@@ -1,0 +1,534 @@
+[
+  {
+    "product_id": "P01",
+    "title": "Beehive releases",
+    "publisher": "New Zealand Government / Beehive",
+    "domain": "Government statements",
+    "source_url": "https://www.beehive.govt.nz/releases",
+    "snapshot_at_utc": "2026-09-19T19:12:17.178902Z",
+    "record_count": 4735,
+    "evidence_forms": [
+      {
+        "type": "source body / document record",
+        "count": 4735
+      }
+    ],
+    "observed_start_utc": "2026-09-19T09:26:42.000Z",
+    "observed_end_utc": "2026-09-19T16:17:15.000Z",
+    "coverage_window": "Releases dated 2023-11-29 through snapshot date",
+    "release_mode": "metadata-and-links-only",
+    "rights_status": "pending-publisher-review",
+    "known_limitations": "Link only; copied release bodies excluded pending source-specific review"
+  },
+  {
+    "product_id": "P02",
+    "title": "54th Parliament bill publications",
+    "publisher": "New Zealand Parliament",
+    "domain": "Parliament and law",
+    "source_url": "https://www.parliament.nz/en/pb/bills-and-laws/bills-proposed-laws/",
+    "snapshot_at_utc": "2026-09-19T19:12:17.178902Z",
+    "record_count": 201,
+    "evidence_forms": [
+      {
+        "type": "source body / document record",
+        "count": 115
+      },
+      {
+        "type": "catalogue",
+        "count": 86
+      }
+    ],
+    "observed_start_utc": "2026-09-19T18:31:20.033Z",
+    "observed_end_utc": "2026-09-19T18:31:20.033Z",
+    "coverage_window": "See limitation; observation timestamps are not necessarily reference periods",
+    "release_mode": "metadata-and-links-only",
+    "rights_status": "pending-publisher-review",
+    "known_limitations": "Four known retrieval gaps; proposed bill text is not enacted law"
+  },
+  {
+    "product_id": "P03",
+    "title": "Current bills index",
+    "publisher": "New Zealand Parliament",
+    "domain": "Parliament and law",
+    "source_url": "https://www.parliament.nz/en/pb/bills-and-laws/bills-proposed-laws/",
+    "snapshot_at_utc": "2026-09-19T19:12:17.178902Z",
+    "record_count": 101,
+    "evidence_forms": [
+      {
+        "type": "normalised fact",
+        "count": 101
+      }
+    ],
+    "observed_start_utc": "2026-09-16T03:16:18.536Z",
+    "observed_end_utc": "2026-09-19T01:21:42.353Z",
+    "coverage_window": "See limitation; observation timestamps are not necessarily reference periods",
+    "release_mode": "metadata-and-links-only",
+    "rights_status": "pending-publisher-review",
+    "known_limitations": "Current snapshot; not all historical legislation"
+  },
+  {
+    "product_id": "P04",
+    "title": "2023 general election candidate roster",
+    "publisher": "Electoral Commission",
+    "domain": "Elections",
+    "source_url": "https://elections.nz/democracy-in-nz/historical-events/2023-general-election/",
+    "snapshot_at_utc": "2026-09-19T19:12:17.178902Z",
+    "record_count": 486,
+    "evidence_forms": [
+      {
+        "type": "normalised fact",
+        "count": 486
+      }
+    ],
+    "observed_start_utc": "2026-09-19T01:09:19.454Z",
+    "observed_end_utc": "2026-09-19T01:09:19.454Z",
+    "coverage_window": "2023 general election",
+    "release_mode": "metadata-and-links-only",
+    "rights_status": "pending-publisher-review",
+    "known_limitations": "2023 only; do not infer 2026 candidate publication"
+  },
+  {
+    "product_id": "P05",
+    "title": "54th Parliament committee business",
+    "publisher": "New Zealand Parliament",
+    "domain": "Parliament and law",
+    "source_url": "https://www.parliament.nz/en/pb/sc/",
+    "snapshot_at_utc": "2026-09-19T19:12:17.178902Z",
+    "record_count": 123,
+    "evidence_forms": [
+      {
+        "type": "normalised fact",
+        "count": 123
+      }
+    ],
+    "observed_start_utc": "2026-09-19T01:09:20.010Z",
+    "observed_end_utc": "2026-09-19T01:09:23.906Z",
+    "coverage_window": "See limitation; observation timestamps are not necessarily reference periods",
+    "release_mode": "metadata-and-links-only",
+    "rights_status": "pending-publisher-review",
+    "known_limitations": "Current selected product; broader committee activity not enumerated"
+  },
+  {
+    "product_id": "P06",
+    "title": "54th Parliament select committee report bodies",
+    "publisher": "New Zealand Parliament",
+    "domain": "Parliament and law",
+    "source_url": "https://www.parliament.nz/en/pb/sc/reports/",
+    "snapshot_at_utc": "2026-09-19T19:12:17.178902Z",
+    "record_count": 1285,
+    "evidence_forms": [
+      {
+        "type": "source body / document record",
+        "count": 1285
+      }
+    ],
+    "observed_start_utc": "2026-09-19T09:08:40.507Z",
+    "observed_end_utc": "2026-09-19T11:50:31.743Z",
+    "coverage_window": "See limitation; observation timestamps are not necessarily reference periods",
+    "release_mode": "metadata-and-links-only",
+    "rights_status": "pending-publisher-review",
+    "known_limitations": "Copied report bodies excluded from this repository pending rights review"
+  },
+  {
+    "product_id": "P07",
+    "title": "54th Parliament select committee report index",
+    "publisher": "New Zealand Parliament",
+    "domain": "Parliament and law",
+    "source_url": "https://www.parliament.nz/en/pb/sc/reports/",
+    "snapshot_at_utc": "2026-09-19T19:12:17.178902Z",
+    "record_count": 1286,
+    "evidence_forms": [
+      {
+        "type": "normalised fact",
+        "count": 1286
+      }
+    ],
+    "observed_start_utc": "2026-09-19T01:52:39.009Z",
+    "observed_end_utc": "2026-09-19T01:53:49.820Z",
+    "coverage_window": "See limitation; observation timestamps are not necessarily reference periods",
+    "release_mode": "metadata-and-links-only",
+    "rights_status": "pending-publisher-review",
+    "known_limitations": "Current selected report index; not all committee materials"
+  },
+  {
+    "product_id": "P08",
+    "title": "2023 overall election results",
+    "publisher": "Electoral Commission",
+    "domain": "Elections",
+    "source_url": "https://electionresults.govt.nz/electionresults_2023/",
+    "snapshot_at_utc": "2026-09-19T19:12:17.178902Z",
+    "record_count": 18,
+    "evidence_forms": [
+      {
+        "type": "normalised fact",
+        "count": 17
+      },
+      {
+        "type": "aggregate",
+        "count": 1
+      }
+    ],
+    "observed_start_utc": "2026-09-19T09:22:27.000Z",
+    "observed_end_utc": "2026-09-19T09:22:27.000Z",
+    "coverage_window": "2023 general election",
+    "release_mode": "metadata-and-links-only",
+    "rights_status": "pending-publisher-review",
+    "known_limitations": "2023 general election only"
+  },
+  {
+    "product_id": "P09",
+    "title": "2023 electorate election results",
+    "publisher": "Electoral Commission",
+    "domain": "Elections",
+    "source_url": "https://electionresults.govt.nz/electionresults_2023/",
+    "snapshot_at_utc": "2026-09-19T19:12:17.178902Z",
+    "record_count": 1791,
+    "evidence_forms": [
+      {
+        "type": "aggregate",
+        "count": 72
+      },
+      {
+        "type": "normalised fact",
+        "count": 1719
+      }
+    ],
+    "observed_start_utc": "2026-09-19T09:44:19.000Z",
+    "observed_end_utc": "2026-09-19T09:46:49.000Z",
+    "coverage_window": "2023 general election",
+    "release_mode": "metadata-and-links-only",
+    "rights_status": "pending-publisher-review",
+    "known_limitations": "2023 general election only; geography/version alignment required"
+  },
+  {
+    "product_id": "P10",
+    "title": "Current members of Parliament",
+    "publisher": "New Zealand Parliament",
+    "domain": "Parliament and law",
+    "source_url": "https://www3.parliament.nz/en/mps-and-electorates/members-of-parliament",
+    "snapshot_at_utc": "2026-09-19T19:12:17.178902Z",
+    "record_count": 122,
+    "evidence_forms": [
+      {
+        "type": "normalised fact",
+        "count": 122
+      }
+    ],
+    "observed_start_utc": "2026-09-19T01:17:34.224Z",
+    "observed_end_utc": "2026-09-19T01:17:34.224Z",
+    "coverage_window": "See limitation; observation timestamps are not necessarily reference periods",
+    "release_mode": "metadata-and-links-only",
+    "rights_status": "pending-publisher-review",
+    "known_limitations": "Current snapshot; membership changes over time"
+  },
+  {
+    "product_id": "P11",
+    "title": "Health New Zealand data catalogue sample",
+    "publisher": "Health New Zealand",
+    "domain": "Social outcomes",
+    "source_url": "https://www.tewhatuora.govt.nz/for-health-professionals/data-and-statistics/",
+    "snapshot_at_utc": "2026-09-19T19:12:17.178902Z",
+    "record_count": 93,
+    "evidence_forms": [
+      {
+        "type": "normalised fact",
+        "count": 44
+      },
+      {
+        "type": "catalogue",
+        "count": 26
+      },
+      {
+        "type": "catalogue metadata",
+        "count": 23
+      }
+    ],
+    "observed_start_utc": "2026-09-15T19:03:59.219Z",
+    "observed_end_utc": "2026-09-16T03:36:15.650Z",
+    "coverage_window": "See limitation; observation timestamps are not necessarily reference periods",
+    "release_mode": "metadata-and-links-only",
+    "rights_status": "pending-publisher-review",
+    "known_limitations": "Mixed facts and catalogue metadata; incomplete denominator"
+  },
+  {
+    "product_id": "P12",
+    "title": "MSD benefits and hardship statistics sample",
+    "publisher": "Ministry of Social Development",
+    "domain": "Social outcomes",
+    "source_url": "https://www.msd.govt.nz/about-msd-and-our-work/publications-resources/statistics/",
+    "snapshot_at_utc": "2026-09-19T19:12:17.178902Z",
+    "record_count": 929,
+    "evidence_forms": [
+      {
+        "type": "catalogue",
+        "count": 26
+      },
+      {
+        "type": "normalised fact",
+        "count": 903
+      }
+    ],
+    "observed_start_utc": "2026-09-15T19:03:55.040Z",
+    "observed_end_utc": "2026-09-16T03:16:38.542Z",
+    "coverage_window": "See limitation; observation timestamps are not necessarily reference periods",
+    "release_mode": "metadata-and-links-only",
+    "rights_status": "pending-publisher-review",
+    "known_limitations": "Selected measures only; release denominator not independently certified"
+  },
+  {
+    "product_id": "P13",
+    "title": "Registered-party policy page catalogue",
+    "publisher": "Registered New Zealand political parties",
+    "domain": "Elections",
+    "source_url": "https://elections.nz/democracy-in-nz/political-parties-in-new-zealand/register-of-political-parties/",
+    "snapshot_at_utc": "2026-09-19T19:12:17.178902Z",
+    "record_count": 17,
+    "evidence_forms": [
+      {
+        "type": "catalogue",
+        "count": 17
+      }
+    ],
+    "observed_start_utc": "2026-09-19T18:38:43.204Z",
+    "observed_end_utc": "2026-09-19T18:38:55.582Z",
+    "coverage_window": "Observed at snapshot date",
+    "release_mode": "metadata-and-links-only",
+    "rights_status": "pending-publisher-review",
+    "known_limitations": "17 substantive policy URLs, not 17 manifestos; observed 2 manifestos, 4 collections, 2 platforms and 9 hubs"
+  },
+  {
+    "product_id": "P14",
+    "title": "Recent party-vote polls sample",
+    "publisher": "Multiple poll publishers",
+    "domain": "Elections",
+    "source_url": "https://en.wikipedia.org/wiki/Opinion_polling_for_the_2026_New_Zealand_general_election",
+    "snapshot_at_utc": "2026-09-19T19:12:17.178902Z",
+    "record_count": 12,
+    "evidence_forms": [
+      {
+        "type": "normalised fact",
+        "count": 12
+      }
+    ],
+    "observed_start_utc": "2026-09-19T18:38:55.645Z",
+    "observed_end_utc": "2026-09-19T18:38:55.645Z",
+    "coverage_window": "90-day sample ending 2026-09-19",
+    "release_mode": "metadata-and-links-only",
+    "rights_status": "pending-publisher-review",
+    "known_limitations": "Twelve records; methodology/sponsor disclosure verified for 9 and unresolved for 3; aggregator is not a primary publisher"
+  },
+  {
+    "product_id": "P15",
+    "title": "2023 candidate expense-return document index",
+    "publisher": "Electoral Commission",
+    "domain": "Political finance",
+    "source_url": "https://elections.nz/democracy-in-nz/candidates/candidate-expenses-and-donations/",
+    "snapshot_at_utc": "2026-09-19T19:12:17.178902Z",
+    "record_count": 492,
+    "evidence_forms": [
+      {
+        "type": "official document record",
+        "count": 492
+      }
+    ],
+    "observed_start_utc": "2026-09-19T17:51:54.739Z",
+    "observed_end_utc": "2026-09-19T18:11:42.663Z",
+    "coverage_window": "2023 candidate returns",
+    "release_mode": "metadata-and-links-only",
+    "rights_status": "pending-publisher-review",
+    "known_limitations": "492 document records: 268 embedded-text and 224 image-only; no PDFs or personal street-address fields included"
+  },
+  {
+    "product_id": "P16",
+    "title": "2025 party finance aggregate index",
+    "publisher": "Electoral Commission",
+    "domain": "Political finance",
+    "source_url": "https://elections.nz/democracy-in-nz/political-parties-in-new-zealand/party-donations-and-loans-by-year/",
+    "snapshot_at_utc": "2026-09-19T19:12:17.178902Z",
+    "record_count": 14,
+    "evidence_forms": [
+      {
+        "type": "official aggregate",
+        "count": 14
+      }
+    ],
+    "observed_start_utc": "2026-09-19T16:28:18.983Z",
+    "observed_end_utc": "2026-09-19T16:28:18.983Z",
+    "coverage_window": "2025 party returns",
+    "release_mode": "metadata-and-links-only",
+    "rights_status": "pending-publisher-review",
+    "known_limitations": "Aggregate product; do not infer donor-level relationships"
+  },
+  {
+    "product_id": "P17",
+    "title": "2025 party finance return document index",
+    "publisher": "Electoral Commission",
+    "domain": "Political finance",
+    "source_url": "https://elections.nz/democracy-in-nz/political-parties-in-new-zealand/party-donations-and-loans-by-year/",
+    "snapshot_at_utc": "2026-09-19T19:12:17.178902Z",
+    "record_count": 17,
+    "evidence_forms": [
+      {
+        "type": "official document record",
+        "count": 17
+      }
+    ],
+    "observed_start_utc": "2026-09-19T16:58:58.118Z",
+    "observed_end_utc": "2026-09-19T17:15:27.000Z",
+    "coverage_window": "2025 party returns",
+    "release_mode": "metadata-and-links-only",
+    "rights_status": "pending-publisher-review",
+    "known_limitations": "17 originals observed; six needed bounded vision review across 80 pages; not full OCR"
+  },
+  {
+    "product_id": "P18",
+    "title": "Reserve Bank statistics catalogue",
+    "publisher": "Reserve Bank of New Zealand",
+    "domain": "Economy",
+    "source_url": "https://www.rbnz.govt.nz/statistics",
+    "snapshot_at_utc": "2026-09-19T19:12:17.178902Z",
+    "record_count": 18,
+    "evidence_forms": [
+      {
+        "type": "catalogue",
+        "count": 18
+      }
+    ],
+    "observed_start_utc": "2026-09-19T01:19:41.413Z",
+    "observed_end_utc": "2026-09-19T01:19:41.413Z",
+    "coverage_window": "See limitation; observation timestamps are not necessarily reference periods",
+    "release_mode": "metadata-and-links-only",
+    "rights_status": "pending-publisher-review",
+    "known_limitations": "Catalogue entries only, not time-series observations"
+  },
+  {
+    "product_id": "P19",
+    "title": "2018 Census national highlights sample",
+    "publisher": "Stats NZ",
+    "domain": "Population",
+    "source_url": "https://www.stats.govt.nz/2018-census/",
+    "snapshot_at_utc": "2026-09-19T19:12:17.178902Z",
+    "record_count": 877,
+    "evidence_forms": [
+      {
+        "type": "normalised fact",
+        "count": 877
+      }
+    ],
+    "observed_start_utc": "2026-09-15T19:06:45.000Z",
+    "observed_end_utc": "2026-09-15T19:06:45.000Z",
+    "coverage_window": "2018 Census selected highlights",
+    "release_mode": "metadata-and-links-only",
+    "rights_status": "pending-publisher-review",
+    "known_limitations": "Selected national highlights; not a full Census product inventory"
+  },
+  {
+    "product_id": "P20",
+    "title": "Stats NZ CSV catalogue sample",
+    "publisher": "Stats NZ",
+    "domain": "Economy",
+    "source_url": "https://www.stats.govt.nz/large-datasets/csv-files-for-download/",
+    "snapshot_at_utc": "2026-09-19T19:12:17.178902Z",
+    "record_count": 128,
+    "evidence_forms": [
+      {
+        "type": "catalogue metadata",
+        "count": 128
+      }
+    ],
+    "observed_start_utc": "2026-09-15T19:06:42.000Z",
+    "observed_end_utc": "2026-09-18T01:08:53.000Z",
+    "coverage_window": "See limitation; observation timestamps are not necessarily reference periods",
+    "release_mode": "metadata-and-links-only",
+    "rights_status": "pending-publisher-review",
+    "known_limitations": "Catalogue metadata only; selected snapshot"
+  },
+  {
+    "product_id": "P21",
+    "title": "2023 Census selected products",
+    "publisher": "Stats NZ",
+    "domain": "Population",
+    "source_url": "https://www.stats.govt.nz/2023-census/",
+    "snapshot_at_utc": "2026-09-19T19:12:17.178902Z",
+    "record_count": 37689,
+    "evidence_forms": [
+      {
+        "type": "normalised fact",
+        "count": 37689
+      }
+    ],
+    "observed_start_utc": "2026-09-16T03:16:27.491Z",
+    "observed_end_utc": "2026-09-16T03:16:27.491Z",
+    "coverage_window": "2023 Census selected products",
+    "release_mode": "metadata-and-links-only",
+    "rights_status": "pending-publisher-review",
+    "known_limitations": "Selected products only; count does not imply all Census outputs"
+  },
+  {
+    "product_id": "P22",
+    "title": "Food price and population selected series",
+    "publisher": "Stats NZ",
+    "domain": "Economy",
+    "source_url": "https://www.stats.govt.nz/large-datasets/csv-files-for-download/",
+    "snapshot_at_utc": "2026-09-19T19:12:17.178902Z",
+    "record_count": 55428,
+    "evidence_forms": [
+      {
+        "type": "normalised fact",
+        "count": 55428
+      }
+    ],
+    "observed_start_utc": "2026-09-16T03:44:43.138Z",
+    "observed_end_utc": "2026-09-16T03:44:43.138Z",
+    "coverage_window": "Selected files; reference periods vary by series",
+    "release_mode": "metadata-and-links-only",
+    "rights_status": "pending-publisher-review",
+    "known_limitations": "Selected files only; preserve each series unit, period and vintage"
+  },
+  {
+    "product_id": "P23",
+    "title": "Rental bond selected measures",
+    "publisher": "Tenancy Services",
+    "domain": "Housing",
+    "source_url": "https://www.tenancy.govt.nz/rent-bond-and-bills/market-rent/",
+    "snapshot_at_utc": "2026-09-19T19:12:17.178902Z",
+    "record_count": 57892,
+    "evidence_forms": [
+      {
+        "type": "normalised fact",
+        "count": 57888
+      },
+      {
+        "type": "catalogue",
+        "count": 4
+      }
+    ],
+    "observed_start_utc": "2026-09-15T19:04:02.093Z",
+    "observed_end_utc": "2026-09-16T03:16:40.612Z",
+    "coverage_window": "See limitation; observation timestamps are not necessarily reference periods",
+    "release_mode": "metadata-and-links-only",
+    "rights_status": "pending-publisher-review",
+    "known_limitations": "Selected measures; align geography and period before comparison"
+  },
+  {
+    "product_id": "P24",
+    "title": "Written parliamentary questions",
+    "publisher": "New Zealand Parliament",
+    "domain": "Parliament and law",
+    "source_url": "https://www.parliament.nz/en/pb/order-paper-questions/written-questions/",
+    "snapshot_at_utc": "2026-09-19T19:12:17.178902Z",
+    "record_count": 187956,
+    "evidence_forms": [
+      {
+        "type": "normalised fact",
+        "count": 187956
+      }
+    ],
+    "observed_start_utc": "2026-09-19T01:54:46.231Z",
+    "observed_end_utc": "2026-09-19T14:29:45.223Z",
+    "coverage_window": "Questions from 2023-10-13 through open/current snapshot",
+    "release_mode": "metadata-and-links-only",
+    "rights_status": "pending-publisher-review",
+    "known_limitations": "Snapshot count; independent replay-completion certification was unfinished"
+  }
+]

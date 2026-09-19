@@ -1,0 +1,20 @@
+{
+  "example_only": true,
+  "claim": "Synthetic illustration; not a claim about New Zealand politics",
+  "class": "observed fact",
+  "publisher": "Example Public Agency",
+  "source_url": "https://example.org/data/table",
+  "source_title": "Example table",
+  "published_at": "2026-01-15",
+  "observed_at": "2026-01-16T00:00:00Z",
+  "source_locator": "Table 1, row A, column value",
+  "value": 42,
+  "unit": "example units",
+  "denominator": "100 synthetic cases",
+  "geography": "Example Region",
+  "period": "2025",
+  "vintage": "2026-01 release",
+  "transformation": "direct transcription",
+  "quality_state": "synthetic",
+  "rights_state": "example only; no third-party content"
+}

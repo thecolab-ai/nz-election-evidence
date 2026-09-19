@@ -1,0 +1,292 @@
+[
+  {
+    "rights_id": "RIGHTS-01",
+    "publisher": "Electoral Commission",
+    "source_url": "https://electionresults.govt.nz/electionresults_2023/",
+    "product_ids": [
+      "P08",
+      "P09"
+    ],
+    "review_status": "pending",
+    "default_release": "link-only",
+    "licence_or_terms_url": "",
+    "verified_permissions": "metadata and source links only",
+    "excluded_assets": "original PDFs, copied articles, full policy text, page captures and personal addresses",
+    "attribution": "Publisher name and primary source URL",
+    "reviewed_on": ""
+  },
+  {
+    "rights_id": "RIGHTS-02",
+    "publisher": "Electoral Commission",
+    "source_url": "https://elections.nz/democracy-in-nz/candidates/candidate-expenses-and-donations/",
+    "product_ids": [
+      "P15"
+    ],
+    "review_status": "pending",
+    "default_release": "link-only",
+    "licence_or_terms_url": "",
+    "verified_permissions": "metadata and source links only",
+    "excluded_assets": "original PDFs, copied articles, full policy text, page captures and personal addresses",
+    "attribution": "Publisher name and primary source URL",
+    "reviewed_on": ""
+  },
+  {
+    "rights_id": "RIGHTS-03",
+    "publisher": "Electoral Commission",
+    "source_url": "https://elections.nz/democracy-in-nz/historical-events/2023-general-election/",
+    "product_ids": [
+      "P04"
+    ],
+    "review_status": "pending",
+    "default_release": "link-only",
+    "licence_or_terms_url": "",
+    "verified_permissions": "metadata and source links only",
+    "excluded_assets": "original PDFs, copied articles, full policy text, page captures and personal addresses",
+    "attribution": "Publisher name and primary source URL",
+    "reviewed_on": ""
+  },
+  {
+    "rights_id": "RIGHTS-04",
+    "publisher": "Electoral Commission",
+    "source_url": "https://elections.nz/democracy-in-nz/political-parties-in-new-zealand/party-donations-and-loans-by-year/",
+    "product_ids": [
+      "P16",
+      "P17"
+    ],
+    "review_status": "pending",
+    "default_release": "link-only",
+    "licence_or_terms_url": "",
+    "verified_permissions": "metadata and source links only",
+    "excluded_assets": "original PDFs, copied articles, full policy text, page captures and personal addresses",
+    "attribution": "Publisher name and primary source URL",
+    "reviewed_on": ""
+  },
+  {
+    "rights_id": "RIGHTS-05",
+    "publisher": "Health New Zealand",
+    "source_url": "https://www.tewhatuora.govt.nz/for-health-professionals/data-and-statistics/",
+    "product_ids": [
+      "P11"
+    ],
+    "review_status": "pending",
+    "default_release": "link-only",
+    "licence_or_terms_url": "",
+    "verified_permissions": "metadata and source links only",
+    "excluded_assets": "original PDFs, copied articles, full policy text, page captures and personal addresses",
+    "attribution": "Publisher name and primary source URL",
+    "reviewed_on": ""
+  },
+  {
+    "rights_id": "RIGHTS-06",
+    "publisher": "Ministry of Social Development",
+    "source_url": "https://www.msd.govt.nz/about-msd-and-our-work/publications-resources/statistics/",
+    "product_ids": [
+      "P12"
+    ],
+    "review_status": "pending",
+    "default_release": "link-only",
+    "licence_or_terms_url": "",
+    "verified_permissions": "metadata and source links only",
+    "excluded_assets": "original PDFs, copied articles, full policy text, page captures and personal addresses",
+    "attribution": "Publisher name and primary source URL",
+    "reviewed_on": ""
+  },
+  {
+    "rights_id": "RIGHTS-07",
+    "publisher": "Multiple poll publishers",
+    "source_url": "https://en.wikipedia.org/wiki/Opinion_polling_for_the_2026_New_Zealand_general_election",
+    "product_ids": [
+      "P14"
+    ],
+    "review_status": "pending",
+    "default_release": "link-only",
+    "licence_or_terms_url": "",
+    "verified_permissions": "metadata and source links only",
+    "excluded_assets": "original PDFs, copied articles, full policy text, page captures and personal addresses",
+    "attribution": "Publisher name and primary source URL",
+    "reviewed_on": ""
+  },
+  {
+    "rights_id": "RIGHTS-08",
+    "publisher": "New Zealand Government / Beehive",
+    "source_url": "https://www.beehive.govt.nz/releases",
+    "product_ids": [
+      "P01"
+    ],
+    "review_status": "pending",
+    "default_release": "link-only",
+    "licence_or_terms_url": "",
+    "verified_permissions": "metadata and source links only",
+    "excluded_assets": "original PDFs, copied articles, full policy text, page captures and personal addresses",
+    "attribution": "Publisher name and primary source URL",
+    "reviewed_on": ""
+  },
+  {
+    "rights_id": "RIGHTS-09",
+    "publisher": "New Zealand Parliament",
+    "source_url": "https://www.parliament.nz/en/pb/bills-and-laws/bills-proposed-laws/",
+    "product_ids": [
+      "P02",
+      "P03"
+    ],
+    "review_status": "pending",
+    "default_release": "link-only",
+    "licence_or_terms_url": "",
+    "verified_permissions": "metadata and source links only",
+    "excluded_assets": "original PDFs, copied articles, full policy text, page captures and personal addresses",
+    "attribution": "Publisher name and primary source URL",
+    "reviewed_on": ""
+  },
+  {
+    "rights_id": "RIGHTS-10",
+    "publisher": "New Zealand Parliament",
+    "source_url": "https://www.parliament.nz/en/pb/order-paper-questions/written-questions/",
+    "product_ids": [
+      "P24"
+    ],
+    "review_status": "pending",
+    "default_release": "link-only",
+    "licence_or_terms_url": "",
+    "verified_permissions": "metadata and source links only",
+    "excluded_assets": "original PDFs, copied articles, full policy text, page captures and personal addresses",
+    "attribution": "Publisher name and primary source URL",
+    "reviewed_on": ""
+  },
+  {
+    "rights_id": "RIGHTS-11",
+    "publisher": "New Zealand Parliament",
+    "source_url": "https://www.parliament.nz/en/pb/sc/",
+    "product_ids": [
+      "P05"
+    ],
+    "review_status": "pending",
+    "default_release": "link-only",
+    "licence_or_terms_url": "",
+    "verified_permissions": "metadata and source links only",
+    "excluded_assets": "original PDFs, copied articles, full policy text, page captures and personal addresses",
+    "attribution": "Publisher name and primary source URL",
+    "reviewed_on": ""
+  },
+  {
+    "rights_id": "RIGHTS-12",
+    "publisher": "New Zealand Parliament",
+    "source_url": "https://www.parliament.nz/en/pb/sc/reports/",
+    "product_ids": [
+      "P06",
+      "P07"
+    ],
+    "review_status": "pending",
+    "default_release": "link-only",
+    "licence_or_terms_url": "",
+    "verified_permissions": "metadata and source links only",
+    "excluded_assets": "original PDFs, copied articles, full policy text, page captures and personal addresses",
+    "attribution": "Publisher name and primary source URL",
+    "reviewed_on": ""
+  },
+  {
+    "rights_id": "RIGHTS-13",
+    "publisher": "New Zealand Parliament",
+    "source_url": "https://www3.parliament.nz/en/mps-and-electorates/members-of-parliament",
+    "product_ids": [
+      "P10"
+    ],
+    "review_status": "pending",
+    "default_release": "link-only",
+    "licence_or_terms_url": "",
+    "verified_permissions": "metadata and source links only",
+    "excluded_assets": "original PDFs, copied articles, full policy text, page captures and personal addresses",
+    "attribution": "Publisher name and primary source URL",
+    "reviewed_on": ""
+  },
+  {
+    "rights_id": "RIGHTS-14",
+    "publisher": "Registered New Zealand political parties",
+    "source_url": "https://elections.nz/democracy-in-nz/political-parties-in-new-zealand/register-of-political-parties/",
+    "product_ids": [
+      "P13"
+    ],
+    "review_status": "pending",
+    "default_release": "link-only",
+    "licence_or_terms_url": "",
+    "verified_permissions": "metadata and source links only",
+    "excluded_assets": "original PDFs, copied articles, full policy text, page captures and personal addresses",
+    "attribution": "Publisher name and primary source URL",
+    "reviewed_on": ""
+  },
+  {
+    "rights_id": "RIGHTS-15",
+    "publisher": "Reserve Bank of New Zealand",
+    "source_url": "https://www.rbnz.govt.nz/statistics",
+    "product_ids": [
+      "P18"
+    ],
+    "review_status": "pending",
+    "default_release": "link-only",
+    "licence_or_terms_url": "",
+    "verified_permissions": "metadata and source links only",
+    "excluded_assets": "original PDFs, copied articles, full policy text, page captures and personal addresses",
+    "attribution": "Publisher name and primary source URL",
+    "reviewed_on": ""
+  },
+  {
+    "rights_id": "RIGHTS-16",
+    "publisher": "Stats NZ",
+    "source_url": "https://www.stats.govt.nz/2018-census/",
+    "product_ids": [
+      "P19"
+    ],
+    "review_status": "pending",
+    "default_release": "link-only",
+    "licence_or_terms_url": "",
+    "verified_permissions": "metadata and source links only",
+    "excluded_assets": "original PDFs, copied articles, full policy text, page captures and personal addresses",
+    "attribution": "Publisher name and primary source URL",
+    "reviewed_on": ""
+  },
+  {
+    "rights_id": "RIGHTS-17",
+    "publisher": "Stats NZ",
+    "source_url": "https://www.stats.govt.nz/2023-census/",
+    "product_ids": [
+      "P21"
+    ],
+    "review_status": "pending",
+    "default_release": "link-only",
+    "licence_or_terms_url": "",
+    "verified_permissions": "metadata and source links only",
+    "excluded_assets": "original PDFs, copied articles, full policy text, page captures and personal addresses",
+    "attribution": "Publisher name and primary source URL",
+    "reviewed_on": ""
+  },
+  {
+    "rights_id": "RIGHTS-18",
+    "publisher": "Stats NZ",
+    "source_url": "https://www.stats.govt.nz/large-datasets/csv-files-for-download/",
+    "product_ids": [
+      "P20",
+      "P22"
+    ],
+    "review_status": "pending",
+    "default_release": "link-only",
+    "licence_or_terms_url": "",
+    "verified_permissions": "metadata and source links only",
+    "excluded_assets": "original PDFs, copied articles, full policy text, page captures and personal addresses",
+    "attribution": "Publisher name and primary source URL",
+    "reviewed_on": ""
+  },
+  {
+    "rights_id": "RIGHTS-19",
+    "publisher": "Tenancy Services",
+    "source_url": "https://www.tenancy.govt.nz/rent-bond-and-bills/market-rent/",
+    "product_ids": [
+      "P23"
+    ],
+    "review_status": "pending",
+    "default_release": "link-only",
+    "licence_or_terms_url": "",
+    "verified_permissions": "metadata and source links only",
+    "excluded_assets": "original PDFs, copied articles, full policy text, page captures and personal addresses",
+    "attribution": "Publisher name and primary source URL",
+    "reviewed_on": ""
+  }
+]

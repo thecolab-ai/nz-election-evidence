@@ -1,0 +1,511 @@
+[
+  {
+    "lane_id": "R01",
+    "title": "Election news pilot",
+    "domain": "government",
+    "status": "not_yet_available",
+    "held_product_ids": [],
+    "next_verification": "Define named publishers and a bounded election-news index/feed set, then implement index pagination and article-original capture.",
+    "source_url": "https://www.data.govt.nz/"
+  },
+  {
+    "lane_id": "R02",
+    "title": "Beehive releases",
+    "domain": "government",
+    "status": "held_snapshot",
+    "held_product_ids": [
+      "P01"
+    ],
+    "next_verification": "Create a separately scoped collector for Beehive speeches/other products; do not broaden this Releases completion claim.",
+    "source_url": "https://www.beehive.govt.nz/releases"
+  },
+  {
+    "lane_id": "R03",
+    "title": "Benefits & hardship",
+    "domain": "people",
+    "status": "held_partial",
+    "held_product_ids": [
+      "P12"
+    ],
+    "next_verification": "Capture the publisher index/API that enumerates statistical releases, fixture-test all pagination and release variants, then reconcile stable IDs and loaded originals to that index.",
+    "source_url": "https://www.msd.govt.nz/about-msd-and-our-work/publications-resources/statistics/"
+  },
+  {
+    "lane_id": "R04",
+    "title": "Bill publications",
+    "domain": "parliament",
+    "status": "roadmap_partial",
+    "held_product_ids": [
+      "P02"
+    ],
+    "next_verification": "Resolve only the three no-public-URL bills and the bounded legacy 128-2 versions-page failure when official publication becomes accessible; do not claim all legislation.",
+    "source_url": "https://www.parliament.nz/"
+  },
+  {
+    "lane_id": "R05",
+    "title": "Bill quality assessments",
+    "domain": "parliament",
+    "status": "roadmap_discovery",
+    "held_product_ids": [],
+    "next_verification": "Define a finite public bill-quality assessment input list and reconcile one assessment per declared bill.",
+    "source_url": "https://www.parliament.nz/"
+  },
+  {
+    "lane_id": "R06",
+    "title": "Current bills",
+    "domain": "parliament",
+    "status": "held_partial",
+    "held_product_ids": [
+      "P03"
+    ],
+    "next_verification": "Refresh the source index, compare the reported total and stable IDs with the 95-record snapshot, and open a new versioned denominator before claiming a newer complete selected product.",
+    "source_url": "https://www.parliament.nz/"
+  },
+  {
+    "lane_id": "R07",
+    "title": "Candidate roster",
+    "domain": "elections",
+    "status": "held_snapshot",
+    "held_product_ids": [
+      "P04"
+    ],
+    "next_verification": "At the Electoral Commission nomination timetable/publication point, capture the official 2026 candidate index and its evidence date, then reconcile all stable IDs. Do not infer non-publication from 404s.",
+    "source_url": "https://elections.nz/"
+  },
+  {
+    "lane_id": "R08",
+    "title": "Historical census",
+    "domain": "people",
+    "status": "roadmap_partial",
+    "held_product_ids": [],
+    "next_verification": "Capture the publisher index/API that enumerates census products, fixture-test all pagination and release variants, then reconcile stable IDs and loaded originals to that index.",
+    "source_url": "https://www.stats.govt.nz/"
+  },
+  {
+    "lane_id": "R09",
+    "title": "Climate & energy",
+    "domain": "economy",
+    "status": "roadmap_partial",
+    "held_product_ids": [],
+    "next_verification": "Capture the publisher index/API that enumerates dataset or reports, fixture-test all pagination and release variants, then reconcile stable IDs and loaded originals to that index.",
+    "source_url": "https://www.data.govt.nz/"
+  },
+  {
+    "lane_id": "R10",
+    "title": "Current public entities",
+    "domain": "parliament",
+    "status": "held_partial",
+    "held_product_ids": [
+      "P10"
+    ],
+    "next_verification": "Capture the publisher index/API that enumerates entity records, fixture-test all pagination and release variants, then reconcile stable IDs and loaded originals to that index.",
+    "source_url": "https://www.parliament.nz/"
+  },
+  {
+    "lane_id": "R11",
+    "title": "Education outcomes",
+    "domain": "people",
+    "status": "roadmap_partial",
+    "held_product_ids": [],
+    "next_verification": "Capture the publisher index/API that enumerates dataset or reports, fixture-test all pagination and release variants, then reconcile stable IDs and loaded originals to that index.",
+    "source_url": "https://www.data.govt.nz/"
+  },
+  {
+    "lane_id": "R12",
+    "title": "Evidence catalogue documentation",
+    "domain": "platform",
+    "status": "roadmap_discovery",
+    "held_product_ids": [],
+    "next_verification": "Define the finite public catalogue and reconcile one entry per declared source lane.",
+    "source_url": "https://www.data.govt.nz/"
+  },
+  {
+    "lane_id": "R13",
+    "title": "Parliament source snapshot",
+    "domain": "platform",
+    "status": "roadmap_discovery",
+    "held_product_ids": [],
+    "next_verification": "Define the finite Parliament source list and reconcile each declared item.",
+    "source_url": "https://www.parliament.nz/"
+  },
+  {
+    "lane_id": "R14",
+    "title": "Evidence snapshot documentation",
+    "domain": "platform",
+    "status": "roadmap_discovery",
+    "held_product_ids": [],
+    "next_verification": "Define a versioned public snapshot manifest and reconcile each declared item.",
+    "source_url": "https://www.parliament.nz/"
+  },
+  {
+    "lane_id": "R15",
+    "title": "Election methodology",
+    "domain": "elections",
+    "status": "roadmap_partial",
+    "held_product_ids": [],
+    "next_verification": "Capture the publisher index/API that enumerates methodology documents, fixture-test all pagination and release variants, then reconcile stable IDs and loaded originals to that index.",
+    "source_url": "https://elections.nz/"
+  },
+  {
+    "lane_id": "R16",
+    "title": "2023 election results",
+    "domain": "elections",
+    "status": "held_snapshot",
+    "held_product_ids": [
+      "P09",
+      "P08"
+    ],
+    "next_verification": "Add separately bounded historical election years; do not infer all-history coverage from 2023.",
+    "source_url": "https://elections.nz/"
+  },
+  {
+    "lane_id": "R17",
+    "title": "Fiscal & RBNZ evidence",
+    "domain": "economy",
+    "status": "held_partial",
+    "held_product_ids": [
+      "P18"
+    ],
+    "next_verification": "Capture the publisher index/API that enumerates fiscal releases, fixture-test all pagination and release variants, then reconcile stable IDs and loaded originals to that index.",
+    "source_url": "https://www.data.govt.nz/"
+  },
+  {
+    "lane_id": "R18",
+    "title": "Geographic crosswalks",
+    "domain": "people",
+    "status": "roadmap_partial",
+    "held_product_ids": [],
+    "next_verification": "Capture the publisher index/API that enumerates crosswalk rows, fixture-test all pagination and release variants, then reconcile stable IDs and loaded originals to that index.",
+    "source_url": "https://www.stats.govt.nz/"
+  },
+  {
+    "lane_id": "R19",
+    "title": "Hansard",
+    "domain": "parliament",
+    "status": "roadmap_partial",
+    "held_product_ids": [],
+    "next_verification": "Capture the publisher index/API that enumerates sitting transcripts, fixture-test all pagination and release variants, then reconcile stable IDs and loaded originals to that index.",
+    "source_url": "https://www.parliament.nz/"
+  },
+  {
+    "lane_id": "R20",
+    "title": "Health outcomes",
+    "domain": "people",
+    "status": "held_partial",
+    "held_product_ids": [
+      "P11"
+    ],
+    "next_verification": "Capture the publisher index/API that enumerates dataset or reports, fixture-test all pagination and release variants, then reconcile stable IDs and loaded originals to that index.",
+    "source_url": "https://www.tewhatuora.govt.nz/for-health-professionals/data-and-statistics/"
+  },
+  {
+    "lane_id": "R21",
+    "title": "Housing & rental bonds",
+    "domain": "people",
+    "status": "held_partial",
+    "held_product_ids": [
+      "P23"
+    ],
+    "next_verification": "Capture the publisher index/API that enumerates dataset or reports, fixture-test all pagination and release variants, then reconcile stable IDs and loaded originals to that index.",
+    "source_url": "https://www.tenancy.govt.nz/rent-bond-and-bills/market-rent/"
+  },
+  {
+    "lane_id": "R22",
+    "title": "Immigration & workforce",
+    "domain": "people",
+    "status": "roadmap_partial",
+    "held_product_ids": [],
+    "next_verification": "Capture the publisher index/API that enumerates statistical releases, fixture-test all pagination and release variants, then reconcile stable IDs and loaded originals to that index.",
+    "source_url": "https://www.data.govt.nz/"
+  },
+  {
+    "lane_id": "R23",
+    "title": "Infrastructure & transport",
+    "domain": "economy",
+    "status": "roadmap_partial",
+    "held_product_ids": [],
+    "next_verification": "Capture the publisher index/API that enumerates dataset or reports, fixture-test all pagination and release variants, then reconcile stable IDs and loaded originals to that index.",
+    "source_url": "https://www.data.govt.nz/"
+  },
+  {
+    "lane_id": "R24",
+    "title": "Cross-source validation",
+    "domain": "platform",
+    "status": "roadmap_discovery",
+    "held_product_ids": [],
+    "next_verification": "Create public, synthetic cross-source validation fixtures with no copied source content.",
+    "source_url": "https://www.parliament.nz/"
+  },
+  {
+    "lane_id": "R25",
+    "title": "Broadcast interviews",
+    "domain": "government",
+    "status": "roadmap_discovery",
+    "held_product_ids": [],
+    "next_verification": "Capture the publisher index/API that enumerates programme items, fixture-test all pagination and release variants, then reconcile stable IDs and loaded originals to that index.",
+    "source_url": "https://www.data.govt.nz/"
+  },
+  {
+    "lane_id": "R26",
+    "title": "Video interviews",
+    "domain": "government",
+    "status": "roadmap_discovery",
+    "held_product_ids": [],
+    "next_verification": "Capture the publisher index/API that enumerates videos, fixture-test all pagination and release variants, then reconcile stable IDs and loaded originals to that index.",
+    "source_url": "https://www.data.govt.nz/"
+  },
+  {
+    "lane_id": "R27",
+    "title": "Justice & safety",
+    "domain": "people",
+    "status": "roadmap_partial",
+    "held_product_ids": [],
+    "next_verification": "Capture the publisher index/API that enumerates dataset or reports, fixture-test all pagination and release variants, then reconcile stable IDs and loaded originals to that index.",
+    "source_url": "https://www.data.govt.nz/"
+  },
+  {
+    "lane_id": "R28",
+    "title": "Legislation versions",
+    "domain": "parliament",
+    "status": "blocked_unverified",
+    "held_product_ids": [],
+    "next_verification": "Obtain a publisher-supported legislation index/export that returns genuine version metadata, then fixture-test pagination and capture every listed version.",
+    "source_url": "https://www.parliament.nz/"
+  },
+  {
+    "lane_id": "R29",
+    "title": "Local government",
+    "domain": "people",
+    "status": "roadmap_partial",
+    "held_product_ids": [],
+    "next_verification": "Capture the publisher index/API that enumerates council datasets, fixture-test all pagination and release variants, then reconcile stable IDs and loaded originals to that index.",
+    "source_url": "https://www.data.govt.nz/"
+  },
+  {
+    "lane_id": "R30",
+    "title": "Current manifestos",
+    "domain": "elections",
+    "status": "not_yet_available",
+    "held_product_ids": [],
+    "next_verification": "Build a bounded 17-party current-manifesto status collector with dated official-site evidence; label missing evidence unverified and never treat a 404 alone as proof of non-publication.",
+    "source_url": "https://www.data.govt.nz/"
+  },
+  {
+    "lane_id": "R31",
+    "title": "Manifesto history",
+    "domain": "elections",
+    "status": "roadmap_discovery",
+    "held_product_ids": [],
+    "next_verification": "Capture the publisher index/API that enumerates catalogue records, fixture-test all pagination and release variants, then reconcile stable IDs and loaded originals to that index.",
+    "source_url": "https://www.data.govt.nz/"
+  },
+  {
+    "lane_id": "R32",
+    "title": "Committee business & reports",
+    "domain": "parliament",
+    "status": "held_snapshot",
+    "held_product_ids": [
+      "P05",
+      "P06",
+      "P07"
+    ],
+    "next_verification": "For broader committee coverage, define and enumerate hearings, submissions, inquiries and other business separately.",
+    "source_url": "https://www.parliament.nz/"
+  },
+  {
+    "lane_id": "R33",
+    "title": "Written questions",
+    "domain": "parliament",
+    "status": "held_validation_pending",
+    "held_product_ids": [
+      "P24"
+    ],
+    "next_verification": "Independently validate the dated snapshot IDs against an official month-by-month denominator before making a completeness claim.",
+    "source_url": "https://www.parliament.nz/"
+  },
+  {
+    "lane_id": "R34",
+    "title": "Parliament votes",
+    "domain": "parliament",
+    "status": "roadmap_partial",
+    "held_product_ids": [],
+    "next_verification": "Capture the publisher index/API that enumerates vote divisions, fixture-test all pagination and release variants, then reconcile stable IDs and loaded originals to that index.",
+    "source_url": "https://www.parliament.nz/"
+  },
+  {
+    "lane_id": "R35",
+    "title": "Party policy & polls",
+    "domain": "elections",
+    "status": "held_snapshot",
+    "held_product_ids": [
+      "P14",
+      "P13"
+    ],
+    "next_verification": "Selected 17-party 2026 policy-page product is closed. Track future publisher changes as a separate refresh; do not equate this with 17 separately published 2026 manifestos.",
+    "source_url": "https://www.data.govt.nz/"
+  },
+  {
+    "lane_id": "R36",
+    "title": "Policy delivery",
+    "domain": "government",
+    "status": "roadmap_partial",
+    "held_product_ids": [],
+    "next_verification": "Capture the publisher index/API that enumerates delivery indicators, fixture-test all pagination and release variants, then reconcile stable IDs and loaded originals to that index.",
+    "source_url": "https://www.beehive.govt.nz/releases"
+  },
+  {
+    "lane_id": "R37",
+    "title": "Policy discovery",
+    "domain": "elections",
+    "status": "roadmap_partial",
+    "held_product_ids": [],
+    "next_verification": "Capture the publisher index/API that enumerates policy documents, fixture-test all pagination and release variants, then reconcile stable IDs and loaded originals to that index.",
+    "source_url": "https://www.data.govt.nz/"
+  },
+  {
+    "lane_id": "R38",
+    "title": "Political finance",
+    "domain": "elections",
+    "status": "held_snapshot",
+    "held_product_ids": [
+      "P15",
+      "P16",
+      "P17"
+    ],
+    "next_verification": "For a separate bounded next product, add OCR/page citations for the six image-only PDFs or select another reporting year; do not conflate donations, loans, amendments, or aggregate totals.",
+    "source_url": "https://elections.nz/"
+  },
+  {
+    "lane_id": "R39",
+    "title": "Provenance review",
+    "domain": "platform",
+    "status": "roadmap_discovery",
+    "held_product_ids": [],
+    "next_verification": "Define an auditable public provenance checklist and test each published artefact.",
+    "source_url": "https://www.data.govt.nz/"
+  },
+  {
+    "lane_id": "R40",
+    "title": "Public accountability",
+    "domain": "government",
+    "status": "roadmap_partial",
+    "held_product_ids": [],
+    "next_verification": "Capture the publisher index/API that enumerates accountability resources, fixture-test all pagination and release variants, then reconcile stable IDs and loaded originals to that index.",
+    "source_url": "https://www.data.govt.nz/"
+  },
+  {
+    "lane_id": "R41",
+    "title": "Search quality evaluation",
+    "domain": "platform",
+    "status": "roadmap_discovery",
+    "held_product_ids": [],
+    "next_verification": "Define a public evaluation set using synthetic or redistribution-approved examples.",
+    "source_url": "https://www.beehive.govt.nz/releases"
+  },
+  {
+    "lane_id": "R42",
+    "title": "Source inventory method",
+    "domain": "platform",
+    "status": "roadmap_discovery",
+    "held_product_ids": [],
+    "next_verification": "Maintain one public inventory entry per declared source family.",
+    "source_url": "https://www.beehive.govt.nz/releases"
+  },
+  {
+    "lane_id": "R43",
+    "title": "Source prioritisation",
+    "domain": "platform",
+    "status": "not_yet_available",
+    "held_product_ids": [],
+    "next_verification": "Define transparent public-interest and evidence-quality ranking criteria.",
+    "source_url": "https://www.data.govt.nz/"
+  },
+  {
+    "lane_id": "R44",
+    "title": "2023 Census products",
+    "domain": "people",
+    "status": "held_snapshot",
+    "held_product_ids": [
+      "P21"
+    ],
+    "next_verification": "Retain exact 37,689-row fail-closed validation and expand scope only after a publisher index proves additional Census product identities.",
+    "source_url": "https://www.stats.govt.nz/"
+  },
+  {
+    "lane_id": "R45",
+    "title": "Stats discovery",
+    "domain": "economy",
+    "status": "roadmap_discovery",
+    "held_product_ids": [],
+    "next_verification": "Capture the publisher index/API that enumerates catalogue products, fixture-test all pagination and release variants, then reconcile stable IDs and loaded originals to that index.",
+    "source_url": "https://www.stats.govt.nz/"
+  },
+  {
+    "lane_id": "R46",
+    "title": "Stats NZ catalogue",
+    "domain": "economy",
+    "status": "held_partial",
+    "held_product_ids": [
+      "P19",
+      "P20"
+    ],
+    "next_verification": "Capture the publisher index/API that enumerates catalogue products, fixture-test all pagination and release variants, then reconcile stable IDs and loaded originals to that index.",
+    "source_url": "https://www.stats.govt.nz/"
+  },
+  {
+    "lane_id": "R47",
+    "title": "Food prices & population",
+    "domain": "economy",
+    "status": "held_snapshot",
+    "held_product_ids": [
+      "P22"
+    ],
+    "next_verification": "Retain exact 55,428-row selected-product reconciliation and widen scope only after a publisher index proves additional series identities.",
+    "source_url": "https://www.stats.govt.nz/"
+  },
+  {
+    "lane_id": "R48",
+    "title": "Temporal entities",
+    "domain": "parliament",
+    "status": "roadmap_partial",
+    "held_product_ids": [],
+    "next_verification": "Capture the publisher index/API that enumerates dated entity assertions, fixture-test all pagination and release variants, then reconcile stable IDs and loaded originals to that index.",
+    "source_url": "https://www.parliament.nz/"
+  },
+  {
+    "lane_id": "R49",
+    "title": "Trade & primary sector",
+    "domain": "economy",
+    "status": "roadmap_partial",
+    "held_product_ids": [],
+    "next_verification": "Capture the publisher index/API that enumerates dataset or reports, fixture-test all pagination and release variants, then reconcile stable IDs and loaded originals to that index.",
+    "source_url": "https://www.data.govt.nz/"
+  },
+  {
+    "lane_id": "R50",
+    "title": "Transport-source diagnostics",
+    "domain": "platform",
+    "status": "roadmap_discovery",
+    "held_product_ids": [],
+    "next_verification": "Document source-level transport coverage and gaps without operational diagnostics.",
+    "source_url": "https://www.data.govt.nz/"
+  },
+  {
+    "lane_id": "R51",
+    "title": "Public data model",
+    "domain": "platform",
+    "status": "roadmap_discovery",
+    "held_product_ids": [],
+    "next_verification": "Define a backend-neutral public data model; no warehouse is required.",
+    "source_url": "https://www.data.govt.nz/"
+  },
+  {
+    "lane_id": "R52",
+    "title": "Water & environment",
+    "domain": "economy",
+    "status": "roadmap_partial",
+    "held_product_ids": [],
+    "next_verification": "Capture the publisher index/API that enumerates dataset or reports, fixture-test all pagination and release variants, then reconcile stable IDs and loaded originals to that index.",
+    "source_url": "https://www.stats.govt.nz/"
+  }
+]

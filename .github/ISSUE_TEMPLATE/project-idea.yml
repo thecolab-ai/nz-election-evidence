@@ -1,0 +1,21 @@
+name: Research project idea
+about: Propose a bounded, evidence-led community project
+title: "Project idea: "
+labels: [project-idea]
+body:
+  - type: textarea
+    id: question
+    attributes: {label: Answerable question, description: One bounded question, not a desired political conclusion.}
+    validations: {required: true}
+  - type: textarea
+    id: evidence
+    attributes: {label: Candidate primary sources and locators}
+    validations: {required: true}
+  - type: textarea
+    id: method
+    attributes: {label: Unit, denominator, period, geography and method}
+    validations: {required: true}
+  - type: textarea
+    id: limits
+    attributes: {label: Uncertainty, privacy and non-causal limits}
+    validations: {required: true}
