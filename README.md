@@ -44,7 +44,7 @@ The count is a dated observation of a prior research snapshot, not a live counte
 - 492 candidate-finance document records were held; 224 were image-only. This repository does not redistribute those PDFs.
 - Written-question validation was still pending; its count is not a completeness certificate.
 
-Read [methodology](docs/methodology.md), the [data dictionary](docs/data-dictionary.md), [coverage and limitations](docs/coverage-and-limitations.md), and [data licensing](DATA-LICENSING.md).
+Read [methodology](docs/methodology.md), the [data dictionary](docs/data-dictionary.md), [coverage and limitations](docs/coverage-and-limitations.md), [data licensing](DATA-LICENSING.md), and the [sanitisation/publication-readiness report](docs/sanitization-report.md).
 
 ## Principles
 
