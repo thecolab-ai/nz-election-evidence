@@ -1,7 +1,7 @@
 -- Default deny is structural: every object is withheld or has recorded lineage; every exposed column is
 -- withheld or classified; nothing withheld is exposed; no projection lacks the release join.
 begin;
-select plan(8);
+select plan(10);
 
 select is((select string_agg(n.nspname || '.' || c.relname, ', ') from pg_class c join pg_namespace n on n.oid = c.relnamespace
             where ((n.nspname = 'evidence_private' and c.relkind = 'r') or (n.nspname = 'evidence_views' and c.relkind = 'v'))
@@ -48,6 +48,17 @@ select is((select count(*)::int from evidence_private.public_columns pc join evi
   'no payload, name, title, vote, value or publisher identifier is classed as link metadata');
 select is((select count(*)::int from pg_proc p join pg_namespace n on n.oid = p.pronamespace
             where n.nspname in ('evidence_public', 'evidence_open', 'evidence_inspector')), 0, 'still no function in any exposed schema');
+
+select is((select string_agg(o.nspname || '.' || oc.relname || '.' || oa.attname, ', ')
+            from pg_class oc join pg_namespace o on o.oid = oc.relnamespace
+            join pg_attribute oa on oa.attrelid = oc.oid and oa.attnum > 0
+            where o.nspname in ('evidence_open', 'evidence_public') and oc.relkind = 'v'
+              and oa.attname in ('person_id', 'party_id', 'target_person_id', 'target_party_id', 'linked_person_name', 'linked_party_name',
+                                 'display_name', 'canonical_name', 'created_via_decision_id')),
+  null, 'canonical people and parties: no projection carries a canonical id or name (consistent withholding)');
+select is((select count(*)::int from pg_class oc join pg_namespace o on o.oid = oc.relnamespace
+            where o.nspname in ('evidence_open', 'evidence_public') and oc.relname in ('people', 'parties', 'party_aliases')), 0,
+  'canonical tables and their aliases have no projection');
 
 select * from finish();
 rollback;

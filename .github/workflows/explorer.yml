@@ -150,7 +150,7 @@ jobs:
       - name: Election-day freeze (R3)
         run: python3 scripts/red_lines.py --freeze-check
       - name: Surface review recorded and approved (R10). Pending fails closed.
-        run: node tools/release_gate.ts --surface "Evidence explorer"
+        run: node tools/release_gate.ts --surface-id explorer-pages
 
   deploy:
     name: Deploy explorer shell to GitHub Pages

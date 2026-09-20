@@ -16,7 +16,7 @@ test("least privilege: read-only by default, Pages scopes on the deploy job only
 
 test("CI before deploy: every check job, the R10 gate, the freeze check and the owner switch", () => {
   assert.ok(deploy.includes("needs: [compliance, tooling, database, web, web-e2e, release-gate]"));
-  assert.ok(workflow.includes('node tools/release_gate.ts --surface "Evidence explorer"'));
+  assert.ok(workflow.includes("node tools/release_gate.ts --surface-id explorer-pages"));
   assert.ok(workflow.includes("scripts/red_lines.py --freeze-check"));
   assert.ok(deploy.includes("vars.PAGES_DEPLOY_ENABLED == 'true'"));
 });
@@ -49,4 +49,16 @@ test("build and bundle check share one base path", () => {
   assert.equal(web.split("VITE_BASE_PATH").length - 1, 1, "declared once, at job level");
   assert.ok(web.includes("npm run build") && web.includes("npm run check:bundle"));
   assert.ok(!web.includes("check-bundle.ts \""), "no separately supplied base path argument");
+});
+
+test("branch-protection recommendations name real check jobs, and keep release approval out of merge requirements", async () => {
+  const doc = await readFile(new URL("../docs/database/branch-protection.md", import.meta.url), "utf-8");
+  const required = doc.slice(doc.indexOf("## 1."), doc.indexOf("## 2."));
+  for (const job of ["compliance", "tooling", "database", "web", "web-e2e"]) {
+    const name = new RegExp(`\\n  ${job}:\\n    name: (.+)`).exec(workflow)?.[1];
+    assert.ok(name && required.includes("`" + name + "`"), `required checks must list the "${job}" job by its real name`);
+  }
+  const table = required.slice(0, required.indexOf("**Do not**"));
+  assert.ok(!table.includes("R10 release gate") && !table.includes("Deploy explorer shell"), "release and deploy jobs are not merge requirements");
+  assert.ok(doc.includes("Nothing here has been applied"));
 });

@@ -3,7 +3,7 @@
 -- payload release under pending rights). TEST FIXTURES ONLY: synthetic, rolled back.
 -- Rights ids here (RIGHTS-79x) are distinct from the browser-test fixtures (RIGHTS-98, RIGHTS-99), which may share a local stack.
 begin;
-select plan(47);
+select plan(53);
 
 create function pg_temp.seed(p_source text, p_prefix text) returns void language plpgsql as $$
 declare
@@ -198,6 +198,28 @@ select throws_ok('select decided_by from evidence_open.identity_decisions', '427
 select throws_ok('select count(*) from evidence_open.app_memberships', '42P01', null, 'memberships have no projection');
 select throws_ok('select count(*) from evidence_open.people', '42P01', null, 'objects without provable single-source lineage have no projection');
 select is((select count(*)::int from evidence_open.ingest_errors where source_id = 'pgtap_pending' and error_class = 'record_rejected'), 1, 'the error class alone is public');
+
+-- 4b. Canonical people: a reviewed link exists privately, and nothing about it is public ------------------------------
+reset role;
+insert into evidence_private.people (id, display_name, public_role_basis) values ('99999999-0000-0000-0000-0000000000aa', 'CANONICAL Fixture Person', 'candidate');
+insert into evidence_private.identity_decisions (subject_kind, person_identity_id, target_person_id, decision, method, decided_by)
+select 'person', i.id, '99999999-0000-0000-0000-0000000000aa', 'approved', 'manual_source_review', 'Fixture Reviewer Name'
+from evidence_private.person_source_identities i where i.source_id = 'pgtap_fields' limit 1;
+update evidence_private.person_source_identities set person_id = '99999999-0000-0000-0000-0000000000aa', link_status = 'approved'
+ where id = (select person_identity_id from evidence_private.identity_decisions where target_person_id = '99999999-0000-0000-0000-0000000000aa');
+select is((select count(*)::int from evidence_views.graph_edges where to_kind = 'person'), 1, 'privately, the reviewed identity link is an edge');
+set local role anon;
+select is((select count(*)::int from evidence_public.graph_edges where to_kind in ('person', 'party') or from_kind in ('person', 'party')), 0,
+  'no edge to a canonical person or party is public');
+select is((select count(*)::int from (select to_jsonb(g)::text j from evidence_public.graph_edges g
+            union all select to_jsonb(i)::text from evidence_public.person_identities i
+            union all select to_jsonb(d)::text from evidence_public.identity_decisions d
+            union all select to_jsonb(p)::text from evidence_open.person_source_identities p) x
+            where j like '%CANONICAL%' or j like '%99999999-0000-0000-0000-0000000000aa%'), 0,
+  'neither the canonical name nor the canonical id appears in any identity, decision or edge projection');
+select throws_ok('select person_id from evidence_open.person_source_identities', '42703', null, 'person_id is not a public column');
+select throws_ok('select linked_person_name from evidence_public.person_identities', '42703', null, 'linked_person_name is not a public column');
+select throws_ok('select target_person_id from evidence_open.identity_decisions', '42703', null, 'target_person_id is not a public column');
 
 -- 5. Private, system and write paths -----------------------------------------------------------------------------------------------
 select throws_ok('select count(*) from evidence_private.source_records', '42501', null, 'anon: private schema denied');

@@ -20,3 +20,17 @@
 /supabase/functions/ @adam91holt
 /supabase/tests/ @adam91holt
 /web/scripts/ @adam91holt
+
+# Application code, generated database types, package manifests and lockfiles. A dependency or a type
+# change can alter what the public shell requests or ships, so these need owner review as well.
+/web/ @adam91holt
+/web/src/lib/database.types.ts @adam91holt
+/web/package.json @adam91holt
+/web/package-lock.json @adam91holt
+/ingest/ @adam91holt
+/ingest/package.json @adam91holt
+/ingest/package-lock.json @adam91holt
+/supabase/functions/deno.json @adam91holt
+/supabase/functions/deno.lock @adam91holt
+/tools/package.json @adam91holt
+/docs/database/ @adam91holt

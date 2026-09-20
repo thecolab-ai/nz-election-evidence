@@ -69,6 +69,17 @@ insert into evidence_private.public_withheld (object_schema, object_name, column
   ('evidence_private', 'people', '*', 'Canonical people are assembled by reviewers from several sources, so a row has no single provable source. Their source identities are published instead.'),
   ('evidence_views', 'people', '*', 'Canonical people are assembled by reviewers from several sources, so a row has no single provable source. Their source identities are published instead.'),
   ('evidence_private', 'parties', '*', 'Canonical parties are assembled by reviewers from several sources, so a row has no single provable source. Their source identities are published instead.'),
+  ('evidence_private', 'person_source_identities', 'person_id', 'Canonical people and parties are withheld until a reviewed multi-source publication path exists, so nothing that points at or names one is published either.'),
+  ('evidence_private', 'party_source_identities', 'party_id', 'Canonical people and parties are withheld until a reviewed multi-source publication path exists, so nothing that points at or names one is published either.'),
+  ('evidence_views', 'person_identities', 'person_id', 'Canonical people and parties are withheld until a reviewed multi-source publication path exists, so nothing that points at or names one is published either.'),
+  ('evidence_views', 'person_identities', 'linked_person_name', 'Canonical people and parties are withheld until a reviewed multi-source publication path exists, so nothing that points at or names one is published either.'),
+  ('evidence_views', 'party_identities', 'party_id', 'Canonical people and parties are withheld until a reviewed multi-source publication path exists, so nothing that points at or names one is published either.'),
+  ('evidence_views', 'party_identities', 'linked_party_name', 'Canonical people and parties are withheld until a reviewed multi-source publication path exists, so nothing that points at or names one is published either.'),
+  ('evidence_private', 'identity_decisions', 'target_person_id', 'Canonical people and parties are withheld until a reviewed multi-source publication path exists, so nothing that points at or names one is published either.'),
+  ('evidence_private', 'identity_decisions', 'target_party_id', 'Canonical people and parties are withheld until a reviewed multi-source publication path exists, so nothing that points at or names one is published either.'),
+  ('evidence_views', 'identity_decisions', 'target_person_id', 'Canonical people and parties are withheld until a reviewed multi-source publication path exists, so nothing that points at or names one is published either.'),
+  ('evidence_views', 'identity_decisions', 'target_party_id', 'Canonical people and parties are withheld until a reviewed multi-source publication path exists, so nothing that points at or names one is published either.'),
+  ('evidence_private', 'party_aliases', '*', 'Canonical people and parties are withheld until a reviewed multi-source publication path exists, so nothing that points at or names one is published either.'),
   ('evidence_private', 'electorates', '*', 'Electorate identity rows carry a name with no foreign key to the version that evidenced it. Electorate versions are published instead.'),
   ('evidence_private', 'boundary_editions', '*', 'No foreign key to a source version yet; default deny until lineage is recorded.'),
   ('evidence_private', 'geography_versions', '*', 'No foreign key to a source dataset yet; default deny until lineage is recorded.'),
@@ -127,6 +138,11 @@ insert into evidence_private.public_row_rules (object_schema, object_name, predi
                     where lv.version_id = b.version_id), 'none') = 'fields'$r$,
    'Inputs of a summary are listed only once that summary is approved and the input source is cleared for field release.');
 
+-- Canonical entities are withheld, so the edge from a source identity to its canonical person is too.
+insert into evidence_private.public_row_rules (object_schema, object_name, predicate, reason) values
+  ('evidence_views', 'graph_edges', $r$b.to_kind not in ('person', 'party') and b.from_kind not in ('person', 'party')$r$,
+   'Canonical people and parties are withheld until a reviewed multi-source publication path exists, so edges to them are withheld as well.');
+
 -- Lineage helpers: id to source, by foreign key only ----------------------------------------------------
 create view evidence_private.lineage_record as
   select r.id as record_id, r.source_id from evidence_private.source_records r;
@@ -166,7 +182,6 @@ insert into evidence_private.public_lineage (object_schema, object_name, lineage
   ('evidence_private', 'ingest_schedules', 'source', 'b.source_id', 'Every row resolves to exactly one source through foreign keys; rows that do not are not shown.'),
   ('evidence_private', 'parliamentary_service_terms', 'source', '(select l.source_id from evidence_private.lineage_version l where l.version_id = b.evidence_version_id)', 'Every row resolves to exactly one source through foreign keys; rows that do not are not shown.'),
   ('evidence_private', 'party_affiliations', 'source', '(select l.source_id from evidence_private.lineage_version l where l.version_id = b.evidence_version_id)', 'Every row resolves to exactly one source through foreign keys; rows that do not are not shown.'),
-  ('evidence_private', 'party_aliases', 'source', '(select l.source_id from evidence_private.lineage_version l where l.version_id = b.evidence_version_id)', 'Every row resolves to exactly one source through foreign keys; rows that do not are not shown.'),
   ('evidence_private', 'party_list_entries', 'source', '(select l.source_id from evidence_private.lineage_party_list l where l.list_id = b.list_id)', 'Every row resolves to exactly one source through foreign keys; rows that do not are not shown.'),
   ('evidence_private', 'party_lists', 'source', '(select l.source_id from evidence_private.lineage_version l where l.version_id = b.evidence_version_id)', 'Every row resolves to exactly one source through foreign keys; rows that do not are not shown.'),
   ('evidence_private', 'party_registrations', 'source', '(select l.source_id from evidence_private.lineage_version l where l.version_id = b.evidence_version_id)', 'Every row resolves to exactly one source through foreign keys; rows that do not are not shown.'),
@@ -275,7 +290,9 @@ begin
            when a.attname in ('record_kind', 'document_type', 'view_scope', 'source_url', 'official_url', 'projection_version',
                               'tombstone_reason', 'is_current', 'version_count', 'observation_count', 'link_status',
                               'review_status', 'method', 'subject_kind', 'decision', 'service_terms', 'candidacies',
-                              'open_proposals', 'edge_id', 'from_kind', 'to_kind', 'omitted_fields') then 'link'
+                              'open_proposals', 'edge_id', 'from_kind', 'to_kind', 'omitted_fields',
+                              -- the project's own reference data and review flags, not publisher content
+                              'election_slug', 'boundary_edition', 'boundary_edition_verified') then 'link'
            else 'content'
          end as release_class
   from pg_catalog.pg_class c

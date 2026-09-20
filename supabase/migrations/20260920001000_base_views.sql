@@ -170,7 +170,7 @@ select c.id, e.slug as election_slug, e.view_scope, c.candidacy_type, c.current_
        c.party_identity_id, pi.name_at_source as party_label, c.stood_as_independent,
        c.contest_id, ev.name as electorate_name, ev.electorate_type,
        ple.list_rank, cr.votes, cr.value_status as votes_status, rs.result_status,
-       c.evidence_version_id
+       c.evidence_version_id, ct.electorate_version_id
 from evidence_private.candidacies c
 join evidence_private.elections e on e.id = c.election_id
 join evidence_private.person_source_identities i on i.id = c.person_identity_id

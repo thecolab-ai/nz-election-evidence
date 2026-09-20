@@ -1,10 +1,10 @@
 #!/usr/bin/env node
-// R10 release gate for deployable surfaces. Exit 0 only when the named surface's LATEST row in
+// R10 release gate for deployable surfaces. Exit 0 only when the LATEST row carrying that surface's stable id in
 // REVIEW-REGISTER.md is approved, dated and names a reviewer. A PENDING row, a missing row, a later
 // withdrawal or an unnamed reviewer all fail closed. CI runs this before any Pages deployment;
 // passing CI never substitutes for the review.
 //
-//   node tools/release_gate.ts --surface "Evidence explorer"
+//   node tools/release_gate.ts --surface-id explorer-pages
 
 import { readFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
@@ -42,27 +42,51 @@ export function unknownOutcomes(text: string): string[] {
   return registerRows(text).map((row) => plain(row.outcome)).filter((outcome) => !OUTCOMES.has(outcome));
 }
 
-export function gate(text: string, surface: string): { open: boolean; reason: string } {
+/** The deployable surfaces this repository knows. A gate can only be asked about one of these ids. */
+export const SURFACE_IDS = ["catalogue-readme", "evidence-atlas", "explorer-pages", "evidence-store"] as const;
+export type SurfaceId = (typeof SURFACE_IDS)[number];
+
+const ID_SHAPE = /^[a-z][a-z0-9-]{2,40}$/;
+
+/** NFKC, lower case, trimmed. Anything that is not then a plain id is no id at all. */
+export function normaliseSurfaceId(value: string): string | null {
+  const id = value.normalize("NFKC").trim().toLowerCase();
+  return ID_SHAPE.test(id) ? id : null;
+}
+
+/**
+ * The stable id of a register row: the FIRST code-formatted token of the Surface cell, e.g.
+ * "`explorer-pages` — Evidence explorer (...)". The human description after it is never used for matching,
+ * so a row cannot open a gate by mentioning another surface's name. A row without an id matches nothing.
+ */
+export function rowSurfaceId(row: RegisterRow): string | null {
+  const match = /^\s*`([^`]+)`/.exec(row.surface);
+  return match ? normaliseSurfaceId(match[1] ?? "") : null;
+}
+
+export function gate(text: string, surfaceId: string): { open: boolean; reason: string } {
+  const wanted = normaliseSurfaceId(surfaceId);
+  if (!wanted || !(SURFACE_IDS as readonly string[]).includes(wanted)) return { open: false, reason: `'${surfaceId}' is not a known surface id (${SURFACE_IDS.join(", ")})` };
   const unknown = unknownOutcomes(text);
   if (unknown.length) return { open: false, reason: `REVIEW-REGISTER.md uses an outcome outside the allowed set: ${unknown.join(" | ")}` };
-  const matches = registerRows(text).filter((row) => row.surface.toLowerCase().includes(surface.toLowerCase()));
-  const latest = matches.at(-1);
-  if (!latest) return { open: false, reason: `no REVIEW-REGISTER.md row for surface '${surface}'` };
-  // Exact match only. "APPROVED WITH CONDITIONS", "APPROVED?", "Approved pending sign-off" and the like stay closed.
-  if (plain(latest.outcome) !== APPROVED_OUTCOME) {
-    return { open: false, reason: `latest row for '${surface}' is not approved: ${latest.outcome}` };
-  }
-  if (!OUTCOMES.has(plain(latest.outcome))) return { open: false, reason: "unknown outcome" };
-  if (UNNAMED.has(plain(latest.reviewedBy).toLowerCase())) return { open: false, reason: `latest row for '${surface}' names no reviewer` };
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(latest.date)) return { open: false, reason: `latest row for '${surface}' has no ISO date` };
+  const rows = registerRows(text);
+  const unidentified = rows.filter((row) => rowSurfaceId(row) === null);
+  if (unidentified.length) return { open: false, reason: `${unidentified.length} REVIEW-REGISTER.md row(s) carry no stable surface id; every row needs one` };
+  // Normalised EXACT equality on the id. No substring, prefix or description matching.
+  const latest = rows.filter((row) => rowSurfaceId(row) === wanted).at(-1);
+  if (!latest) return { open: false, reason: `no REVIEW-REGISTER.md row for surface id '${wanted}'` };
+  // Exact outcome only. "APPROVED WITH CONDITIONS", "APPROVED?", "Approved pending sign-off" and the like stay closed.
+  if (plain(latest.outcome) !== APPROVED_OUTCOME) return { open: false, reason: `latest row for '${wanted}' is not approved: ${latest.outcome}` };
+  if (UNNAMED.has(plain(latest.reviewedBy).toLowerCase())) return { open: false, reason: `latest row for '${wanted}' names no reviewer` };
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(latest.date)) return { open: false, reason: `latest row for '${wanted}' has no ISO date` };
   return { open: true, reason: `approved on ${latest.date} by ${plain(latest.reviewedBy)}` };
 }
 
 async function main(argv: string[]): Promise<number> {
-  const index = argv.indexOf("--surface");
+  const index = argv.indexOf("--surface-id");
   const surface = index >= 0 ? argv[index + 1] : undefined;
   if (!surface) {
-    console.error('usage: node tools/release_gate.ts --surface "<surface name>"');
+    console.error(`usage: node tools/release_gate.ts --surface-id <${SURFACE_IDS.join("|")}>`);
     return 2;
   }
   const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
