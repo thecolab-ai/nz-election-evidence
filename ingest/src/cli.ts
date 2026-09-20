@@ -22,7 +22,7 @@ import { buildManifest, registryPayload, schedulePayload, validateSourcesFile } 
 import { type RunReport, runSource } from "../../supabase/functions/_shared/runner.ts";
 import type { Json, SourcesFile } from "../../supabase/functions/_shared/types.ts";
 import sourcesFile from "../../supabase/functions/_shared/sources.config.json" with { type: "json" };
-import { exportAdapter, loadExport } from "./export_import.ts";
+import { exportAdapter, type ImportFindings, loadExport, preflightExport } from "./export_import.ts";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const file = sourcesFile as unknown as SourcesFile;
@@ -46,8 +46,9 @@ async function connect(): Promise<IngestDb> {
 }
 
 /** Receipt: counts, hashes, statuses and publisher URLs. No payloads, bodies, hosts of ours, or credentials. */
-function receipt(report: RunReport): { [key: string]: unknown } {
+function receipt(report: RunReport, findings?: ImportFindings): { [key: string]: unknown } {
   return {
+    input_findings: findings ?? null,
     receipt_version: 1,
     source_id: report.source_id, mode: report.mode, dry_run: report.dry_run, status: report.status,
     complete_snapshot: report.complete_snapshot, error_class: report.error_class, error_detail: report.error_detail,
@@ -113,6 +114,7 @@ async function main(argv: string[]): Promise<number> {
   }
 
   let report: RunReport;
+  let findings: ImportFindings | undefined;
   if (command === "run") {
     if (source.adapter_kind !== "live_fetch") throw new Error("use `import` for export sources");
     const adapter = LIVE_ADAPTERS[source.adapter_name];
@@ -126,6 +128,8 @@ async function main(argv: string[]): Promise<number> {
   } else if (command === "import") {
     if (source.adapter_kind !== "export_import" || !source.export_contract) throw new Error("use `run` for live sources");
     const loaded = await loadExport(source.export_contract, process.env);
+    // The whole file is validated before a run exists: a rejected input writes nothing and skips nothing.
+    findings = await preflightExport(source, source.export_contract, loaded, process.env);
     const db = dryRun ? null : await connect();
     try {
       report = await runSource({
@@ -139,7 +143,7 @@ async function main(argv: string[]): Promise<number> {
     throw new Error("commands: validate | plan | run | import | registry-sync");
   }
 
-  const out = receipt(report);
+  const out = receipt(report, findings);
   const receiptFile = flag(args, "--receipt");
   if (receiptFile) await writeFile(resolve(process.cwd(), receiptFile), JSON.stringify(out, null, 2) + "\n");
   console.log(JSON.stringify(out, null, 2));

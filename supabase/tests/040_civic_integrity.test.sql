@@ -2,7 +2,7 @@
 -- electorate, unknown is not zero, dual candidacies, baseline projection replay.
 -- TEST FIXTURES ONLY: invented names and numbers, rolled back. Not real people or results.
 begin;
-select plan(25);
+select plan(26);
 
 select evidence_private.sync_registry(jsonb_build_object('sources', jsonb_build_array(
   jsonb_build_object('source_id', 'pgtap_baseline', 'title', 'Fixture baseline export', 'publisher', 'Fixture Publisher',
@@ -33,12 +33,13 @@ select evidence_private.ingest_batch((select (v ->> 'run_id')::uuid from t where
   pg_temp.cand('c-1', 'Alex Fixture', 'electorate', 'Fixture Party', 'Fixture North', 1200, null, '1'),
   pg_temp.cand('c-2', 'Alex Fixture', 'list', 'Fixture Party', null, 0, 3, '2'),
   pg_temp.cand('c-3', 'Alex Fixture', 'electorate', 'Other Party', 'Fixture South', 900, null, '3'),
-  pg_temp.cand('c-4', 'Sam Sample', 'electorate', 'Independent', 'Fixture North', 0, null, '4')));
+  pg_temp.cand('c-4', 'Sam Sample', 'electorate', 'Independent', 'Fixture North', 0, null, '4'),
+  pg_temp.cand('c-5', 'Uma Unevidenced', 'electorate', 'Fixture Party', 'Fixture South', null, null, '5')));
 insert into t select 'p1', evidence_private.project_run((select (v ->> 'run_id')::uuid from t where k = 'run'), '44444444-4444-4444-4444-444444444444');
 
-select is((select (v ->> 'baseline_candidacies')::int from t where k = 'p1'), 4, 'four candidacies projected');
-select is((select count(*)::int from evidence_private.person_source_identities where source_id = 'pgtap_baseline'), 4,
-  'three rows sharing one name stay three separate identities (plus one other)');
+select is((select (v ->> 'baseline_candidacies')::int from t where k = 'p1'), 5, 'five candidacies projected');
+select is((select count(*)::int from evidence_private.person_source_identities where source_id = 'pgtap_baseline'), 5,
+  'three rows sharing one name stay three separate identities (plus two others)');
 select is((select count(*)::int from evidence_private.person_source_identities where source_id = 'pgtap_baseline' and person_id is not null), 0,
   'no identity is linked to a person automatically');
 select is((select count(*)::int from evidence_private.people) - (select people::int from before_counts), 0, 'no canonical person is created from a name');
@@ -56,7 +57,11 @@ select is((select votes from evidence_private.candidate_results r join evidence_
 select is((select value_status || '/' || coalesce(votes::text, 'null') from evidence_private.candidate_results r
             join evidence_private.candidacies c on c.id = r.candidacy_id
             join evidence_private.person_source_identities i on i.id = c.person_identity_id where i.source_id = 'pgtap_baseline' and i.external_id = 'c-4'),
-  'not_reported/null', 'an ambiguous upstream zero is stored as not reported, never as zero');
+  'reported/0', 'a source-reported zero stays zero');
+select is((select value_status || '/' || coalesce(votes::text, 'null') from evidence_private.candidate_results r
+            join evidence_private.candidacies c on c.id = r.candidacy_id
+            join evidence_private.person_source_identities i on i.id = c.person_identity_id where i.source_id = 'pgtap_baseline' and i.external_id = 'c-5'),
+  'not_reported/null', 'a vote figure the importer did not keep is not reported, and never becomes zero');
 select is((select count(*)::int from evidence_private.candidate_results r join evidence_private.candidacies c on c.id = r.candidacy_id
             join evidence_private.person_source_identities i on i.id = c.person_identity_id
             where i.source_id = 'pgtap_baseline' and c.candidacy_type = 'list'), 0, 'list candidacies get no electorate vote row');
@@ -68,8 +73,8 @@ select is((select distinct ev.electorate_type from evidence_private.electorate_v
 
 -- replay
 insert into t select 'p2', evidence_private.project_run((select (v ->> 'run_id')::uuid from t where k = 'run'), '44444444-4444-4444-4444-444444444444');
-select is((select count(*)::int from evidence_private.candidacies) - (select candidacies::int from before_counts), 4, 'projection replay adds no candidacies');
-select is((select count(*)::int from evidence_private.candidacy_status_events) - (select status_events::int from before_counts), 4, 'projection replay adds no status events');
+select is((select count(*)::int from evidence_private.candidacies) - (select candidacies::int from before_counts), 5, 'projection replay adds no candidacies');
+select is((select count(*)::int from evidence_private.candidacy_status_events) - (select status_events::int from before_counts), 5, 'projection replay adds no status events');
 
 -- name-only approval is impossible
 select throws_ok($$insert into evidence_private.identity_decisions (subject_kind, person_identity_id, decision, method, decided_by)

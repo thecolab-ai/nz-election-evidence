@@ -35,10 +35,13 @@ Explorer: `cd web && npm ci && npm run typecheck && npm test && npm run build &&
 Large historical loads never run inside the Edge Function. They use the CLI with an export file that stays **outside the repository**:
 
 ```bash
-export EVIDENCE_EXPORT_BASELINE_2023_CANDIDACIES=<location of the reviewed JSON Lines export>
+export EVIDENCE_EXPORT_BASELINE_2023_CANDIDACIES=<location of the verified candidacies JSON Lines file>
+export EVIDENCE_EXPORT_BASELINE_2023_MANIFEST=<location of that capture's manifest.json>
 node src/cli.ts import baseline_2023_candidacies_export --dry-run
 node src/cli.ts import baseline_2023_candidacies_export --backfill --receipt receipt.json
 ```
+
+The importer validates the whole file first: pinned checksum and row count, the upstream manifest's checksum and count, required values, closed vocabularies and unique ids. A mismatch stops before a run exists, so nothing is written and no row is skipped. The receipt's `input_findings` lists what was dropped as an upstream default and any ambiguity (for example a contest where every reported figure is zero); read it before relying on the import.
 
 The export location, producing system and any machine name never enter the ledger; the manifest records the file's SHA-256, size and row count. Each source has a field allowlist in its `export_contract`; every other field is dropped and the drop is recorded by name and reason. To add a source: add a contract to the source config, add a reconciliation row to [source-reconciliation.md](source-reconciliation.md), have the exporter state its row count, run the dry run, then the import, and commit the receipt. An interrupted import resumes from its checkpoint.
 

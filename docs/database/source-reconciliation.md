@@ -1,14 +1,14 @@
 # Source reconciliation
 
-> **Status: NOT complete, NOT released.** Independent review of commit `6b8218e` returned **NO-GO**; this revision addresses its security and CI findings only. Source completeness is unchanged and partial: of the **24** catalogue products, **3** have a live adapter (P01 feed window only, P03, P10), **1** has an export contract that has never been run on real data (P04), and **20 have no route into the store at all**. Nothing has been pushed, applied to a hosted project, scheduled, deployed or published.
+> **Status: NOT complete, NOT released.** Independent review of commit `6b8218e` returned **NO-GO**; this revision addresses its security and CI findings only. Source completeness is unchanged and partial: of the **24** catalogue products, **3** have a live adapter (P01 feed window only, P03, P10), **1** (P04) has an export contract that has now been run on the verified upstream product, **on a local disposable database only**, and **20 have no route into the store at all**. Nothing has been pushed, applied to a hosted project, scheduled, deployed or published.
 
 | Catalogue products | Count | Which |
 |---|---|---|
 | Live adapter, proven against the publisher | **3** | P01 (feed window only, not the 4,735-record history), P03, P10 |
-| Export contract defined, never run on real data | **1** | P04 (no reviewed export file supplied) |
+| Export contract, run on the verified upstream product (local disposable database only; nothing hosted) | **1** | P04: 963 candidacies = 495 electorate + 468 list |
 | No route into the store | **20** | P02, P05, P06, P07, P08, P09, P11, P12, P13, P14, P15, P16, P17, P18, P19, P20, P21, P22, P23, P24 |
 
-None of the upstream 351,710 operational records, 391,024 content versions, or the dedicated census and series observations has been imported. The 225 live records retrieved here (122 + 93 + 10) are fresh retrievals, not part of those totals.
+None of the upstream 351,710 operational records, 391,024 content versions, or the dedicated census and series observations has been imported. The 225 live records retrieved here (122 + 93 + 10) are fresh retrievals, not part of those totals. The 963 candidacy rows come from the dedicated upstream candidacy product, which is separate from (and more complete than) the 486-row operational roster counted inside the 351,710.
 
 **This document makes no claim of complete coverage.** It enumerates, source by source, what this branch can ingest today, what it has actually retrieved (on a disposable local database), and what remains outside it. A count here is a dated observation, never a completeness certificate. Unknown is not zero; an unavailable endpoint is not an empty source.
 
@@ -52,6 +52,20 @@ The project does not work around publisher blocks (R6). Options are an approved 
 
 P02, P04 (contract defined, export not supplied), P05, P06, P07, P08, P09, P11, P12, P13, P14, P15, P16, P17, P18, P19, P20, P21, P22, P23, P24. For each of these the tables and inspector views may exist, but **zero rows have been imported** and the explorer will show an empty state, which is not evidence of absence. Each needs: (1) an export contract with a field allowlist, (2) a reconciliation note against overlapping upstream tables, (3) the exporter's stated row count, (4) an import receipt. Forcing an import to match an upstream count is explicitly not a goal; omissions are itemised instead.
 
+## 2023 candidacy product: what was imported and how
+
+Run on 20 September 2026 against the **local disposable database only**, signed in as the scoped worker. Rights stay pending (link-only) and the release gates stay closed, so none of it is publicly visible.
+
+- **Input control.** The contract is pinned to one validated upstream product: SHA-256 `acb3154d…d82c`, 963 rows, and the upstream manifest must record the same checksum and count. Any other file, count or vocabulary **fails closed before anything is written**; no row is ever skipped. The file and manifest are named by environment variables; their locations never enter the ledger, a receipt or this repository, and the dataset itself is not committed.
+- **Vocabulary.** Upstream `party_list` becomes `list`. Upstream `official_result_candidate` and `official_party_list_candidate` become `officially_nominated`, **for this validated official-results product only** (a contract that asserts nomination must be pinned, enforced by config validation). The upstream value is kept beside the normalised one. Unknown values fail closed.
+- **Zero versus missing, faithfully.** Upstream stores votes and list rank in columns that cannot be empty. The importer keeps a number only when it applies to that kind of row **and** the captured source passage shows it:
+  - all 495 electorate vote figures are evidenced by the passage and stored as reported, **including 9 genuine zeros**;
+  - the 468 list rows' `candidate_votes = 0` and the 495 electorate rows' `list_rank = 0` are collector defaults with nothing in the source behind them; they are dropped and the drop is recorded, never stored as zero;
+  - the earlier rule that turned any zero into "not reported" was wrong for this product and has been removed. A figure the passage did not evidence would be omitted (not reported), in either direction; there were none.
+- **Ambiguity reported, not resolved.** All nine zeros are the nine candidates of one electorate, Port Waikato. The source page shows 0 for each, so 0 is what is stored. Whether that contest was held on the day is not inferred here.
+- **Result.** 963 candidacies (495 electorate, 468 list) across 72 electorate contests and one list contest; 963 official-nomination status events with the Electoral Commission source class; 495 reported results; 468 list entries over 17 lists (ranks 1–76); 17 party labels; 963 source identities, **none merged**: 346 same-name proposals were filed for human review and none approved. Electorate types stay `unverified`. 0 rejected, 0 skipped, 0 ingest errors; the replay inserted 0 versions. Receipts: [receipts/](receipts/README.md).
+- **Not covered.** Elected/not-elected outcomes, party votes, nationwide totals, turnout, boundaries. The 84 rows with no party label are stored with no party, not as "Independent".
+
 ## Adapters and loaders that are NOT implemented
 
 Nothing below is imported, and no count is implied for any of it. "Blocked" means a decision or input outside this repository is needed; "not built" means engineering work remains.
@@ -61,7 +75,7 @@ Nothing below is imported, and no count is implied for any of it. "Blocked" mean
 | 2026 official nominations and party lists | **Blocked + not built** | Official lists are not published until after nominations close (research note: noon, 8 October 2026), and the Electoral Commission sites refuse automated requests from this host. Needs a publisher-approved route, then a parser. The source already carries an explicit not-yet-published state. |
 | Party announcements of candidates | **Not built, needs approval** | A separate, labelled feed with `source_class = party_announcement`. The status model is ready; collection needs an owner decision. |
 | Register of political parties, registrations, aliases | **Blocked + not built** | Same publisher block. The 33 upstream historical identities are not a current register and are not imported. |
-| 2023 official results (candidate, party, nationwide totals) | **Blocked live; export contract built, not run** | Live route blocked. `baseline_2023_candidacies_export` covers candidacies, list ranks and candidate votes and is tested end to end with a fixture; **no reviewed export file was supplied**. Party-vote and nationwide-total loaders (P08, P09) are not built. |
+| 2023 official results (candidate, party, nationwide totals) | **Candidacies imported locally; rest not built** | Live route blocked. The verified 963-row candidacy product imports cleanly (see below). Party-vote and nationwide-total loaders (P08, P09) are not built, and nothing is on a hosted project. |
 | Electorate boundaries 2025 review, official codes, General/Māori type | **Blocked + not built** | Electorate type stays `unverified`. No geometry: the published maps are images, not polygons. |
 | Party and candidate finance returns (2023 returns, 2025 annual returns) | **Blocked + not built** | Table holds return status and official URL only. No loader. |
 | Party policy pages | **Not built** | Table and classification-basis field exist. The upstream classification is unreviewed model output with unknown model metadata and would be imported as such, if at all. |

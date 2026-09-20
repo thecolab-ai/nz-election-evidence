@@ -35,6 +35,39 @@ export interface ExportContract {
   droppedFields: { field: string; reason: string }[];
   /** Count the exporter must report so reconciliation is explicit. */
   expectedRowsNote: string;
+  /** Pins the one validated upstream product this contract was written for. Any other file fails closed. */
+  expectedInput?: { sha256: string; rows: number };
+  /** Variable naming the upstream manifest; its recorded checksum and count must agree with the file. */
+  manifestEnv?: string;
+  manifestChecksumPath?: string[];
+  manifestRowsPath?: string[];
+  /** Every row must carry exactly this value. */
+  requiredValues?: { field: string; equals: string }[];
+  /** Closed upstream vocabularies. A value outside the map fails the whole import before any write. */
+  enumMaps?: EnumMap[];
+  /** Numbers kept only when the captured source passage shows them. */
+  evidencedNumbers?: EvidencedNumber[];
+}
+
+export interface EnumMap {
+  from: string;
+  to: string;
+  map: { [upstreamValue: string]: string };
+  /** Payload key that keeps the upstream value beside the normalised one. */
+  keepUpstreamAs?: string;
+}
+
+export interface EvidencedNumber {
+  from: string;
+  to: string;
+  /** Upstream field holding the captured source text. Read in memory to check the number; never stored. */
+  passageField: string;
+  /** The number only means something for rows where this normalised field has this value. */
+  onlyWhen: { field: string; equals: string };
+  /** Omission reason for rows outside onlyWhen (an upstream default, not a source value). */
+  notApplicableReason: string;
+  /** Group whose members all showing zero is reported as an ambiguity, never resolved. */
+  allZeroGroupField?: string;
 }
 
 export interface SourceConfig {

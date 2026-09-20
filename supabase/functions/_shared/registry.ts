@@ -42,6 +42,11 @@ export function validateSourcesFile(file: SourcesFile): string[] {
     const contract = source.export_contract;
     if (contract) {
       if (!/^EVIDENCE_EXPORT_[A-Z0-9_]+$/.test(contract.fileEnv)) problems.push(`${where}: export file must be named by an EVIDENCE_EXPORT_* variable`);
+      const assertsNomination = (contract.enumMaps ?? []).some((m) => Object.values(m.map).some((v) => v === "officially_nominated" || v === "elected" || v === "not_elected"));
+      if (assertsNomination && !(contract.expectedInput && /^sha256:[0-9a-f]{64}$/.test(contract.expectedInput.sha256) && contract.expectedInput.rows > 0 && contract.manifestEnv)) {
+        problems.push(`${where}: a contract that maps to officially_nominated must be pinned to one validated input (checksum, row count and manifest)`);
+      }
+      if (contract.manifestEnv && !/^EVIDENCE_EXPORT_[A-Z0-9_]+$/.test(contract.manifestEnv)) problems.push(`${where}: manifest must be named by an EVIDENCE_EXPORT_* variable`);
       const dropped = new Set(contract.droppedFields.map((d) => d.field));
       for (const rule of contract.allowedFields) {
         if (dropped.has(rule.from)) problems.push(`${where}: field ${rule.from} is both allowed and dropped`);

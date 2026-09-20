@@ -83,24 +83,9 @@ test("manifests are deterministic: same inputs, same hash; any config change, ne
   assert.notEqual((await buildManifest(file, changed, "1.0.0", "incremental", 200)).manifestHash, a.manifestHash);
 });
 
-test("export import: allowlist projection, drops recorded by name, file location never recorded", async () => {
+test("export import: a missing input is reported by variable name, never by location", async () => {
   const source = file.sources.find((s) => s.source_id === "baseline_2023_candidacies_export")!;
-  const contract = source.export_contract!;
-  await assert.rejects(loadExport(contract, {}), (e: IngestError) => e.errorClass === "missing_input");
-  const location = fixture("baseline-candidacies.fixture.jsonl").pathname;
-  const loaded = await loadExport(contract, { [contract.fileEnv]: location });
-  assert.equal(loaded.digest.rows, 3);
-  assert.match(loaded.digest.sha256, /^sha256:[0-9a-f]{64}$/);
-  const records = await Promise.all(loaded.rows.map((row) => projectExportRow(source, contract, row, "2026-09-20T00:00:00.000Z")));
-  const text = JSON.stringify(records);
-  assert.ok(!text.includes("must be dropped") && !text.includes("TEST FIXTURE value"), "dropped values never reach a record");
-  assert.ok(!text.includes(location), "the export location never reaches a record");
-  assert.deepEqual(Object.keys(records[0].safe_payload).sort(), ["candidacy_type", "candidate_name", "candidate_votes", "electorate_name", "electorate_type_upstream_label", "list_rank", "nomination_status", "party_name"]);
-  const omitted = records[2].omitted_fields.map((o) => o.field);
-  assert.ok(omitted.includes("source_record_json") && omitted.includes("source_passage") && omitted.includes("candidate_name_key"));
-  assert.equal(records[2].omitted_fields.find((o) => o.field === "unexpected_new_upstream_column")?.reason, "not on this source's field allowlist");
-  const again = await projectExportRow(source, contract, { ...loaded.rows[0], captured_at: "2030-01-01T00:00:00Z", source_passage: "different" }, "x");
-  assert.equal(again.content_hash, records[0].content_hash, "observation time and dropped fields do not change the content hash");
+  await assert.rejects(loadExport(source.export_contract!, {}), (e: IngestError) => e.errorClass === "missing_input" && e.message.includes("EVIDENCE_EXPORT_"));
 });
 
 test("function auth: constant-time secret, fail closed, body can never carry a URL", () => {
@@ -121,9 +106,10 @@ test("function auth: constant-time secret, fail closed, body can never carry a U
 test("adversarial export rows: hostile column names, identifiers and links never reach a record or an error", async () => {
   const source = file.sources.find((s) => s.source_id === "baseline_2023_candidacies_export")!;
   const contract = source.export_contract!;
-  const good = { candidacy_id: "fixture-c-900", source_url: "https://electionresults.govt.nz/electionresults_2023/", captured_at: "2026-09-01T00:00:00Z", candidate_name: "Fixture Person", candidacy_type: "list" };
+  const good = { candidacy_id: "fixture-c-900", source_url: "https://electionresults.govt.nz/electionresults_2023/", captured_at: "2026-09-01T00:00:00Z", candidate_name: "Fixture Person", election_id: "NZGE2023", candidacy_type: "party_list", nomination_status: "official_party_list_candidate", party_selection_status: "party_list_rank_published", electorate_type: "", candidate_votes: 0, list_rank: 4, source_passage: "Fixture Party 4 Fixture Person" };
 
   const hostileColumns = { ...good, 'x"; drop table y; --': "v", "<img src=x onerror=alert(1)>": "v", "donor_email": "fixture-donor@example.invalid", "api_token": "fixture-not-a-secret", "home path": "/ho" + "me/operator/x" };
+  assert.ok(!JSON.stringify(await projectExportRow(source, contract, hostileColumns, "x")).includes("Fixture Party 4 Fixture Person"), "the captured passage is read for evidence and never stored");
   const record = await projectExportRow(source, contract, hostileColumns, "2026-09-20T00:00:00.000Z");
   const text = JSON.stringify(record);
   for (const leaked of ["drop table", "<img", "onerror", "example.invalid", "fixture-not-a-secret", "operator", "donor_email", "api_token"]) assert.ok(!text.includes(leaked), leaked);

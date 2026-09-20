@@ -278,12 +278,14 @@ begin
         insert into evidence_private.result_sets (election_id, result_status, source_version_id)
         values (v_election, 'final', v_row.version_id) returning id into v_result_set;
       end if;
-      -- The upstream column cannot hold null, so a zero there is ambiguous and stays "not reported".
+      -- The importer keeps candidate_votes only when the captured source passage shows the number, so a key
+      -- that is present is a reported value - zero included - and an absent key is "not reported". This
+      -- function never turns a zero into a missing value or a missing value into zero.
       v_votes := nullif(v_row.p ->> 'candidate_votes', '')::bigint;
       insert into evidence_private.candidate_results (result_set_id, candidacy_id, votes, value_status)
       values (v_result_set, v_candidacy,
-              case when v_votes > 0 then v_votes end,
-              case when v_votes > 0 then 'reported' else 'not_reported' end)
+              case when v_row.p ? 'candidate_votes' then v_votes end,
+              case when v_row.p ? 'candidate_votes' and v_votes is not null then 'reported' else 'not_reported' end)
       on conflict (result_set_id, candidacy_id) do update
         set votes = excluded.votes, value_status = excluded.value_status;
     end if;

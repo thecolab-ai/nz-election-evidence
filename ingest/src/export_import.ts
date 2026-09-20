@@ -64,6 +64,118 @@ function coerce(rule: FieldRule, value: unknown): Json | undefined {
   }
 }
 
+export interface ImportFindings {
+  rows: number;
+  rows_by_type: { [normalisedType: string]: number };
+  /** Numbers the captured source passage does not show. They are omitted, never guessed. */
+  unevidenced_numbers: { field: string; rows: number }[];
+  /** Groups in which every evidenced value is zero. Reported as published; whether the contest was held is not inferred. */
+  all_zero_groups: { field: string; group_field: string; group: string; rows: number }[];
+  upstream_defaults_dropped: { field: string; rows: number }[];
+}
+
+/** Whole-number tokens in a captured passage, with or without thousands separators. */
+export function numberTokens(passage: unknown): number[] {
+  if (typeof passage !== "string") return [];
+  return [...passage.matchAll(/(?<![\w.])\d{1,3}(?:,\d{3})+(?![\w.])|(?<![\w.,])\d+(?![\w.])/g)].map((m) => Number(m[0].replace(/,/g, "")));
+}
+
+function at(object: unknown, path: string[]): unknown {
+  return path.reduce<unknown>((value, key) => (typeof value === "object" && value !== null ? (value as { [k: string]: unknown })[key] : undefined), object);
+}
+
+function refuse(message: string): never {
+  throw new IngestError("input_not_accepted", message);
+}
+
+/**
+ * Validates the WHOLE input before a run is started, so a bad file writes nothing and no row is ever
+ * skipped: pinned checksum and count, upstream manifest agreement, required values, closed vocabularies,
+ * unique identifiers. Messages never contain a file location or a row's content.
+ */
+export async function preflightExport(
+  source: SourceConfig, contract: ExportContract, loaded: LoadedExport, env: { [key: string]: string | undefined },
+): Promise<ImportFindings> {
+  void source;
+  if (contract.expectedInput) {
+    if (loaded.digest.sha256 !== contract.expectedInput.sha256) refuse("input does not match the pinned checksum of the validated product");
+    if (loaded.digest.rows !== contract.expectedInput.rows) refuse(`input row count ${loaded.digest.rows} differs from the pinned row count ${contract.expectedInput.rows}`);
+  }
+  if (contract.manifestEnv) {
+    const location = env[contract.manifestEnv];
+    if (!location) throw new IngestError("missing_input", `set ${contract.manifestEnv} to the upstream manifest of the export`);
+    let manifest: unknown;
+    try {
+      manifest = JSON.parse(await readFile(location, "utf-8"));
+    } catch {
+      refuse("upstream manifest could not be read as JSON");
+    }
+    const checksum = at(manifest, contract.manifestChecksumPath ?? []);
+    const count = at(manifest, contract.manifestRowsPath ?? []);
+    if (typeof checksum !== "string" || "sha256:" + checksum.replace(/^sha256:/, "") !== loaded.digest.sha256) refuse("upstream manifest checksum does not match the input file");
+    if (count !== loaded.digest.rows) refuse("upstream manifest row count does not match the input file");
+  }
+
+  const seen = new Set<string>();
+  loaded.rows.forEach((row, index) => {
+    const where = `row ${index + 1}`;
+    const id = row[contract.idField];
+    if (typeof id !== "string" || !id) refuse(`${where}: missing ${contract.idField}`);
+    if (seen.has(id)) refuse(`${where}: duplicate ${contract.idField}`);
+    seen.add(id);
+    for (const required of contract.requiredValues ?? []) {
+      if (row[required.field] !== required.equals) refuse(`${where}: ${required.field} is not the value this contract was written for`);
+    }
+    for (const map of contract.enumMaps ?? []) {
+      const value = row[map.from];
+      if (typeof value !== "string" || !Object.hasOwn(map.map, value)) refuse(`${where}: ${map.from} holds a value outside the documented upstream vocabulary`);
+    }
+  });
+
+  const findings: ImportFindings = { rows: loaded.rows.length, rows_by_type: {}, unevidenced_numbers: [], all_zero_groups: [], upstream_defaults_dropped: [] };
+  const typeMap = (contract.enumMaps ?? []).find((m) => m.to === "candidacy_type");
+  for (const row of loaded.rows) {
+    const type = typeMap ? typeMap.map[String(row[typeMap.from])] ?? "unknown" : "all";
+    findings.rows_by_type[type] = (findings.rows_by_type[type] ?? 0) + 1;
+  }
+  for (const rule of contract.evidencedNumbers ?? []) {
+    let unevidenced = 0;
+    let defaults = 0;
+    const groups = new Map<string, { rows: number; zeros: number }>();
+    for (const row of loaded.rows) {
+      const outcome = evidencedNumber(contract, rule, row);
+      if (outcome.kind === "not_applicable") defaults++;
+      else if (outcome.kind === "unevidenced") unevidenced++;
+      else if (rule.allZeroGroupField) {
+        const group = String(row[rule.allZeroGroupField] ?? "");
+        const entry = groups.get(group) ?? { rows: 0, zeros: 0 };
+        entry.rows++;
+        if (outcome.value === 0) entry.zeros++;
+        groups.set(group, entry);
+      }
+    }
+    if (unevidenced) findings.unevidenced_numbers.push({ field: rule.to, rows: unevidenced });
+    if (defaults) findings.upstream_defaults_dropped.push({ field: rule.to, rows: defaults });
+    for (const [group, entry] of [...groups].sort(([a], [b]) => a.localeCompare(b))) {
+      if (entry.rows > 0 && entry.zeros === entry.rows) findings.all_zero_groups.push({ field: rule.to, group_field: rule.allZeroGroupField!, group, rows: entry.rows });
+    }
+  }
+  return findings;
+}
+
+type NumberOutcome = { kind: "evidenced"; value: number } | { kind: "unevidenced" } | { kind: "not_applicable" };
+
+/** A number is kept only if it applies to this kind of row AND the captured source passage shows it. Zero included. */
+function evidencedNumber(contract: ExportContract, rule: NonNullable<ExportContract["evidencedNumbers"]>[number], row: { [key: string]: unknown }): NumberOutcome {
+  const gate = (contract.enumMaps ?? []).find((m) => m.to === rule.onlyWhen.field);
+  const gateValue = gate ? gate.map[String(row[gate.from])] : row[rule.onlyWhen.field];
+  if (gateValue !== rule.onlyWhen.equals) return { kind: "not_applicable" };
+  const raw = row[rule.from];
+  const value = typeof raw === "number" ? raw : Number(raw);
+  if (raw === null || raw === undefined || raw === "" || !Number.isSafeInteger(value) || value < 0) return { kind: "unevidenced" };
+  return numberTokens(row[rule.passageField]).includes(value) ? { kind: "evidenced", value } : { kind: "unevidenced" };
+}
+
 const PLAIN_FIELD = /^[A-Za-z][A-Za-z0-9_.-]{0,79}$/;
 
 /** Upstream column names are published in omitted_fields, so a hostile one is reduced to a digest. */
@@ -97,6 +209,24 @@ export async function projectExportRow(
     if (value !== undefined) payload[rule.to] = value;
   }
   const omitted: OmittedField[] = [];
+  for (const map of contract.enumMaps ?? []) {
+    used.add(map.from);
+    const value = row[map.from];
+    // Preflight has already refused unknown values for the whole file; this guards direct callers.
+    if (typeof value !== "string" || !Object.hasOwn(map.map, value)) throw new IngestError("input_not_accepted", `${map.from} holds a value outside the documented upstream vocabulary`);
+    if (map.map[value] !== "") payload[map.to] = map.map[value] as string;
+    if (map.keepUpstreamAs) payload[map.keepUpstreamAs] = value;
+  }
+  for (const rule of contract.evidencedNumbers ?? []) {
+    used.add(rule.from);
+    const outcome = evidencedNumber(contract, rule, row);
+    if (outcome.kind === "evidenced") {
+      payload[rule.to] = outcome.value;
+      payload[rule.to + "_evidence"] = "number_found_in_captured_source_passage";
+    } else {
+      omitted.push({ field: rule.from, reason: outcome.kind === "not_applicable" ? rule.notApplicableReason : "not evidenced by the captured source passage; omitted rather than guessed, in either direction" });
+    }
+  }
   const declared = new Map(contract.droppedFields.map((d) => [d.field, d.reason]));
   for (const key of Object.keys(row).sort()) {
     if (used.has(key)) continue;

@@ -1,14 +1,46 @@
 {
   "config_version": 1,
   "registry_products": [
-    { "registry_key": "parliament_members", "title": "Members of Parliament directory", "domain": "Parliament and law" },
-    { "registry_key": "parliament_bills", "title": "Current bills catalogue", "domain": "Parliament and law" },
-    { "registry_key": "parliament_written_questions", "title": "Written parliamentary questions", "domain": "Parliament and law" },
-    { "registry_key": "government_releases", "title": "Government releases", "domain": "Government statements" },
-    { "registry_key": "party_register", "title": "Register of political parties", "domain": "Elections" },
-    { "registry_key": "election_2026_nominations", "title": "2026 General Election nominations and party lists", "domain": "Elections" },
-    { "registry_key": "election_2023_results", "title": "2023 General Election official results", "domain": "Elections" },
-    { "registry_key": "party_finance_returns", "title": "Party donations, loans and annual returns", "domain": "Political finance" }
+    {
+      "registry_key": "parliament_members",
+      "title": "Members of Parliament directory",
+      "domain": "Parliament and law"
+    },
+    {
+      "registry_key": "parliament_bills",
+      "title": "Current bills catalogue",
+      "domain": "Parliament and law"
+    },
+    {
+      "registry_key": "parliament_written_questions",
+      "title": "Written parliamentary questions",
+      "domain": "Parliament and law"
+    },
+    {
+      "registry_key": "government_releases",
+      "title": "Government releases",
+      "domain": "Government statements"
+    },
+    {
+      "registry_key": "party_register",
+      "title": "Register of political parties",
+      "domain": "Elections"
+    },
+    {
+      "registry_key": "election_2026_nominations",
+      "title": "2026 General Election nominations and party lists",
+      "domain": "Elections"
+    },
+    {
+      "registry_key": "election_2023_results",
+      "title": "2023 General Election official results",
+      "domain": "Elections"
+    },
+    {
+      "registry_key": "party_finance_returns",
+      "title": "Party donations, loans and annual returns",
+      "domain": "Political finance"
+    }
   ],
   "sources": [
     {
@@ -19,16 +51,24 @@
       "official_url": "https://www3.parliament.nz/en/mps-and-electorates/members-of-parliament/",
       "adapter_kind": "live_fetch",
       "adapter_name": "nz_parliament_mp_directory",
-      "allowed_hosts": ["www3.parliament.nz"],
+      "allowed_hosts": [
+        "www3.parliament.nz"
+      ],
       "rights_id": "RIGHTS-13",
       "view_scope": "current_parliament",
       "expected_cadence_seconds": 86400,
       "snapshot_semantics": "complete_snapshot",
       "enabled": true,
       "catalogue_products": [
-        { "product_id": "P10", "mapping_note": "Same publisher listing as the dated catalogue product; this source is a fresh retrieval, not the 11 June 2026 snapshot." }
+        {
+          "product_id": "P10",
+          "mapping_note": "Same publisher listing as the dated catalogue product; this source is a fresh retrieval, not the 11 June 2026 snapshot."
+        }
       ],
-      "adapter_options": { "min_rows": 100, "max_rows": 130 }
+      "adapter_options": {
+        "min_rows": 100,
+        "max_rows": 130
+      }
     },
     {
       "source_id": "nz_parliament_current_bills",
@@ -38,14 +78,19 @@
       "official_url": "https://bills.parliament.nz/",
       "adapter_kind": "live_fetch",
       "adapter_name": "nz_parliament_current_bills",
-      "allowed_hosts": ["bills.parliament.nz"],
+      "allowed_hosts": [
+        "bills.parliament.nz"
+      ],
       "rights_id": "RIGHTS-09",
       "view_scope": "current_parliament",
       "expected_cadence_seconds": 21600,
       "snapshot_semantics": "complete_snapshot",
       "enabled": true,
       "catalogue_products": [
-        { "product_id": "P03", "mapping_note": "Current bills index. P02 (bill publications) is a different upstream product and is not covered by this adapter." }
+        {
+          "product_id": "P03",
+          "mapping_note": "Current bills index. P02 (bill publications) is a different upstream product and is not covered by this adapter."
+        }
       ]
     },
     {
@@ -56,14 +101,19 @@
       "official_url": "https://www.beehive.govt.nz/releases/feed",
       "adapter_kind": "live_fetch",
       "adapter_name": "nz_government_releases_feed",
-      "allowed_hosts": ["www.beehive.govt.nz"],
+      "allowed_hosts": [
+        "www.beehive.govt.nz"
+      ],
       "rights_id": "RIGHTS-08",
       "view_scope": "general",
       "expected_cadence_seconds": 3600,
       "snapshot_semantics": "append_only_feed",
       "enabled": true,
       "catalogue_products": [
-        { "product_id": "P01", "mapping_note": "Incremental feed window only. The 4,735-record historical product needs the export import route; the feed does not backfill it." }
+        {
+          "product_id": "P01",
+          "mapping_note": "Incremental feed window only. The 4,735-record historical product needs the export import route; the feed does not backfill it."
+        }
       ]
     },
     {
@@ -74,7 +124,9 @@
       "official_url": "https://questions.parliament.nz/",
       "adapter_kind": "live_fetch",
       "adapter_name": "availability_probe",
-      "allowed_hosts": ["questions.parliament.nz"],
+      "allowed_hosts": [
+        "questions.parliament.nz"
+      ],
       "rights_id": "RIGHTS-10",
       "view_scope": "current_parliament",
       "expected_cadence_seconds": 86400,
@@ -82,7 +134,10 @@
       "enabled": false,
       "blocked_reason": "The former listing URL now redirects to a separate questions site (first seen 2026-09-20); the fetch guard refused the off-allowlist redirect until this entry was updated. No parser is enabled yet. Nothing here implies a record count.",
       "catalogue_products": [
-        { "product_id": "P24", "mapping_note": "Probe only. The 187,956-record product is not imported by this source." }
+        {
+          "product_id": "P24",
+          "mapping_note": "Probe only. The 187,956-record product is not imported by this source."
+        }
       ]
     },
     {
@@ -93,7 +148,9 @@
       "official_url": "https://elections.nz/democracy-in-nz/political-parties-in-new-zealand/register-of-political-parties/",
       "adapter_kind": "live_fetch",
       "adapter_name": "availability_probe",
-      "allowed_hosts": ["elections.nz"],
+      "allowed_hosts": [
+        "elections.nz"
+      ],
       "view_scope": "primary_2026",
       "expected_cadence_seconds": 86400,
       "snapshot_semantics": "complete_snapshot",
@@ -108,7 +165,10 @@
       "official_url": "https://vote.nz/2026-general-election/about/overview/key-dates",
       "adapter_kind": "live_fetch",
       "adapter_name": "availability_probe",
-      "allowed_hosts": ["vote.nz", "elections.nz"],
+      "allowed_hosts": [
+        "vote.nz",
+        "elections.nz"
+      ],
       "view_scope": "primary_2026",
       "expected_cadence_seconds": 21600,
       "snapshot_semantics": "complete_snapshot",
@@ -123,15 +183,24 @@
       "official_url": "https://electionresults.govt.nz/electionresults_2023/",
       "adapter_kind": "live_fetch",
       "adapter_name": "availability_probe",
-      "allowed_hosts": ["electionresults.govt.nz", "www.electionresults.govt.nz"],
+      "allowed_hosts": [
+        "electionresults.govt.nz",
+        "www.electionresults.govt.nz"
+      ],
       "rights_id": "RIGHTS-01",
       "view_scope": "baseline_2023",
       "snapshot_semantics": "complete_snapshot",
       "enabled": false,
       "blocked_reason": "Publisher refused automated requests from the build host (HTTP 403) on 2026-09-20. Baseline rows arrive through the reviewed export import instead.",
       "catalogue_products": [
-        { "product_id": "P08", "mapping_note": "Probe only; nationwide totals are not imported by this source." },
-        { "product_id": "P09", "mapping_note": "Probe only; electorate results are not imported by this source." }
+        {
+          "product_id": "P08",
+          "mapping_note": "Probe only; nationwide totals are not imported by this source."
+        },
+        {
+          "product_id": "P09",
+          "mapping_note": "Probe only; electorate results are not imported by this source."
+        }
       ]
     },
     {
@@ -142,15 +211,23 @@
       "official_url": "https://elections.nz/democracy-in-nz/political-parties-in-new-zealand/party-donations-and-loans-by-year/",
       "adapter_kind": "live_fetch",
       "adapter_name": "availability_probe",
-      "allowed_hosts": ["elections.nz"],
+      "allowed_hosts": [
+        "elections.nz"
+      ],
       "rights_id": "RIGHTS-04",
       "view_scope": "finance_2025",
       "snapshot_semantics": "complete_snapshot",
       "enabled": false,
       "blocked_reason": "Publisher refused automated requests from the build host (HTTP 403) on 2026-09-20. Return status is unknown here. Donor identities are never collected.",
       "catalogue_products": [
-        { "product_id": "P16", "mapping_note": "Probe only." },
-        { "product_id": "P17", "mapping_note": "Probe only." }
+        {
+          "product_id": "P16",
+          "mapping_note": "Probe only."
+        },
+        {
+          "product_id": "P17",
+          "mapping_note": "Probe only."
+        }
       ]
     },
     {
@@ -167,7 +244,10 @@
       "snapshot_semantics": "complete_snapshot",
       "enabled": false,
       "catalogue_products": [
-        { "product_id": "P04", "mapping_note": "The dedicated upstream candidacy table (495 electorate and 468 list rows) is preferred over the less complete 486-row roster behind P04. The two are reconciled, not added." }
+        {
+          "product_id": "P04",
+          "mapping_note": "The dedicated upstream candidacy product (495 electorate and 468 list rows, 963 in all) is preferred over the less complete 486-row roster behind P04. The two are reconciled, not added."
+        }
       ],
       "export_contract": {
         "fileEnv": "EVIDENCE_EXPORT_BASELINE_2023_CANDIDACIES",
@@ -176,30 +256,169 @@
         "sourceUrlField": "source_url",
         "observedAtField": "captured_at",
         "allowedFields": [
-          { "from": "candidate_name", "to": "candidate_name", "type": "string", "maxLength": 200 },
-          { "from": "party_name", "to": "party_name", "type": "string", "maxLength": 200 },
-          { "from": "electorate_name", "to": "electorate_name", "type": "string", "maxLength": 200 },
-          { "from": "electorate_type", "to": "electorate_type_upstream_label", "type": "string", "maxLength": 40 },
-          { "from": "candidacy_type", "to": "candidacy_type", "type": "string", "maxLength": 20 },
-          { "from": "nomination_status", "to": "nomination_status", "type": "string", "maxLength": 40 },
-          { "from": "candidate_votes", "to": "candidate_votes", "type": "integer" },
-          { "from": "list_rank", "to": "list_rank", "type": "integer" }
+          {
+            "from": "candidate_name",
+            "to": "candidate_name",
+            "type": "string",
+            "maxLength": 200
+          },
+          {
+            "from": "party_name",
+            "to": "party_name",
+            "type": "string",
+            "maxLength": 200
+          },
+          {
+            "from": "electorate_name",
+            "to": "electorate_name",
+            "type": "string",
+            "maxLength": 200
+          },
+          {
+            "from": "election_id",
+            "to": "upstream_election_id",
+            "type": "string",
+            "maxLength": 20
+          }
         ],
         "droppedFields": [
-          { "field": "source_record_json", "reason": "upstream captured record; never imported" },
-          { "field": "source_passage", "reason": "copied source text; never imported (R6)" },
-          { "field": "candidate_name_key", "reason": "name-derived key; names never act as identity keys" },
-          { "field": "party_id", "reason": "upstream surrogate; party identity is rebuilt from the label and reviewed" },
-          { "field": "electorate_id", "reason": "upstream surrogate; electorate versions are rebuilt and verified" },
-          { "field": "snapshot_id", "reason": "upstream bookkeeping" }
+          {
+            "field": "source_record_json",
+            "reason": "upstream captured record; never imported"
+          },
+          {
+            "field": "source_passage",
+            "reason": "copied source text; never imported (R6)"
+          },
+          {
+            "field": "candidate_name_key",
+            "reason": "name-derived key; names never act as identity keys"
+          },
+          {
+            "field": "party_id",
+            "reason": "upstream surrogate; party identity is rebuilt from the label and reviewed"
+          },
+          {
+            "field": "electorate_id",
+            "reason": "upstream surrogate; electorate versions are rebuilt and verified"
+          },
+          {
+            "field": "snapshot_id",
+            "reason": "upstream bookkeeping"
+          },
+          {
+            "field": "source_observation_at",
+            "reason": "duplicate of the capture time"
+          }
         ],
-        "expectedRowsNote": "Exporter must state the row count alongside the file: 495 electorate + 468 list rows were reported by the upstream audit. The importer reports its own counts; a mismatch is a reconciliation finding, not something to force."
+        "expectedRowsNote": "Pinned to the verified 12 September 2026 capture of the official 2023 results: 963 rows (495 electorate, 468 party list). The official-nomination mapping applies to this validated product only; any other file, vocabulary or count fails closed.",
+        "expectedInput": {
+          "sha256": "sha256:acb3154d63abdb76d62fec09ce62996b379081ecf3586e7f00b76e7b0955d82c",
+          "rows": 963
+        },
+        "manifestEnv": "EVIDENCE_EXPORT_BASELINE_2023_MANIFEST",
+        "manifestChecksumPath": [
+          "normalized_checksums",
+          "candidacies"
+        ],
+        "manifestRowsPath": [
+          "counts",
+          "candidacies"
+        ],
+        "requiredValues": [
+          {
+            "field": "election_id",
+            "equals": "NZGE2023"
+          }
+        ],
+        "enumMaps": [
+          {
+            "from": "candidacy_type",
+            "to": "candidacy_type",
+            "keepUpstreamAs": "upstream_candidacy_type",
+            "map": {
+              "electorate": "electorate",
+              "party_list": "list"
+            }
+          },
+          {
+            "from": "nomination_status",
+            "to": "nomination_status",
+            "keepUpstreamAs": "upstream_nomination_status",
+            "map": {
+              "official_result_candidate": "officially_nominated",
+              "official_party_list_candidate": "officially_nominated"
+            }
+          },
+          {
+            "from": "party_selection_status",
+            "to": "party_selection_status",
+            "map": {
+              "not_stated": "not_stated",
+              "party_label_published": "party_label_published",
+              "party_list_rank_published": "party_list_rank_published"
+            }
+          },
+          {
+            "from": "electorate_type",
+            "to": "electorate_type_upstream_label",
+            "map": {
+              "General": "General",
+              "Māori": "Māori",
+              "": ""
+            }
+          }
+        ],
+        "evidencedNumbers": [
+          {
+            "from": "candidate_votes",
+            "to": "candidate_votes",
+            "passageField": "source_passage",
+            "onlyWhen": {
+              "field": "candidacy_type",
+              "equals": "electorate"
+            },
+            "notApplicableReason": "upstream default of 0 in a column that cannot be empty; the source publishes no vote figure for a party-list candidacy",
+            "allZeroGroupField": "electorate_name"
+          },
+          {
+            "from": "list_rank",
+            "to": "list_rank",
+            "passageField": "source_passage",
+            "onlyWhen": {
+              "field": "candidacy_type",
+              "equals": "list"
+            },
+            "notApplicableReason": "upstream default of 0 in a column that cannot be empty; an electorate result row carries no list rank"
+          }
+        ]
       }
     }
   ],
   "schedules": [
-    { "schedule_key": "mp-directory-daily", "source_id": "nz_parliament_mp_directory", "cron_expr": "20 17 * * *", "function_slug": "ingest-run", "max_runtime_seconds": 60, "max_records": 200 },
-    { "schedule_key": "current-bills-6-hourly", "source_id": "nz_parliament_current_bills", "cron_expr": "35 */6 * * *", "function_slug": "ingest-run", "max_runtime_seconds": 120, "max_records": 1000 },
-    { "schedule_key": "releases-feed-hourly", "source_id": "nz_government_releases_feed", "cron_expr": "50 * * * *", "function_slug": "ingest-run", "max_runtime_seconds": 45, "max_records": 100 }
+    {
+      "schedule_key": "mp-directory-daily",
+      "source_id": "nz_parliament_mp_directory",
+      "cron_expr": "20 17 * * *",
+      "function_slug": "ingest-run",
+      "max_runtime_seconds": 60,
+      "max_records": 200
+    },
+    {
+      "schedule_key": "current-bills-6-hourly",
+      "source_id": "nz_parliament_current_bills",
+      "cron_expr": "35 */6 * * *",
+      "function_slug": "ingest-run",
+      "max_runtime_seconds": 120,
+      "max_records": 1000
+    },
+    {
+      "schedule_key": "releases-feed-hourly",
+      "source_id": "nz_government_releases_feed",
+      "cron_expr": "50 * * * *",
+      "function_slug": "ingest-run",
+      "max_runtime_seconds": 45,
+      "max_records": 100
+    }
   ]
 }

@@ -1,6 +1,7 @@
 -- Anonymous projections: default deny, complete source lineage, field-aware rights, release gate, no writes.
 -- Regression tests for the release review (rights leak through tables without a source_id column; general
 -- payload release under pending rights). TEST FIXTURES ONLY: synthetic, rolled back.
+-- Rights ids here (RIGHTS-79x) are distinct from the browser-test fixtures (RIGHTS-98, RIGHTS-99), which may share a local stack.
 begin;
 select plan(47);
 
@@ -86,15 +87,15 @@ reset role;
 -- 1. P0 regression: refused / restricted / withheld / no-rights sources, through EVERY projection ---------------
 select evidence_private.sync_registry(jsonb_build_object(
   'rights', jsonb_build_array(
-    jsonb_build_object('rights_id', 'RIGHTS-94', 'publisher', 'Fixture', 'source_url', 'https://fixture.example/', 'review_status', 'refused', 'default_release', 'withheld', 'reviewed_on', '2026-09-20', 'register_hash', 'h'),
-    jsonb_build_object('rights_id', 'RIGHTS-95', 'publisher', 'Fixture', 'source_url', 'https://fixture.example/', 'review_status', 'restricted', 'default_release', 'link-only', 'reviewed_on', '2026-09-20', 'register_hash', 'h'),
-    jsonb_build_object('rights_id', 'RIGHTS-96', 'publisher', 'Fixture', 'source_url', 'https://fixture.example/', 'review_status', 'pending', 'default_release', 'withheld', 'register_hash', 'h'),
-    jsonb_build_object('rights_id', 'RIGHTS-97', 'publisher', 'Fixture', 'source_url', 'https://fixture.example/', 'review_status', 'pending', 'default_release', 'link-only', 'register_hash', 'h'),
-    jsonb_build_object('rights_id', 'RIGHTS-98', 'publisher', 'Fixture', 'source_url', 'https://fixture.example/', 'review_status', 'approved', 'default_release', 'approved-fields', 'reviewed_on', '2026-09-20',
+    jsonb_build_object('rights_id', 'RIGHTS-794', 'publisher', 'Fixture', 'source_url', 'https://fixture.example/', 'review_status', 'refused', 'default_release', 'withheld', 'reviewed_on', '2026-09-20', 'register_hash', 'h'),
+    jsonb_build_object('rights_id', 'RIGHTS-795', 'publisher', 'Fixture', 'source_url', 'https://fixture.example/', 'review_status', 'restricted', 'default_release', 'link-only', 'reviewed_on', '2026-09-20', 'register_hash', 'h'),
+    jsonb_build_object('rights_id', 'RIGHTS-796', 'publisher', 'Fixture', 'source_url', 'https://fixture.example/', 'review_status', 'pending', 'default_release', 'withheld', 'register_hash', 'h'),
+    jsonb_build_object('rights_id', 'RIGHTS-797', 'publisher', 'Fixture', 'source_url', 'https://fixture.example/', 'review_status', 'pending', 'default_release', 'link-only', 'register_hash', 'h'),
+    jsonb_build_object('rights_id', 'RIGHTS-798', 'publisher', 'Fixture', 'source_url', 'https://fixture.example/', 'review_status', 'approved', 'default_release', 'approved-fields', 'reviewed_on', '2026-09-20',
       'approved_fields', jsonb_build_array('title', 'bill_number'), 'register_hash', 'h'),
-    jsonb_build_object('rights_id', 'RIGHTS-99', 'publisher', 'Fixture', 'source_url', 'https://fixture.example/', 'review_status', 'pending', 'default_release', 'approved-fields', 'register_hash', 'h')),
-  'sources', jsonb_build_array(pg_temp.src('pgtap_refused', 'RIGHTS-94'), pg_temp.src('pgtap_restricted', 'RIGHTS-95'),
-    pg_temp.src('pgtap_withheld', 'RIGHTS-96'), pg_temp.src('pgtap_norights', ''))));
+    jsonb_build_object('rights_id', 'RIGHTS-799', 'publisher', 'Fixture', 'source_url', 'https://fixture.example/', 'review_status', 'pending', 'default_release', 'approved-fields', 'register_hash', 'h')),
+  'sources', jsonb_build_array(pg_temp.src('pgtap_refused', 'RIGHTS-794'), pg_temp.src('pgtap_restricted', 'RIGHTS-795'),
+    pg_temp.src('pgtap_withheld', 'RIGHTS-796'), pg_temp.src('pgtap_norights', ''))));
 select pg_temp.seed('pgtap_refused', 'refused');
 select pg_temp.seed('pgtap_restricted', 'restricted');
 select pg_temp.seed('pgtap_withheld', 'withheld');
@@ -126,7 +127,7 @@ reset role;
 
 -- 2. Pending, link-only: rows appear, with link metadata only ---------------------------------------------------------
 select evidence_private.sync_registry(jsonb_build_object('sources', jsonb_build_array(
-  pg_temp.src('pgtap_pending', 'RIGHTS-97'), pg_temp.src('pgtap_pendingfields', 'RIGHTS-99'))));
+  pg_temp.src('pgtap_pending', 'RIGHTS-797'), pg_temp.src('pgtap_pendingfields', 'RIGHTS-799'))));
 select pg_temp.seed('pgtap_pending', 'pending');
 select pg_temp.seed('pgtap_pendingfields', 'pendingfields');
 select is((select string_agg(tier, ',' order by source_id) from evidence_private.source_release where source_id in ('pgtap_pending', 'pgtap_pendingfields')),
@@ -159,7 +160,7 @@ select is((select public_release_tier from evidence_public.sources where source_
 reset role;
 
 -- 3. Approved with approved-fields: exactly the named fields ---------------------------------------------------------------
-select evidence_private.sync_registry(jsonb_build_object('sources', jsonb_build_array(pg_temp.src('pgtap_fields', 'RIGHTS-98'))));
+select evidence_private.sync_registry(jsonb_build_object('sources', jsonb_build_array(pg_temp.src('pgtap_fields', 'RIGHTS-798'))));
 select pg_temp.seed('pgtap_fields', 'fields');
 set local role anon;
 select is((select v.safe_payload from evidence_open.source_record_versions v join evidence_open.source_records r on r.id = v.record_id
@@ -172,9 +173,9 @@ select is((select d.title || '|' || b.bill_number from evidence_open.bills b joi
 select is((select count(*)::int from evidence_public.service_terms where source_id = 'pgtap_fields' and member_name is not null), 0, 'approved fields: unnamed fields stay null');
 select is((select count(*)::int from evidence_public.records where source_id = 'pgtap_fields' and label is not null), 0, 'approved fields: a derived column needs its own name approved');
 reset role;
-select throws_ok($$update evidence_private.source_rights set approved_fields = array['title'] where rights_id = 'RIGHTS-97'$$, '23514', null,
+select throws_ok($$update evidence_private.source_rights set approved_fields = array['title'] where rights_id = 'RIGHTS-797'$$, '23514', null,
   'approved_fields cannot be set on a pending rights row');
-select throws_ok($$update evidence_private.source_rights set approved_fields = array['title'], review_status = 'approved', reviewed_on = current_date where rights_id = 'RIGHTS-97'$$, '23514', null,
+select throws_ok($$update evidence_private.source_rights set approved_fields = array['title'], review_status = 'approved', reviewed_on = current_date where rights_id = 'RIGHTS-797'$$, '23514', null,
   'approved_fields cannot be set while the release mode is link-only');
 
 -- 4. Withheld columns, operational text, multi-source summaries ------------------------------------------------------------------

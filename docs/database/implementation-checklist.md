@@ -1,6 +1,6 @@
 # Implementation checklist
 
-> **Status: NOT complete, NOT released.** Independent review of commit `6b8218e` returned **NO-GO**; this revision addresses its security and CI findings only. Source completeness is unchanged and partial: of the **24** catalogue products, **3** have a live adapter (P01 feed window only, P03, P10), **1** has an export contract that has never been run on real data (P04), and **20 have no route into the store at all**. Nothing has been pushed, applied to a hosted project, scheduled, deployed or published.
+> **Status: NOT complete, NOT released.** Independent review of commit `6b8218e` returned **NO-GO**; this revision addresses its security and CI findings only. Source completeness is unchanged and partial: of the **24** catalogue products, **3** have a live adapter (P01 feed window only, P03, P10), **1** (P04) has an export contract run on the verified upstream product on a local disposable database only, and **20 have no route into the store at all**. Nothing has been pushed, applied to a hosted project, scheduled, deployed or published.
 
 Branch `feat/supabase-evidence-explorer`. Legend: **[x]** done and verified here · **[~]** built, verification partial (reason given) · **[ ]** not done. "Verified" means the command was run in this work and passed; nothing below is claimed without that. All verification used a **disposable local stack**. No hosted project was touched, nothing was pushed, deployed, scheduled or published.
 
@@ -23,7 +23,8 @@ Branch `feat/supabase-evidence-explorer`. Legend: **[x]** done and verified here
 - [x] Live adapters with real receipts: Parliament MP directory, current bills, Beehive releases feed
 - [x] Availability probes for sources that refused automated requests (nominations, party register, 2023 results, party finance) and for written questions
 - [x] Config-based export importer (JSON Lines, per-source field allowlist, drops recorded by name, location never recorded); contract defined for 2023 candidacies
-- [ ] Export imports actually run — **missing input**: no reviewed export file was supplied
+- [x] 2023 candidacy export compatibility: pinned checksum and manifest, closed upstream vocabularies (`party_list` → `list`; official result/list candidate → `officially_nominated` for this validated product only), evidence-checked numbers (genuine zeros kept, collector-default zeros dropped, nothing guessed), whole-file preflight so a bad input writes nothing and skips nothing. Imported locally: 963 = 495 + 468, 963 nomination events, replay 0 new versions, 0 rejected
+- [ ] The same import on a hosted project — not done; awaits release review
 - [ ] Export contracts for the remaining catalogue products (see reconciliation)
 - [ ] Statistics loader (tables, route guard and views exist; no loader)
 - [ ] Parsers for nominations, party register, results and finance once a publisher-approved route exists

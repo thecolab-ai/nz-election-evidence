@@ -3,6 +3,10 @@
 // (test/local-stack.ts). With EVIDENCE_REQUIRE_INTEGRATION=1 (CI) a skip is a failure. Uses a scripted publisher
 // (no network) and a `fixture_it_*` source so nothing here can be mistaken for live data.
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
+import { mkdtemp, readFile, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { test } from "node:test";
 import postgres from "postgres";
 import { billsAdapter } from "../../supabase/functions/_shared/adapters/bills.ts";
@@ -11,7 +15,7 @@ import { runSource } from "../../supabase/functions/_shared/runner.ts";
 import { LOCAL_WORKER_LOGIN, localStackChoice, seedDeclaresSameLogin } from "./local-stack.ts";
 import type { SourceConfig, SourcesFile } from "../../supabase/functions/_shared/types.ts";
 import sourcesFile from "../../supabase/functions/_shared/sources.config.json" with { type: "json" };
-import { exportAdapter, loadExport } from "../src/export_import.ts";
+import { exportAdapter, loadExport, preflightExport } from "../src/export_import.ts";
 
 const choice = localStackChoice();
 const url = choice.url;
@@ -167,10 +171,17 @@ test("runner against a real database", { skip }, async (t) => {
 });
 
 test("export import against a real database", { skip }, async (t) => {
-  // Same contract as the real baseline source, under a fixture-named source id so the rows can
-  // never be mistaken for the 2023 baseline.
+  // The real 2023 contract (enum maps, evidenced numbers, preflight) under a fixture-named source id and a
+  // fixture-pinned checksum, so the rows can never be mistaken for the 2023 baseline.
   const real = (sourcesFile as unknown as SourcesFile).sources.find((s) => s.source_id === "baseline_2023_candidacies_export")!;
-  const fixtureSource: SourceConfig = { ...real, source_id: "fixture_it_export_" + suffix, title: "TEST FIXTURE export import", catalogue_products: [] };
+  const location = new URL("./fixtures/baseline-candidacies.fixture.jsonl", import.meta.url).pathname;
+  const bytes = await readFile(location);
+  const sha = createHash("sha256").update(bytes).digest("hex");
+  const manifestDir = await mkdtemp(join(tmpdir(), "fixture-manifest-"));
+  await writeFile(join(manifestDir, "manifest.json"), JSON.stringify({ counts: { candidacies: 5 }, normalized_checksums: { candidacies: sha } }));
+  const contract = { ...real.export_contract!, expectedInput: { sha256: "sha256:" + sha, rows: 5 } };
+  const env = { [contract.fileEnv]: location, [contract.manifestEnv!]: join(manifestDir, "manifest.json") };
+  const fixtureSource: SourceConfig = { ...real, source_id: "fixture_it_export_" + suffix, title: "TEST FIXTURE export import", catalogue_products: [], export_contract: contract };
   const fixtureFile: SourcesFile = { config_version: 1, registry_products: [], sources: [fixtureSource], schedules: [] };
   const sql = postgres(url!, { max: 1, prepare: false, onnotice: () => undefined });
   await assertScopedLogin(sql);
@@ -178,34 +189,37 @@ test("export import against a real database", { skip }, async (t) => {
   t.after(async () => { await db.close(); });
   await db.syncRegistry({ sources: [{ ...fixtureSource, registry_key: "", rights_id: "", expected_cadence_seconds: "", config_hash: "fixture", catalogue_products: [], export_contract: null }] } as never);
 
-  const location = new URL("./fixtures/baseline-candidacies.fixture.jsonl", import.meta.url).pathname;
-  const loaded = await loadExport(real.export_contract!, { [real.export_contract!.fileEnv]: location });
+  const loaded = await loadExport(contract, env);
+  const findings = await preflightExport(fixtureSource, contract, loaded, env);
+  assert.deepEqual(findings.rows_by_type, { electorate: 4, list: 1 });
   const base = { file: fixtureFile, source: fixtureSource, adapter: exportAdapter(loaded), mode: "export_import" as const, triggerKind: "test" as const,
     maxRecords: 1000, maxRuntimeSeconds: 120, dryRun: false, db, inputDigest: loaded.digest };
 
   const first = await runSource(base);
   assert.equal(first.status, "succeeded");
-  assert.deepEqual([first.totals.seen, first.totals.versions_inserted, first.totals.rejected], [3, 3, 0], "the database payload guard accepted every allowlisted row");
-  assert.equal((first.projection as { baseline_candidacies: number }).baseline_candidacies, 3);
-  assert.equal(first.manifest.input_digest?.rows, 3);
-  assert.ok(!JSON.stringify(first).includes(location), "the export location is not in the report");
+  assert.deepEqual([first.totals.seen, first.totals.versions_inserted, first.totals.rejected], [5, 5, 0], "every row stored, none skipped, none rejected by the database guard");
+  assert.equal((first.projection as { baseline_candidacies: number }).baseline_candidacies, 5);
+  assert.ok(!JSON.stringify(first).includes(location) && !JSON.stringify(first).includes(manifestDir), "no input location in the report");
 
   const replay = await runSource(base);
-  assert.deepEqual([replay.totals.versions_inserted, replay.totals.unchanged], [0, 3], "re-importing the same export changes nothing");
+  assert.deepEqual([replay.totals.versions_inserted, replay.totals.unchanged, replay.totals.rejected], [0, 5, 0], "re-importing the same export changes nothing");
   assert.equal(replay.manifest_hash, first.manifest_hash);
 
   const rows = await sql`
-    select c.candidacy_type, c.current_status, i.link_status, i.person_id, r.value_status, r.votes, e.list_rank
+    select i.external_id, c.candidacy_type, c.current_status, i.link_status, i.person_id, r.value_status, r.votes, e.list_rank,
+           (select count(*)::int from evidence_private.candidacy_status_events s where s.candidacy_id = c.id
+              and s.status = 'officially_nominated' and s.source_class = 'official_electoral_commission') as nomination_events
     from evidence_private.candidacies c
     join evidence_private.person_source_identities i on i.id = c.person_identity_id
     left join evidence_private.candidate_results r on r.candidacy_id = c.id
     left join evidence_private.party_list_entries e on e.candidacy_id = c.id
     where i.source_id = ${fixtureSource.source_id} order by i.external_id`;
-  assert.equal(rows.length, 3);
-  assert.deepEqual(rows.map((r) => r.candidacy_type), ["electorate", "list", "electorate"]);
-  assert.ok(rows.every((r) => r.current_status === "officially_nominated" && r.link_status === "unresolved" && r.person_id === null),
-    "same-named rows stay unlinked; official status came through a status event");
-  assert.equal(Number(rows[0].votes), 1200);
-  assert.equal(rows[1].list_rank, 3);
-  assert.deepEqual([rows[2].value_status, rows[2].votes], ["not_reported", null], "ambiguous upstream zero is not stored as zero");
+  assert.equal(rows.length, 5);
+  assert.deepEqual(rows.map((r) => r.candidacy_type), ["electorate", "list", "electorate", "electorate", "electorate"]);
+  assert.ok(rows.every((r) => r.current_status === "officially_nominated" && r.nomination_events === 1 && r.link_status === "unresolved" && r.person_id === null),
+    "official nomination arrived through one status event each; same-named rows stay unlinked");
+  assert.deepEqual([rows[0]!.value_status, Number(rows[0]!.votes)], ["reported", 1200]);
+  assert.deepEqual([rows[1]!.value_status, rows[1]!.votes, rows[1]!.list_rank], [null, null, 3], "a list candidacy has a rank and no vote row at all");
+  assert.deepEqual([rows[2]!.value_status, Number(rows[2]!.votes)], ["reported", 0], "a source-reported zero is stored as zero");
+  assert.deepEqual([rows[4]!.value_status, rows[4]!.votes], ["not_reported", null], "a figure the source passage does not evidence is not reported, and is not zero");
 });
