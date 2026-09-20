@@ -13,6 +13,8 @@ This release describes a frozen evidence inventory observed on **2026-09-19 at 1
 
 Document/body records, normalised facts, aggregates, catalogue entries and catalogue metadata are not interchangeable. Counts show inventory scale, not importance, quality or completeness.
 
+The party-policy type breakdown retained in this snapshot is a **preliminary model-assisted classification**. Its model name/version is unknown, schema/prompt is unavailable, confidence is unavailable, and it has not yet been checked against human review. It must not be treated as a verified finding. Future model-derived fields must carry the R9 metadata and item-level primary-source mapping before publication; unknown metadata must remain explicit rather than being reconstructed or guessed.
+
 ## Analysis rules
 
 Define the denominator before counting. Preserve source dates separately from observation dates. Align units, geography, boundary editions, period and vintage. Record revisions. Treat joins as hypotheses until identifiers are reviewed. Before/after, proximity and co-occurrence are not causal designs. Report unknowns rather than converting them to zero.

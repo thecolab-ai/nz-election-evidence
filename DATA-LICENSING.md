@@ -4,7 +4,7 @@ The MIT licence applies only to original code and documentation authored for thi
 
 ## Conservative default
 
-Every source family starts as **rights pending / link only**. `catalogue/rights-register.csv` records the review queue. Until a row has an exact licence or terms URL, version/basis, permitted assets, attribution, reviewer and review date, this repository publishes only factual descriptive metadata and public source links.
+Every source family starts as **rights pending / link only**. `catalogue/rights-register.csv` records the review queue. Until a row has an exact licence or terms URL, version/basis, permitted assets, attribution, reviewer and review date, this repository publishes only factual descriptive metadata and public source links. While a row is pending, its `verified_permissions` value reads **“Not verified; release restricted to catalogue metadata and source links pending rights review”**; the field name does not imply that permission has been established.
 
 We do not redistribute original PDFs, copied articles, page captures, full policy or manifesto bodies, transcripts, source-derived HTML fixtures, or donor addresses. Public availability is not the same as a redistribution licence. Open-government branding alone is not an item-level rights decision.
 

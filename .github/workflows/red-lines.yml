@@ -11,8 +11,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with: { fetch-depth: 2 }
+        # Full history is required to prove CORRECTIONS.md remained append-only.
+        with: { fetch-depth: 0 }
       - name: Enforce red lines
         run: python3 scripts/red_lines.py --freeze-check
-      - name: Red-line unit tests
-        run: python3 -m unittest tests/test_red_lines.py -v
+      - name: Red-line and public-compliance unit tests
+        run: python3 -m unittest discover -s tests -v

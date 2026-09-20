@@ -1,6 +1,6 @@
 # Sanitisation and publication-readiness report
 
-Status: **ready for independent review before changing repository visibility**
+Status: **public catalogue preview; independent and legal review pending**
 
 Reviewed scope: current repository tree
 Evidence snapshot represented: 2026-09-19T19:12:17.178902Z
@@ -10,7 +10,9 @@ Evidence snapshot represented: 2026-09-19T19:12:17.178902Z
 - 24 metadata-only source-product records with public IDs, publisher URLs, record counts, evidence forms, observed timestamps, stated coverage and limitations
 - 52 separately labelled roadmap lanes; every held product maps to exactly one lane
 - 19 source-specific rights-review rows, all `pending` and `link-only`
-- New repository-authored documentation, portable Python tooling, tests, issue templates, static atlas and original SVG artwork
+- New repository-authored documentation, portable Python tooling, tests, issue templates, static atlas and SVG artwork
+
+The SVG's generation provenance is not recorded. That gap does not establish whether a model was used. If a model was used, the model/version, prompt or schema, confidence treatment and human-review state must be recorded before the artwork can be described as R9-compliant.
 
 ## Excluded by design
 
@@ -42,13 +44,12 @@ python3 -m unittest discover -s tests -v
 
 The self-contained atlas was also browser-checked for all 24 product cards, all 52 roadmap cards and working search/filter behaviour.
 
-## Independent review before public visibility
+## Independent review of the current public preview
 
 1. Inspect the complete Git tree and commit diff.
 2. Re-run both offline commands above.
-3. Confirm repository visibility is still private during review.
-4. Review every source and the rights register; leave link-only defaults in place unless written permission or publisher terms have been recorded.
-5. Confirm the snapshot wording is still prominent and that no text implies live data or universal completeness.
-6. Only then change visibility through the normal organisation approval process.
+3. Review every source and the rights register; leave link-only defaults in place unless written permission or publisher terms have been recorded.
+4. Confirm the snapshot wording is still prominent and that no text implies live data or universal completeness.
+5. Do not treat this technical report, CI, or the pending review-register rows as completing R10 legal review.
 
 This report is not a legal opinion and does not itself grant redistribution rights.
