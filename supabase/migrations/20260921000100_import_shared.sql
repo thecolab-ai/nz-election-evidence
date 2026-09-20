@@ -17,9 +17,11 @@
 -- carrying a publisher id or a digest beside such a word.
 --
 -- One rule, stated once: before the phone test, and ONLY for it, IDENTIFIER TOKENS are taken out of the text:
---   * a UUID, and
---   * a run of 16 to 128 hexadecimal characters that is a whole token (no letter or digit touches either end):
+--   * a UUID that is a whole token (no letter or digit touches either end), and
+--   * a run of 16 to 128 hexadecimal characters that is a whole token:
 --     SHA-256 digests, their 16-character prefixes used as release keys, undashed publisher ids.
+-- Known limit, accepted: a phone number written with no separator straight against four or more hexadecimal letters
+-- ("0211234567abcdef") reads as such a token. Numbers are not printed that way.
 -- A phone number is at most 12 digits, so it is never such a token, and a number printed beside an identifier is still
 -- refused. Every other test sees the whole text. Payloads that write digests with the digits 0-9 as the letters g-p
 -- (the election family's encoding, decoded by its projection) hold no digit run at all and pass exactly as before:
@@ -56,7 +58,7 @@ begin
     return 'credential_like_value';
   end if;
   v_without_identifiers := regexp_replace(
-    regexp_replace(p_text, '[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}', ' ', 'g'),
+    regexp_replace(p_text, '(^|[^0-9A-Za-z])[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}(?![0-9A-Za-z])', '\1 ', 'g'),
     '(^|[^0-9A-Za-z])[0-9a-fA-F]{16,128}(?![0-9A-Za-z])', '\1 ', 'g');
   if v_without_identifiers ~ '(^|[^0-9])(\+?64|0)[ -]?[2-9][0-9]?[ -]?[0-9]{3}[ -]?[0-9]{3,4}([^0-9]|$)' and p_text ~* '(ph|phone|mob|tel|call)' then
     return 'phone_like_value';
@@ -109,7 +111,13 @@ begin
       union all
       select r.id, r.resumed_from_run_id, c.depth + 1
       from evidence_private.import_runs r join chain c on r.id = c.resumed_from_run_id
-      where c.depth < 100)
+      where c.depth < 100
+        -- Only a run that never projected itself: a run that stopped at its budget ("partial") or succeeded projected
+        -- itself and its own earlier runs, so the walk ends there and nothing is projected twice.
+        and r.status in ('abandoned', 'failed')
+        -- Never an older run behind a later successful one: projecting it could put older content over newer.
+        and not exists (select 1 from evidence_private.import_runs later
+                        where later.source_id = r.source_id and later.status = 'succeeded' and later.started_at > r.started_at))
     select id, depth from chain order by depth desc
   loop
     v_out := jsonb_build_object(

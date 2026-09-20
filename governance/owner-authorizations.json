@@ -229,18 +229,15 @@
           "rights_id": "RIGHTS-12",
           "fields": [
             "committee",
-            "label",
             "metadata_only",
             "parliament_number",
             "public_page_url",
             "publication_date",
             "report_type",
             "reported_on",
-            "select_committee",
-            "subtitle",
-            "title"
+            "select_committee"
           ],
-          "basis": "Title, committee, type and publisher date of select committee reports as the publisher's public index lists them, with the official link. Never report text (R6)."
+          "basis": "Committee, report type and publisher date of select committee reports as the publisher's public index lists them, with the official link. NOT the report title: 247 of the 1,286 reports are petition reports whose titles name the private person who petitioned (R7). Never report text (R6)."
         },
         {
           "scope": "source_fields",
@@ -248,18 +245,15 @@
           "rights_id": "RIGHTS-12",
           "fields": [
             "committee",
-            "label",
             "metadata_only",
             "parliament_number",
             "public_page_url",
             "publication_date",
             "report_type",
             "reported_on",
-            "select_committee",
-            "subtitle",
-            "title"
+            "select_committee"
           ],
-          "basis": "Title, committee, type and publisher date of select committee reports as the publisher's public index lists them, with the official link. Never report text (R6)."
+          "basis": "Committee, report type and publisher date of select committee reports as the publisher's public index lists them, with the official link. NOT the report title: 247 of the 1,286 reports are petition reports whose titles name the private person who petitioned (R7). Never report text (R6)."
         },
         {
           "scope": "source_fields",
@@ -282,14 +276,12 @@
             "business_type",
             "committee",
             "item_type",
-            "label",
             "metadata_only",
             "parliament_number",
             "public_page_url",
-            "select_committee",
-            "title"
+            "select_committee"
           ],
-          "basis": "Title, type and committee of items of business before select committees as the publisher's public index lists them, with the official link."
+          "basis": "Committee and type of items of business before select committees as the publisher's public index lists them, with the official link. NOT the item title: petition items are titled with the name of the private person who petitioned (R7)."
         },
         {
           "scope": "source_fields",
@@ -299,14 +291,12 @@
             "business_type",
             "committee",
             "item_type",
-            "label",
             "metadata_only",
             "parliament_number",
             "public_page_url",
-            "select_committee",
-            "title"
+            "select_committee"
           ],
-          "basis": "Title, type and committee of items of business before select committees as the publisher's public index lists them, with the official link."
+          "basis": "Committee and type of items of business before select committees as the publisher's public index lists them, with the official link. NOT the item title: petition items are titled with the name of the private person who petitioned (R7)."
         },
         {
           "scope": "source_fields",
@@ -1055,6 +1045,7 @@
       "never_in_scope": [
         "question, reply, report, bill, release, policy-page or document text; summaries; copied source passages; files",
         "contact details of anyone: email, phone, postal or street address, social handles",
+        "titles of select committee reports and items of business: petition titles name the private person who petitioned, and a field decision cannot tell a petition from a briefing",
         "donors, contributors and anything read from inside a finance return; money amounts, including Commission-published totals",
         "vote counts, vote shares, seats, list ranks, poll figures and sample sizes (each needs its own recorded decision and an R1 look); no ranking, average or trend of parties or candidates",
         "policy classes and any other model output (R9)",

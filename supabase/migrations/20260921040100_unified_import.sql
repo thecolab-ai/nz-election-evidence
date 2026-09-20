@@ -166,6 +166,9 @@ select s.source_id,
                         from evidence_private.owner_authorization_scopes f
                         join evidence_private.owner_authorizations o on o.authorization_id = f.authorization_id
                         where f.scope_kind in ('source_fields', 'statistical_facts') and f.source_id = s.source_id and f.rights_id = r.rights_id
+                          -- Checked again every time it is read, not only when the decision was recorded: a source that
+                          -- is no longer registered as official statistics loses its statistical-fact columns at once.
+                          and (f.scope_kind <> 'statistical_facts' or (s.view_scope = 'statistics' and s.registry_key = 'statistics'))
                           and o.revoked_at is null and (now() at time zone 'utc')::date between o.decided_on and o.expires_on), '{}'::text[])
        end as owner_fields
 from evidence_private.sources s

@@ -144,6 +144,8 @@ export interface LoaderUnit {
   backfill_source_ids: string[];
   /** Live sources of the refresh route, in the order they would run. Empty when there is none. */
   refresh_source_ids: string[];
+  /** Further source ids that name this unit as a target without being part of a plain refresh (a deliberate backfill walk). */
+  alias_source_ids?: string[];
 }
 
 /** The adapter a family implements. Real work is delegated to the family's own modules; nothing is re-implemented. */

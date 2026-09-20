@@ -236,3 +236,14 @@ test("every field decision in the committed file names a registered source under
   const registry = (JSON.parse(await readFile(new URL("supabase/functions/_shared/sources.config.json", root), "utf-8")) as { sources: RegisteredSource[] }).sources;
   assert.deepEqual(authorizationProblems(doc, registry), []);
 });
+
+test("no decision releases the title of a select committee item: petition titles name the private person who petitioned", async () => {
+  const doc = JSON.parse(await readFile(new URL("governance/owner-authorizations.json", root), "utf-8")) as AuthorizationFile;
+  const committee = /committee_(reports|business)/;
+  for (const a of doc.authorizations) {
+    for (const s of a.scopes) {
+      if (s.scope !== "source_fields" || !committee.test(s.source_id) || /report_files/.test(s.source_id)) continue;
+      for (const field of ["title", "label", "subtitle"]) assert.ok(!s.fields.includes(field), `${s.source_id}: ${field}`);
+    }
+  }
+});

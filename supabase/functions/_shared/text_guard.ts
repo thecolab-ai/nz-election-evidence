@@ -12,23 +12,25 @@ export type TextViolation =
   | "credential_like_value"
   | "phone_like_value";
 
-const CONTROL = /[\u0001-\u0008\u000b\u000c\u000e-\u001f\u007f]/;
+// The store cannot hold a NUL at all, so the mirror refuses it here rather than letting the insert fail.
+const CONTROL = /[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/;
 const EMAIL = /[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/;
 const FILESYSTEM = /(^|["\s=:(,])(file:\/\/|~\/|[A-Za-z]:\\|\/(home|Users|root|var|mnt|srv|etc|tmp|opt|data)\/)/;
+// \s: the database treats a no-break space as whitespace too (checked against the real function; shared vectors hold both to it).
 const CREDENTIAL_ASSIGNMENT = /(password|passwd|pwd|secret|api[_-]?key|access[_-]?key|token|bearer|authorization)["']?\s*[=:]\s*\S/i;
 const JWT = /eyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\./;
 // Assembled from pieces so this file does not itself look like it holds a token.
 const KNOWN_TOKEN = new RegExp("(AKIA[0-9A-Z]{16}|gh[pousr]_[A-Za-z0-9]{20,}|github" + "_pat_|sb_secret_|sk-[A-Za-z0-9]{16,}|BEGIN [A-Z ]*PRIVATE KEY)");
 const URL_CREDENTIALS = /[a-z][a-z0-9+.-]*:\/\/[^/\s:@]+:[^/\s@]+@/i;
 
-/** Identifier tokens, removed before the phone test and only for it: UUIDs, and whole tokens of 16 to 128 hex characters. */
-const UUID = /[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}/g;
+/** Identifier tokens, removed before the phone test and only for it: whole-token UUIDs, and whole tokens of 16 to 128 hex characters. */
+const UUID = /(^|[^0-9A-Za-z])[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}(?![0-9A-Za-z])/g;
 const HEX_TOKEN = /(^|[^0-9A-Za-z])[0-9a-fA-F]{16,128}(?![0-9A-Za-z])/g;
 const PHONE = /(^|[^0-9])(\+?64|0)[ -]?[2-9][0-9]?[ -]?[0-9]{3}[ -]?[0-9]{3,4}([^0-9]|$)/;
 const PHONE_WORD = /(ph|phone|mob|tel|call)/i;
 
 export function withoutIdentifierTokens(text: string): string {
-  return text.replace(UUID, " ").replace(HEX_TOKEN, "$1 ");
+  return text.replace(UUID, "$1 ").replace(HEX_TOKEN, "$1 ");
 }
 
 export function textViolation(text: string | null | undefined): TextViolation | null {

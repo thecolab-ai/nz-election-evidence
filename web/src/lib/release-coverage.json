@@ -319,8 +319,8 @@
         "nz_parliament_written_questions_recent",
         "nz_parliament_written_questions_backfill"
       ],
-      "refresh": "exercised_only",
-      "refresh_gap": "Both live routes are built and were exercised against the publisher, but neither has been run in full: the incremental route has not yet run on a schedule, and the backfill walk (about 1,900 paced requests) has never been made end to end."
+      "refresh": "scheduled",
+      "refresh_gap": null
     }
   ],
   "not_published_for_2026": [

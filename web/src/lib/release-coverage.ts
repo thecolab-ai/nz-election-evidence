@@ -46,33 +46,35 @@ export interface HeldSource {
   last_success_at: string | null
 }
 
-export interface ProductHeld {
-  /** Sources of this product the store returned (a source whose rights allow no release is not returned at all). */
-  sources_seen: number
-  /** Sources with at least one successful load or fetch. */
-  sources_loaded: number
+/** What ONE route of a product holds. Routes to the same publisher items overlap, so they are never added together. */
+export interface RouteHeld {
+  source_id: string
   ledger_records: number
   statistical_observations: number
   catalogue_entries: number
+}
+
+export interface ProductHeld {
+  /** Sources of this product the store returned (a source whose rights allow no release is not returned at all). */
+  sources_seen: number
+  /** Routes that hold at least one row, each with its own count. */
+  routes: RouteHeld[]
   held: boolean
 }
 
 /**
- * What the store holds for one product, from the rows of the public `sources` view. Counts of different sources of
- * one product are routes to overlapping publisher items, so they are shown per source elsewhere; here they only
- * decide whether anything is held at all. They are never presented as one total of distinct items.
+ * What the store holds for one product, route by route, from the rows of the public `sources` view. A product's
+ * routes reach overlapping publisher items (an export and a live fetch of the same questions), so no total across
+ * routes is ever computed or shown: a sum would count the same item two or three times.
  */
 export function heldFor(product: ProductCoverage, sources: readonly HeldSource[]): ProductHeld {
-  const ids = new Set([...product.backfill_source_ids, ...product.refresh_source_ids])
-  const mine = sources.filter((s) => ids.has(s.source_id))
-  const sum = (pick: (s: HeldSource) => unknown) => mine.reduce((total, s) => total + Number(pick(s) ?? 0), 0)
-  const ledger = sum((s) => s.live_records)
-  const observations = sum((s) => s.statistical_observations)
-  const entries = sum((s) => s.statistical_catalogue_entries)
-  return {
-    sources_seen: mine.length, sources_loaded: mine.filter((s) => s.last_success_at).length,
-    ledger_records: ledger, statistical_observations: observations, catalogue_entries: entries, held: ledger + observations + entries > 0,
-  }
+  // A statistics source is both the backfill and the refresh route of its product: one source, counted once.
+  const ids = [...new Set([...product.backfill_source_ids, ...product.refresh_source_ids])]
+  const mine = ids.map((id) => sources.find((s) => s.source_id === id)).filter((s): s is HeldSource => s !== undefined)
+  const routes = mine
+    .map((s) => ({ source_id: s.source_id, ledger_records: Number(s.live_records ?? 0), statistical_observations: Number(s.statistical_observations ?? 0), catalogue_entries: Number(s.statistical_catalogue_entries ?? 0) }))
+    .filter((r) => r.ledger_records + r.statistical_observations + r.catalogue_entries > 0)
+  return { sources_seen: mine.length, routes, held: routes.length > 0 }
 }
 
 export function coverageCounts(rows: readonly ProductCoverage[] = RELEASE_COVERAGE): { total: number; with_backfill_route: number; with_refresh_route: number; without_refresh_route: number } {

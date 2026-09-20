@@ -7,6 +7,7 @@ import type { Json, SourcesFile } from "../../../supabase/functions/_shared/type
 import { resolveHost } from "../resolve_host.ts";
 import { refreshAccess, sanitize } from "./access.ts";
 import { connectWorker, type WorkerConnection } from "./connect.ts";
+import { typedDestinationCounts } from "./typed.ts";
 import { type LoaderContext, type LoaderFamily, type LoaderUnit, newReceipt, settle, type TargetReceipt } from "./contract.ts";
 
 /** Counts, hashes, statuses and publisher links of one ledger run. Payloads are never echoed. */
@@ -70,7 +71,14 @@ export async function refreshLedgerUnit(family: LoaderFamily, unit: LoaderUnit, 
       });
       addReport(receipt, report);
       statuses.push(report.status);
-      detail.push(reportDetail(report));
+      const entry = reportDetail(report);
+      // What this live source now holds in the typed tables, so a refresh is reconciled like a backfill.
+      if (connection && (report.status === "succeeded" || report.status === "partial")) {
+        const typed = await typedDestinationCounts(connection.sql, source.source_id).catch(() => null);
+        entry.typed_destination_rows = typed ? typed.counts : null;
+        if (typed) for (const [table, rows] of Object.entries(typed.counts)) receipt.counts.destination[`${source.source_id}:${table}`] = rows;
+      }
+      detail.push(entry);
     }
   } finally {
     await connection?.close();

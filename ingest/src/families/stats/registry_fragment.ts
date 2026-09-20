@@ -52,6 +52,7 @@ function sourceConfig(plan: StatsSourcePlan): SourceConfig {
     ...common, adapter_kind: "live_fetch", adapter_name: "stats_family_fetch", allowed_hosts: [...new Set([officialHost, ...plan.live_hosts])].sort(),
     access_basis: ACCESS_BASIS[plan.source_id] ?? "public_page", snapshot_semantics: "append_only_feed", min_interval_ms: 2000,
     expected_cadence_seconds: CADENCE_SECONDS[plan.source_id],
+    disabled_because: "cli_only",
     blocked_reason: "Runs from the statistics family CLI only (fetch, then load): the publisher files are larger than the Edge Function budget, so this source is never schedule-enabled.",
     access_note: plan.incremental_note,
   };

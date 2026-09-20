@@ -27,7 +27,7 @@ import { registryPayload, schedulePayload } from "../../supabase/functions/_shar
 import { IngestError, type Json, type SourcesFile } from "../../supabase/functions/_shared/types.ts";
 import sourcesFile from "../../supabase/functions/_shared/sources.config.json" with { type: "json" };
 import { ContractError } from "./families/stats/contract.ts";
-import { receiptViolations, REPOSITORY_ROOT, sanitize } from "./loaders/access.ts";
+import { redactReceipt, REPOSITORY_ROOT, sanitize } from "./loaders/access.ts";
 import { connectWorker } from "./loaders/connect.ts";
 import {
   type ErrorCode, EXIT, exitCodeFor, LOADER_COMMANDS, type LoaderCommand, type LoaderContext, LoaderError, type LoaderFamily, type LoaderUnit,
@@ -39,7 +39,7 @@ import { electionFamily } from "./loaders/families/election.ts";
 import { parliamentFamily } from "./loaders/families/parliament.ts";
 import { statsFamily } from "./loaders/families/stats.ts";
 import { mergeRegistry, rightsProblems, type RightsRow } from "./loaders/registry.ts";
-import { withRetry } from "./loaders/retry.ts";
+import { isTransient, withRetry } from "./loaders/retry.ts";
 
 export interface Loaders { file: SourcesFile; problems: string[]; families: LoaderFamily[] }
 
@@ -59,7 +59,7 @@ export function resolveTargets(families: LoaderFamily[], targets: string[]): { f
   for (const target of targets) {
     const matches = all.filter(({ family, unit }) =>
       target === "all" || family.family === target || unit.unit === target || unit.product_ids.includes(target)
-      || unit.backfill_source_ids.includes(target) || unit.refresh_source_ids.includes(target));
+      || unit.backfill_source_ids.includes(target) || unit.refresh_source_ids.includes(target) || (unit.alias_source_ids ?? []).includes(target));
     if (matches.length === 0) throw new LoaderError("target_unknown", `unknown target "${target}". Use all, a family (${families.map((f) => f.family).join(", ")}), a product id, or one of: ${all.map((u) => u.unit.unit).join(", ")}`);
     for (const match of matches) picked.add(match.family.family + "\n" + match.unit.unit);
   }
@@ -97,12 +97,20 @@ export async function runCommand(command: LoaderCommand, family: LoaderFamily, u
       case "plan": return await family.plan(unit, ctx);
       case "validate": return await family.validate(unit, ctx);
       case "dry-run": return await family.import(unit, ctx, true);
+      // Only the backfill is repeated automatically: it reads a private file and every write is idempotent and
+      // checkpointed. A refresh contacts publishers, so it runs ONCE per call: a run that stopped at its budget answers
+      // "partial" and the operator's next call resumes it. The budget given on the command line is never multiplied.
       case "import": return await withRetry(() => family.import(unit, ctx, false));
-      case "refresh": return dryRun ? await family.refresh(unit, ctx, true) : await withRetry(() => family.refresh(unit, ctx, false));
+      case "refresh": return await family.refresh(unit, ctx, dryRun);
       case "reconcile": return await family.reconcile(unit, ctx);
     }
   } catch (error) {
-    return refusal(family, unit, command, error);
+    const receipt = refusal(family, unit, command, error);
+    if (isTransient(error)) {
+      receipt.error_code = "transient_database";
+      receipt.status = "failed";
+    }
+    return receipt;
   }
 }
 
@@ -123,9 +131,10 @@ function positional(args: string[]): string[] {
 }
 
 async function emit(out: unknown, receiptFile: string | undefined): Promise<void> {
-  const problems = receiptViolations(out);
-  if (problems.length) throw new Error("the receipt holds a value that may not leave this process (" + problems.slice(0, 3).join("; ") + "); nothing was written");
-  const text = JSON.stringify(out, null, 2) + "\n";
+  // By now any write is committed, so a string that may not leave the process is withheld from the receipt, not thrown.
+  const { value, redacted } = redactReceipt(out);
+  if (redacted) console.error(`note: ${redacted} value(s) were withheld from this receipt by the ledger guard`);
+  const text = JSON.stringify(value, null, 2) + "\n";
   if (receiptFile) await writeFile(resolve(process.cwd(), receiptFile), text, { mode: 0o600 });
   process.stdout.write(text);
 }
@@ -197,16 +206,13 @@ async function main(argv: string[]): Promise<number> {
     const receipt = await runCommand(command as LoaderCommand, family, unit, ctx, dryRun);
     receipts.push(receipt);
     ctx.log(`${command} ${family.family}/${unit.unit}: ${receipt.status}${receipt.error_code ? " (" + receipt.error_code + ")" : ""}`);
-    if (receiptDir) {
-      const problemsInReceipt = receiptViolations(receipt);
-      if (problemsInReceipt.length) throw new Error("a receipt holds a value that may not leave this process (" + problemsInReceipt.slice(0, 3).join("; ") + ")");
-      await writeFile(resolve(process.cwd(), receiptDir, `${command}-${family.family}-${unit.unit}.json`), JSON.stringify(receipt, null, 2) + "\n", { mode: 0o600 });
-    }
+    if (receiptDir) await writeFile(resolve(process.cwd(), receiptDir, `${command}-${family.family}-${unit.unit}.json`), JSON.stringify(redactReceipt(receipt).value, null, 2) + "\n", { mode: 0o600 });
     const code = exitCodeFor(receipt.status);
     // A blocked route is an availability fact, not a failure of the run: it decides the exit code only when nothing ran.
     if (code !== EXIT.blocked) worst = Math.max(worst, code);
     if (code !== EXIT.ok && code !== EXIT.blocked && !args.includes("--continue-on-error")) break;
   }
+  if (receipts.length === 0) throw new LoaderError("usage", `nothing to ${command} for ${targets.join(", ")}: no unit of that target has such a route (see \`coverage\`)`);
   const summary = receipts.map((r) => ({
     family: r.family, unit: r.unit, status: r.status, error_code: r.error_code, input: r.counts.input, written: r.counts.written,
     checks_passed: r.counts.checks.filter((c) => c.ok).length, checks_failed: r.counts.checks.filter((c) => !c.ok).length,

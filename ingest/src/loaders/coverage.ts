@@ -58,7 +58,7 @@ export const SOURCE_ROUTES: { [sourceId: string]: SourceRoute } = {
   parliament_export_member_terms: { kind: "backfill", state: "loaded_and_reconciled", evidence: COMBINED },
   parliament_export_minister_roles: { kind: "backfill", state: "loaded_and_reconciled", evidence: COMBINED },
   parliament_export_written_questions: { kind: "backfill", state: "loaded_and_reconciled", evidence: COMBINED },
-  nz_parliament_written_questions_recent: { kind: "refresh", state: "exercised_not_run_in_full", evidence: "100 records through the runner against the publisher, 2026-09-20; not yet run on a schedule (LIVE-NOTES.md)" },
+  nz_parliament_written_questions_recent: { kind: "refresh", state: "working", evidence: "stored run through this CLI against the publisher, 2026-09-20: 21 paced requests, 2,000 records, stopped at its record budget with a checkpoint and resumed by the next call (a pass over two months is a chain of such calls). Not yet run on a schedule" },
   nz_parliament_written_questions_backfill: { kind: "refresh", state: "exercised_not_run_in_full", evidence: "about 1,900 paced requests; never run end to end. History rests on the export route" },
   nz_parliament_committee_reports: { kind: "refresh", state: "working", evidence: "complete walk against the publisher, 2026-09-20 (LIVE-NOTES.md)" },
   nz_parliament_committee_business: { kind: "refresh", state: "working", evidence: "dry run against the publisher, 2026-09-20: 123 items, 123 content hashes identical to the export route" },
@@ -98,7 +98,6 @@ export const REFRESH_GAPS: { [productId: string]: string } = {
   P16: "The Electoral Commission's page challenges this host. Backfill only.",
   P17: "The Electoral Commission's page challenges this host. Backfill only.",
   P19: "A closed historical release published as a ZIP archive; the text-only fetch client cannot read it. Nothing to refresh.",
-  P24: "Both live routes are built and were exercised against the publisher, but neither has been run in full: the incremental route has not yet run on a schedule, and the backfill walk (about 1,900 paced requests) has never been made end to end.",
   P21: "Workbooks mapped by hand; the publisher's observation API needs a subscription key and is not used.",
 };
 

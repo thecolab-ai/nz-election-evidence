@@ -53,6 +53,7 @@ export function parliamentFamily(file: SourcesFile): LoaderFamily {
     units: () => PARLIAMENT_EXPORT_CONTRACTS.map((contract) => ({
       unit: contract.source_id, family: "parliament" as const, product_ids: contract.product_ids,
       backfill_source_ids: [contract.source_id], refresh_source_ids: REFRESH[contract.source_id] ?? [],
+      alias_source_ids: REFRESH_BACKFILL[contract.source_id] ?? [],
     })),
 
     async plan(unit, ctx) { return inspect(unit, ctx, "plan"); },
@@ -99,6 +100,7 @@ export function parliamentFamily(file: SourcesFile): LoaderFamily {
     },
 
     refresh(unit, ctx, dryRun) {
+      // The whole-Parliament walk is never part of a plain refresh: it runs only when asked for with --backfill.
       const sources = ctx.backfill && REFRESH_BACKFILL[unit.unit] ? REFRESH_BACKFILL[unit.unit] : unit.refresh_source_ids;
       return refreshLedgerUnit(family, { ...unit, refresh_source_ids: sources }, file, ctx, dryRun);
     },

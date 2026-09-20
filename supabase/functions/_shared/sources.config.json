@@ -2426,6 +2426,7 @@
       "source_id": "nz_parliament_written_questions_backfill",
       "title": "Written questions, 54th Parliament from its start (metadata only)",
       "enabled": false,
+      "disabled_because": "cli_only",
       "blocked_reason": "Backfill route: about 1,900 paced requests. Run deliberately from the CLI and resumed from its checkpoint; never scheduled.",
       "adapter_options": {
         "mode": "backfill",
@@ -2514,6 +2515,7 @@
       "expected_cadence_seconds": 86400,
       "snapshot_semantics": "rolling_window",
       "enabled": false,
+      "disabled_because": "pending_person_decision",
       "blocked_reason": "Works from the CLI, but waits on a person's decision: the legislation website's robots.txt disallows the versions index path (recorded as an advisory), and the way the index address is derived was checked on three bills only. See LIVE-NOTES.md.",
       "access_basis": "public_undocumented_endpoint",
       "min_interval_ms": 3000,
@@ -2540,6 +2542,7 @@
       "view_scope": "general",
       "snapshot_semantics": "append_only_feed",
       "enabled": false,
+      "disabled_because": "publisher_blocked",
       "blocked_reason": "On 2026-09-20 the listing answered this project's automated client with a firewall challenge (one attempt, not retried, not worked around). The listing markup has therefore never been observed and the parser is unverified. The releases feed stays the live route.",
       "access_basis": "public_page",
       "min_interval_ms": 5000,
@@ -2576,6 +2579,7 @@
       "snapshot_semantics": "append_only_feed",
       "min_interval_ms": 2000,
       "expected_cadence_seconds": 2592000,
+      "disabled_because": "cli_only",
       "blocked_reason": "Runs from the statistics family CLI only (fetch, then load): the publisher files are larger than the Edge Function budget, so this source is never schedule-enabled.",
       "access_note": "The listing page is fetched fresh. Facts come from a workbook whose cell mapping was reviewed by hand for one quarter; a new quarter needs that review again, so no fact is parsed unattended."
     },
@@ -2603,6 +2607,7 @@
       "snapshot_semantics": "append_only_feed",
       "min_interval_ms": 2000,
       "expected_cadence_seconds": 2592000,
+      "disabled_because": "cli_only",
       "blocked_reason": "Runs from the statistics family CLI only (fetch, then load): the publisher files are larger than the Edge Function budget, so this source is never schedule-enabled.",
       "access_note": "The statistics index is fetched fresh. Facts come from a quarterly workbook normalised against reviewed cells; the next quarter's workbook needs that review, so no fact is parsed unattended."
     },
@@ -2631,6 +2636,7 @@
       "snapshot_semantics": "append_only_feed",
       "min_interval_ms": 2000,
       "expected_cadence_seconds": 604800,
+      "disabled_because": "cli_only",
       "blocked_reason": "Runs from the statistics family CLI only (fetch, then load): the publisher files are larger than the Edge Function budget, so this source is never schedule-enabled.",
       "access_note": "The public catalogue API result set is fetched fresh and replaces nothing: entries are versioned by content."
     },
@@ -2715,6 +2721,7 @@
       "snapshot_semantics": "append_only_feed",
       "min_interval_ms": 2000,
       "expected_cadence_seconds": 86400,
+      "disabled_because": "cli_only",
       "blocked_reason": "Runs from the statistics family CLI only (fetch, then load): the publisher files are larger than the Edge Function budget, so this source is never schedule-enabled.",
       "access_note": "The listing page is fetched fresh and every CSV/ZIP link on it becomes a catalogue entry version."
     },
@@ -2773,6 +2780,7 @@
       "snapshot_semantics": "append_only_feed",
       "min_interval_ms": 2000,
       "expected_cadence_seconds": 2592000,
+      "disabled_because": "cli_only",
       "blocked_reason": "Runs from the statistics family CLI only (fetch, then load): the publisher files are larger than the Edge Function budget, so this source is never schedule-enabled.",
       "access_note": "The newest 'Selected price indexes' CSV linked from the listing page is fetched fresh and loaded as its own release vintage."
     },
@@ -2831,6 +2839,7 @@
       "snapshot_semantics": "append_only_feed",
       "min_interval_ms": 2000,
       "expected_cadence_seconds": 2592000,
+      "disabled_because": "cli_only",
       "blocked_reason": "Runs from the statistics family CLI only (fetch, then load): the publisher files are larger than the Edge Function budget, so this source is never schedule-enabled.",
       "access_note": "The regional monthly CSV linked from the rental bond data page is fetched fresh and loaded as its own release vintage."
     }

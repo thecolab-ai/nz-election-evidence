@@ -4,18 +4,18 @@ import { Note } from '@/components/page'
 import { ErrorBlock, LoadingBlock } from '@/components/states'
 import { formatCount } from '@/lib/format'
 import { useRowsQuery } from '@/lib/queries'
-import { coverageCounts, heldFor, NOT_PUBLISHED_FOR_2026, REFRESH_LABELS, RELEASE_COVERAGE, type HeldSource, type ProductCoverage, type ProductHeld } from '@/lib/release-coverage'
+import { coverageCounts, heldFor, NOT_PUBLISHED_FOR_2026, REFRESH_LABELS, RELEASE_COVERAGE, type HeldSource, type ProductCoverage, type ProductHeld, type RouteHeld } from '@/lib/release-coverage'
 
-function heldWords(held: ProductHeld): string {
+function routeWords(route: RouteHeld): string {
   const parts: string[] = []
-  if (held.ledger_records > 0) parts.push(`${formatCount(held.ledger_records)} source records`)
-  if (held.statistical_observations > 0) parts.push(`${formatCount(held.statistical_observations)} observations`)
-  if (held.catalogue_entries > 0) parts.push(`${formatCount(held.catalogue_entries)} catalogue entries`)
+  if (route.ledger_records > 0) parts.push(`${formatCount(route.ledger_records)} source records`)
+  if (route.statistical_observations > 0) parts.push(`${formatCount(route.statistical_observations)} observations`)
+  if (route.catalogue_entries > 0) parts.push(`${formatCount(route.catalogue_entries)} catalogue entries`)
   return parts.join(' · ')
 }
 
 function ProductLine({ row, held }: { row: ProductCoverage; held: ProductHeld }) {
-  const sourceIds = [...row.backfill_source_ids, ...row.refresh_source_ids]
+  const sourceIds = [...new Set([...row.backfill_source_ids, ...row.refresh_source_ids])]
   return (
     <li className="flex flex-wrap items-start justify-between gap-3 px-4 py-2.5" data-testid={`coverage-${row.product_id}`} data-held={held.held ? 'yes' : 'no'}>
       <div className="min-w-0 max-w-3xl">
@@ -25,12 +25,21 @@ function ProductLine({ row, held }: { row: ProductCoverage; held: ProductHeld })
         <p className="text-[13px] text-muted-foreground">
           {row.publisher} ·{' '}
           {held.held ? (
-            <span data-testid="coverage-held-count">Held across {held.sources_loaded} {held.sources_loaded === 1 ? 'route' : 'routes'}: {heldWords(held)}. Routes to the same publisher items overlap, so these are not one total.</span>
+            <span data-testid="coverage-held-count">
+              Held, route by route (routes reach overlapping publisher items, so they are not added together):{' '}
+              {held.routes.map((route, index) => (
+                <span key={route.source_id}>
+                  {index > 0 ? '; ' : ''}
+                  <Link to="/sources/$sourceId" params={{ sourceId: route.source_id }} className="doc-link font-mono text-xs">{route.source_id}</Link> {routeWords(route)}
+                </span>
+              ))}
+              .
+            </span>
           ) : (
             <span>An import route exists; nothing of this product is in this store.</span>
           )}{' '}
           {row.refresh_gap ? <span>{row.refresh_gap} </span> : null}
-          {sourceIds.map((id, index) => (
+          {held.held ? null : sourceIds.map((id, index) => (
             <span key={id}>
               {index > 0 ? ', ' : ''}
               <Link to="/sources/$sourceId" params={{ sourceId: id }} className="doc-link font-mono text-xs">

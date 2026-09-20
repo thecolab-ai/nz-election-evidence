@@ -8,10 +8,10 @@ import { join, resolve } from "node:path";
 import test from "node:test";
 import { CLI_ONLY_ADAPTERS, LIVE_ADAPTERS } from "../../supabase/functions/_shared/adapters/index.ts";
 import { textViolation } from "../../supabase/functions/_shared/text_guard.ts";
-import type { SourceConfig, SourcesFile } from "../../supabase/functions/_shared/types.ts";
+import type { SourcesFile } from "../../supabase/functions/_shared/types.ts";
 import sourcesFile from "../../supabase/functions/_shared/sources.config.json" with { type: "json" };
 import { loaders, resolveTargets, runCommand } from "../src/cli.ts";
-import { assertPrivateInput, insideRepository, receiptViolations, refreshAccess, REPOSITORY_ROOT, sanitize } from "../src/loaders/access.ts";
+import { assertPrivateInput, insideAnyCheckout, insideRepository, receiptViolations, redactReceipt, refreshAccess, REPOSITORY_ROOT, sanitize } from "../src/loaders/access.ts";
 import {
   check, ERROR_CODES, EXIT, exitCodeFor, LOADER_COMMANDS, LoaderError, type LoaderFamily, type LoaderStatus, type LoaderUnit, newReceipt, settle, type TargetReceipt,
 } from "../src/loaders/contract.ts";
@@ -178,6 +178,10 @@ test("targets: all, a family, a product, a unit and a source id resolve to units
   assert.deepEqual(resolveTargets(families, ["P22"]).map((u) => u.unit.unit), ["stats_nz_selected_series", "stats_nz_release_series"]);
   assert.deepEqual(resolveTargets(families, ["P09", "P09", "election"]).length, 10, "a unit named twice runs once (the nine election units and the core probe that claims P09)");
   assert.deepEqual(resolveTargets(families, ["nz_parliament_written_questions_recent"]).map((u) => u.unit.unit), ["parliament_export_written_questions"]);
+  // The deliberate whole-Parliament walk names its unit too, but is never part of a plain refresh.
+  const [questions] = resolveTargets(families, ["nz_parliament_written_questions_backfill"]);
+  assert.equal(questions.unit.unit, "parliament_export_written_questions");
+  assert.ok(!questions.unit.refresh_source_ids.includes("nz_parliament_written_questions_backfill"));
   assert.throws(() => resolveTargets(families, ["P99"]), (e: unknown) => e instanceof LoaderError && e.code === "target_unknown");
   // Every one of the 24 products is reachable by its id.
   for (const product of catalogue) assert.ok(resolveTargets(families, [product.product_id]).length >= 1, product.product_id);
@@ -281,9 +285,19 @@ test("source access: a probe, a challenged route and a pending decision are neve
   assert.deepEqual([access("nz_parliament_bill_publications").allowed, access("nz_parliament_bill_publications").code], [false, "route_pending_decision"]);
   assert.equal(access("nz_parliament_written_questions_backfill").allowed, true, "disabled for scheduling only: it runs deliberately from the CLI");
   assert.equal(access("nz_parliament_committee_reports").allowed, true);
-  const signIn: SourceConfig = { ...file.sources.find((s) => s.source_id === "nz_parliament_committee_reports")!, access_basis: "authenticated" };
-  assert.equal(refreshAccess(signIn).allowed, false);
-  assert.equal(refreshAccess({ ...signIn, access_basis: undefined }).allowed, false, "no stated access basis is not public");
+  const reports = file.sources.find((s) => s.source_id === "nz_parliament_committee_reports")!;
+  assert.equal(refreshAccess({ ...reports, access_basis: "authenticated" }).allowed, false);
+  assert.equal(refreshAccess({ ...reports, access_basis: undefined }).allowed, false, "no stated access basis is not public");
+  // The decision comes from a closed value, never from the wording of a note: a blocked source whose note happens to
+  // mention the CLI stays blocked, and a disabled source that does not say why is never contacted.
+  assert.equal(refreshAccess({ ...reports, enabled: false, disabled_because: "publisher_blocked", blocked_reason: "Challenged. Do not run from the CLI; runs from the CLI only after a person says so." }).allowed, false);
+  assert.equal(refreshAccess({ ...reports, enabled: false, disabled_because: undefined, blocked_reason: "Runs from the CLI only." }).allowed, false);
+  assert.equal(refreshAccess({ ...reports, enabled: false, disabled_because: "cli_only", blocked_reason: "anything" }).allowed, true);
+  // Every disabled live source of the registry states its reason as a closed value (probes record availability and need none).
+  for (const source of file.sources.filter((s) => s.adapter_kind === "live_fetch" && !s.enabled && s.adapter_name !== "availability_probe")) assert.ok(source.disabled_because, source.source_id);
+  const undeclared = structuredClone(file);
+  delete undeclared.sources.find((s) => s.source_id === "nz_government_releases_listing")!.disabled_because;
+  assert.ok(mergeRegistry(undeclared, []).problems.some((p) => /must state disabled_because/.test(p)));
 });
 
 test("source access: a blocked refresh writes nothing and says blocked, never 'no records'", async () => {
@@ -300,6 +314,29 @@ test("source access: a blocked refresh writes nothing and says blocked, never 'n
   assert.deepEqual([noBackfill.status, noBackfill.error_code], ["blocked", "route_none"]);
 });
 
+test("outputs: a value that may not leave the process is withheld from a receipt, and the receipt is kept", () => {
+  const { value, redacted } = redactReceipt({ unit: "u", counts: { seen: 3 }, fetches: [{ url: "https://publisher.example/list?token=abc123" }, { url: "https://publisher.example/list" }], note: "written by person@example.org" });
+  assert.equal(redacted, 2);
+  assert.deepEqual(value.counts, { seen: 3 }, "everything else survives");
+  assert.match(value.fetches[0].url, /^\[withheld from this receipt: credential_like_value\]$/);
+  assert.equal(value.fetches[1].url, "https://publisher.example/list");
+  assert.deepEqual(receiptViolations(value), []);
+});
+
+test("privacy: a private input inside ANY git checkout is refused, not only inside this worktree", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "loader-checkout-"));
+  try {
+    await mkdir(join(dir, "other-checkout", ".git"), { recursive: true });
+    await mkdir(join(dir, "other-checkout", "data"), { mode: 0o700 });
+    await writeFile(join(dir, "other-checkout", "data", "rows.jsonl"), "{}\n", { mode: 0o600 });
+    assert.equal(insideAnyCheckout(join(dir, "other-checkout", "data", "rows.jsonl")), true);
+    assert.equal(insideAnyCheckout(dir), false);
+    await assert.rejects(assertPrivateInput(join(dir, "other-checkout", "data", "rows.jsonl"), "fixture"), (e: unknown) => e instanceof LoaderError && e.code === "input_location_not_private");
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
 test("outputs: a receipt that would carry an email, a disk location or a credential is caught", () => {
   assert.deepEqual(receiptViolations({ a: ["fine", { b: "https://www.parliament.nz/en/pb/" }] }), []);
   assert.equal(receiptViolations({ a: { b: "/srv/someone/export.jsonl" } }).length, 1);
@@ -308,6 +345,19 @@ test("outputs: a receipt that would carry an email, a disk location or a credent
 });
 
 // Retries ----------------------------------------------------------------------------------------------------------------------------
+
+test("retries: a refresh contacts publishers, so it runs once per call and its budget is never multiplied", async () => {
+  let refreshes = 0;
+  let imports = 0;
+  const counting = {
+    ...fakeFamily,
+    refresh: async () => { refreshes++; return { ...newReceipt(fakeFamily, fakeUnit, "refresh", "a", "1"), status: "partial" as LoaderStatus }; },
+    import: async () => { imports++; return { ...newReceipt(fakeFamily, fakeUnit, "import", "a", "1"), status: imports < 2 ? "partial" as LoaderStatus : "succeeded" as LoaderStatus }; },
+  } as unknown as LoaderFamily;
+  const ctx = { env: {}, log: () => undefined };
+  const refreshed = await runCommand("refresh", counting, fakeUnit, ctx, false);
+  assert.deepEqual([refreshed.status, refreshes], ["partial", 1], "a partial refresh is returned; the operator's next call resumes it");
+});
 
 test("retries: a transient database failure and a budget stop are repeated; a refusal never is", async () => {
   const done = (status: LoaderStatus): TargetReceipt => ({ ...newReceipt(fakeFamily, fakeUnit, "import", "a", "1"), status });

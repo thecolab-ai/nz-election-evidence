@@ -94,6 +94,10 @@ export function mergeRegistry(committed: SourcesFile, parts: Fragment[] = fragme
     if (source.adapter_kind === "live_fetch" && !LIVE_ADAPTERS[source.adapter_name] && !CLI_ONLY_ADAPTERS.has(source.adapter_name)) {
       problems.push(`source ${source.source_id}: adapter ${source.adapter_name} does not exist`);
     }
+    const probe = source.adapter_name === "availability_probe";
+    if (source.adapter_kind === "live_fetch" && !source.enabled && !probe && !source.disabled_because) problems.push(`source ${source.source_id}: a disabled live source must state disabled_because`);
+    if ((source.enabled || probe || source.adapter_kind !== "live_fetch") && source.disabled_because) problems.push(`source ${source.source_id}: disabled_because belongs on a disabled live source only`);
+    if (CLI_ONLY_ADAPTERS.has(source.adapter_name) && source.disabled_because !== "cli_only") problems.push(`source ${source.source_id}: a CLI-only adapter must say disabled_because cli_only`);
   }
   for (const schedule of schedules) {
     const source = sources.find((s) => s.source_id === schedule.source_id);

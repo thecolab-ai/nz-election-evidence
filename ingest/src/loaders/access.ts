@@ -6,6 +6,7 @@
 //   Outputs          receipts carry counts, digests, statuses and publisher links. Never a location on a disk, a
 //                    connection string, a credential or a payload.
 
+import { existsSync } from "node:fs";
 import { stat } from "node:fs/promises";
 import { dirname, isAbsolute, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -21,6 +22,17 @@ export function insideRepository(location: string, root: string = REPOSITORY_ROO
   return rel === "" || (!rel.startsWith("..") && !isAbsolute(rel));
 }
 
+/** Inside ANY git checkout (this worktree, the main checkout, another worktree): a `.git` entry in an ancestor. */
+export function insideAnyCheckout(location: string): boolean {
+  let dir = resolve(location);
+  for (;;) {
+    if (existsSync(resolve(dir, ".git"))) return true;
+    const parent = dirname(dir);
+    if (parent === dir) return false;
+    dir = parent;
+  }
+}
+
 export interface PrivateInputFinding { input: string; finding: string }
 
 /**
@@ -30,7 +42,7 @@ export interface PrivateInputFinding { input: string; finding: string }
  * receipt instead of refusing the input. Family artifacts are always "require".
  */
 export async function assertPrivateInput(location: string, label: string, ownerOnly: "require" | "advise" = "require", root: string = REPOSITORY_ROOT): Promise<PrivateInputFinding[]> {
-  if (insideRepository(location, root)) throw new LoaderError("input_location_not_private", `${label}: the private input sits inside the repository; move it outside before anything reads it`);
+  if (insideRepository(location, root) || insideAnyCheckout(location)) throw new LoaderError("input_location_not_private", `${label}: the private input sits inside the repository; move it outside before anything reads it`);
   const findings: PrivateInputFinding[] = [];
   let info;
   try {
@@ -51,25 +63,20 @@ export async function assertPrivateInput(location: string, label: string, ownerO
 
 export interface RouteAccess { allowed: boolean; code: "route_blocked" | "route_pending_decision" | null; reason: string | null }
 
-const PENDING_DECISION = /waits on a person|pending a person|person's decision/i;
-
 /**
- * May the refresh route of this live source be run now? Deliberately conservative:
+ * May the refresh route of this live source be run now? Decided from closed values, never from the wording of a note:
  *   - a sign-in or a paywall: never (the runner refuses too; this answers before anything is built);
  *   - a probe: it records availability, it is not a refresh route;
- *   - a source the registry marks disabled because a publisher challenged it, or because a person's decision is pending.
- * A disabled source whose note says it runs "from the CLI only" is a working CLI route and is allowed.
+ *   - a disabled source: only when the registry says it is disabled because it is CLI-only. A publisher block, a pending
+ *     decision, or a disabled source that does not say why, is never contacted.
  */
 export function refreshAccess(source: SourceConfig): RouteAccess {
   if (source.adapter_kind !== "live_fetch") return { allowed: false, code: "route_blocked", reason: "not a live source" };
   if (!source.access_basis || INELIGIBLE_ACCESS.has(source.access_basis)) return { allowed: false, code: "route_blocked", reason: "only public unauthenticated endpoints are contacted" };
   if (source.adapter_name === "availability_probe") return { allowed: false, code: "route_blocked", reason: source.blocked_reason ?? "availability probe only: the publisher does not serve this host" };
-  if (!source.enabled && source.blocked_reason) {
-    if (PENDING_DECISION.test(source.blocked_reason)) return { allowed: false, code: "route_pending_decision", reason: source.blocked_reason };
-    if (/CLI only|from the CLI|family CLI|Run deliberately/i.test(source.blocked_reason)) return { allowed: true, code: null, reason: null };
-    return { allowed: false, code: "route_blocked", reason: source.blocked_reason };
-  }
-  return { allowed: true, code: null, reason: null };
+  if (source.enabled || source.disabled_because === "cli_only") return { allowed: true, code: null, reason: null };
+  if (source.disabled_because === "pending_person_decision") return { allowed: false, code: "route_pending_decision", reason: source.blocked_reason ?? null };
+  return { allowed: false, code: "route_blocked", reason: source.blocked_reason ?? "disabled without a stated reason" };
 }
 
 const CONNECTION = /postgres(?:ql)?:\/\/\S+/g;
@@ -78,6 +85,26 @@ const HOME_LOCATION = /(^|["\s=:(,])(\/(home|Users|root|var|mnt|srv|tmp|opt|data
 /** Text that may leave the process: connection strings and disk locations are cut out, length is bounded. */
 export function sanitize(message: string): string {
   return message.replace(CONNECTION, "postgres://[redacted]").replace(HOME_LOCATION, "$1[location withheld]").replace(/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g, "[redacted]").slice(0, 600);
+}
+
+/**
+ * A receipt is written AFTER the work is committed, so a value that may not leave the process must not cost the
+ * receipt: the offending string is replaced by a marker that names the rule it broke, and the rest is kept.
+ */
+export function redactReceipt<T>(value: T): { value: T; redacted: number } {
+  let redacted = 0;
+  const walk = (node: unknown): unknown => {
+    if (typeof node === "string") {
+      const violation = textViolation(node);
+      if (!violation) return node;
+      redacted++;
+      return `[withheld from this receipt: ${violation}]`;
+    }
+    if (Array.isArray(node)) return node.map(walk);
+    if (node && typeof node === "object") return Object.fromEntries(Object.entries(node).map(([key, item]) => [key, walk(item)]));
+    return node;
+  };
+  return { value: walk(value) as T, redacted };
 }
 
 /** Every string in a receipt is checked with the shared ledger guard before it is printed or written. */

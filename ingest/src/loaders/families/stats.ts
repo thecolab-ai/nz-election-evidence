@@ -152,7 +152,9 @@ export function statsFamily(): LoaderFamily {
       const d = result.destination;
       receipt.counts.destination = { stat_datasets: d.datasets, stat_releases: d.releases, stat_series: d.series, geography_versions: d.geographies, stat_catalogue_entry_versions: d.catalogue_entry_versions, stat_observations: d.observations };
     }
-    for (const line of result.artifact_to_destination) check(receipt, line.what, line.upstream_rows, line.artifact_rows);
+    // The family loader decides whether a difference is explained (after a refresh the store rightly holds the versions
+    // of earlier loads as well); the receipt carries its verdict rather than re-deciding it as a strict equality.
+    for (const line of result.artifact_to_destination) receipt.counts.checks.push({ name: line.what, expected: line.upstream_rows, actual: line.artifact_rows, ok: !line.explanation.startsWith("UNEXPLAINED") });
     if (result.status === "skipped_lease_held") {
       receipt.status = "skipped_lease_held";
       receipt.error_code = "lease_held";

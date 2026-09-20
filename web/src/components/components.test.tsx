@@ -147,11 +147,24 @@ describe('release coverage keeps routes and held data apart', () => {
   it('held is read from the store: ledger records, or typed observations for a statistics source, never a guess', () => {
     const p23 = RELEASE_COVERAGE.find((row) => row.product_id === 'P23')!
     const empty = heldFor(p23, [{ source_id: 'stats_tenancy_rental_bonds', live_records: 0, statistical_observations: null, statistical_catalogue_entries: null, last_success_at: null }])
-    expect(empty).toMatchObject({ held: false, sources_seen: 1, sources_loaded: 0 })
+    expect(empty).toMatchObject({ held: false, sources_seen: 1, routes: [] })
     const loaded = heldFor(p23, [{ source_id: 'stats_tenancy_rental_bonds', live_records: 0, statistical_observations: '57888', statistical_catalogue_entries: 4, last_success_at: '2026-09-20T10:00:00Z' }])
-    expect(loaded).toMatchObject({ held: true, sources_loaded: 1, ledger_records: 0, statistical_observations: 57888, catalogue_entries: 4 })
+    expect(loaded.held).toBe(true)
+    expect(loaded.routes).toEqual([{ source_id: 'stats_tenancy_rental_bonds', ledger_records: 0, statistical_observations: 57888, catalogue_entries: 4 }])
     // A source of another product never counts towards this one.
     expect(heldFor(p23, [{ source_id: 'stats_msd_benefits', live_records: 0, statistical_observations: 903, statistical_catalogue_entries: 26, last_success_at: '2026-09-20T10:00:00Z' }]).held).toBe(false)
+  })
+  it('never adds overlapping routes of one product together: each route keeps its own count', () => {
+    const p24 = RELEASE_COVERAGE.find((row) => row.product_id === 'P24')!
+    const held = heldFor(p24, [
+      { source_id: 'parliament_export_written_questions', live_records: 187956, statistical_observations: null, statistical_catalogue_entries: null, last_success_at: '2026-09-20T10:00:00Z' },
+      { source_id: 'nz_parliament_written_questions_recent', live_records: 2000, statistical_observations: null, statistical_catalogue_entries: null, last_success_at: '2026-09-20T11:00:00Z' },
+    ])
+    expect(held.routes.map((r) => [r.source_id, r.ledger_records])).toEqual([['parliament_export_written_questions', 187956], ['nz_parliament_written_questions_recent', 2000]])
+    expect(JSON.stringify(held)).not.toContain('189956')
+    // A route that ran and holds nothing is not counted as holding anything.
+    const ranEmpty = heldFor(p24, [{ source_id: 'nz_parliament_written_questions_recent', live_records: 0, statistical_observations: null, statistical_catalogue_entries: null, last_success_at: '2026-09-20T11:00:00Z' }])
+    expect(ranEmpty).toMatchObject({ held: false, routes: [] })
   })
   it('says plainly what the 2026 election routes do not publish', () => {
     expect(NOT_PUBLISHED_FOR_2026.some((line) => /nominations/.test(line) && /unknown/.test(line))).toBe(true)
