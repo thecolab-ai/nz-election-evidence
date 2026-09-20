@@ -1,0 +1,78 @@
+{
+  "input_findings": null,
+  "receipt_version": 1,
+  "source_id": "nz_parliament_mp_directory",
+  "mode": "incremental",
+  "dry_run": false,
+  "status": "succeeded",
+  "complete_snapshot": true,
+  "error_class": null,
+  "error_detail": null,
+  "manifest_hash": "sha256:9511f83474ea24d37190bd33b2ce586326ab62ba6d88d0a17eaba79f9997dc4d",
+  "manifest": {
+    "manifest_version": 1,
+    "config_version": 1,
+    "source_id": "nz_parliament_mp_directory",
+    "adapter_name": "nz_parliament_mp_directory",
+    "adapter_version": "1.0.0",
+    "mode": "incremental",
+    "allowed_hosts": [
+      "www3.parliament.nz"
+    ],
+    "snapshot_semantics": "complete_snapshot",
+    "source_config_hash": "sha256:fbd44c010a9a07624cfa0e5d536c23f975c574775a5be6b53554ff4f94043553",
+    "max_records": 2000
+  },
+  "run_id": "8060ef87-95a6-4db2-a023-711403b7b1a3",
+  "resumed_from_run_id": null,
+  "totals": {
+    "seen": 122,
+    "versions_inserted": 0,
+    "observations_inserted": 122,
+    "unchanged": 122,
+    "rejected": 0
+  },
+  "tombstoned": 0,
+  "pages": 1,
+  "projection": {
+    "documents": 0,
+    "mp_directory": 122,
+    "baseline_candidacies": 0
+  },
+  "fetches": [
+    {
+      "method": "GET",
+      "url": "https://www3.parliament.nz/robots.txt",
+      "attempt": 1,
+      "outcome": "ok",
+      "http_status": 200,
+      "bytes": 714,
+      "body_sha256": "sha256:e19bf175c5b805494a9bfcf76e5a80483499f01e74c48bb4fe45498c5668b21a",
+      "retrieved_at": "2026-09-20T07:12:33.976Z",
+      "duration_ms": 555
+    },
+    {
+      "method": "GET",
+      "url": "https://www3.parliament.nz/en/mps-and-electorates/members-of-parliament/",
+      "attempt": 1,
+      "outcome": "robots_advisory_disallowed",
+      "http_status": null,
+      "bytes": null,
+      "body_sha256": null,
+      "retrieved_at": "2026-09-20T07:12:34.532Z",
+      "duration_ms": 0
+    },
+    {
+      "method": "GET",
+      "url": "https://www3.parliament.nz/en/mps-and-electorates/members-of-parliament/",
+      "attempt": 1,
+      "outcome": "ok",
+      "http_status": 200,
+      "bytes": 354159,
+      "body_sha256": "sha256:a9589081aee8bd3ef1624966632fbfb990c3b5a36c39cd18c609d2ee61cf9c61",
+      "retrieved_at": "2026-09-20T07:12:33.963Z",
+      "duration_ms": 6228
+    }
+  ],
+  "receipt_note": "Real retrieval from the official publisher on 2026-09-20 (UTC), written to a disposable local database. Counts, hashes, statuses and publisher URLs only; no payloads or response bodies."
+}

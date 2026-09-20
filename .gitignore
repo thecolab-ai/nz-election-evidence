@@ -2,3 +2,13 @@ __pycache__/
 *.py[cod]
 .DS_Store
 .venv/
+node_modules/
+dist/
+test-results/
+playwright-report/
+.receipts-local/
+.env
+.env.*
+!.env.example
+# random per-bootstrap value of the LOCAL disposable worker login (ingest/src/local_bootstrap.ts)
+.local-stack.json

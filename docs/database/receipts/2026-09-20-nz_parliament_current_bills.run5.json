@@ -1,0 +1,78 @@
+{
+  "input_findings": null,
+  "receipt_version": 1,
+  "source_id": "nz_parliament_current_bills",
+  "mode": "incremental",
+  "dry_run": false,
+  "status": "succeeded",
+  "complete_snapshot": true,
+  "error_class": null,
+  "error_detail": null,
+  "manifest_hash": "sha256:323a2b3b759b40dbd38572b1b80f1ec7ba963359ea05f46d32db4ca8f2bd0ccf",
+  "manifest": {
+    "manifest_version": 1,
+    "config_version": 1,
+    "source_id": "nz_parliament_current_bills",
+    "adapter_name": "nz_parliament_current_bills",
+    "adapter_version": "1.0.0",
+    "mode": "incremental",
+    "allowed_hosts": [
+      "bills.parliament.nz"
+    ],
+    "snapshot_semantics": "complete_snapshot",
+    "source_config_hash": "sha256:762f7b787dc4170099195fab6079c1d0e89873f1ccc53c00727cf663e4226dd2",
+    "max_records": 2000
+  },
+  "run_id": "1f9e23af-f77b-4bc8-af1f-4dbbcfc9a236",
+  "resumed_from_run_id": null,
+  "totals": {
+    "seen": 93,
+    "versions_inserted": 0,
+    "observations_inserted": 93,
+    "unchanged": 93,
+    "rejected": 0
+  },
+  "tombstoned": 0,
+  "pages": 2,
+  "projection": {
+    "documents": 93,
+    "mp_directory": 0,
+    "baseline_candidacies": 0
+  },
+  "fetches": [
+    {
+      "method": "GET",
+      "url": "https://bills.parliament.nz/robots.txt",
+      "attempt": 1,
+      "outcome": "ok",
+      "http_status": 200,
+      "bytes": 23,
+      "body_sha256": "sha256:eaeaa8d3511d1622227d89707d995b8b1f0902f5b86fdbe58882d1cef260d4d7",
+      "retrieved_at": "2026-09-20T07:12:40.434Z",
+      "duration_ms": 219
+    },
+    {
+      "method": "POST",
+      "url": "https://bills.parliament.nz/api/data/search",
+      "attempt": 1,
+      "outcome": "ok",
+      "http_status": 200,
+      "bytes": 41089,
+      "body_sha256": "sha256:48bfd793ef3afe0782032299ee3cb92d1c79ec67c31ac556aed9a021a5c9565e",
+      "retrieved_at": "2026-09-20T07:12:40.424Z",
+      "duration_ms": 3155
+    },
+    {
+      "method": "POST",
+      "url": "https://bills.parliament.nz/api/data/search",
+      "attempt": 1,
+      "outcome": "ok",
+      "http_status": 200,
+      "bytes": 35205,
+      "body_sha256": "sha256:b940796b1bf86662fc3fefafe80ffe779d12b4e6e228b5d13a9cb7559ea677ea",
+      "retrieved_at": "2026-09-20T07:12:43.625Z",
+      "duration_ms": 2891
+    }
+  ],
+  "receipt_note": "Real retrieval from the official publisher on 2026-09-20 (UTC), written to a disposable local database. Counts, hashes, statuses and publisher URLs only; no payloads or response bodies."
+}

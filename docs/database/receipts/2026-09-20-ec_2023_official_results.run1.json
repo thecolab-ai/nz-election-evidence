@@ -1,0 +1,53 @@
+{
+  "input_findings": null,
+  "receipt_version": 1,
+  "source_id": "ec_2023_official_results",
+  "mode": "incremental",
+  "dry_run": false,
+  "status": "blocked",
+  "complete_snapshot": false,
+  "error_class": "publisher_challenge",
+  "error_detail": "publisher answered HTTP 403",
+  "manifest_hash": "sha256:a1f5278caea315ecf37f5b1955afc312fa6660d8ef9504827adc6deb07ef2a27",
+  "manifest": {
+    "manifest_version": 1,
+    "config_version": 1,
+    "source_id": "ec_2023_official_results",
+    "adapter_name": "availability_probe",
+    "adapter_version": "1.0.0",
+    "mode": "incremental",
+    "allowed_hosts": [
+      "electionresults.govt.nz",
+      "www.electionresults.govt.nz"
+    ],
+    "snapshot_semantics": "complete_snapshot",
+    "source_config_hash": "sha256:c347aded962a210f71339029ea415b996252c6865fc06206a691c078e2e4903e",
+    "max_records": 2000
+  },
+  "run_id": "d2e6163b-e1b1-4cc0-b4cc-35c90f34b149",
+  "resumed_from_run_id": null,
+  "totals": {
+    "seen": 0,
+    "versions_inserted": 0,
+    "observations_inserted": 0,
+    "unchanged": 0,
+    "rejected": 0
+  },
+  "tombstoned": 0,
+  "pages": 0,
+  "projection": null,
+  "fetches": [
+    {
+      "method": "GET",
+      "url": "https://electionresults.govt.nz/electionresults_2023/",
+      "attempt": 1,
+      "outcome": "challenge",
+      "http_status": 403,
+      "bytes": 6145,
+      "body_sha256": "sha256:512e3f2d0cbcf7716c4cdc0bea4bf88271070b2079d0a7384b549a5c07540857",
+      "retrieved_at": "2026-09-20T05:28:46.015Z",
+      "duration_ms": 65
+    }
+  ],
+  "receipt_note": "Real retrieval from the official publisher on 2026-09-20 (UTC), written to a disposable local database. Counts, hashes, statuses and publisher URLs only; no payloads or response bodies."
+}

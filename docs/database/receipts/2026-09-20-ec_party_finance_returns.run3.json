@@ -1,0 +1,63 @@
+{
+  "input_findings": null,
+  "receipt_version": 1,
+  "source_id": "ec_party_finance_returns",
+  "mode": "incremental",
+  "dry_run": false,
+  "status": "blocked",
+  "complete_snapshot": false,
+  "error_class": "publisher_challenge",
+  "error_detail": "publisher answered with a bot-challenge page instead of content",
+  "manifest_hash": "sha256:6922ae6e7b9d8b17208daaa3501b23368e519cd28ed74b0a7533b002a036d0f9",
+  "manifest": {
+    "manifest_version": 1,
+    "config_version": 1,
+    "source_id": "ec_party_finance_returns",
+    "adapter_name": "availability_probe",
+    "adapter_version": "1.0.0",
+    "mode": "incremental",
+    "allowed_hosts": [
+      "elections.nz"
+    ],
+    "snapshot_semantics": "complete_snapshot",
+    "source_config_hash": "sha256:994ee197b5b925732c8848df805627b03e819cd7a8a700b4366378a1b4a98ac1",
+    "max_records": 2000
+  },
+  "run_id": "0cefdd84-69f2-49e5-9a5c-83e44e6676d4",
+  "resumed_from_run_id": null,
+  "totals": {
+    "seen": 0,
+    "versions_inserted": 0,
+    "observations_inserted": 0,
+    "unchanged": 0,
+    "rejected": 0
+  },
+  "tombstoned": 0,
+  "pages": 0,
+  "projection": null,
+  "fetches": [
+    {
+      "method": "GET",
+      "url": "https://elections.nz/robots.txt",
+      "attempt": 1,
+      "outcome": "ok",
+      "http_status": 200,
+      "bytes": 95,
+      "body_sha256": "sha256:c98676c2e5570065359053fc8c8375d5cebe1da0e2514c7ae174ec7aa7f5d249",
+      "retrieved_at": "2026-09-20T06:52:05.709Z",
+      "duration_ms": 509
+    },
+    {
+      "method": "GET",
+      "url": "https://elections.nz/democracy-in-nz/political-parties-in-new-zealand/party-donations-and-loans-by-year/",
+      "attempt": 1,
+      "outcome": "challenge",
+      "http_status": 200,
+      "bytes": 212,
+      "body_sha256": "sha256:d02032286070b4dd9d8fbd985a7bdca8af8edf52b89ff177db3bfcb2c8a9c43d",
+      "retrieved_at": "2026-09-20T06:52:05.709Z",
+      "duration_ms": 5480
+    }
+  ],
+  "receipt_note": "Real retrieval from the official publisher on 2026-09-20 (UTC), written to a disposable local database. Counts, hashes, statuses and publisher URLs only; no payloads or response bodies."
+}

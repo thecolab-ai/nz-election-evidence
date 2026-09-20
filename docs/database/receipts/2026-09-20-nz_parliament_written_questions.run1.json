@@ -1,0 +1,52 @@
+{
+  "input_findings": null,
+  "receipt_version": 1,
+  "source_id": "nz_parliament_written_questions",
+  "mode": "incremental",
+  "dry_run": false,
+  "status": "failed",
+  "complete_snapshot": false,
+  "error_class": "parser_not_enabled",
+  "error_detail": "publisher page is reachable; no parser is enabled for this source, so nothing was imported and no count is implied",
+  "manifest_hash": "sha256:81c741dd1c654f654a6a78fb9c41cdbd28fe2f7120096360c6254fc51a1b101f",
+  "manifest": {
+    "manifest_version": 1,
+    "config_version": 1,
+    "source_id": "nz_parliament_written_questions",
+    "adapter_name": "availability_probe",
+    "adapter_version": "1.0.0",
+    "mode": "incremental",
+    "allowed_hosts": [
+      "questions.parliament.nz"
+    ],
+    "snapshot_semantics": "rolling_window",
+    "source_config_hash": "sha256:d6dcec925bb8934aac4c1dda6e35bf1e20b0480fe58c411241b987c68e1fbcd8",
+    "max_records": 2000
+  },
+  "run_id": "91367e4e-346f-4546-a92a-121e49d61207",
+  "resumed_from_run_id": null,
+  "totals": {
+    "seen": 0,
+    "versions_inserted": 0,
+    "observations_inserted": 0,
+    "unchanged": 0,
+    "rejected": 0
+  },
+  "tombstoned": 0,
+  "pages": 0,
+  "projection": null,
+  "fetches": [
+    {
+      "method": "GET",
+      "url": "https://questions.parliament.nz/",
+      "attempt": 1,
+      "outcome": "ok",
+      "http_status": 200,
+      "bytes": 13626,
+      "body_sha256": "sha256:6f7013ebd0d66514a8786978357ecb87baa4fe86c9f849025866ec70d8823df1",
+      "retrieved_at": "2026-09-20T05:28:46.432Z",
+      "duration_ms": 168
+    }
+  ],
+  "receipt_note": "Real retrieval from the official publisher on 2026-09-20 (UTC), written to a disposable local database. Counts, hashes, statuses and publisher URLs only; no payloads or response bodies."
+}

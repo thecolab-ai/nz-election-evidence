@@ -1,0 +1,63 @@
+{
+  "input_findings": null,
+  "receipt_version": 1,
+  "source_id": "ec_register_of_political_parties",
+  "mode": "incremental",
+  "dry_run": false,
+  "status": "blocked",
+  "complete_snapshot": false,
+  "error_class": "publisher_challenge",
+  "error_detail": "publisher answered with a bot-challenge page instead of content",
+  "manifest_hash": "sha256:f29dfbee685f147c3d65dfcc9cee59b7d1e4f1dc167aa2a3823b8354d338a32d",
+  "manifest": {
+    "manifest_version": 1,
+    "config_version": 1,
+    "source_id": "ec_register_of_political_parties",
+    "adapter_name": "availability_probe",
+    "adapter_version": "1.0.0",
+    "mode": "incremental",
+    "allowed_hosts": [
+      "elections.nz"
+    ],
+    "snapshot_semantics": "complete_snapshot",
+    "source_config_hash": "sha256:a54b2f771c00f43e67dc837389c09c9052d0f11e6fa9fa5d4bded7100f69b83a",
+    "max_records": 2000
+  },
+  "run_id": "61d96d38-2ea0-4fda-8257-3c4a2bb93185",
+  "resumed_from_run_id": null,
+  "totals": {
+    "seen": 0,
+    "versions_inserted": 0,
+    "observations_inserted": 0,
+    "unchanged": 0,
+    "rejected": 0
+  },
+  "tombstoned": 0,
+  "pages": 0,
+  "projection": null,
+  "fetches": [
+    {
+      "method": "GET",
+      "url": "https://elections.nz/robots.txt",
+      "attempt": 1,
+      "outcome": "ok",
+      "http_status": 200,
+      "bytes": 95,
+      "body_sha256": "sha256:c98676c2e5570065359053fc8c8375d5cebe1da0e2514c7ae174ec7aa7f5d249",
+      "retrieved_at": "2026-09-20T06:51:55.141Z",
+      "duration_ms": 56
+    },
+    {
+      "method": "GET",
+      "url": "https://elections.nz/democracy-in-nz/political-parties-in-new-zealand/register-of-political-parties/",
+      "attempt": 1,
+      "outcome": "challenge",
+      "http_status": 200,
+      "bytes": 212,
+      "body_sha256": "sha256:d02032286070b4dd9d8fbd985a7bdca8af8edf52b89ff177db3bfcb2c8a9c43d",
+      "retrieved_at": "2026-09-20T06:51:55.141Z",
+      "duration_ms": 5025
+    }
+  ],
+  "receipt_note": "Real retrieval from the official publisher on 2026-09-20 (UTC), written to a disposable local database. Counts, hashes, statuses and publisher URLs only; no payloads or response bodies."
+}

@@ -1,0 +1,24 @@
+{
+  "name": "nz-election-evidence-ingest",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "TypeScript tooling: ingestion CLI (registry sync, dry-run manifests, bounded live runs, backfills, reviewed export imports) plus repository release tools in ../tools.",
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "node --test --test-reporter=spec test/*.test.ts ../tools/*.test.ts",
+    "check:deno": "deno check --config ../supabase/functions/deno.json ../supabase/functions/ingest-run/index.ts",
+    "cli": "node src/cli.ts"
+  },
+  "dependencies": {
+    "postgres": "3.4.9"
+  },
+  "devDependencies": {
+    "@types/node": "26.6.2",
+    "deno": "2.9.6",
+    "typescript": "7.0.2"
+  }
+}

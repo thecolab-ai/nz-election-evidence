@@ -1,0 +1,40 @@
+{
+  "input_findings": null,
+  "receipt_version": 1,
+  "source_id": "nz_parliament_current_bills",
+  "mode": "incremental",
+  "dry_run": false,
+  "status": "blocked",
+  "complete_snapshot": false,
+  "error_class": "access_basis_not_established",
+  "error_detail": "no documented or permitted route to this data exists; the endpoint was not contacted",
+  "manifest_hash": "sha256:5165e766f90a1bdb83160aa25d69de227942ba42ae6bce4a8efab8c80a80d5ee",
+  "manifest": {
+    "manifest_version": 1,
+    "config_version": 1,
+    "source_id": "nz_parliament_current_bills",
+    "adapter_name": "nz_parliament_current_bills",
+    "adapter_version": "1.0.0",
+    "mode": "incremental",
+    "allowed_hosts": [
+      "bills.parliament.nz"
+    ],
+    "snapshot_semantics": "complete_snapshot",
+    "source_config_hash": "sha256:89ca0ef845da33614e96605f039d256b0e5a8b5f82a809334e8ee2864ad683be",
+    "max_records": 2000
+  },
+  "run_id": "41d2b294-8d5f-4c76-a6fc-5f5b3fb61072",
+  "resumed_from_run_id": null,
+  "totals": {
+    "seen": 0,
+    "versions_inserted": 0,
+    "observations_inserted": 0,
+    "unchanged": 0,
+    "rejected": 0
+  },
+  "tombstoned": 0,
+  "pages": 0,
+  "projection": null,
+  "fetches": [],
+  "receipt_note": "Real retrieval from the official publisher on 2026-09-20 (UTC), written to a disposable local database. Counts, hashes, statuses and publisher URLs only; no payloads or response bodies."
+}

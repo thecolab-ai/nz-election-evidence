@@ -1,0 +1,137 @@
+{
+  "schema_version": 1,
+  "notice": "Decisions of the repository owner, recorded as exactly that. An entry here is NOT an independent legal review (RED-LINES R10), NOT the acceptance of the accountable-person role (R8), and NOT a licence, permission or approval from any publisher. REVIEW-REGISTER.md and catalogue/rights-register.json are not changed by an entry here and keep saying what is true of them. This file is project process documentation, not legal advice.",
+  "authorizations": [
+    {
+      "authorization_id": "OWNER-AUTH-2026-09-20-01",
+      "status": "active",
+      "decided_on": "2026-09-20",
+      "expires_on": "2026-11-06",
+      "decided_by": "Adam Holt",
+      "decided_by_role": "repository owner and project maintainer",
+      "request_source": "Owner request received over Telegram on 2026-09-20 and relayed to this build by the release coordinator. The message itself is not held in this repository.",
+      "statement": "The owner authorizes, at the owner's own risk and ahead of the independent reviews, (1) deployment of the static explorer to GitHub Pages connected to the hosted database with the public URL and public anon key only, (2) release of anonymous read-only rows from the hosted evidence store, and (3) display of the listed official descriptive fields for the four listed sources, each shown with its publisher, its official link and a notice that reviews are pending.",
+      "departs_from": [
+        "RED-LINES R10 as written: it says no new public surface or data product goes live before a legal-review entry names a reviewer, and allows no exceptions. None exists. The owner proceeds anyway; this is a departure from R10, not compliance with it.",
+        "RED-LINES R8 as written: it says nothing goes live without a named accountable person. Nobody has accepted that role. The owner proceeds anyway; this is a departure from R8, not compliance with it.",
+        "RED-LINES.md itself is not amended by this decision."
+      ],
+      "scopes": [
+        {
+          "scope": "pages_deploy",
+          "surface_id": "explorer-pages"
+        },
+        {
+          "scope": "public_rows",
+          "surface_id": "evidence-store"
+        },
+        {
+          "scope": "source_fields",
+          "source_id": "nz_parliament_mp_directory",
+          "rights_id": "RIGHTS-13",
+          "fields": [
+            "label",
+            "name_display",
+            "name_sort",
+            "name_at_source",
+            "member_name",
+            "person_name",
+            "party_label",
+            "is_independent_label",
+            "representation",
+            "electorate_label",
+            "electorate_name_at_source",
+            "parliament_number",
+            "public_page_url",
+            "basis",
+            "valid_from",
+            "valid_to",
+            "date_precision",
+            "from_label",
+            "to_label",
+            "relationship",
+            "from_id",
+            "to_id"
+          ],
+          "basis": "Name, party and seat of sitting members as listed on the publisher's public members page, with the link to each member's official page. Facts about office-holders in their public capacity (R7)."
+        },
+        {
+          "scope": "source_fields",
+          "source_id": "nz_parliament_current_bills",
+          "rights_id": "RIGHTS-09",
+          "fields": [
+            "label",
+            "title",
+            "bill_number",
+            "bill_type",
+            "current_stage",
+            "select_committee",
+            "parliament_number",
+            "member_name",
+            "member_name_at_source",
+            "party_label",
+            "party_label_at_source",
+            "public_page_url",
+            "metadata_only"
+          ],
+          "basis": "Bill title, number, type, stage, committee and member in charge as listed in the publisher's public bills catalogue, with the link to the official bill page. Never bill text (R6)."
+        },
+        {
+          "scope": "source_fields",
+          "source_id": "nz_government_releases_feed",
+          "rights_id": "RIGHTS-08",
+          "fields": [
+            "label",
+            "title",
+            "public_page_url"
+          ],
+          "basis": "Release title and official link from the publisher's public feed. The feed's summary text and the release text are never collected (R6)."
+        },
+        {
+          "scope": "source_fields",
+          "source_id": "baseline_2023_candidacies_export",
+          "rights_id": "RIGHTS-01",
+          "fields": [
+            "label",
+            "candidate_name",
+            "name_at_source",
+            "party_name",
+            "party_label",
+            "is_independent_label",
+            "stood_as_independent",
+            "electorate_name",
+            "name",
+            "electorate_type",
+            "candidacy_type",
+            "current_status",
+            "identity_link_status",
+            "status",
+            "status_date",
+            "date_precision",
+            "source_class",
+            "from_label",
+            "to_label",
+            "relationship",
+            "from_id",
+            "to_id"
+          ],
+          "basis": "Candidate name, party label, electorate and candidacy type from the verified 963-row capture of the official 2023 results, with the official link. Vote figures and list positions are deliberately NOT in this decision."
+        }
+      ],
+      "not_claimed": [
+        "No independent legal review has been carried out. Every REVIEW-REGISTER.md row stays PENDING with nobody appointed (R10).",
+        "Nobody has accepted the accountable-person role (R8). This decision does not name one.",
+        "No publisher has granted a licence or permission. Every rights-register row stays pending and link-only; none is marked approved by this decision.",
+        "No security sign-off exists for the evidence store."
+      ],
+      "never_in_scope": [
+        "document, article, release or bill bodies; feed summaries; copied source passages",
+        "contact details of anyone: email, phone, postal or street address, social handles",
+        "portraits and other images",
+        "canonical (merged) people or parties: identities stay source-specific",
+        "vote counts, vote shares and list ranks (needs its own recorded field decision and an R1 look)",
+        "any source whose rights row is refused, restricted or withheld: those stay invisible whatever this file says"
+      ]
+    }
+  ]
+}

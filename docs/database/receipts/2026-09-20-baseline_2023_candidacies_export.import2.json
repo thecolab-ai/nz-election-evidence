@@ -1,0 +1,72 @@
+{
+  "input_findings": {
+    "rows": 963,
+    "rows_by_type": {
+      "electorate": 495,
+      "list": 468
+    },
+    "unevidenced_numbers": [],
+    "all_zero_groups": [
+      {
+        "field": "candidate_votes",
+        "group_field": "electorate_name",
+        "group": "Port Waikato",
+        "rows": 9
+      }
+    ],
+    "upstream_defaults_dropped": [
+      {
+        "field": "candidate_votes",
+        "rows": 468
+      },
+      {
+        "field": "list_rank",
+        "rows": 495
+      }
+    ]
+  },
+  "receipt_version": 1,
+  "source_id": "baseline_2023_candidacies_export",
+  "mode": "export_import",
+  "dry_run": false,
+  "status": "succeeded",
+  "complete_snapshot": true,
+  "error_class": null,
+  "error_detail": null,
+  "manifest_hash": "sha256:377b9c3709b9d34c4d9afdbcd0b2718d204976d679f2bc34bc7bc5abef4f090f",
+  "manifest": {
+    "manifest_version": 1,
+    "config_version": 1,
+    "source_id": "baseline_2023_candidacies_export",
+    "adapter_name": "export_jsonl",
+    "adapter_version": "1.0.0",
+    "mode": "export_import",
+    "allowed_hosts": [],
+    "snapshot_semantics": "complete_snapshot",
+    "source_config_hash": "sha256:f5ebb614275beabc07c655bcc35ad1e25ce26553706684f4d06c225dec15d07d",
+    "max_records": 200000,
+    "input_digest": {
+      "sha256": "sha256:acb3154d63abdb76d62fec09ce62996b379081ecf3586e7f00b76e7b0955d82c",
+      "bytes": 955395,
+      "rows": 963
+    }
+  },
+  "run_id": "c0c07df9-530c-456b-96ce-b73f485bdd97",
+  "resumed_from_run_id": null,
+  "totals": {
+    "seen": 963,
+    "versions_inserted": 0,
+    "observations_inserted": 963,
+    "unchanged": 963,
+    "rejected": 0
+  },
+  "tombstoned": 0,
+  "pages": 3,
+  "projection": {
+    "documents": 0,
+    "mp_directory": 0,
+    "baseline_candidacies": 963
+  },
+  "fetches": [],
+  "receipt_note": "Real retrieval from the official publisher on 2026-09-20 (UTC), written to a disposable local database. Counts, hashes, statuses and publisher URLs only; no payloads or response bodies."
+}
