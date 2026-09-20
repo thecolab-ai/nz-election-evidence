@@ -43,6 +43,16 @@ for path in ROOT.rglob('*'):
  for rx,label in blocked:
   if label=='donor address phrase' and rel in allowed_phrase: continue
   if rx.search(text): fail(f'{label} found in {rel}')
+# Repository hygiene: the record stays small and text-only. See docs/what-lives-where.md.
+# Human-authored claim files are a few KB each; fetched bodies, exports and binaries live elsewhere.
+SIZE_LIMIT=100_000; ASSET_LIMIT=500_000
+binary_suffixes={'.pdf','.doc','.docx','.xls','.xlsx','.ppt','.pptx','.zip','.gz','.tgz','.tar','.7z','.rar','.png','.jpg','.jpeg','.gif','.webp','.bmp','.tif','.tiff','.mp3','.mp4','.mov','.wav','.sqlite','.db','.parquet','.pkl','.pickle','.npy','.bin','.exe','.dll','.so','.jar','.wasm'}
+for path in ROOT.rglob('*'):
+ if not path.is_file() or '.git' in path.parts or '__pycache__' in path.parts: continue
+ rel=str(path.relative_to(ROOT)); size=path.stat().st_size
+ if path.suffix.lower() in binary_suffixes: fail(f'binary or document file committed: {rel} (bodies and exports live outside the repository; see docs/what-lives-where.md)')
+ limit=ASSET_LIMIT if rel.startswith('docs/assets/') else SIZE_LIMIT
+ if size>limit: fail(f'file too large for the record: {rel} is {size:,} bytes (limit {limit:,}; see docs/what-lives-where.md)')
 if errors:
  print('VALIDATION FAILED',file=sys.stderr)
  for e in errors: print(f'- {e}',file=sys.stderr)

@@ -28,6 +28,10 @@ Every substantive claim in a pull request or analysis must use this template:
 
 Do not add person profiles, donor addresses, personal contact details, inferred sensitive traits, or bulk personal information. Do not republish original finance PDFs. Name-level public-interest work requires a separate necessity, accuracy and harm review; this starter repository is not that venue.
 
+## Keep the record small
+
+The repository holds human-authored text only: claim files, evidence rows, registers, schemas and docs. No file over 100 KB (500 KB under `docs/assets/`), and no binary or document formats at all. Fetched bodies, exports and bulk datasets live outside the repository and are linked. See [docs/what-lives-where.md](docs/what-lives-where.md); CI enforces it.
+
 ## Pull request checklist
 
 - [ ] Claim template completed for changed evidence claims
@@ -36,6 +40,7 @@ Do not add person profiles, donor addresses, personal contact details, inferred 
 - [ ] Unknown/unverified states remain explicit
 - [ ] No causal language unsupported by a causal design
 - [ ] No copied source bodies, unapproved data or unnecessary personal data
+- [ ] No file over 100 KB and no binary or document files (see docs/what-lives-where.md)
 - [ ] Rights register updated if permissions are asserted
 - [ ] `python3 scripts/validate.py` and unit tests pass
 - [ ] Visuals have alt text and do not compare unlike counts without explanation
