@@ -1,7 +1,7 @@
 -- Parliament family: guard correction, typed projection, dates kept apart, route de-duplication, replay.
 -- TEST FIXTURES ONLY: every source, URL path and record below is synthetic and rolled back.
 begin;
-select plan(29);
+select plan(30);
 
 -- Guard correction: hexadecimal identifiers are not phone numbers; phone numbers still are -----------------------------
 select is(evidence_private.text_violation('{"title":"Telecommunications example","ref":"0a021234-5678-4abc-8def-021234567890"}'), null,
@@ -69,12 +69,16 @@ select pg_temp.run('g1', 'pgtap_family_export', 'aaaaaaaa-1111-1111-1111-1111111
     'public_page_url', 'https://fixture.example/item/0a021234-0000-4000-8000-000000000004', 'metadata_only', true)),
   pg_temp.rec('set-1', 'bill_publication_set', 'e', jsonb_build_object('bill_ref', 'b-1', 'title', 'Example Bill', 'publication_index_status', 'unavailable', 'metadata_only', true)),
   pg_temp.rec('set-2', 'bill_publication_set', 'f', jsonb_build_object('bill_ref', 'b-2', 'title', 'Example Bill Two', 'publication_revision_count', 0, 'metadata_only', true)),
+  -- member:1 is mentioned by two records. The publisher states a date for each, and the EARLIER one must be the version
+  -- the identity cites, whatever order the rows arrive in and whatever their surrogate keys are.
   pg_temp.rec('term-1', 'member_service_term', '1', jsonb_build_object('person_ref', 'member:1', 'person_name_at_source', 'Member, Example',
-    'party_label', 'Example Party', 'representation', 'list', 'valid_from', '2023-10-14', 'date_basis', 'stated_in_official_open_data_file', 'metadata_only', true)),
+    'party_label', 'Example Party', 'representation', 'list', 'valid_from', '2023-10-14', 'date_basis', 'stated_in_official_open_data_file', 'metadata_only', true),
+    '2023-10-20T00:00:00Z'::timestamptz),
   pg_temp.rec('term-2', 'member_service_term', '2', jsonb_build_object('person_ref', 'member:2', 'person_name_at_source', 'Other, Example',
     'representation', 'electorate', 'electorate_label', 'Example Electorate', 'date_basis', 'not_stated_by_source', 'metadata_only', true)),
   pg_temp.rec('role-1', 'minister_role', '3', jsonb_build_object('person_ref', 'member:1', 'person_name_at_source', 'Member, Example',
-    'role_name', 'Minister', 'portfolio_name', 'Examples', 'date_basis', 'not_stated_by_source', 'metadata_only', true))));
+    'role_name', 'Minister', 'portfolio_name', 'Examples', 'date_basis', 'not_stated_by_source', 'metadata_only', true),
+    '2023-11-27T00:00:00Z'::timestamptz)));
 
 select is((select (v ->> 'rejected')::int from t where k = 'g1:batch'), 0, 'no record is refused, including one with a digit run inside a digest');
 select is((select v -> 'parliament_family' ->> 'written_questions' from t where k = 'g1:projection'), '1', 'project_run reports the family projector');
@@ -105,6 +109,12 @@ select results_eq($$select t.basis, t.date_precision, t.valid_from from evidence
 select results_eq($$select rt.date_precision, rt.valid_from, rt.role_title from evidence_private.role_terms rt
   join evidence_private.person_source_identities i on i.id = rt.person_identity_id where i.source_id = 'pgtap_family_export'$$,
   $$values ('unknown', null::date, 'Minister: Examples')$$, 'a role the source does not date is stored undated');
+-- The cited first sighting is the earliest record the publisher dated, never whichever surrogate key sorted first.
+select is((select r.external_record_id from evidence_private.person_source_identities i
+            join evidence_private.source_record_versions v on v.id = i.first_version_id
+            join evidence_private.source_records r on r.id = v.record_id
+           where i.source_id = 'pgtap_family_export' and i.external_id = 'member:1'), 'term-1',
+  'the version an identity cites as its first sighting is the earliest one the publisher dated');
 select is((select count(*)::int from evidence_private.person_source_identities where source_id = 'pgtap_family_export' and person_id is not null), 0,
   'no source identity is linked to a person by the projection');
 

@@ -363,12 +363,17 @@ begin
   get diagnostics v_attributions = row_count;
 
   -- Members and ministers: one source identity per upstream member reference. No identity is linked to a person here.
+  -- One member is usually mentioned by several records (a term and a ministerial role), and the version cited as the
+  -- first sighting is chosen by the PUBLISHER's own ordering: the earliest date the publisher states, then the
+  -- publisher's own record id. It was previously chosen by version_id, a random uuid, which made the stored
+  -- first_version_id differ between two loads of the very same export; comparing the content of two stores loaded in
+  -- opposite family order is what exposed it.
   insert into evidence_private.person_source_identities (source_id, external_id, identity_scheme, name_at_source, first_version_id)
   select distinct on (f.source_id, f.p ->> 'person_ref')
          f.source_id, f.p ->> 'person_ref', 'upstream_member_ref', f.p ->> 'person_name_at_source', f.version_id
   from evidence_private.parliament_family_run_rows(p_run_id) f
   where f.record_kind in ('member_service_term', 'minister_role') and f.p ->> 'person_ref' is not null and f.p ->> 'person_name_at_source' is not null
-  order by f.source_id, f.p ->> 'person_ref', f.version_id
+  order by f.source_id, f.p ->> 'person_ref', coalesce(f.source_published_at, 'infinity'::timestamptz), f.external_record_id
   on conflict (source_id, external_id) do update set name_at_source = excluded.name_at_source;
 
   -- A term row carries a date only when the official file states one; otherwise it is a sighting with unknown dates.
