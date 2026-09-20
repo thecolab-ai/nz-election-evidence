@@ -10,9 +10,9 @@ enabled = true
 port = 55321
 # Schemas to expose in your API. Tables, views and stored procedures in this schema will get API
 # endpoints. `public` and `graphql_public` schemas are included by default.
-schemas = ["evidence_inspector"]
+schemas = ["evidence_public", "evidence_open", "evidence_inspector"]
 # Extra schemas to add to the search_path of every request.
-extra_search_path = ["evidence_inspector", "extensions"]
+extra_search_path = ["extensions"]
 # The maximum number of rows returns from a view, table, or stored procedure. Limits payload size
 # for accidental or malicious requests.
 max_rows = 200
@@ -218,7 +218,7 @@ web3 = 30
 
 [auth.email]
 # Allow/disallow new user signups via email to your project.
-enable_signup = false
+enable_signup = true
 # If enabled, a user will be required to confirm any email change on both the old, and new email
 # addresses. If disabled, only the new email is required to confirm.
 double_confirm_changes = true

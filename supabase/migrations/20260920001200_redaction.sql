@@ -48,8 +48,8 @@ begin
          omitted_fields = omitted_fields || jsonb_build_array(jsonb_build_object('field', '*', 'reason', 'redacted: ' || left(p_reason, 300)))
    where id = p_version_id;
   perform set_config('evidence.redaction_in_progress', 'off', true);
-  insert into evidence_private.record_lifecycle_events (record_id, event, reason)
-  values (v_record, 'redacted', left(p_requested_by || ': ' || p_reason, 500));
+  insert into evidence_private.record_lifecycle_events (record_id, event, reason, requested_by)
+  values (v_record, 'redacted', left(p_reason, 500), left(p_requested_by, 200));
 end
 $$;
 

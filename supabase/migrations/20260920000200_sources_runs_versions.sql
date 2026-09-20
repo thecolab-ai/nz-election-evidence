@@ -266,6 +266,8 @@ create table evidence_private.record_lifecycle_events (
   run_id uuid references evidence_private.import_runs (id),
   event text not null check (event in ('tombstoned', 'reappeared', 'redacted')),
   reason text not null,
+  -- Who asked for a redaction. Kept for audit, withheld from the public projections.
+  requested_by text,
   occurred_at timestamptz not null default now()
 );
 

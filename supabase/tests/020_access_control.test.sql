@@ -2,7 +2,7 @@
 -- the views only; no browser role can write anything, anywhere.
 -- TEST FIXTURES ONLY: synthetic users and records, rolled back.
 begin;
-select plan(43);
+select plan(45);
 
 insert into auth.users (id, instance_id, aud, role, email)
 values ('aaaaaaaa-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'inspector@fixture.invalid'),
@@ -32,7 +32,7 @@ select throws_ok('select count(*) from evidence_private.source_records', '42501'
 select throws_ok('select count(*) from evidence_private.app_memberships', '42501', null, 'anon: cannot read memberships');
 select throws_ok('select count(*) from evidence_inspector.records', '42501', null, 'anon: no inspector schema access');
 select throws_ok('select count(*) from evidence_inspector.sources', '42501', null, 'anon: no inspector sources');
-select throws_ok('select evidence_inspector.is_inspector()', '42501', null, 'anon: cannot call the membership predicate');
+select throws_ok('select is_inspector from evidence_inspector.my_access', '42501', null, 'anon: cannot read the membership readback');
 select throws_ok('select count(*) from evidence_api.sources', '42501', null, 'anon: published schema is closed until the release gates open');
 select throws_ok($$select evidence_private.ingest_batch(gen_random_uuid(), gen_random_uuid(), '[]')$$, '42501', null, 'anon: cannot call ingest functions');
 select throws_ok($$select evidence_private.publish_batch(gen_random_uuid())$$, '42501', null, 'anon: cannot call the release function');
@@ -41,7 +41,7 @@ reset role;
 -- ordinary signed-in user ------------------------------------------------------------------
 set local request.jwt.claims = '{"sub":"aaaaaaaa-0000-0000-0000-000000000002","role":"authenticated"}';
 set local role authenticated;
-select is(evidence_inspector.is_inspector(), false, 'ordinary user: not an inspector');
+select is((select is_inspector from evidence_inspector.my_access), false, 'ordinary user: not an inspector');
 select is((select count(*)::int from evidence_inspector.records), 0, 'ordinary user: inspector views return no rows');
 select is((select count(*)::int from evidence_inspector.sources), 0, 'ordinary user: no sources');
 select is((select count(*)::int from evidence_inspector.record_versions), 0, 'ordinary user: no payloads');
@@ -57,21 +57,21 @@ reset role;
 -- A role claim inside user-editable metadata changes nothing
 set local request.jwt.claims = '{"sub":"aaaaaaaa-0000-0000-0000-000000000002","role":"authenticated","user_metadata":{"app_role":"inspector"},"app_metadata":{"app_role":"inspector"}}';
 set local role authenticated;
-select is(evidence_inspector.is_inspector(), false, 'metadata role claims are ignored');
+select is((select is_inspector from evidence_inspector.my_access), false, 'metadata role claims are ignored');
 select is((select count(*)::int from evidence_inspector.records), 0, 'metadata role claims unlock nothing');
 reset role;
 
 -- revoked inspector ---------------------------------------------------------------------------
 set local request.jwt.claims = '{"sub":"aaaaaaaa-0000-0000-0000-000000000003","role":"authenticated"}';
 set local role authenticated;
-select is(evidence_inspector.is_inspector(), false, 'revoked membership: not an inspector');
+select is((select is_inspector from evidence_inspector.my_access), false, 'revoked membership: not an inspector');
 select is((select count(*)::int from evidence_inspector.records), 0, 'revoked membership: no rows');
 reset role;
 
 -- inspector -------------------------------------------------------------------------------------
 set local request.jwt.claims = '{"sub":"aaaaaaaa-0000-0000-0000-000000000001","role":"authenticated"}';
 set local role authenticated;
-select is(evidence_inspector.is_inspector(), true, 'inspector: membership recognised');
+select is((select is_inspector from evidence_inspector.my_access), true, 'inspector: membership recognised');
 select is((select count(*)::int from evidence_inspector.records where source_id = 'pgtap_access'), 1, 'inspector: reads records through the view');
 select is((select safe_payload ->> 'title' from evidence_inspector.record_versions where source_id = 'pgtap_access'),
   'Private fixture item', 'inspector: reads the allowlisted detail JSON');
@@ -107,12 +107,18 @@ select is((select count(*)::int from pg_class c join pg_namespace n on n.oid = c
                    or not coalesce(c.reloptions @> array['security_barrier=true'], false))), 0,
   'every inspector view is a security barrier owned by the read-only reader role');
 select is((select count(*)::int from pg_proc p join pg_namespace n on n.oid = p.pronamespace
-            where n.nspname = 'evidence_inspector' and p.proname <> 'is_inspector'), 0,
-  'the inspector schema exposes no RPC other than the membership predicate');
+            where n.nspname in ('evidence_inspector', 'evidence_public', 'evidence_open')), 0,
+  'the exposed schemas contain no function at all: there is no RPC surface');
+select is((select count(*)::int from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+            where n.nspname like 'evidence_%' and p.prosecdef), 0,
+  'no SECURITY DEFINER function exists in any evidence schema');
 select is((select count(*)::int from pg_class c join pg_namespace n on n.oid = c.relnamespace
             where n.nspname = 'evidence_inspector' and c.relkind = 'v'
-              and pg_get_viewdef(c.oid) not like '%is_inspector()%'), 0,
-  'every inspector view filters on the membership predicate');
+              and pg_get_viewdef(c.oid) not like '%app_memberships%'), 0,
+  'every inspector view filters on a current membership');
+select is((select count(*)::int from information_schema.role_table_grants
+            where grantee in ('anon', 'authenticated', 'PUBLIC') and table_schema = 'evidence_views'), 0,
+  'browser roles hold nothing on the unexposed base views');
 
 select * from finish();
 rollback;
