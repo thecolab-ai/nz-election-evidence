@@ -11,7 +11,7 @@ import { canonicalJson, contentHash } from "../../supabase/functions/_shared/can
 import { buildManifest, validateSourcesFile } from "../../supabase/functions/_shared/registry.ts";
 import { IngestError, type SourcesFile } from "../../supabase/functions/_shared/types.ts";
 import sourcesFile from "../../supabase/functions/_shared/sources.config.json" with { type: "json" };
-import { loadExport, projectExportRow } from "../src/export_import.ts";
+import { loadExport, projectExportRow, safeFieldName } from "../src/export_import.ts";
 
 const file = sourcesFile as unknown as SourcesFile;
 const fixture = (name: string) => new URL("./fixtures/" + name, import.meta.url);
@@ -115,5 +115,27 @@ test("function auth: constant-time secret, fail closed, body can never carry a U
   assert.deepEqual(parseIngestRequest({ source_id: "nz_parliament_mp_directory" }), { source_id: "nz_parliament_mp_directory", schedule_key: undefined, trigger_kind: "cron", max_runtime_seconds: 60, max_records: 500 });
   for (const bad of [{ source_id: "x", url: "https://evil.example" }, { source_id: "../etc" }, { source_id: "abc", max_runtime_seconds: 9999 }, { source_id: "abc", max_records: 1e9 }, { source_id: "abc", trigger_kind: "cli" }, [], "text", null]) {
     assert.throws(() => parseIngestRequest(bad), Error, JSON.stringify(bad));
+  }
+});
+
+test("adversarial export rows: hostile column names, identifiers and links never reach a record or an error", async () => {
+  const source = file.sources.find((s) => s.source_id === "baseline_2023_candidacies_export")!;
+  const contract = source.export_contract!;
+  const good = { candidacy_id: "fixture-c-900", source_url: "https://electionresults.govt.nz/electionresults_2023/", captured_at: "2026-09-01T00:00:00Z", candidate_name: "Fixture Person", candidacy_type: "list" };
+
+  const hostileColumns = { ...good, 'x"; drop table y; --': "v", "<img src=x onerror=alert(1)>": "v", "donor_email": "fixture-donor@example.invalid", "api_token": "fixture-not-a-secret", "home path": "/ho" + "me/operator/x" };
+  const record = await projectExportRow(source, contract, hostileColumns, "2026-09-20T00:00:00.000Z");
+  const text = JSON.stringify(record);
+  for (const leaked of ["drop table", "<img", "onerror", "example.invalid", "fixture-not-a-secret", "operator", "donor_email", "api_token"]) assert.ok(!text.includes(leaked), leaked);
+  for (const entry of record.omitted_fields) assert.match(entry.field, /^[A-Za-z][A-Za-z0-9_.-]{0,79}$/);
+  assert.equal(record.omitted_fields.filter((o) => o.field.startsWith("unlisted_field_")).length, 5);
+  assert.equal(safeFieldName("source_passage"), "source_passage");
+  assert.equal(safeFieldName("a".repeat(200)).startsWith("unlisted_field_"), true);
+
+  for (const badId of ["person@example.invalid", "/ho" + "me/operator/file", "has space", "https://elsewhere.example/x", "<b>x</b>"]) {
+    await assert.rejects(projectExportRow(source, contract, { ...good, candidacy_id: badId }, "x"), (e: IngestError) => e.errorClass === "parse_error" && !e.message.includes(badId), badId);
+  }
+  for (const badUrl of ["https://user:pw@electionresults.govt.nz/", "https://electionresults.govt.nz/?token=abc", "http://electionresults.govt.nz/", "file:///x"]) {
+    await assert.rejects(projectExportRow(source, contract, { ...good, source_url: badUrl }, "x"), (e: IngestError) => e.errorClass === "parse_error" && !e.message.includes("pw") && !e.message.includes("abc"), badUrl);
   }
 });

@@ -64,13 +64,29 @@ function coerce(rule: FieldRule, value: unknown): Json | undefined {
   }
 }
 
+const PLAIN_FIELD = /^[A-Za-z][A-Za-z0-9_.-]{0,79}$/;
+
+/** Upstream column names are published in omitted_fields, so a hostile one is reduced to a digest. */
+export function safeFieldName(name: string): string {
+  if (PLAIN_FIELD.test(name) && !/mail|phone|passw|secret|token/i.test(name)) return name;
+  return "unlisted_field_" + createHash("sha256").update(name).digest("hex").slice(0, 12);
+}
+
+const SAFE_ID = /^[^\s<>"'\\]{1,400}$/;
+
 export async function projectExportRow(
   source: SourceConfig, contract: ExportContract, row: { [key: string]: unknown }, fallbackRetrievedAt: string,
 ): Promise<IngestRecord> {
   const id = row[contract.idField];
   const sourceUrl = row[contract.sourceUrlField];
   if (typeof id !== "string" || !id) throw new IngestError("parse_error", `row lacks ${contract.idField}`);
-  if (typeof sourceUrl !== "string" || !/^https:\/\//.test(sourceUrl)) throw new IngestError("parse_error", `row ${id} lacks an https ${contract.sourceUrlField}`);
+  // The identifier is never echoed into an error: it is untrusted and errors are logged.
+  if (!SAFE_ID.test(id) || /^[/~.]/.test(id) || id.includes("://") || id.includes("@")) {
+    throw new IngestError("parse_error", `row has an unusable ${contract.idField} (digest ${createHash("sha256").update(id).digest("hex").slice(0, 12)})`);
+  }
+  if (typeof sourceUrl !== "string" || !/^https:\/\/[A-Za-z0-9.-]+(\/|$)/.test(sourceUrl) || /[?&#](key|api_?key|token|access_token|auth|sig|signature|secret|password|session)=/i.test(sourceUrl)) {
+    throw new IngestError("parse_error", `row lacks a plain https ${contract.sourceUrlField}`);
+  }
 
   const payload: { [key: string]: Json } = {};
   const used = new Set<string>([contract.idField, contract.sourceUrlField, contract.observedAtField]);
@@ -84,8 +100,9 @@ export async function projectExportRow(
   const declared = new Map(contract.droppedFields.map((d) => [d.field, d.reason]));
   for (const key of Object.keys(row).sort()) {
     if (used.has(key)) continue;
-    // Name and reason only. The dropped value is never read into the record.
-    omitted.push({ field: key, reason: declared.get(key) ?? "not on this source's field allowlist" });
+    // Name and reason only. The dropped value is never read into the record, and an upstream column
+    // name is itself untrusted input: anything that is not a plain identifier is replaced by a digest.
+    omitted.push({ field: safeFieldName(key), reason: declared.get(key) ?? "not on this source's field allowlist" });
   }
   const observed = row[contract.observedAtField];
   const retrievedAt = typeof observed === "string" && !Number.isNaN(Date.parse(observed)) ? new Date(observed).toISOString() : fallbackRetrievedAt;

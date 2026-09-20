@@ -73,12 +73,14 @@ jobs:
         run: |
           npm ci --no-audit --no-fund
           npm run types:check
-      - name: Runner integration tests against that database (crash/resume, replay, overlap, blocked)
+      - name: Runner integration tests against that database (crash/resume, replay, overlap, blocked, export import)
         working-directory: ingest
         env:
-          # Scoped worker login created by supabase/seed.sql on the throwaway local database only.
-          # A fixed local value, not a secret; hosted projects use a generated password.
-          EVIDENCE_TEST_DB_URL: postgresql://evidence_ingest_local:local-only-not-a-secret@127.0.0.1:55322/postgres
+          # No connection string here. test/local-stack.ts assembles the loopback connection for the scoped
+          # worker login that supabase/seed.sql creates on this throwaway database, and the tests assert they
+          # are signed in as exactly that login. REQUIRE turns a skipped integration test into a failure.
+          EVIDENCE_TEST_LOCAL_STACK: "1"
+          EVIDENCE_REQUIRE_INTEGRATION: "1"
         run: |
           npm ci --no-audit --no-fund
           node --test --test-reporter=spec test/integration.test.ts
@@ -89,6 +91,9 @@ jobs:
     name: Explorer typecheck, unit tests and Pages build
     runs-on: ubuntu-latest
     defaults: { run: { working-directory: web } }
+    env:
+      # One value for the build AND the bundle check, so they can never disagree about the base path.
+      VITE_BASE_PATH: /nz-election-evidence/
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with: { persist-credentials: false }
@@ -99,13 +104,12 @@ jobs:
       - run: npm test
       - name: Build for the repository base path
         env:
-          VITE_BASE_PATH: ${{ env.PAGES_BASE_PATH }}
           # Public values only. Empty is valid: the shell then renders its "not connected" state.
           VITE_SUPABASE_URL: ${{ vars.EXPLORER_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ vars.EXPLORER_SUPABASE_ANON_KEY }}
         run: npm run build
       - name: Built shell is routable on Pages and carries no evidence, private name or privileged key material
-        run: node scripts/check-bundle.ts "${PAGES_BASE_PATH}"
+        run: npm run check:bundle
       - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
         with: { path: web/dist }

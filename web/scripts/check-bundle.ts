@@ -2,7 +2,7 @@
 // The words "service_role" and "sb_secret_" legitimately appear once in the bundle - inside the guard
 // that REFUSES such keys (src/lib/env.ts) - so this looks for key MATERIAL, not for the words.
 //
-//   node scripts/check-bundle.ts [base path, default /nz-election-evidence/]
+//   VITE_BASE_PATH=/nz-election-evidence/ node scripts/check-bundle.ts   (same variable and default as the build)
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -34,13 +34,19 @@ function walk(dir: string): string[] {
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
   const dist = join(dirname(fileURLToPath(import.meta.url)), '..', 'dist')
-  const base = process.argv[2] ?? '/nz-election-evidence/'
+  // Same source and same default as vite.config.ts, so the check always matches what was built.
+  const raw = (process.env.VITE_BASE_PATH ?? '/').trim()
+  const base = raw === '' || raw === '/' ? '/' : `/${raw.replace(/^\/+|\/+$/g, '')}/`
   const problems: string[] = []
   for (const required of ['index.html', '404.html', '.nojekyll']) if (!existsSync(join(dist, required))) problems.push(`missing dist/${required}`)
   if (problems.length === 0) {
     const index = readFileSync(join(dist, 'index.html'), 'utf-8')
     if (index !== readFileSync(join(dist, '404.html'), 'utf-8')) problems.push('404.html is not a copy of index.html (SPA refresh would break)')
-    if (!index.includes(`${base}assets/`)) problems.push(`index.html does not load assets from ${base}`)
+    // Anchored on the attribute, so "/assets/" cannot pass for a build made under another base path.
+    const assetRefs = [...index.matchAll(/(?:src|href)="([^"]*assets\/[^"]+)"/g)].map((m) => m[1] ?? '')
+    if (assetRefs.length === 0 || !assetRefs.every((ref) => ref.startsWith(`${base}assets/`))) {
+      problems.push(`index.html does not load every asset from ${base}assets/ (built for a different base path?)`)
+    }
     if (!/http-equiv="Content-Security-Policy"/i.test(index)) problems.push('no content security policy')
     const files = walk(dist).filter((f) => /\.(js|css|html|json|map|txt)$/.test(f)).map((f) => ({ name: f.slice(dist.length + 1), text: readFileSync(f, 'utf-8') }))
     problems.push(...bundleProblems(files))

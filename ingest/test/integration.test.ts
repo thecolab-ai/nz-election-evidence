@@ -1,5 +1,6 @@
 // End-to-end runner tests against a real disposable Postgres with the migrations applied.
-// Skipped unless EVIDENCE_TEST_DB_URL points at the LOCAL stack, signed in as the scoped worker login. Uses a scripted publisher
+// Run with EVIDENCE_TEST_LOCAL_STACK=1 against the disposable local stack, signed in as the scoped worker login
+// (test/local-stack.ts). With EVIDENCE_REQUIRE_INTEGRATION=1 (CI) a skip is a failure. Uses a scripted publisher
 // (no network) and a `fixture_it_*` source so nothing here can be mistaken for live data.
 import assert from "node:assert/strict";
 import { test } from "node:test";
@@ -7,12 +8,32 @@ import postgres from "postgres";
 import { billsAdapter } from "../../supabase/functions/_shared/adapters/bills.ts";
 import { createPostgresDb } from "../../supabase/functions/_shared/db.ts";
 import { runSource } from "../../supabase/functions/_shared/runner.ts";
+import { LOCAL_WORKER_LOGIN, localStackChoice, seedDeclaresSameLogin } from "./local-stack.ts";
 import type { SourceConfig, SourcesFile } from "../../supabase/functions/_shared/types.ts";
 import sourcesFile from "../../supabase/functions/_shared/sources.config.json" with { type: "json" };
 import { exportAdapter, loadExport } from "../src/export_import.ts";
 
-const url = process.env.EVIDENCE_TEST_DB_URL;
-const local = url ? /@(127\.0\.0\.1|localhost):\d+\//.test(url) : false;
+const choice = localStackChoice();
+const url = choice.url;
+const skip: string | false = url ? false : "local stack not selected (set EVIDENCE_TEST_LOCAL_STACK=1)";
+
+test("integration tests are not silently skipped where they are required", () => {
+  assert.equal(seedDeclaresSameLogin(), true, "supabase/seed.sql and test/local-stack.ts must declare the same local worker login");
+  if (choice.required) assert.ok(url, "EVIDENCE_REQUIRE_INTEGRATION=1 but the local stack was not selected: integration tests would have been skipped");
+});
+
+/** The tests must run as exactly the scoped worker: not a superuser, not the migration role, nothing more than evidence_ingest. */
+async function assertScopedLogin(sql: postgres.Sql): Promise<void> {
+  const [me] = await sql`
+    select current_user as login, r.rolsuper, r.rolbypassrls, r.rolcreaterole, r.rolcreatedb,
+           (select array_agg(g.rolname order by g.rolname) from pg_auth_members m join pg_roles g on g.oid = m.roleid where m.member = r.oid) as member_of,
+           inet_server_addr()::text as server
+    from pg_roles r where r.rolname = current_user`;
+  assert.equal(me.login, LOCAL_WORKER_LOGIN);
+  assert.deepEqual([me.rolsuper, me.rolbypassrls, me.rolcreaterole, me.rolcreatedb], [false, false, false, false]);
+  assert.deepEqual(me.member_of, ["evidence_ingest"]);
+}
+
 const suffix = Date.now().toString(36);
 
 const source: SourceConfig = {
@@ -43,8 +64,9 @@ function publisher(options: { total?: number; amend?: number; failPage?: number;
   return { impl, requests };
 }
 
-test("runner against a real database", { skip: !url ? "EVIDENCE_TEST_DB_URL not set" : !local ? "refusing: not a local database URL" : false }, async (t) => {
+test("runner against a real database", { skip }, async (t) => {
   const sql = postgres(url!, { max: 1, prepare: false, onnotice: () => undefined });
+  await assertScopedLogin(sql);
   const db = createPostgresDb(sql);
   const holder = crypto.randomUUID();
   const base = { file, source, adapter: billsAdapter, mode: "incremental" as const, triggerKind: "test" as const, maxRecords: 1000, maxRuntimeSeconds: 120, dryRun: false, db, sleep: async () => {} };
@@ -144,13 +166,14 @@ test("runner against a real database", { skip: !url ? "EVIDENCE_TEST_DB_URL not 
   });
 });
 
-test("export import against a real database", { skip: !url ? "EVIDENCE_TEST_DB_URL not set" : !local ? "refusing: not a local database URL" : false }, async (t) => {
+test("export import against a real database", { skip }, async (t) => {
   // Same contract as the real baseline source, under a fixture-named source id so the rows can
   // never be mistaken for the 2023 baseline.
   const real = (sourcesFile as unknown as SourcesFile).sources.find((s) => s.source_id === "baseline_2023_candidacies_export")!;
   const fixtureSource: SourceConfig = { ...real, source_id: "fixture_it_export_" + suffix, title: "TEST FIXTURE export import", catalogue_products: [] };
   const fixtureFile: SourcesFile = { config_version: 1, registry_products: [], sources: [fixtureSource], schedules: [] };
   const sql = postgres(url!, { max: 1, prepare: false, onnotice: () => undefined });
+  await assertScopedLogin(sql);
   const db = createPostgresDb(sql);
   t.after(async () => { await db.close(); });
   await db.syncRegistry({ sources: [{ ...fixtureSource, registry_key: "", rights_id: "", expected_cadence_seconds: "", config_hash: "fixture", catalogue_products: [], export_contract: null }] } as never);

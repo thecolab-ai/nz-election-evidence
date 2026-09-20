@@ -18,7 +18,8 @@
     "e2e:pages": "playwright test --config playwright.pages.config.ts",
     "types:generate": "node scripts/db-types.ts write",
     "types:check": "node scripts/db-types.ts check",
-    "check:bundle": "node scripts/check-bundle.ts"
+    "check:bundle": "node scripts/check-bundle.ts",
+    "check:bundle:pages": "VITE_BASE_PATH=/nz-election-evidence/ node scripts/check-bundle.ts"
   },
   "dependencies": {
     "@dagrejs/dagre": "3.1.1",

@@ -19,6 +19,10 @@ export interface RegisterRow {
   notes: string;
 }
 
+/** The only outcomes the register may use. Exactly one of them opens the gate. */
+export const APPROVED_OUTCOME = "APPROVED";
+export const OUTCOMES = new Set([APPROVED_OUTCOME, "PENDING — NOT REVIEWED", "REJECTED", "WITHDRAWN"]);
+
 const UNNAMED = new Set(["", "not appointed", "tbc", "tbd", "pending", "unknown", "n/a"]);
 const plain = (cell: string) => cell.replace(/[*_`]/g, "").trim();
 
@@ -34,13 +38,21 @@ export function registerRows(text: string): RegisterRow[] {
   return rows;
 }
 
+export function unknownOutcomes(text: string): string[] {
+  return registerRows(text).map((row) => plain(row.outcome)).filter((outcome) => !OUTCOMES.has(outcome));
+}
+
 export function gate(text: string, surface: string): { open: boolean; reason: string } {
+  const unknown = unknownOutcomes(text);
+  if (unknown.length) return { open: false, reason: `REVIEW-REGISTER.md uses an outcome outside the allowed set: ${unknown.join(" | ")}` };
   const matches = registerRows(text).filter((row) => row.surface.toLowerCase().includes(surface.toLowerCase()));
   const latest = matches.at(-1);
   if (!latest) return { open: false, reason: `no REVIEW-REGISTER.md row for surface '${surface}'` };
-  if (!plain(latest.outcome).toUpperCase().startsWith("APPROVED")) {
+  // Exact match only. "APPROVED WITH CONDITIONS", "APPROVED?", "Approved pending sign-off" and the like stay closed.
+  if (plain(latest.outcome) !== APPROVED_OUTCOME) {
     return { open: false, reason: `latest row for '${surface}' is not approved: ${latest.outcome}` };
   }
+  if (!OUTCOMES.has(plain(latest.outcome))) return { open: false, reason: "unknown outcome" };
   if (UNNAMED.has(plain(latest.reviewedBy).toLowerCase())) return { open: false, reason: `latest row for '${surface}' names no reviewer` };
   if (!/^\d{4}-\d{2}-\d{2}$/.test(latest.date)) return { open: false, reason: `latest row for '${surface}' has no ISO date` };
   return { open: true, reason: `approved on ${latest.date} by ${plain(latest.reviewedBy)}` };

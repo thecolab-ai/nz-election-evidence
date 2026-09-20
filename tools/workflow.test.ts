@@ -37,3 +37,16 @@ test("the workflow never touches a hosted project", () => {
     assert.ok(!workflow.includes(forbidden), forbidden);
   }
 });
+
+test("no connection string or credential-shaped value in the workflow; integration tests cannot be skipped", () => {
+  assert.ok(!/postgres(ql)?:\/\//.test(workflow), "connection strings belong in test/local-stack.ts, not in CI config");
+  assert.ok(!workflow.includes("***"));
+  assert.ok(workflow.includes('EVIDENCE_TEST_LOCAL_STACK: "1"') && workflow.includes('EVIDENCE_REQUIRE_INTEGRATION: "1"'));
+});
+
+test("build and bundle check share one base path", () => {
+  const web = workflow.slice(workflow.indexOf("\n  web:"), workflow.indexOf("\n  web-e2e:"));
+  assert.equal(web.split("VITE_BASE_PATH").length - 1, 1, "declared once, at job level");
+  assert.ok(web.includes("npm run build") && web.includes("npm run check:bundle"));
+  assert.ok(!web.includes("check-bundle.ts \""), "no separately supplied base path argument");
+});
