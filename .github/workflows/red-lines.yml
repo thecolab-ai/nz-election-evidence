@@ -1,0 +1,18 @@
+name: Red lines
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: "0 11 6 11 *"   # 00:00 NZDT 7 Nov: election-day freeze check (script only fails in 2026)
+permissions:
+  contents: read
+jobs:
+  red-lines:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 2 }
+      - name: Enforce red lines
+        run: python3 scripts/red_lines.py --freeze-check
+      - name: Red-line unit tests
+        run: python3 -m unittest tests/test_red_lines.py -v
