@@ -8,6 +8,8 @@ import { billsAdapter } from "../../supabase/functions/_shared/adapters/bills.ts
 import { createPostgresDb } from "../../supabase/functions/_shared/db.ts";
 import { runSource } from "../../supabase/functions/_shared/runner.ts";
 import type { SourceConfig, SourcesFile } from "../../supabase/functions/_shared/types.ts";
+import sourcesFile from "../../supabase/functions/_shared/sources.config.json" with { type: "json" };
+import { exportAdapter, loadExport } from "../src/export_import.ts";
 
 const url = process.env.EVIDENCE_TEST_DB_URL;
 const local = url ? /@(127\.0\.0\.1|localhost):\d+\//.test(url) : false;
@@ -117,4 +119,47 @@ test("runner against a real database", { skip: !url ? "EVIDENCE_TEST_DB_URL not 
     assert.equal(full.totals.versions_inserted, 1);
     assert.equal(full.tombstoned, 1);
   });
+});
+
+test("export import against a real database", { skip: !url ? "EVIDENCE_TEST_DB_URL not set" : !local ? "refusing: not a local database URL" : false }, async (t) => {
+  // Same contract as the real baseline source, under a fixture-named source id so the rows can
+  // never be mistaken for the 2023 baseline.
+  const real = (sourcesFile as unknown as SourcesFile).sources.find((s) => s.source_id === "baseline_2023_candidacies_export")!;
+  const fixtureSource: SourceConfig = { ...real, source_id: "fixture_it_export_" + suffix, title: "TEST FIXTURE export import", catalogue_products: [] };
+  const fixtureFile: SourcesFile = { config_version: 1, registry_products: [], sources: [fixtureSource], schedules: [] };
+  const sql = postgres(url!, { max: 1, prepare: false, onnotice: () => undefined });
+  const db = await createPostgresDb(sql, "evidence_ingest");
+  t.after(async () => { await db.close(); });
+  await db.syncRegistry({ sources: [{ ...fixtureSource, registry_key: "", rights_id: "", expected_cadence_seconds: "", config_hash: "fixture", catalogue_products: [], export_contract: null }] } as never);
+
+  const location = new URL("./fixtures/baseline-candidacies.fixture.jsonl", import.meta.url).pathname;
+  const loaded = await loadExport(real.export_contract!, { [real.export_contract!.fileEnv]: location });
+  const base = { file: fixtureFile, source: fixtureSource, adapter: exportAdapter(loaded), mode: "export_import" as const, triggerKind: "test" as const,
+    maxRecords: 1000, maxRuntimeSeconds: 120, dryRun: false, db, inputDigest: loaded.digest };
+
+  const first = await runSource(base);
+  assert.equal(first.status, "succeeded");
+  assert.deepEqual([first.totals.seen, first.totals.versions_inserted, first.totals.rejected], [3, 3, 0], "the database payload guard accepted every allowlisted row");
+  assert.equal((first.projection as { baseline_candidacies: number }).baseline_candidacies, 3);
+  assert.equal(first.manifest.input_digest?.rows, 3);
+  assert.ok(!JSON.stringify(first).includes(location), "the export location is not in the report");
+
+  const replay = await runSource(base);
+  assert.deepEqual([replay.totals.versions_inserted, replay.totals.unchanged], [0, 3], "re-importing the same export changes nothing");
+  assert.equal(replay.manifest_hash, first.manifest_hash);
+
+  const rows = await sql`
+    select c.candidacy_type, c.current_status, i.link_status, i.person_id, r.value_status, r.votes, e.list_rank
+    from evidence_private.candidacies c
+    join evidence_private.person_source_identities i on i.id = c.person_identity_id
+    left join evidence_private.candidate_results r on r.candidacy_id = c.id
+    left join evidence_private.party_list_entries e on e.candidacy_id = c.id
+    where i.source_id = ${fixtureSource.source_id} order by i.external_id`;
+  assert.equal(rows.length, 3);
+  assert.deepEqual(rows.map((r) => r.candidacy_type), ["electorate", "list", "electorate"]);
+  assert.ok(rows.every((r) => r.current_status === "officially_nominated" && r.link_status === "unresolved" && r.person_id === null),
+    "same-named rows stay unlinked; official status came through a status event");
+  assert.equal(Number(rows[0].votes), 1200);
+  assert.equal(rows[1].list_rank, 3);
+  assert.deepEqual([rows[2].value_status, rows[2].votes], ["not_reported", null], "ambiguous upstream zero is not stored as zero");
 });
