@@ -2,7 +2,7 @@
 -- the views only; no browser role can write anything, anywhere.
 -- TEST FIXTURES ONLY: synthetic users and records, rolled back.
 begin;
-select plan(40);
+select plan(43);
 
 insert into auth.users (id, instance_id, aud, role, email)
 values ('aaaaaaaa-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'inspector@fixture.invalid'),
@@ -100,6 +100,19 @@ select is((select count(*)::int from information_schema.role_table_grants
 select is((select count(*)::int from information_schema.role_table_grants
             where grantee in ('anon', 'authenticated', 'PUBLIC') and table_schema = 'evidence_inspector' and privilege_type <> 'SELECT'), 0,
   'browser roles hold only SELECT on inspector views');
+
+select is((select count(*)::int from pg_class c join pg_namespace n on n.oid = c.relnamespace
+            where n.nspname = 'evidence_inspector' and c.relkind = 'v'
+              and (pg_get_userbyid(c.relowner) <> 'evidence_inspector_reader'
+                   or not coalesce(c.reloptions @> array['security_barrier=true'], false))), 0,
+  'every inspector view is a security barrier owned by the read-only reader role');
+select is((select count(*)::int from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+            where n.nspname = 'evidence_inspector' and p.proname <> 'is_inspector'), 0,
+  'the inspector schema exposes no RPC other than the membership predicate');
+select is((select count(*)::int from pg_class c join pg_namespace n on n.oid = c.relnamespace
+            where n.nspname = 'evidence_inspector' and c.relkind = 'v'
+              and pg_get_viewdef(c.oid) not like '%is_inspector()%'), 0,
+  'every inspector view filters on the membership predicate');
 
 select * from finish();
 rollback;

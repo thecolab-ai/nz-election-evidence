@@ -13,6 +13,8 @@ select s.source_id, s.title, s.publisher, s.official_url, s.adapter_kind, s.adap
        f.latest_source_published_at, f.consecutive_failures, f.last_error_class,
        case
          when f.last_attempt_at is null then 'never_run'
+         -- The publisher page answered, but no parser is enabled: reachable, nothing imported, no count implied.
+         when f.last_error_class = 'parser_not_enabled' then 'reachable_not_parsed'
          when f.last_attempt_status in ('blocked', 'failed') then 'unavailable'
          when f.last_success_at is null then 'unavailable'
          when s.expected_cadence_seconds is not null

@@ -224,6 +224,12 @@ begin
     raise exception 'acquire the lease for % before starting a run', p_source_id using errcode = 'P0001';
   end if;
 
+  -- The caller holds the only live lease, so any run still marked running has died (crash, timeout).
+  update evidence_private.import_runs
+     set status = 'abandoned', finished_at = now(), error_class = 'superseded_by_new_run',
+         error_detail = 'worker stopped without finishing; a later run took over'
+   where source_id = p_source_id and status = 'running';
+
   -- Resume from the newest unfinished attempt of the same mode and manifest, if it left a checkpoint.
   select r.id into v_resume
   from evidence_private.import_runs r
@@ -231,6 +237,9 @@ begin
     and r.status in ('abandoned', 'failed', 'partial')
     and r.manifest_hash is not distinct from p_manifest_hash
     and exists (select 1 from evidence_private.run_checkpoints c where c.run_id = r.id)
+    -- A checkpoint is resumed at most once. If that attempt also fails, the next run starts clean,
+    -- so a checkpoint the publisher has since invalidated can never wedge the source.
+    and not exists (select 1 from evidence_private.import_runs again where again.resumed_from_run_id = r.id)
     and not exists (
       select 1 from evidence_private.import_runs later
       where later.source_id = p_source_id and later.mode = p_mode
