@@ -1,51 +1,81 @@
+import generated from './release-coverage.json' with { type: 'json' }
+
 /**
- * What the first connected release actually covers, product by product. Stated in the explorer so that nobody
- * reads a populated page as a complete one. Held equal to catalogue/sources.json and the ingestion source
- * configuration by a test (tools/release_coverage.test.ts): adding a route means changing this list.
+ * Coverage of the project's 24-product catalogue, in two parts that are kept apart on purpose.
  *
- *   live     a live adapter retrieves it from the publisher
- *   export   imported once from a checksum-pinned, verified historical export
- *   none     no route into this store. Nothing is held, and nothing is implied about what the publisher has
+ *   ROUTES (static, generated)   which import routes exist for a product: a backfill from a verified private export,
+ *                                and how the product is kept current. Generated from the ingestion route coverage
+ *                                (ingest/src/loaders/coverage.ts) and held equal to it by a test. A route is a way in;
+ *                                it is never a claim that anything has been loaded.
+ *   HELD (read from the store)   what this store really holds for the product right now, from the rights-filtered
+ *                                public `sources` view. Nothing is shown as held unless the database says so.
  */
-export type ProductRoute = 'live' | 'export' | 'none'
+export type RefreshKind = 'scheduled' | 'operator_run' | 'exercised_only' | 'pending_decision' | 'none'
 
 export interface ProductCoverage {
   product_id: string
   title: string
   publisher: string
-  route: ProductRoute
-  source_id?: string
-  note?: string
+  catalogue_record_count: number
+  backfill_source_ids: string[]
+  refresh_source_ids: string[]
+  refresh: RefreshKind
+  /** Why there is no working refresh route, where that is the case. */
+  refresh_gap: string | null
 }
 
-export const RELEASE_COVERAGE: readonly ProductCoverage[] = [
-  { product_id: 'P01', title: 'Beehive releases', publisher: 'New Zealand Government / Beehive', route: 'live', source_id: 'nz_government_releases_feed', note: 'The current feed window only: titles and links. The historical archive is not held.' },
-  { product_id: 'P02', title: '54th Parliament bill publications', publisher: 'New Zealand Parliament', route: 'none' },
-  { product_id: 'P03', title: 'Current bills index', publisher: 'New Zealand Parliament', route: 'live', source_id: 'nz_parliament_current_bills', note: 'Bill metadata and links. Never bill text.' },
-  { product_id: 'P04', title: '2023 general election candidate roster', publisher: 'Electoral Commission', route: 'export', source_id: 'baseline_2023_candidacies_export', note: 'A verified historical export of 963 candidacies (495 electorate, 468 party list). A 2023 baseline, not the 2026 election.' },
-  { product_id: 'P05', title: '54th Parliament committee business', publisher: 'New Zealand Parliament', route: 'none' },
-  { product_id: 'P06', title: '54th Parliament select committee report bodies', publisher: 'New Zealand Parliament', route: 'none' },
-  { product_id: 'P07', title: '54th Parliament select committee report index', publisher: 'New Zealand Parliament', route: 'none' },
-  { product_id: 'P08', title: '2023 overall election results', publisher: 'Electoral Commission', route: 'none' },
-  { product_id: 'P09', title: '2023 electorate election results', publisher: 'Electoral Commission', route: 'none' },
-  { product_id: 'P10', title: 'Current members of Parliament', publisher: 'New Zealand Parliament', route: 'live', source_id: 'nz_parliament_mp_directory', note: 'Name, party and seat as listed, with the official profile link. A sitting member is not a candidate.' },
-  { product_id: 'P11', title: 'Health New Zealand data catalogue sample', publisher: 'Health New Zealand', route: 'none' },
-  { product_id: 'P12', title: 'MSD benefits and hardship statistics sample', publisher: 'Ministry of Social Development', route: 'none' },
-  { product_id: 'P13', title: 'Registered-party policy page catalogue', publisher: 'Registered New Zealand political parties', route: 'none' },
-  { product_id: 'P14', title: 'Recent party-vote polls sample', publisher: 'Multiple poll publishers', route: 'none' },
-  { product_id: 'P15', title: '2023 candidate expense-return document index', publisher: 'Electoral Commission', route: 'none' },
-  { product_id: 'P16', title: '2025 party finance aggregate index', publisher: 'Electoral Commission', route: 'none' },
-  { product_id: 'P17', title: '2025 party finance return document index', publisher: 'Electoral Commission', route: 'none' },
-  { product_id: 'P18', title: 'Reserve Bank statistics catalogue', publisher: 'Reserve Bank of New Zealand', route: 'none' },
-  { product_id: 'P19', title: '2018 Census national highlights sample', publisher: 'Stats NZ', route: 'none' },
-  { product_id: 'P20', title: 'Stats NZ CSV catalogue sample', publisher: 'Stats NZ', route: 'none' },
-  { product_id: 'P21', title: '2023 Census selected products', publisher: 'Stats NZ', route: 'none' },
-  { product_id: 'P22', title: 'Food price and population selected series', publisher: 'Stats NZ', route: 'none' },
-  { product_id: 'P23', title: 'Rental bond selected measures', publisher: 'Tenancy Services', route: 'none' },
-  { product_id: 'P24', title: 'Written parliamentary questions', publisher: 'New Zealand Parliament', route: 'none' },
-]
+export const RELEASE_COVERAGE: readonly ProductCoverage[] = generated.products as ProductCoverage[]
 
-export function coverageCounts(rows: readonly ProductCoverage[] = RELEASE_COVERAGE): { total: number; live: number; export: number; none: number } {
-  const count = (route: ProductRoute) => rows.filter((row) => row.route === route).length
-  return { total: rows.length, live: count('live'), export: count('export'), none: count('none') }
+/** What is NOT published for the 2026 election by any route. Unknown and unpublished: never zero, never "none". */
+export const NOT_PUBLISHED_FOR_2026: readonly string[] = generated.not_published_for_2026
+
+export const REFRESH_LABELS: Record<RefreshKind, string> = {
+  scheduled: 'Refreshed by a scheduled fetch',
+  operator_run: 'Refreshed by an operator-run fetch',
+  exercised_only: 'Refresh route tested, not yet run in full',
+  pending_decision: 'Refresh route waits on a decision',
+  none: 'No refresh route',
+}
+
+/** The columns of the public `sources` view this statement reads. Declared here so release tooling can import this file on its own. */
+export interface HeldSource {
+  source_id: string
+  live_records: number | string | null
+  statistical_observations: number | string | null
+  statistical_catalogue_entries: number | string | null
+  last_success_at: string | null
+}
+
+export interface ProductHeld {
+  /** Sources of this product the store returned (a source whose rights allow no release is not returned at all). */
+  sources_seen: number
+  /** Sources with at least one successful load or fetch. */
+  sources_loaded: number
+  ledger_records: number
+  statistical_observations: number
+  catalogue_entries: number
+  held: boolean
+}
+
+/**
+ * What the store holds for one product, from the rows of the public `sources` view. Counts of different sources of
+ * one product are routes to overlapping publisher items, so they are shown per source elsewhere; here they only
+ * decide whether anything is held at all. They are never presented as one total of distinct items.
+ */
+export function heldFor(product: ProductCoverage, sources: readonly HeldSource[]): ProductHeld {
+  const ids = new Set([...product.backfill_source_ids, ...product.refresh_source_ids])
+  const mine = sources.filter((s) => ids.has(s.source_id))
+  const sum = (pick: (s: HeldSource) => unknown) => mine.reduce((total, s) => total + Number(pick(s) ?? 0), 0)
+  const ledger = sum((s) => s.live_records)
+  const observations = sum((s) => s.statistical_observations)
+  const entries = sum((s) => s.statistical_catalogue_entries)
+  return {
+    sources_seen: mine.length, sources_loaded: mine.filter((s) => s.last_success_at).length,
+    ledger_records: ledger, statistical_observations: observations, catalogue_entries: entries, held: ledger + observations + entries > 0,
+  }
+}
+
+export function coverageCounts(rows: readonly ProductCoverage[] = RELEASE_COVERAGE): { total: number; with_backfill_route: number; with_refresh_route: number; without_refresh_route: number } {
+  const refreshed = rows.filter((row) => row.refresh === 'scheduled' || row.refresh === 'operator_run').length
+  return { total: rows.length, with_backfill_route: rows.filter((row) => row.backfill_source_ids.length > 0).length, with_refresh_route: refreshed, without_refresh_route: rows.length - refreshed }
 }

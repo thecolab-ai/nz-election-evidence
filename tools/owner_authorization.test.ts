@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { test } from "node:test";
-import { authorizationProblems, deployAuthorization, FORBIDDEN_FIELD, MAX_DAYS_IN_FORCE, scopesInForce, type AuthorizationFile } from "./owner_authorization.ts";
+import { authorizationProblems, deployAuthorization, FORBIDDEN_FIELD, MAX_DAYS_IN_FORCE, type RegisteredSource, scopesInForce, STATISTICAL_FACT_FIELDS, type AuthorizationFile } from "./owner_authorization.ts";
 import { gate, gateWithOwnerOverride, registerRows, unparsedRegisterLines } from "./release_gate.ts";
 
 const root = new URL("../", import.meta.url);
@@ -39,7 +39,8 @@ function fixture(patch: (file: AuthorizationFile) => void = () => {}): Authoriza
 test("the committed owner file is valid, is the owner's decision, and approves nothing in either register", async () => {
   const doc = JSON.parse(await readFile(new URL("governance/owner-authorizations.json", root), "utf-8")) as AuthorizationFile;
   assert.deepEqual(authorizationProblems(doc), []);
-  for (const a of doc.authorizations) assert.match(a.request_source, /Telegram/);
+  // Each entry says how the owner's request reached the build, and that the message itself is not held here.
+  for (const a of doc.authorizations) assert.match(a.request_source, /(Telegram|relayed).*not held in this repository/s);
 
   // The review register is untouched: every row pending, nobody appointed, and the plain gate stays closed.
   const register = await readFile(new URL("REVIEW-REGISTER.md", root), "utf-8");
@@ -174,4 +175,64 @@ test("the database constraint and this tool forbid the same field names", async 
   const match = /owner_field_scope_forbidden check \(field_token !~ '([^']+)'\)/.exec(sql);
   assert.ok(match, "constraint present");
   assert.equal(match[1], FORBIDDEN_FIELD.source);
+});
+
+// Statistical facts: an explicit scope of its own, because the descriptive scope (rightly) cannot hold a number --------------
+
+const STATS_SOURCE: RegisteredSource = { source_id: "fixture_stats", rights_id: "RIGHTS-18", view_scope: "statistics", registry_key: "statistics" };
+const POLL_SOURCE: RegisteredSource = { source_id: "fixture_polls", rights_id: "RIGHTS-07", view_scope: "primary_2026", registry_key: "party_vote_polls" };
+const FIXTURE_SOURCE: RegisteredSource = { source_id: "fixture_source", rights_id: "RIGHTS-13", view_scope: "current_parliament", registry_key: "parliament_members" };
+const statistical = (patch: Partial<{ source_id: string; rights_id: string; fields: string[]; basis: string }> = {}) => fixture((f) => {
+  f.authorizations[0]!.scopes.push({ scope: "statistical_facts", source_id: "fixture_stats", rights_id: "RIGHTS-18", fields: ["value", "value_status"], basis: "TEST FIXTURE: official statistics as printed by the publisher, with unit, period and status.", ...patch });
+});
+
+test("the descriptive scope still cannot release a number, so statistical facts need their own explicit scope", () => {
+  for (const field of STATISTICAL_FACT_FIELDS) {
+    assert.ok(FORBIDDEN_FIELD.test(field), `${field} stays forbidden in a source_fields scope`);
+    const file = fixture((f) => { (f.authorizations[0]!.scopes[2] as { fields: string[] }).fields.push(field); });
+    assert.match(authorizationProblems(file).join("\n"), /can never be released by a source_fields decision/, field);
+  }
+  assert.deepEqual(authorizationProblems(statistical(), [STATS_SOURCE, FIXTURE_SOURCE]), []);
+  assert.equal(scopesInForce(statistical(), "2026-09-21", [STATS_SOURCE, FIXTURE_SOURCE]).filter((s) => s.scope.scope === "statistical_facts").length, 1);
+});
+
+test("a statistical_facts scope names only the four fact columns: no pattern, no vote, no money, no descriptive field", () => {
+  for (const field of ["votes", "party_votes", "value_pct", "amount_nzd", "approved_total", "sample_size", "list_seats", "title", "unit", "qualifiers", "*", "value*"]) {
+    assert.match(authorizationProblems(statistical({ fields: ["value", field] }), [STATS_SOURCE, FIXTURE_SOURCE]).join("\n"), /is not a statistical fact column|is not a field name/, field);
+  }
+  assert.match(authorizationProblems(statistical({ fields: [] })).join("\n"), /non-empty list/);
+  assert.match(authorizationProblems(statistical({ fields: ["value", "value"] })).join("\n"), /duplicate field/);
+  assert.match(authorizationProblems(statistical({ basis: "too short" })).join("\n"), /basis is missing/);
+  assert.match(authorizationProblems(statistical({ basis: "Figures are licensed by the publisher for display on this site, at length." })).join("\n"), /presents the owner decision as/);
+});
+
+test("statistical facts are for registered statistics sources only, beside the rights row that governs them", () => {
+  const registry = [STATS_SOURCE, POLL_SOURCE, FIXTURE_SOURCE];
+  assert.match(authorizationProblems(statistical({ source_id: "fixture_polls", rights_id: "RIGHTS-07" }), registry).join("\n"), /not a statistics source/);
+  assert.match(authorizationProblems(statistical({ rights_id: "RIGHTS-17" }), registry).join("\n"), /is governed by RIGHTS-18, not RIGHTS-17/);
+  assert.match(authorizationProblems(statistical({ source_id: "fixture_unknown" }), registry).join("\n"), /is not a registered source/);
+  // Any problem anywhere means nothing at all is in force.
+  assert.deepEqual(scopesInForce(statistical({ source_id: "fixture_polls", rights_id: "RIGHTS-07" }), "2026-09-21", registry), []);
+  // One descriptive and one statistical decision per source is fine; two of a kind is not.
+  const both = statistical();
+  both.authorizations[0]!.scopes.push({ scope: "source_fields", source_id: "fixture_stats", rights_id: "RIGHTS-18", fields: ["title", "unit"], basis: "TEST FIXTURE: series title and unit as printed by the publisher, with the link." });
+  assert.deepEqual(authorizationProblems(both, registry), []);
+  both.authorizations[0]!.scopes.push({ scope: "statistical_facts", source_id: "fixture_stats", rights_id: "RIGHTS-18", fields: ["raw_value"], basis: "TEST FIXTURE: a second statistical decision for the same source in one entry." });
+  assert.match(authorizationProblems(both, registry).join("\n"), /second statistical_facts decision/);
+});
+
+test("the database constraints of the unified migration and this tool agree on both field rules", async () => {
+  const sql = await readFile(new URL("supabase/migrations/20260921040100_unified_import.sql", root), "utf-8");
+  const forbidden = /owner_field_scope_forbidden\s+check \(scope_kind is distinct from 'source_fields' or field_token !~ '([^']+)'\)/.exec(sql);
+  assert.ok(forbidden, "the forbidden-name rule still binds every source_fields row");
+  assert.equal(forbidden[1], FORBIDDEN_FIELD.source);
+  const allowed = /owner_statistical_fact_tokens\s+check \(scope_kind is distinct from 'statistical_facts' or field_token in \(([^)]+)\)\)/.exec(sql);
+  assert.ok(allowed, "closed list present");
+  assert.deepEqual(allowed[1].split(",").map((t) => t.trim().replace(/'/g, "")), [...STATISTICAL_FACT_FIELDS]);
+});
+
+test("every field decision in the committed file names a registered source under its own rights row", async () => {
+  const doc = JSON.parse(await readFile(new URL("governance/owner-authorizations.json", root), "utf-8")) as AuthorizationFile;
+  const registry = (JSON.parse(await readFile(new URL("supabase/functions/_shared/sources.config.json", root), "utf-8")) as { sources: RegisteredSource[] }).sources;
+  assert.deepEqual(authorizationProblems(doc, registry), []);
 });

@@ -27,6 +27,17 @@ export const ROW_RELEASE_SURFACES = ["evidence-store"] as const;
 export const FORBIDDEN_FIELD =
   /(email|e_mail|phone|mobile|fax|address|postal|contact|twitter|facebook|instagram|linkedin|handle|body|content|html|text|passage|description|summary|excerpt|transcript|portrait|image|photo|donor|birth|gender|ethnic|vote|share|rank|seats|score|confidence|value|pct|percent|total|amount|sample|payload|external_id|external_record_id|publisher_item_id)/;
 
+/**
+ * The ONLY fields a statistical_facts scope can name: the number as stored, the number where it cannot be held exactly,
+ * the cell as the publisher printed it, and the status that says whether there is a number at all. A closed list, for
+ * sources registered as official statistics only. Votes, poll figures, seats and money are not statistical facts here
+ * and stay outside every owner scope. Kept equal to the database constraint owner_statistical_fact_tokens (tested).
+ */
+export const STATISTICAL_FACT_FIELDS = ["value", "value_double", "raw_value", "value_status"] as const;
+
+/** What the validator needs to know about a registered source to check a field decision against it. */
+export interface RegisteredSource { source_id: string; rights_id?: string; view_scope: string; registry_key?: string }
+
 const FIELD_SHAPE = /^[a-z][a-z0-9_]{1,62}$/;
 const ID_SHAPE = /^OWNER-AUTH-\d{4}-\d{2}-\d{2}-\d{2}$/;
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
@@ -36,7 +47,8 @@ const RIGHTS_ID = /^RIGHTS-[0-9]{2,}$/;
 export type Scope =
   | { scope: "pages_deploy"; surface_id: string }
   | { scope: "public_rows"; surface_id: string }
-  | { scope: "source_fields"; source_id: string; rights_id: string; fields: string[]; basis: string };
+  | { scope: "source_fields"; source_id: string; rights_id: string; fields: string[]; basis: string }
+  | { scope: "statistical_facts"; source_id: string; rights_id: string; fields: string[]; basis: string };
 
 export interface Authorization {
   authorization_id: string;
@@ -71,7 +83,7 @@ const days = (from: string, to: string) => Math.round((Date.parse(to + "T00:00:0
 const MISREPRESENTS = /\b(legal(ly)? review(ed)? (complete|passed|done)|reviewed and approved|publisher[- ]approved|licen[cs]ed by|licen[cs]e granted|permission granted|rights (approved|cleared)|R10 (approved|complete|satisfied)|R8 (approved|complete|satisfied))\b/i;
 
 /** Every problem with the file. An empty list means it is usable; anything else means NO authorization is in force. */
-export function authorizationProblems(doc: unknown): string[] {
+export function authorizationProblems(doc: unknown, registry?: RegisteredSource[]): string[] {
   const problems: string[] = [];
   if (!doc || typeof doc !== "object") return ["not a JSON object"];
   const file = doc as Partial<AuthorizationFile>;
@@ -121,6 +133,7 @@ export function authorizationProblems(doc: unknown): string[] {
       continue;
     }
     const sources = new Set<string>();
+    const statisticsSources = new Set<string>();
     for (const [j, rawScope] of a.scopes.entries()) {
       const s = rawScope as Partial<Scope> & { [key: string]: unknown };
       const where = `${at}.scopes[${j}]`;
@@ -128,10 +141,12 @@ export function authorizationProblems(doc: unknown): string[] {
         if (!(DEPLOYABLE_SURFACES as readonly string[]).includes(String(s.surface_id))) problems.push(`${where}: pages_deploy applies to ${DEPLOYABLE_SURFACES.join(", ")} only`);
       } else if (s.scope === "public_rows") {
         if (!(ROW_RELEASE_SURFACES as readonly string[]).includes(String(s.surface_id))) problems.push(`${where}: public_rows applies to ${ROW_RELEASE_SURFACES.join(", ")} only`);
-      } else if (s.scope === "source_fields") {
+      } else if (s.scope === "source_fields" || s.scope === "statistical_facts") {
+        const statistical = s.scope === "statistical_facts";
+        const seen = statistical ? statisticsSources : sources;
         if (typeof s.source_id !== "string" || !SOURCE_ID.test(s.source_id)) problems.push(`${where}: source_id is missing; a field decision is always for ONE source`);
-        else if (sources.has(s.source_id)) problems.push(`${where}: second field decision for ${s.source_id} in one authorization`);
-        else sources.add(s.source_id);
+        else if (seen.has(s.source_id)) problems.push(`${where}: second ${s.scope} decision for ${s.source_id} in one authorization`);
+        else seen.add(s.source_id);
         if (typeof s.rights_id !== "string" || !RIGHTS_ID.test(s.rights_id)) problems.push(`${where}: rights_id must name the (still pending) rights row this decision sits beside`);
         if (!text(s.basis, 40)) problems.push(`${where}: basis is missing`);
         else if (MISREPRESENTS.test(String(s.basis))) problems.push(`${where}: basis presents the owner decision as a licence or approval`);
@@ -139,9 +154,19 @@ export function authorizationProblems(doc: unknown): string[] {
         else {
           for (const field of s.fields) {
             if (typeof field !== "string" || !FIELD_SHAPE.test(field)) problems.push(`${where}: '${String(field)}' is not a field name (no wildcards or patterns)`);
-            else if (FORBIDDEN_FIELD.test(field)) problems.push(`${where}: '${field}' can never be released by an owner decision (contact data, bodies, images, figures, publisher identifiers)`);
+            else if (statistical && !(STATISTICAL_FACT_FIELDS as readonly string[]).includes(field)) problems.push(`${where}: '${field}' is not a statistical fact column (${STATISTICAL_FACT_FIELDS.join(", ")}); descriptive fields belong in a source_fields scope`);
+            else if (!statistical && FORBIDDEN_FIELD.test(field)) problems.push(`${where}: '${field}' can never be released by a source_fields decision (contact data, bodies, images, figures, publisher identifiers)`);
           }
           if (new Set(s.fields).size !== s.fields.length) problems.push(`${where}: duplicate field`);
+        }
+        // With the source registry at hand the decision is checked against the source it names.
+        if (registry && typeof s.source_id === "string") {
+          const source = registry.find((entry) => entry.source_id === s.source_id);
+          if (!source) problems.push(`${where}: ${s.source_id} is not a registered source`);
+          else {
+            if (source.rights_id !== s.rights_id) problems.push(`${where}: ${s.source_id} is governed by ${source.rights_id ?? "no rights row"}, not ${String(s.rights_id)}`);
+            if (statistical && (source.view_scope !== "statistics" || source.registry_key !== "statistics")) problems.push(`${where}: ${s.source_id} is not a statistics source; statistical facts can be released for official statistics only`);
+          }
         }
       } else {
         problems.push(`${where}: unknown scope '${String(s.scope)}'`);
@@ -157,8 +182,8 @@ export interface InForce {
 }
 
 /** Scopes in force on `today` (ISO date, UTC). A file with ANY problem has none in force. */
-export function scopesInForce(doc: unknown, today: string): InForce[] {
-  if (!isDate(today) || authorizationProblems(doc).length) return [];
+export function scopesInForce(doc: unknown, today: string, registry?: RegisteredSource[]): InForce[] {
+  if (!isDate(today) || authorizationProblems(doc, registry).length) return [];
   return (doc as AuthorizationFile).authorizations
     .filter((a) => a.status === "active" && a.decided_on <= today && today <= a.expires_on)
     .flatMap((authorization) => authorization.scopes.map((scope) => ({ authorization, scope })));
@@ -182,15 +207,16 @@ export async function readAuthorizationFile(root: string): Promise<unknown> {
 async function main(): Promise<number> {
   const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
   const doc = await readAuthorizationFile(root);
-  const problems = authorizationProblems(doc);
+  const registry = (JSON.parse(await readFile(resolve(root, "supabase/functions/_shared/sources.config.json"), "utf-8")) as { sources: RegisteredSource[] }).sources;
+  const problems = authorizationProblems(doc, registry);
   if (problems.length) {
     for (const problem of problems) console.error(`owner-authorizations: ${problem}`);
     return 1;
   }
-  const inForce = scopesInForce(doc, todayUtc());
+  const inForce = scopesInForce(doc, todayUtc(), registry);
   console.log(`owner-authorizations: valid; ${inForce.length} scope(s) in force today. These are owner decisions, not reviews and not publisher licences.`);
   for (const { authorization, scope } of inForce) {
-    const target = scope.scope === "source_fields" ? `${scope.source_id} (${scope.fields.length} fields, beside pending ${scope.rights_id})` : scope.surface_id;
+    const target = scope.scope === "source_fields" || scope.scope === "statistical_facts" ? `${scope.source_id} (${scope.fields.length} fields, beside pending ${scope.rights_id})` : scope.surface_id;
     console.log(`  ${authorization.authorization_id}  ${scope.scope}  ${target}  until ${authorization.expires_on}`);
   }
   return 0;

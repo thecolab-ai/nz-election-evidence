@@ -114,6 +114,13 @@ export function SourceDetailPage() {
             { label: 'Live records', value: <Link to="/records" search={{ source: s.source_id }} className="doc-link num">{formatCount(s.live_records)}</Link> },
             { label: 'Tombstoned records', value: <span className="num">{formatCount(s.tombstoned_records)}</span> },
             { label: 'Content versions', value: <span className="num">{formatCount(s.content_versions)}</span> },
+            // A statistics source writes typed observations, not ledger records: its counts are recorded when a load finishes.
+            ...(s.statistical_observations === null || s.statistical_observations === undefined ? [] : [
+              { label: 'Statistical observations', value: <Link to="/statistics" className="doc-link num" data-testid="source-observations">{formatCount(s.statistical_observations)}</Link> },
+              { label: 'Observations with no number printed', value: <span className="num" data-testid="source-observations-withheld">{formatCount(s.statistical_observations_without_a_number)}</span> },
+              { label: 'Series · catalogue entries', value: <span className="num">{formatCount(s.statistical_series)} · {formatCount(s.statistical_catalogue_entries)}</span> },
+              { label: 'Statistics counted', value: formatDateTime(s.statistics_counted_at, 'never counted') },
+            ]),
           ]}
         />
       </Section>

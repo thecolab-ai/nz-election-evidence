@@ -42,6 +42,16 @@ export interface SourceRow {
   tombstoned_records: Numeric
   content_versions: Numeric
   catalogue_product_ids: string[]
+  /**
+   * Statistics sources write typed observations, not ledger records, so their `live_records` is 0 by design. These are
+   * recorded by the loader at the end of a load. Null for a source that is not a statistics source or was never loaded.
+   */
+  statistical_observations: Numeric | null
+  /** Observations whose status says the publisher printed no number. Never zeros. */
+  statistical_observations_without_a_number: Numeric | null
+  statistical_series: number | null
+  statistical_catalogue_entries: number | null
+  statistics_counted_at: string | null
   /** Field names shown for this source on a current OWNER decision, not on a publisher's approval. */
   owner_authorized_fields: string[]
 }

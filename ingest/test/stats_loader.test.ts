@@ -81,6 +81,8 @@ class MemoryDb implements StatDb {
     return { datasets: 1, releases: 1, series: 1, geographies: 1, catalogue_entry_versions: 0, catalogue_entries_current: 0, observations: this.observations.size, observations_by_release: byRelease,
       observations_by_status: {}, withheld_rows_carrying_a_number: 0, content_digest: "x" };
   }
+  summaries: string[] = [];
+  async recordSummary(runId: string) { this.summaries.push(runId); }
   async finishRun(runId: string, _h: string, status: "succeeded" | "failed") { this.runs.find((r) => r.id === runId)!.status = status; return { status }; }
   async close(): Promise<void> { /* nothing open */ }
 }

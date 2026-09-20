@@ -26,6 +26,8 @@ export interface StatDb {
   ingestObservations(runId: string, holder: string, rows: unknown[]): Promise<ObservationBatchResult>;
   saveCheckpoint(runId: string, holder: string, cursor: { file: string; offset: number }, recordsSoFar: number): Promise<void>;
   counts(sourceId: string): Promise<DestinationCounts>;
+  /** Records what the source now holds for the sources view (counts only), under the lease of this run. */
+  recordSummary(runId: string, holder: string): Promise<void>;
   finishRun(runId: string, holder: string, status: "succeeded" | "failed", watermark: string, errorClass: string | null, errorDetail: string | null): Promise<{ status: string }>;
   close(): Promise<void>;
 }
@@ -55,6 +57,7 @@ export async function connectLoader(env: { [key: string]: string | undefined }):
     ingestObservations: (runId, holder, rows) => one(sql`select evidence_private.ingest_stat_observations(${runId}::uuid, ${holder}::uuid, ${sql.json(rows as never)}) as r`),
     saveCheckpoint: async (runId, holder, cursor, recordsSoFar) => { await sql`select evidence_private.save_checkpoint(${runId}::uuid, ${holder}::uuid, ${sql.json(cursor)}, ${recordsSoFar}::integer, 900)`; },
     counts: (sourceId) => one(sql`select evidence_private.stat_source_counts(${sourceId}) as r`),
+    recordSummary: async (runId, holder) => { await sql`select evidence_private.record_stat_source_summary(${runId}::uuid, ${holder}::uuid)`; },
     finishRun: (runId, holder, status, watermark, errorClass, errorDetail) =>
       one(sql`select evidence_private.finish_run(${runId}::uuid, ${holder}::uuid, ${status}, false, ${watermark}, ${errorClass}, ${errorDetail}) as r`),
     close: async () => { await sql.end({ timeout: 5 }); },
@@ -185,6 +188,7 @@ export async function loadSource(plan: StatsSourcePlan, artifact: OpenArtifact, 
 
     const destination = await db.counts(plan.source_id);
     receipt.destination = destination;
+    await db.recordSummary(runId, holder);
     const lines: ReconciliationLine[] = [];
     for (const [key, rows] of [...perRelease].sort()) {
       const stored = destination.observations_by_release[key] ?? 0;

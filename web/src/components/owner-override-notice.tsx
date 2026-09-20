@@ -58,8 +58,9 @@ export function OwnerOverrideNotice({ status }: { status: readonly SurfaceStatus
               does not open or replace {outstanding.length > 1 ? 'them' : 'it'}.{' '}
             </span>
           ) : null}
-          No publisher has approved or licensed the fields shown on this decision: names, parties, seats and titles appear as each official
-          source published them, each with a link to that source, and each source’s page lists them. Owner decision{' '}
+          No publisher has approved or licensed the fields shown on this decision: names, parties, seats, titles and, for statistics
+          sources, the published figures appear as each official source published them, each with a link to that source, and each source’s
+          page lists them. Votes, poll figures and money are not shown on this decision. Owner decision{' '}
           <span className="font-mono">{row.owner_authorization_id}</span> of {formatDate(row.owner_decided_on)}, in force until{' '}
           {formatDate(row.owner_expires_on)}.{' '}
           <ExternalLink href={`${REPO_BASE}governance/owner-authorizations.json`}>Read the decision and its limits</ExternalLink>{' '}

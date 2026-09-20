@@ -119,6 +119,39 @@ export type Database = {
           },
         ]
       }
+      boundary_map_links: {
+        Row: {
+          boundary_edition_id: string | null
+          boundary_scope: string | null
+          boundary_type_at_source: string | null
+          document_id: string | null
+          election_id: string | null
+          evidence_version_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "boundary_map_links_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: true
+            referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "boundary_map_links_election_id_fkey"
+            columns: ["election_id"]
+            isOneToOne: false
+            referencedRelation: "elections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "boundary_map_links_evidence_version_id_fkey"
+            columns: ["evidence_version_id"]
+            isOneToOne: false
+            referencedRelation: "source_record_versions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       candidacies: {
         Row: {
           candidacy_type: string | null
@@ -406,6 +439,33 @@ export type Database = {
           },
         ]
       }
+      election_official_page_status: {
+        Row: {
+          candidate_details_available: string | null
+          election_id: string | null
+          evidence_version_id: string | null
+          first_retrieved_at: string | null
+          id: string | null
+          official_url: string | null
+          page_status: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "election_official_page_status_election_id_fkey"
+            columns: ["election_id"]
+            isOneToOne: false
+            referencedRelation: "elections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "election_official_page_status_evidence_version_id_fkey"
+            columns: ["evidence_version_id"]
+            isOneToOne: false
+            referencedRelation: "source_record_versions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       election_party_totals: {
         Row: {
           denominator_note: string | null
@@ -429,6 +489,33 @@ export type Database = {
             foreignKeyName: "election_party_totals_result_set_id_fkey"
             columns: ["result_set_id"]
             isOneToOne: false
+            referencedRelation: "result_sets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      election_result_totals: {
+        Row: {
+          electorate_seats: number | null
+          evidence_version_id: string | null
+          list_seats: number | null
+          party_votes: number | null
+          result_set_id: string | null
+          total_seats: number | null
+          value_status: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "election_result_totals_evidence_version_id_fkey"
+            columns: ["evidence_version_id"]
+            isOneToOne: false
+            referencedRelation: "source_record_versions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "election_result_totals_result_set_id_fkey"
+            columns: ["result_set_id"]
+            isOneToOne: true
             referencedRelation: "result_sets"
             referencedColumns: ["id"]
           },
@@ -474,6 +561,44 @@ export type Database = {
             columns: ["official_source_version_id"]
             isOneToOne: false
             referencedRelation: "source_record_versions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      electorate_result_summaries: {
+        Row: {
+          candidate_informals: number | null
+          candidate_lines: number | null
+          candidate_votes_with_informals: number | null
+          contest_id: string | null
+          evidence_version_id: string | null
+          party_informals: number | null
+          party_lines: number | null
+          party_votes_with_informals: number | null
+          result_set_id: string | null
+          votes_counted: number | null
+          votes_counted_pct: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "electorate_result_summaries_contest_id_fkey"
+            columns: ["contest_id"]
+            isOneToOne: false
+            referencedRelation: "contests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "electorate_result_summaries_evidence_version_id_fkey"
+            columns: ["evidence_version_id"]
+            isOneToOne: false
+            referencedRelation: "source_record_versions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "electorate_result_summaries_result_set_id_fkey"
+            columns: ["result_set_id"]
+            isOneToOne: false
+            referencedRelation: "result_sets"
             referencedColumns: ["id"]
           },
         ]
@@ -531,6 +656,50 @@ export type Database = {
           },
         ]
       }
+      finance_published_aggregates: {
+        Row: {
+          amount_nzd: number | null
+          basis: string | null
+          evidence_version_id: string | null
+          finance_return_id: string | null
+          id: string | null
+          metric: string | null
+          party_identity_id: string | null
+          reporting_year: number | null
+          source_record_id: string | null
+          value_status: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_published_aggregates_evidence_version_id_fkey"
+            columns: ["evidence_version_id"]
+            isOneToOne: false
+            referencedRelation: "source_record_versions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_published_aggregates_finance_return_id_fkey"
+            columns: ["finance_return_id"]
+            isOneToOne: false
+            referencedRelation: "finance_return_references"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_published_aggregates_party_identity_id_fkey"
+            columns: ["party_identity_id"]
+            isOneToOne: false
+            referencedRelation: "party_source_identities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_published_aggregates_source_record_id_fkey"
+            columns: ["source_record_id"]
+            isOneToOne: false
+            referencedRelation: "source_records"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       finance_return_references: {
         Row: {
           approved_total: number | null
@@ -574,6 +743,26 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "party_source_identities"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      geography_versions: {
+        Row: {
+          code: string | null
+          code_basis: string | null
+          edition: string | null
+          id: string | null
+          name: string | null
+          scheme: string | null
+          source_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "geography_versions_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "sources"
+            referencedColumns: ["source_id"]
           },
         ]
       }
@@ -1518,6 +1707,57 @@ export type Database = {
           },
         ]
       }
+      result_route_checks: {
+        Row: {
+          candidacy_id: string | null
+          check_kind: string | null
+          counted_route: string | null
+          election_id: string | null
+          evidence_version_id: string | null
+          id: string | null
+          other_version_id: string | null
+          outcome: string | null
+          source_record_id: string | null
+          this_route_votes: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "result_route_checks_candidacy_id_fkey"
+            columns: ["candidacy_id"]
+            isOneToOne: false
+            referencedRelation: "candidacies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "result_route_checks_election_id_fkey"
+            columns: ["election_id"]
+            isOneToOne: false
+            referencedRelation: "elections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "result_route_checks_evidence_version_id_fkey"
+            columns: ["evidence_version_id"]
+            isOneToOne: false
+            referencedRelation: "source_record_versions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "result_route_checks_other_version_id_fkey"
+            columns: ["other_version_id"]
+            isOneToOne: false
+            referencedRelation: "source_record_versions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "result_route_checks_source_record_id_fkey"
+            columns: ["source_record_id"]
+            isOneToOne: false
+            referencedRelation: "source_records"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       result_sets: {
         Row: {
           declared_on: string | null
@@ -1993,11 +2233,53 @@ export type Database = {
           },
         ]
       }
+      stat_catalogue_entries: {
+        Row: {
+          attributes: Json | null
+          content_hash: string | null
+          entry_key: string | null
+          entry_kind: string | null
+          facts_asserted: boolean | null
+          file_sha256: string | null
+          format: string | null
+          found_on_url: string | null
+          id: string | null
+          import_run_id: string | null
+          is_current: boolean | null
+          observation_count: number | null
+          observed_first_at: string | null
+          observed_last_at: string | null
+          publisher_modified_text: string | null
+          source_id: string | null
+          title: string | null
+          url: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stat_catalogue_entries_import_run_id_fkey"
+            columns: ["import_run_id"]
+            isOneToOne: false
+            referencedRelation: "import_runs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stat_catalogue_entries_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "sources"
+            referencedColumns: ["source_id"]
+          },
+        ]
+      }
       stat_datasets: {
         Row: {
+          coverage_note: string | null
           dataset_key: string | null
+          historical: boolean | null
           id: string | null
+          official_url: string | null
           publisher: string | null
+          route: string | null
           source_id: string | null
           title: string | null
         }
@@ -2022,15 +2304,26 @@ export type Database = {
           period_end: string | null
           period_label: string | null
           period_start: string | null
+          qualifiers: Json | null
           raw_value: string | null
           release_id: string | null
           row_locator: string | null
           series_id: string | null
+          source_status: string | null
+          source_symbol: string | null
+          upstream_status: string | null
           value: number | null
           value_double: number | null
           value_status: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "stat_observations_geography_version_id_fkey"
+            columns: ["geography_version_id"]
+            isOneToOne: false
+            referencedRelation: "geography_versions"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "stat_observations_import_run_id_fkey"
             columns: ["import_run_id"]
@@ -2056,11 +2349,21 @@ export type Database = {
       }
       stat_releases: {
         Row: {
+          boundary_edition: string | null
+          capture_count: number | null
           dataset_id: string | null
           id: string | null
+          import_run_id: string | null
+          publisher_last_modified: string | null
           release_key: string | null
           released_on: string | null
+          released_on_basis: string | null
+          retrieved_at: string | null
+          source_bytes: number | null
+          source_file_sha256: string | null
           source_snapshot_id: string | null
+          source_url: string | null
+          vintage_label: string | null
         }
         Relationships: [
           {
@@ -2068,6 +2371,13 @@ export type Database = {
             columns: ["dataset_id"]
             isOneToOne: false
             referencedRelation: "stat_datasets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stat_releases_import_run_id_fkey"
+            columns: ["import_run_id"]
+            isOneToOne: false
+            referencedRelation: "import_runs"
             referencedColumns: ["id"]
           },
         ]
@@ -2103,6 +2413,7 @@ export type Database = {
         Row: {
           dataset_id: string | null
           dimensions: Json | null
+          frequency: string | null
           id: string | null
           magnitude: string | null
           seasonal_adjustment: string | null
@@ -2117,6 +2428,35 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "stat_datasets"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      stat_source_summary: {
+        Row: {
+          catalogue_entries: number | null
+          counted_at: string | null
+          datasets: number | null
+          import_run_id: string | null
+          observations: number | null
+          observations_without_a_number: number | null
+          releases: number | null
+          series: number | null
+          source_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stat_source_summary_import_run_id_fkey"
+            columns: ["import_run_id"]
+            isOneToOne: false
+            referencedRelation: "import_runs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stat_source_summary_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: true
+            referencedRelation: "sources"
+            referencedColumns: ["source_id"]
           },
         ]
       }
@@ -3212,6 +3552,11 @@ export type Database = {
           rights_review_status: string | null
           snapshot_semantics: string | null
           source_id: string | null
+          statistical_catalogue_entries: number | null
+          statistical_observations: number | null
+          statistical_observations_without_a_number: number | null
+          statistical_series: number | null
+          statistics_counted_at: string | null
           title: string | null
           tombstoned_records: number | null
           view_scope: string | null
@@ -3226,9 +3571,40 @@ export type Database = {
           },
         ]
       }
+      stat_catalogue_entries: {
+        Row: {
+          attributes: Json | null
+          content_hash: string | null
+          entry_key: string | null
+          entry_kind: string | null
+          facts_asserted: boolean | null
+          file_hash: string | null
+          format: string | null
+          found_on_url: string | null
+          id: string | null
+          is_current: boolean | null
+          observation_count: number | null
+          observed_first_at: string | null
+          observed_last_at: string | null
+          publisher_modified_text: string | null
+          source_id: string | null
+          source_url: string | null
+          title: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stat_catalogue_entries_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "sources"
+            referencedColumns: ["source_id"]
+          },
+        ]
+      }
       stat_observations: {
         Row: {
           canonical_route: string | null
+          content_hash: string | null
           geography_code: string | null
           geography_edition: string | null
           geography_name: string | null
@@ -3238,14 +3614,22 @@ export type Database = {
           period_end: string | null
           period_label: string | null
           period_start: string | null
+          qualifiers: Json | null
           raw_value: string | null
           release_key: string | null
           released_on: string | null
+          released_on_basis: string | null
+          retrieved_at: string | null
           row_locator: string | null
           series_id: string | null
+          source_file_hash: string | null
+          source_status: string | null
+          source_symbol: string | null
+          source_url: string | null
           value: number | null
           value_double: number | null
           value_status: string | null
+          vintage_label: string | null
         }
         Relationships: [
           {
@@ -3254,6 +3638,36 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "stat_series"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      stat_releases: {
+        Row: {
+          boundary_edition: string | null
+          capture_count: number | null
+          dataset_key: string | null
+          dataset_title: string | null
+          historical: boolean | null
+          id: string | null
+          observations: number | null
+          publisher_last_modified: string | null
+          release_key: string | null
+          released_on: string | null
+          released_on_basis: string | null
+          retrieved_at: string | null
+          source_bytes: number | null
+          source_file_hash: string | null
+          source_id: string | null
+          source_url: string | null
+          vintage_label: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stat_datasets_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "sources"
+            referencedColumns: ["source_id"]
           },
         ]
       }
@@ -3286,12 +3700,17 @@ export type Database = {
       }
       stat_series: {
         Row: {
+          canonical_route: string | null
+          coverage_note: string | null
           dataset_key: string | null
           dataset_title: string | null
           dimensions: Json | null
+          frequency: string | null
+          historical: boolean | null
           id: string | null
           magnitude: string | null
           observations: number | null
+          official_url: string | null
           seasonal_adjustment: string | null
           series_key: string | null
           source_id: string | null
