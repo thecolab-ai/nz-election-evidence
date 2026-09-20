@@ -145,7 +145,9 @@ export function statsFamily(): LoaderFamily {
     if (result.resumed_from_run_id) receipt.provenance.resumed_from_run_ids.push(result.resumed_from_run_id);
     const o = result.totals.observations;
     const entriesWritten = result.totals.meta.catalogue_entries_written ?? 0;
-    receipt.counts.written = { seen: o.seen, inserted: o.inserted + entriesWritten, unchanged: o.unchanged, rejected: 0, conflicts: o.conflicts, tombstoned: 0 };
+    // Observations and catalogue entry versions are both rows of the artifact: both are counted as seen, written or unchanged.
+    const entries = dryRun ? 0 : artifact.manifest.counts.catalogue_entries;
+    receipt.counts.written = { seen: o.seen + entries, inserted: o.inserted + entriesWritten, unchanged: o.unchanged + Math.max(0, entries - entriesWritten), rejected: 0, conflicts: o.conflicts, tombstoned: 0 };
     if (result.destination) {
       const d = result.destination;
       receipt.counts.destination = { stat_datasets: d.datasets, stat_releases: d.releases, stat_series: d.series, geography_versions: d.geographies, stat_catalogue_entry_versions: d.catalogue_entry_versions, stat_observations: d.observations };

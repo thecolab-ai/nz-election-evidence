@@ -5,6 +5,8 @@
 --
 --   1. evidence_private.text_violation: the ledger guard, with one correction to its phone-number test.
 --   2. evidence_private.run_projectors + project_run: a family REGISTERS its projection; nobody replaces project_run.
+--      The one project_run also projects the earlier runs of a resume chain, so a worker that was killed after storing
+--      records, and before projecting them, leaves no record without its typed row once the run is resumed.
 --
 -- Additive: no existing row is rewritten. Every other test in the guard is unchanged, word for word.
 
@@ -65,8 +67,9 @@ $$;
 
 -- 2. Projector registry ----------------------------------------------------------------------------------------------------
 -- A family adds its typed projection with one INSERT. project_run runs the three core projections unchanged and then
--- every registered projector, in key order. A projector reads only its own record kinds, so the order is not
--- meaningful and a run of one family's records leaves another family's tables untouched (tested).
+-- every registered projector, in key order, for the run and for every earlier run of its resume chain. A projector
+-- reads only its own record kinds, so the order is not meaningful and a run of one family's records leaves another
+-- family's tables untouched (tested).
 
 create table evidence_private.run_projectors (
   projector_key text primary key check (projector_key ~ '^[a-z][a-z0-9_]{2,60}$'),
@@ -89,19 +92,41 @@ set search_path = ''
 as $$
 declare
   v_out jsonb;
+  v_run record;
   v_projector record;
   v_result jsonb;
+  v_earlier integer := 0;
 begin
   perform evidence_private.assert_run_held(p_run_id, p_holder);
-  v_out := jsonb_build_object(
-    'mp_directory', evidence_private.project_mp_directory(p_run_id),
-    'documents', evidence_private.project_documents(p_run_id),
-    'baseline_candidacies', evidence_private.project_baseline_candidacies(p_run_id));
-  for v_projector in select projector_key, function_name from evidence_private.run_projectors order by projector_key loop
-    execute format('select evidence_private.%I($1)', v_projector.function_name) into v_result using p_run_id;
-    v_out := v_out || jsonb_build_object(v_projector.projector_key, v_result);
+  -- A projection covers the records a run observed. A run that RESUMES a stopped run observes only what came after
+  -- the checkpoint, and a run that was killed never reached its own projection: without the loop below the records it
+  -- had already stored stayed in the ledger with no typed row (found by a hard stop on the real written questions:
+  -- 187,956 records, 164,756 typed rows). So the whole resume chain is projected, oldest run first. Projections are
+  -- idempotent, so projecting a run twice writes nothing new.
+  for v_run in
+    with recursive chain as (
+      select r.id, r.resumed_from_run_id, 0 as depth from evidence_private.import_runs r where r.id = p_run_id
+      union all
+      select r.id, r.resumed_from_run_id, c.depth + 1
+      from evidence_private.import_runs r join chain c on r.id = c.resumed_from_run_id
+      where c.depth < 100)
+    select id, depth from chain order by depth desc
+  loop
+    v_out := jsonb_build_object(
+      'mp_directory', evidence_private.project_mp_directory(v_run.id),
+      'documents', evidence_private.project_documents(v_run.id),
+      'baseline_candidacies', evidence_private.project_baseline_candidacies(v_run.id));
+    for v_projector in select projector_key, function_name from evidence_private.run_projectors order by projector_key loop
+      execute format('select evidence_private.%I($1)', v_projector.function_name) into v_result using v_run.id;
+      v_out := v_out || jsonb_build_object(v_projector.projector_key, v_result);
+    end loop;
+    if v_run.depth > 0 then
+      v_earlier := v_earlier + 1;
+    end if;
   end loop;
-  return v_out;
+  -- The answer describes the run that was asked for (the last one projected), and says how many earlier runs of its
+  -- resume chain were projected with it.
+  return v_out || jsonb_build_object('earlier_runs_of_this_resume_chain_projected', v_earlier);
 end
 $$;
 

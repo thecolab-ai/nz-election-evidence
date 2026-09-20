@@ -3,7 +3,7 @@
 -- scope for statistical facts (which releases a number for a statistics source only, and approves no rights row).
 -- TEST FIXTURES ONLY: invented publishers, names, numbers and hosts, rolled back.
 begin;
-select plan(39);
+select plan(44);
 
 -- One guard, one rule about identifiers ---------------------------------------------------------------------------------------
 select is(evidence_private.text_violation('Stephens ' || repeat('0212345678ab', 5) || 'cdef'), null, 'a SHA-256 digest in plain hexadecimal beside "ph" passes');
@@ -109,8 +109,44 @@ select is((select outcome from evidence_private.result_route_checks c join evide
 select is((select count(*)::int from evidence_private.candidate_results cr join evidence_private.lineage_result_set l on l.result_set_id = cr.result_set_id where l.source_id = 'pgtap_unified_election'), 0,
   'the electorate-page route never writes a second counted candidate vote');
 
+-- A worker killed after storing records and before projecting them: the resumed run projects the whole chain -----------------------
+do $$
+declare
+  v_dead uuid := 'eeeeeeee-1111-1111-1111-111111111111';
+  v_next uuid := 'eeeeeeee-2222-2222-2222-222222222222';
+  v_run uuid;
+begin
+  perform evidence_private.acquire_lease('pgtap_unified_parliament', v_dead, 60);
+  v_run := (evidence_private.start_run('pgtap_unified_parliament', v_dead, 'v1', 'export_import', 'test', 'm-crash') ->> 'run_id')::uuid;
+  perform evidence_private.ingest_batch(v_run, v_dead, jsonb_build_array(
+    pg_temp.rec('0a021234-0000-4000-8000-0000000000c1', 'written_question', 'c', jsonb_build_object(
+      'title', '2 (2026). Stored before the worker died', 'question_number', 2, 'question_year', 2026, 'parliament_number', 54, 'question_released_on', '2026-02-05',
+      'reply_present', false, 'attachment_present', false, 'public_page_url', 'https://fixture.example/item/c1', 'metadata_only', true))));
+  perform evidence_private.save_checkpoint(v_run, v_dead, '{"line": 1}'::jsonb, 1, 30);
+  insert into t values ('crash:dead_run', to_jsonb(v_run));
+  -- The worker dies here: no project_run, no finish_run. Its lease lapses.
+  update evidence_private.source_leases set expires_at = now() - interval '1 second' where source_id = 'pgtap_unified_parliament';
+
+  perform evidence_private.acquire_lease('pgtap_unified_parliament', v_next, 60);
+  insert into t values ('crash:start', evidence_private.start_run('pgtap_unified_parliament', v_next, 'v1', 'export_import', 'test', 'm-crash'));
+  v_run := ((select v from t where k = 'crash:start') ->> 'run_id')::uuid;
+  perform evidence_private.ingest_batch(v_run, v_next, jsonb_build_array(
+    pg_temp.rec('0a021234-0000-4000-8000-0000000000c2', 'written_question', 'd', jsonb_build_object(
+      'title', '3 (2026). Stored by the resumed run', 'question_number', 3, 'question_year', 2026, 'parliament_number', 54, 'question_released_on', '2026-02-06',
+      'reply_present', false, 'attachment_present', false, 'public_page_url', 'https://fixture.example/item/c2', 'metadata_only', true))));
+  insert into t values ('crash:projection', evidence_private.project_run(v_run, v_next));
+  perform evidence_private.finish_run(v_run, v_next, 'succeeded', false, null, null, null);
+end $$;
+select is((select v -> 'resumed_from_run_id' from t where k = 'crash:start'), (select v from t where k = 'crash:dead_run'), 'the next run resumes the run of the worker that died');
+select is((select status from evidence_private.import_runs where id = ((select v from t where k = 'crash:dead_run') #>> '{}')::uuid), 'abandoned', 'and the dead run is recorded as abandoned, never as succeeded');
+select is((select (v ->> 'earlier_runs_of_this_resume_chain_projected')::int from t where k = 'crash:projection'), 1, 'project_run projected the earlier run of the resume chain too');
+select is((select count(*)::int from evidence_private.written_questions q join evidence_private.lineage_document l on l.document_id = q.document_id
+            where l.source_id = 'pgtap_unified_parliament' and q.question_number::text in ('2', '3')), 2,
+  'the record stored before the worker died has its typed row: nothing stays in the ledger without its projection');
+select is((select count(*)::int from evidence_private.source_records r where r.source_id = 'pgtap_unified_parliament'), 4, 'and the ledger holds each record once');
+
 -- Typed destination tally ------------------------------------------------------------------------------------------------------
-select is(evidence_private.typed_destination_counts('pgtap_unified_parliament') -> 'written_questions', '1'::jsonb, 'typed tally: one written question proven to come from the parliament fixture');
+select is(evidence_private.typed_destination_counts('pgtap_unified_parliament') -> 'written_questions', '3'::jsonb, 'typed tally: the three written questions proven to come from the parliament fixture');
 select is(evidence_private.typed_destination_counts('pgtap_unified_election') -> 'party_results', '2'::jsonb, 'typed tally: two party lines proven to come from the election fixture');
 select ok(not (evidence_private.typed_destination_counts('pgtap_unified_election') ? 'written_questions'), 'a source is never credited with another source''s rows');
 select throws_ok($$select evidence_private.typed_destination_counts('pgtap_no_such_source')$$, 'P0001', null, 'an unknown source is an error, not an empty tally');
