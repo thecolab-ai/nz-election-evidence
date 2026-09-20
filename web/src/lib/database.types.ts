@@ -14,18 +14,93 @@ export type Database = {
       [_ in never]: never
     }
     Views: {
+      bill_publication_sets: {
+        Row: {
+          bill_number: string | null
+          bill_ref: string | null
+          id: string | null
+          index_status: string | null
+          legislation_url: string | null
+          publication_revision_count: number | null
+          source_record_id: string | null
+          title: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bill_publication_sets_source_record_id_fkey"
+            columns: ["source_record_id"]
+            isOneToOne: true
+            referencedRelation: "source_records"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bill_publications: {
+        Row: {
+          bill_number: string | null
+          bill_ref: string | null
+          bill_title: string | null
+          file_bytes: number | null
+          file_sha256: string | null
+          id: string | null
+          official_pdf_url: string | null
+          revision_ref: string | null
+          source_record_id: string | null
+          version_date: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bill_publications_source_record_id_fkey"
+            columns: ["source_record_id"]
+            isOneToOne: true
+            referencedRelation: "source_records"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bill_stages: {
+        Row: {
+          bill_document_id: string | null
+          evidence_version_id: string | null
+          outcome_label: string | null
+          stage_at: string | null
+          stage_code: string | null
+          stage_name: string | null
+          stage_order: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bill_stages_bill_document_id_fkey"
+            columns: ["bill_document_id"]
+            isOneToOne: false
+            referencedRelation: "bills"
+            referencedColumns: ["document_id"]
+          },
+          {
+            foreignKeyName: "bill_stages_evidence_version_id_fkey"
+            columns: ["evidence_version_id"]
+            isOneToOne: false
+            referencedRelation: "source_record_versions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bills: {
         Row: {
           bill_number: string | null
           bill_type: string | null
           current_stage: string | null
           document_id: string | null
+          introduced_at: string | null
           last_activity_at: string | null
+          legislation_url: string | null
           member_identity_id: string | null
           member_name_at_source: string | null
           parliament_number: number | null
           party_label_at_source: string | null
           select_committee: string | null
+          source_last_updated_at: string | null
+          status_label: string | null
         }
         Relationships: [
           {
@@ -163,11 +238,67 @@ export type Database = {
           },
         ]
       }
-      committee_reports: {
+      committee_business_items: {
         Row: {
+          business_type: string | null
           committee: string | null
           document_id: string | null
+          item_type: string | null
+          parliament_number: number | null
+          published_at: string | null
+          source_last_modified_at: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "committee_business_items_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: true
+            referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      committee_report_files: {
+        Row: {
+          attachment_ref: string | null
+          file_bytes: number | null
+          file_sha256: string | null
+          id: string | null
+          media_type: string | null
+          official_download_url: string | null
+          parent_report_ref: string | null
+          published_at: string | null
+          report_document_id: string | null
+          source_record_id: string | null
+          text_extraction_status: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "committee_report_files_report_document_id_fkey"
+            columns: ["report_document_id"]
+            isOneToOne: false
+            referencedRelation: "committee_reports"
+            referencedColumns: ["document_id"]
+          },
+          {
+            foreignKeyName: "committee_report_files_source_record_id_fkey"
+            columns: ["source_record_id"]
+            isOneToOne: true
+            referencedRelation: "source_records"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      committee_reports: {
+        Row: {
+          attachment_ref: string | null
+          committee: string | null
+          document_id: string | null
+          parliament_number: number | null
+          report_type: string | null
           reported_on: string | null
+          source_last_modified_at: string | null
+          subtitle: string | null
         }
         Relationships: [
           {
@@ -1228,6 +1359,22 @@ export type Database = {
           },
         ]
       }
+      record_route_keys: {
+        Row: {
+          item_family: string | null
+          record_id: string | null
+          route_key: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "record_route_keys_record_id_fkey"
+            columns: ["record_id"]
+            isOneToOne: true
+            referencedRelation: "source_records"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       registry_products: {
         Row: {
           domain: string | null
@@ -1248,6 +1395,25 @@ export type Database = {
           title?: string | null
         }
         Relationships: []
+      }
+      release_attributions: {
+        Row: {
+          content_kind: string | null
+          id: string | null
+          minister_names_at_source: string[] | null
+          official_url: string | null
+          portfolio_names_at_source: string[] | null
+          source_record_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "release_attributions_source_record_id_fkey"
+            columns: ["source_record_id"]
+            isOneToOne: true
+            referencedRelation: "source_records"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       release_batches: {
         Row: {
@@ -1496,6 +1662,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      run_projectors: {
+        Row: {
+          function_name: string | null
+          projector_key: string | null
+          registered_at: string | null
+        }
+        Insert: {
+          function_name?: string | null
+          projector_key?: string | null
+          registered_at?: string | null
+        }
+        Update: {
+          function_name?: string | null
+          projector_key?: string | null
+          registered_at?: string | null
+        }
+        Relationships: []
       }
       schedule_dispatch_log: {
         Row: {
@@ -2125,10 +2309,23 @@ export type Database = {
           answered_by_identity_id: string | null
           answered_on: string | null
           asked_by_identity_id: string | null
+          asker_member_ref: string | null
+          asker_name_at_source: string | null
+          attachment_present: boolean | null
           document_id: string | null
+          document_ref: string | null
           lodged_on: string | null
+          minister_name_at_source: string | null
+          ministerial_title_at_source: string | null
+          parliament_number: number | null
           portfolio: string | null
+          portfolio_ref: string | null
           question_number: string | null
+          question_year: number | null
+          released_on: string | null
+          reply_present: boolean | null
+          source_last_modified_at: string | null
+          status_ref: number | null
         }
         Relationships: [
           {
