@@ -1,0 +1,138 @@
+{
+  "receipt_note": "Statistics family, 2026-09-20 (UTC). Read-only upstream export or fresh anonymous fetch, loaded into an isolated disposable local database. Nothing hosted was written. Counts, hashes, statuses and publisher URLs only.",
+  "receipts": [
+    {
+      "receipt_version": 1,
+      "source_id": "stats_nz_census_2023",
+      "products": [
+        "P21"
+      ],
+      "dry_run": false,
+      "status": "succeeded",
+      "error_class": null,
+      "error_detail": null,
+      "run_id": "26eb664b-7b02-43f2-a545-950ad38b990f",
+      "resumed_from_run_id": null,
+      "loader_version": "1.0.0",
+      "artifact": {
+        "digest": "sha256:73d0698295f05ad5534da065f152cf52e28a20fe525a0a3ce94d653ca8706ffc",
+        "producer": {
+          "route": "warehouse_export",
+          "exporter_version": "1.0.0",
+          "recipe_sha256": "6b4d6b428bcae271b179fbaa392a31f0ce476f1f0492079baccba0ab1a2d35e5"
+        },
+        "collected_from": "2026-09-12T03:53:40.000Z",
+        "collected_to": "2026-09-16T03:16:27.491Z",
+        "files": 3,
+        "counts": {
+          "routes": 2,
+          "datasets": 2,
+          "releases": 2,
+          "series": 815,
+          "geographies": 188,
+          "observations": 37689,
+          "catalogue_entries": 757,
+          "observations_by_status": {
+            "confidential": 150,
+            "flag_marker": 27,
+            "missing": 50,
+            "not_applicable": 3,
+            "reported": 37459
+          },
+          "observations_by_dataset": {
+            "statsnz.census.2023.electoral_populations": 658,
+            "statsnz.census.2023.population_ethnicity_age_maori_descent_dwellings": 37031
+          }
+        }
+      },
+      "source_to_artifact": [
+        {
+          "what": "operational fact records (current version of each record id) -> observations",
+          "upstream_rows": 37689,
+          "artifact_rows": 37689,
+          "difference": 0,
+          "explanation": "every current fact record became exactly one observation"
+        },
+        {
+          "what": "dedicated census product finder rows -> product catalogue entries",
+          "upstream_rows": 757,
+          "artifact_rows": 757,
+          "difference": 0,
+          "explanation": "one entry per product (757 products); an index of products, never observations"
+        }
+      ],
+      "artifact_to_destination": [
+        {
+          "what": "observations of statsnz.census.2023.electoral_populations @ 2024-10-23: artifact -> store",
+          "upstream_rows": 658,
+          "artifact_rows": 658,
+          "difference": 0,
+          "explanation": "every artifact row is stored exactly once"
+        },
+        {
+          "what": "observations of statsnz.census.2023.population_ethnicity_age_maori_descent_dwellings @ 2024-05-29: artifact -> store",
+          "upstream_rows": 37031,
+          "artifact_rows": 37031,
+          "difference": 0,
+          "explanation": "every artifact row is stored exactly once"
+        },
+        {
+          "what": "catalogue entry versions: artifact -> store",
+          "upstream_rows": 757,
+          "artifact_rows": 757,
+          "difference": 0,
+          "explanation": "every artifact version is stored exactly once"
+        },
+        {
+          "what": "withheld, confidential, missing or not-applicable rows that carry a number",
+          "upstream_rows": 0,
+          "artifact_rows": 0,
+          "difference": 0,
+          "explanation": "none: a value the publisher did not print is stored as null with its status, never as zero"
+        }
+      ],
+      "totals": {
+        "meta": {
+          "routes": 2,
+          "datasets": 2,
+          "releases": 2,
+          "series_inserted": 815,
+          "geographies_inserted": 188,
+          "catalogue_entries_seen": 757,
+          "catalogue_entries_written": 757
+        },
+        "observations": {
+          "seen": 37689,
+          "inserted": 37689,
+          "unchanged": 0,
+          "conflicts": 0
+        },
+        "batches": 8
+      },
+      "replay_wrote_nothing": false,
+      "destination": {
+        "series": 815,
+        "datasets": 2,
+        "releases": 2,
+        "geographies": 188,
+        "observations": 37689,
+        "content_digest": "36a6b52b46cffca4c5ea9dffe309c923",
+        "observations_by_status": {
+          "missing": 50,
+          "reported": 37459,
+          "flag_marker": 27,
+          "confidential": 150,
+          "not_applicable": 3
+        },
+        "observations_by_release": {
+          "statsnz.census.2023.electoral_populations @ 2024-10-23": 658,
+          "statsnz.census.2023.population_ethnicity_age_maori_descent_dwellings @ 2024-05-29": 37031
+        },
+        "catalogue_entry_versions": 757,
+        "catalogue_entries_current": 757,
+        "withheld_rows_carrying_a_number": 0
+      },
+      "findings": []
+    }
+  ]
+}

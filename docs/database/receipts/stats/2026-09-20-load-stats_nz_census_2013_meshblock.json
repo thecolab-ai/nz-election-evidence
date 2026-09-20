@@ -1,0 +1,105 @@
+{
+  "receipt_note": "Statistics family, 2026-09-20 (UTC). Read-only upstream export or fresh anonymous fetch, loaded into an isolated disposable local database. Nothing hosted was written. Counts, hashes, statuses and publisher URLs only.",
+  "receipts": [
+    {
+      "receipt_version": 1,
+      "source_id": "stats_nz_census_2013_meshblock",
+      "products": [],
+      "dry_run": false,
+      "status": "succeeded",
+      "error_class": null,
+      "error_detail": null,
+      "run_id": "7eee5c86-e2d2-48d5-906a-596345e455b5",
+      "resumed_from_run_id": null,
+      "loader_version": "1.0.0",
+      "artifact": {
+        "digest": "sha256:9c83d59e177dc0db9b4db04fdb0b21bec1c72a1206b91cad28cfe657bcaf647b",
+        "producer": {
+          "route": "warehouse_export",
+          "exporter_version": "1.0.0",
+          "recipe_sha256": "a5e0ff7b1e3b9bbf940a91de56fb5c55f409f3cb017c77ca4dbaa9ffed8fa5aa"
+        },
+        "collected_from": "2026-09-12T03:53:40.000Z",
+        "collected_to": "2026-09-12T03:53:40.000Z",
+        "files": 46,
+        "counts": {
+          "routes": 1,
+          "datasets": 1,
+          "releases": 1,
+          "series": 6,
+          "geographies": 49010,
+          "observations": 882180,
+          "catalogue_entries": 0,
+          "observations_by_status": {
+            "reported": 882180
+          },
+          "observations_by_dataset": {
+            "statsnz.census.2013.meshblock.selected_totals": 882180
+          }
+        }
+      },
+      "source_to_artifact": [
+        {
+          "what": "dedicated census observations of statsnz.census.2013.meshblock.selected_totals -> observations",
+          "upstream_rows": 882180,
+          "artifact_rows": 882180,
+          "difference": 0,
+          "explanation": "every upstream observation became exactly one observation"
+        }
+      ],
+      "artifact_to_destination": [
+        {
+          "what": "observations of statsnz.census.2013.meshblock.selected_totals @ 2014-03-25 source page; 2001/2006/2013 observations: artifact -> store",
+          "upstream_rows": 882180,
+          "artifact_rows": 882180,
+          "difference": 0,
+          "explanation": "every artifact row is stored exactly once"
+        },
+        {
+          "what": "withheld, confidential, missing or not-applicable rows that carry a number",
+          "upstream_rows": 0,
+          "artifact_rows": 0,
+          "difference": 0,
+          "explanation": "none: a value the publisher did not print is stored as null with its status, never as zero"
+        }
+      ],
+      "totals": {
+        "meta": {
+          "routes": 1,
+          "datasets": 1,
+          "releases": 1,
+          "series_inserted": 6,
+          "geographies_inserted": 49010,
+          "catalogue_entries_seen": 0,
+          "catalogue_entries_written": 0
+        },
+        "observations": {
+          "seen": 882180,
+          "inserted": 882180,
+          "unchanged": 0,
+          "conflicts": 0
+        },
+        "batches": 177
+      },
+      "replay_wrote_nothing": false,
+      "destination": {
+        "series": 6,
+        "datasets": 1,
+        "releases": 1,
+        "geographies": 49010,
+        "observations": 882180,
+        "content_digest": "725e189db31961abde81d1e4c495c039",
+        "observations_by_status": {
+          "reported": 882180
+        },
+        "observations_by_release": {
+          "statsnz.census.2013.meshblock.selected_totals @ 2014-03-25 source page; 2001/2006/2013 observations": 882180
+        },
+        "catalogue_entry_versions": 0,
+        "catalogue_entries_current": 0,
+        "withheld_rows_carrying_a_number": 0
+      },
+      "findings": []
+    }
+  ]
+}

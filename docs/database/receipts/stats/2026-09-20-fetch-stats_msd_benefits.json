@@ -1,0 +1,51 @@
+{
+  "receipt_note": "Statistics family, 2026-09-20 (UTC). Read-only upstream export or fresh anonymous fetch, loaded into an isolated disposable local database. Nothing hosted was written. Counts, hashes, statuses and publisher URLs only.",
+  "receipts": [
+    {
+      "source_id": "stats_msd_benefits",
+      "status": "ok",
+      "artifact_root_suffix": "fresh",
+      "counts": {
+        "routes": 0,
+        "datasets": 0,
+        "releases": 0,
+        "series": 0,
+        "geographies": 0,
+        "observations": 0,
+        "catalogue_entries": 26,
+        "observations_by_status": {},
+        "observations_by_dataset": {}
+      },
+      "reconciliation": [
+        {
+          "what": "same-host links under the index page's own path and its document store -> catalogue entries",
+          "upstream_rows": 26,
+          "artifact_rows": 26,
+          "difference": 0,
+          "explanation": "every listed link that matches this source's rule became exactly one catalogue entry"
+        }
+      ],
+      "findings": [
+        "The statistics index is fetched fresh. Facts come from a quarterly workbook normalised against reviewed cells; the next quarter's workbook needs that review, so no fact is parsed unattended."
+      ],
+      "fetches": [
+        {
+          "url": "https://www.msd.govt.nz/robots.txt",
+          "outcome": "ok",
+          "http_status": 200,
+          "bytes": 1254,
+          "body_sha256": "sha256:9120884dc7a47739c64dc5dfb7ab038b4d1ec4fa2dc056528a0ed72428569824",
+          "retrieved_at": "2026-09-20T09:07:43.133Z"
+        },
+        {
+          "url": "https://www.msd.govt.nz/about-msd-and-our-work/publications-resources/statistics/benefit/index.html",
+          "outcome": "ok",
+          "http_status": 200,
+          "bytes": 240315,
+          "body_sha256": "sha256:a0b1526e1ab49963363e3ec2af0163a4deb57675f65e4de6433fde8b050ad5df",
+          "retrieved_at": "2026-09-20T09:07:43.069Z"
+        }
+      ]
+    }
+  ]
+}

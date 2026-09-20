@@ -1,0 +1,128 @@
+{
+  "receipt_note": "Statistics family, 2026-09-20 (UTC). Read-only upstream export or fresh anonymous fetch, loaded into an isolated disposable local database. Nothing hosted was written. Counts, hashes, statuses and publisher URLs only.",
+  "receipts": [
+    {
+      "receipt_version": 1,
+      "source_id": "stats_msd_benefits",
+      "products": [
+        "P12"
+      ],
+      "dry_run": false,
+      "status": "succeeded",
+      "error_class": null,
+      "error_detail": null,
+      "run_id": "96e9ae0b-5775-4e31-9c12-84a6111eb6a5",
+      "resumed_from_run_id": null,
+      "loader_version": "1.0.0",
+      "artifact": {
+        "digest": "sha256:2331ecff8f70a4f0e18a788465fe44289d8faf1ee067645503c04bc595cc76cd",
+        "producer": {
+          "route": "warehouse_export",
+          "exporter_version": "1.0.0",
+          "recipe_sha256": "37d837737d4d2d892b0fa2cc834ed0c5304d52228573ee0f2230cab54d437f52"
+        },
+        "collected_from": "2026-09-15T19:03:55.040Z",
+        "collected_to": "2026-09-16T03:16:38.542Z",
+        "files": 2,
+        "counts": {
+          "routes": 1,
+          "datasets": 1,
+          "releases": 1,
+          "series": 43,
+          "geographies": 1,
+          "observations": 903,
+          "catalogue_entries": 27,
+          "observations_by_status": {
+            "reported": 903
+          },
+          "observations_by_dataset": {
+            "msd-quarterly-national-benefit-tables": 903
+          }
+        }
+      },
+      "source_to_artifact": [
+        {
+          "what": "operational fact records (current version of each record id) -> observations",
+          "upstream_rows": 903,
+          "artifact_rows": 903,
+          "difference": 0,
+          "explanation": "every current fact record became exactly one observation"
+        },
+        {
+          "what": "operational catalogue records (distinct record ids) -> catalogue entries (distinct entry keys)",
+          "upstream_rows": 26,
+          "artifact_rows": 26,
+          "difference": 0,
+          "explanation": "one entry key per upstream record id"
+        },
+        {
+          "what": "operational catalogue stored versions -> catalogue entry versions",
+          "upstream_rows": 27,
+          "artifact_rows": 27,
+          "difference": 0,
+          "explanation": "every stored version differs in allowlisted content"
+        }
+      ],
+      "artifact_to_destination": [
+        {
+          "what": "observations of msd-quarterly-national-benefit-tables @ June 2026: artifact -> store",
+          "upstream_rows": 903,
+          "artifact_rows": 903,
+          "difference": 0,
+          "explanation": "every artifact row is stored exactly once"
+        },
+        {
+          "what": "catalogue entry versions: artifact -> store",
+          "upstream_rows": 27,
+          "artifact_rows": 27,
+          "difference": 0,
+          "explanation": "every artifact version is stored exactly once"
+        },
+        {
+          "what": "withheld, confidential, missing or not-applicable rows that carry a number",
+          "upstream_rows": 0,
+          "artifact_rows": 0,
+          "difference": 0,
+          "explanation": "none: a value the publisher did not print is stored as null with its status, never as zero"
+        }
+      ],
+      "totals": {
+        "meta": {
+          "routes": 1,
+          "datasets": 1,
+          "releases": 1,
+          "series_inserted": 43,
+          "geographies_inserted": 1,
+          "catalogue_entries_seen": 27,
+          "catalogue_entries_written": 27
+        },
+        "observations": {
+          "seen": 903,
+          "inserted": 903,
+          "unchanged": 0,
+          "conflicts": 0
+        },
+        "batches": 1
+      },
+      "replay_wrote_nothing": false,
+      "destination": {
+        "series": 43,
+        "datasets": 1,
+        "releases": 1,
+        "geographies": 1,
+        "observations": 903,
+        "content_digest": "bd4171db67368ea442de8ab24983abcf",
+        "observations_by_status": {
+          "reported": 903
+        },
+        "observations_by_release": {
+          "msd-quarterly-national-benefit-tables @ June 2026": 903
+        },
+        "catalogue_entry_versions": 27,
+        "catalogue_entries_current": 26,
+        "withheld_rows_carrying_a_number": 0
+      },
+      "findings": []
+    }
+  ]
+}

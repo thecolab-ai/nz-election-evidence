@@ -1,0 +1,118 @@
+{
+  "receipt_note": "Statistics family, 2026-09-20 (UTC). Read-only upstream export or fresh anonymous fetch, loaded into an isolated disposable local database. Nothing hosted was written. Counts, hashes, statuses and publisher URLs only.",
+  "receipts": [
+    {
+      "receipt_version": 1,
+      "source_id": "stats_nz_selected_series",
+      "products": [
+        "P22"
+      ],
+      "dry_run": false,
+      "status": "succeeded",
+      "error_class": null,
+      "error_detail": null,
+      "run_id": "59ff17d3-77b9-4ef5-9dbe-85561344351d",
+      "resumed_from_run_id": null,
+      "loader_version": "1.0.0",
+      "artifact": {
+        "digest": "sha256:2b6e0acbd4f81e9413659a33bcffebecfddff7441fc1fbea060a3a20e053be2a",
+        "producer": {
+          "route": "warehouse_export",
+          "exporter_version": "1.0.0",
+          "recipe_sha256": "8f1d9f9354b1b35b9664fa591d1bec88e9827f23dea8aee4d39d56e9bdc48206"
+        },
+        "collected_from": "2026-09-16T03:44:43.138Z",
+        "collected_to": "2026-09-16T03:44:43.138Z",
+        "files": 4,
+        "counts": {
+          "routes": 2,
+          "datasets": 2,
+          "releases": 2,
+          "series": 218,
+          "geographies": 1,
+          "observations": 55428,
+          "catalogue_entries": 0,
+          "observations_by_status": {
+            "missing": 88,
+            "reported": 55340
+          },
+          "observations_by_dataset": {
+            "food_price_index_selected_price_indexes_csv": 55284,
+            "national_population_estimates_release_broad_age_graph_csv": 144
+          }
+        }
+      },
+      "source_to_artifact": [
+        {
+          "what": "operational fact records (current version of each record id) -> observations",
+          "upstream_rows": 55428,
+          "artifact_rows": 55428,
+          "difference": 0,
+          "explanation": "every current fact record became exactly one observation"
+        }
+      ],
+      "artifact_to_destination": [
+        {
+          "what": "observations of food_price_index_selected_price_indexes_csv @ 2026-06: artifact -> store",
+          "upstream_rows": 55284,
+          "artifact_rows": 55284,
+          "difference": 0,
+          "explanation": "every artifact row is stored exactly once"
+        },
+        {
+          "what": "observations of national_population_estimates_release_broad_age_graph_csv @ 2026-06-30: artifact -> store",
+          "upstream_rows": 144,
+          "artifact_rows": 144,
+          "difference": 0,
+          "explanation": "every artifact row is stored exactly once"
+        },
+        {
+          "what": "withheld, confidential, missing or not-applicable rows that carry a number",
+          "upstream_rows": 0,
+          "artifact_rows": 0,
+          "difference": 0,
+          "explanation": "none: a value the publisher did not print is stored as null with its status, never as zero"
+        }
+      ],
+      "totals": {
+        "meta": {
+          "routes": 2,
+          "datasets": 2,
+          "releases": 2,
+          "series_inserted": 218,
+          "geographies_inserted": 1,
+          "catalogue_entries_seen": 0,
+          "catalogue_entries_written": 0
+        },
+        "observations": {
+          "seen": 55428,
+          "inserted": 55428,
+          "unchanged": 0,
+          "conflicts": 0
+        },
+        "batches": 12
+      },
+      "replay_wrote_nothing": false,
+      "destination": {
+        "series": 218,
+        "datasets": 2,
+        "releases": 2,
+        "geographies": 1,
+        "observations": 55428,
+        "content_digest": "4eaa9f60525a6e1ae328ff81325ebddc",
+        "observations_by_status": {
+          "missing": 88,
+          "reported": 55340
+        },
+        "observations_by_release": {
+          "food_price_index_selected_price_indexes_csv @ 2026-06": 55284,
+          "national_population_estimates_release_broad_age_graph_csv @ 2026-06-30": 144
+        },
+        "catalogue_entry_versions": 0,
+        "catalogue_entries_current": 0,
+        "withheld_rows_carrying_a_number": 0
+      },
+      "findings": []
+    }
+  ]
+}

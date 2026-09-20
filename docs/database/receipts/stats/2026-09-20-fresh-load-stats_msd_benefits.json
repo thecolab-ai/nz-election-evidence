@@ -1,0 +1,105 @@
+{
+  "receipt_note": "Statistics family, 2026-09-20 (UTC). Read-only upstream export or fresh anonymous fetch, loaded into an isolated disposable local database. Nothing hosted was written. Counts, hashes, statuses and publisher URLs only.",
+  "receipts": [
+    {
+      "receipt_version": 1,
+      "source_id": "stats_msd_benefits",
+      "products": [
+        "P12"
+      ],
+      "dry_run": false,
+      "status": "succeeded",
+      "error_class": null,
+      "error_detail": null,
+      "run_id": "b420366a-fcf6-41a4-a4b2-6bdc66dcf750",
+      "resumed_from_run_id": null,
+      "loader_version": "1.0.0",
+      "artifact": {
+        "digest": "sha256:df507afc56ab10485c0670bdabab75e8696e50fd45ad0dbaccfa0d68d0864a7a",
+        "producer": {
+          "route": "fresh_fetch",
+          "exporter_version": "1.0.0",
+          "recipe_sha256": "10fbd6d550d53f70e694dde9910f7fea7e8111782f3bdc869ba2989a83cd904e"
+        },
+        "collected_from": "2026-09-20T09:07:43.069Z",
+        "collected_to": "2026-09-20T09:07:43.069Z",
+        "files": 1,
+        "counts": {
+          "routes": 0,
+          "datasets": 0,
+          "releases": 0,
+          "series": 0,
+          "geographies": 0,
+          "observations": 0,
+          "catalogue_entries": 26,
+          "observations_by_status": {},
+          "observations_by_dataset": {}
+        }
+      },
+      "source_to_artifact": [
+        {
+          "what": "same-host links under the index page's own path and its document store -> catalogue entries",
+          "upstream_rows": 26,
+          "artifact_rows": 26,
+          "difference": 0,
+          "explanation": "every listed link that matches this source's rule became exactly one catalogue entry"
+        }
+      ],
+      "artifact_to_destination": [
+        {
+          "what": "catalogue entry versions: artifact -> store",
+          "upstream_rows": 26,
+          "artifact_rows": 53,
+          "difference": 27,
+          "explanation": "the store also holds versions from earlier loads of this source; none of this artifact's versions is missing"
+        },
+        {
+          "what": "withheld, confidential, missing or not-applicable rows that carry a number",
+          "upstream_rows": 0,
+          "artifact_rows": 0,
+          "difference": 0,
+          "explanation": "none: a value the publisher did not print is stored as null with its status, never as zero"
+        }
+      ],
+      "totals": {
+        "meta": {
+          "routes": 0,
+          "datasets": 0,
+          "releases": 0,
+          "series_inserted": 0,
+          "geographies_inserted": 0,
+          "catalogue_entries_seen": 26,
+          "catalogue_entries_written": 26
+        },
+        "observations": {
+          "seen": 0,
+          "inserted": 0,
+          "unchanged": 0,
+          "conflicts": 0
+        },
+        "batches": 0
+      },
+      "replay_wrote_nothing": false,
+      "destination": {
+        "series": 43,
+        "datasets": 1,
+        "releases": 1,
+        "geographies": 1,
+        "observations": 903,
+        "content_digest": "bd4171db67368ea442de8ab24983abcf",
+        "observations_by_status": {
+          "reported": 903
+        },
+        "observations_by_release": {
+          "msd-quarterly-national-benefit-tables @ June 2026": 903
+        },
+        "catalogue_entry_versions": 53,
+        "catalogue_entries_current": 52,
+        "withheld_rows_carrying_a_number": 0
+      },
+      "findings": [
+        "The statistics index is fetched fresh. Facts come from a quarterly workbook normalised against reviewed cells; the next quarter's workbook needs that review, so no fact is parsed unattended."
+      ]
+    }
+  ]
+}

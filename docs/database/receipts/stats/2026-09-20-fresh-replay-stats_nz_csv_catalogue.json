@@ -1,0 +1,101 @@
+{
+  "receipt_note": "Statistics family, 2026-09-20 (UTC). Read-only upstream export or fresh anonymous fetch, loaded into an isolated disposable local database. Nothing hosted was written. Counts, hashes, statuses and publisher URLs only.",
+  "receipts": [
+    {
+      "receipt_version": 1,
+      "source_id": "stats_nz_csv_catalogue",
+      "products": [
+        "P20"
+      ],
+      "dry_run": false,
+      "status": "succeeded",
+      "error_class": null,
+      "error_detail": null,
+      "run_id": "c12263b4-9e5f-4d01-8921-57c37ad0cf07",
+      "resumed_from_run_id": null,
+      "loader_version": "1.0.0",
+      "artifact": {
+        "digest": "sha256:7221544ac67f592d65efa4556f2d4537b1d3ffb61c704d6dc4eee81a37910ce7",
+        "producer": {
+          "route": "fresh_fetch",
+          "exporter_version": "1.0.0",
+          "recipe_sha256": "f5973feb4fc5c8a4ad06244aa7700d17dd1840d97564dcb560ef1ad6c7777f34"
+        },
+        "collected_from": "2026-09-20T09:07:58.819Z",
+        "collected_to": "2026-09-20T09:07:58.819Z",
+        "files": 1,
+        "counts": {
+          "routes": 0,
+          "datasets": 0,
+          "releases": 0,
+          "series": 0,
+          "geographies": 0,
+          "observations": 0,
+          "catalogue_entries": 120,
+          "observations_by_status": {},
+          "observations_by_dataset": {}
+        }
+      },
+      "source_to_artifact": [
+        {
+          "what": "listed .csv and .zip links on the publisher's host -> catalogue entries",
+          "upstream_rows": 120,
+          "artifact_rows": 120,
+          "difference": 0,
+          "explanation": "every listed link that matches this source's rule became exactly one catalogue entry"
+        }
+      ],
+      "artifact_to_destination": [
+        {
+          "what": "catalogue entry versions: artifact -> store",
+          "upstream_rows": 120,
+          "artifact_rows": 248,
+          "difference": 128,
+          "explanation": "the store also holds versions from earlier loads of this source; none of this artifact's versions is missing"
+        },
+        {
+          "what": "withheld, confidential, missing or not-applicable rows that carry a number",
+          "upstream_rows": 0,
+          "artifact_rows": 0,
+          "difference": 0,
+          "explanation": "none: a value the publisher did not print is stored as null with its status, never as zero"
+        }
+      ],
+      "totals": {
+        "meta": {
+          "routes": 0,
+          "datasets": 0,
+          "releases": 0,
+          "series_inserted": 0,
+          "geographies_inserted": 0,
+          "catalogue_entries_seen": 120,
+          "catalogue_entries_written": 0
+        },
+        "observations": {
+          "seen": 0,
+          "inserted": 0,
+          "unchanged": 0,
+          "conflicts": 0
+        },
+        "batches": 0
+      },
+      "replay_wrote_nothing": true,
+      "destination": {
+        "series": 0,
+        "datasets": 0,
+        "releases": 0,
+        "geographies": 0,
+        "observations": 0,
+        "content_digest": "d41d8cd98f00b204e9800998ecf8427e",
+        "observations_by_status": {},
+        "observations_by_release": {},
+        "catalogue_entry_versions": 248,
+        "catalogue_entries_current": 248,
+        "withheld_rows_carrying_a_number": 0
+      },
+      "findings": [
+        "3 further document(s) on the listing are in other formats than .csv or .zip (for example notes and data dictionaries) and are outside this source's rule; they were counted, not written."
+      ]
+    }
+  ]
+}

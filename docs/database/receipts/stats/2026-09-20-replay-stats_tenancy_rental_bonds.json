@@ -1,0 +1,128 @@
+{
+  "receipt_note": "Statistics family, 2026-09-20 (UTC). Read-only upstream export or fresh anonymous fetch, loaded into an isolated disposable local database. Nothing hosted was written. Counts, hashes, statuses and publisher URLs only.",
+  "receipts": [
+    {
+      "receipt_version": 1,
+      "source_id": "stats_tenancy_rental_bonds",
+      "products": [
+        "P23"
+      ],
+      "dry_run": false,
+      "status": "succeeded",
+      "error_class": null,
+      "error_detail": null,
+      "run_id": "fd84cddb-1065-4962-a7bd-62ad7086acd5",
+      "resumed_from_run_id": null,
+      "loader_version": "1.0.0",
+      "artifact": {
+        "digest": "sha256:a69665803312b1e7024a336ea9fcfae128d1c6b0b156806f37e524825ea2ad0f",
+        "producer": {
+          "route": "warehouse_export",
+          "exporter_version": "1.0.0",
+          "recipe_sha256": "780ecd0693bcdfdab32bb30edc1743cf0adc29638cb406a19bb63203d4a593a6"
+        },
+        "collected_from": "2026-09-15T19:04:02.093Z",
+        "collected_to": "2026-09-16T03:16:40.612Z",
+        "files": 4,
+        "counts": {
+          "routes": 1,
+          "datasets": 1,
+          "releases": 1,
+          "series": 8,
+          "geographies": 18,
+          "observations": 57888,
+          "catalogue_entries": 4,
+          "observations_by_status": {
+            "reported": 57888
+          },
+          "observations_by_dataset": {
+            "tenancy.rental_bonds.detailed_monthly_region": 57888
+          }
+        }
+      },
+      "source_to_artifact": [
+        {
+          "what": "operational fact records (current version of each record id) -> observations",
+          "upstream_rows": 57888,
+          "artifact_rows": 57888,
+          "difference": 0,
+          "explanation": "every current fact record became exactly one observation"
+        },
+        {
+          "what": "operational catalogue records (distinct record ids) -> catalogue entries (distinct entry keys)",
+          "upstream_rows": 4,
+          "artifact_rows": 4,
+          "difference": 0,
+          "explanation": "one entry key per upstream record id"
+        },
+        {
+          "what": "operational catalogue stored versions -> catalogue entry versions",
+          "upstream_rows": 4,
+          "artifact_rows": 4,
+          "difference": 0,
+          "explanation": "every stored version differs in allowlisted content"
+        }
+      ],
+      "artifact_to_destination": [
+        {
+          "what": "observations of tenancy.rental_bonds.detailed_monthly_region @ file-444341b2963bb280: artifact -> store",
+          "upstream_rows": 57888,
+          "artifact_rows": 57888,
+          "difference": 0,
+          "explanation": "every artifact row is stored exactly once"
+        },
+        {
+          "what": "catalogue entry versions: artifact -> store",
+          "upstream_rows": 4,
+          "artifact_rows": 4,
+          "difference": 0,
+          "explanation": "every artifact version is stored exactly once"
+        },
+        {
+          "what": "withheld, confidential, missing or not-applicable rows that carry a number",
+          "upstream_rows": 0,
+          "artifact_rows": 0,
+          "difference": 0,
+          "explanation": "none: a value the publisher did not print is stored as null with its status, never as zero"
+        }
+      ],
+      "totals": {
+        "meta": {
+          "routes": 1,
+          "datasets": 1,
+          "releases": 1,
+          "series_inserted": 0,
+          "geographies_inserted": 0,
+          "catalogue_entries_seen": 4,
+          "catalogue_entries_written": 0
+        },
+        "observations": {
+          "seen": 57888,
+          "inserted": 0,
+          "unchanged": 57888,
+          "conflicts": 0
+        },
+        "batches": 12
+      },
+      "replay_wrote_nothing": true,
+      "destination": {
+        "series": 8,
+        "datasets": 1,
+        "releases": 1,
+        "geographies": 18,
+        "observations": 57888,
+        "content_digest": "13ff4480edcde745886f5b8640eae5ab",
+        "observations_by_status": {
+          "reported": 57888
+        },
+        "observations_by_release": {
+          "tenancy.rental_bonds.detailed_monthly_region @ file-444341b2963bb280": 57888
+        },
+        "catalogue_entry_versions": 4,
+        "catalogue_entries_current": 4,
+        "withheld_rows_carrying_a_number": 0
+      },
+      "findings": []
+    }
+  ]
+}

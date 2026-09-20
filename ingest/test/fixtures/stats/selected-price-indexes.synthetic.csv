@@ -1,0 +1,12 @@
+# TEST FIXTURE: SYNTHETIC hand-written rows in the column layout of the publisher's "Selected price indexes" CSV.
+# Invented series references, titles and numbers; not publisher data. The test helper removes these two lines.
+"Series_reference","Period","Data_value","STATUS","UNITS","Subject","Group","Series_title_1","Series_title_2","Series_title_3"
+"FIXM.SE901","2031.07",1012.5,"FINAL","Index","Fixture Price Index - FPI","Fixture Price Index Level 1 Groups for New Zealand Monthly","Food",NA,NA
+"FIXM.SE901","2031.08",1013.25,"P","Index","Fixture Price Index - FPI","Fixture Price Index Level 1 Groups for New Zealand Monthly","Food",NA,NA
+"FIXM.SAP01","2031.07",4.70,"REVISED","Dollars","Fixture Price Index - FPI","Fixture Selected Monthly Weighted Average Prices for New Zealand","Oranges, 1kg","Fresh, ""loose""",NA
+"FIXM.SAP01","2031.08",NA,"FINAL","Dollars","Fixture Price Index - FPI","Fixture Selected Monthly Weighted Average Prices for New Zealand","Oranges, 1kg","Fresh, ""loose""",NA
+"FIXM.SAP02","2031.08",,"C","Dollars","Fixture Price Index - FPI","Fixture Selected Monthly Weighted Average Prices for New Zealand","Fixture item",NA,NA
+"FIXM.SAP03","2031.08","..","S","Dollars","Fixture Price Index - FPI","Fixture Selected Monthly Weighted Average Prices for New Zealand","Another fixture item",NA,NA
+"FIXM.SE1041","2031.08",1100,"FINAL","Index","Fixture Price Index - FPI","Fixture Monthly Rents (Broad Regions)","Fixtureland North","Actual rentals for housing","Flow"
+"FIXQ.SE9","2031.06",0,"FINAL","Index","Fixture Price Index - FPI","Fixture Quarterly Index for New Zealand","All groups",NA,NA
+"FIXM.SE901","",1014,"FINAL","Index","Fixture Price Index - FPI","Fixture Price Index Level 1 Groups for New Zealand Monthly","Food",NA,NA

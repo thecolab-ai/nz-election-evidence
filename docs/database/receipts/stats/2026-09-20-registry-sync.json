@@ -1,0 +1,11 @@
+{
+  "receipt_note": "Statistics family, 2026-09-20 (UTC). Read-only upstream export or fresh anonymous fetch, loaded into an isolated disposable local database. Nothing hosted was written. Counts, hashes, statuses and publisher URLs only.",
+  "receipts": [
+    {
+      "synced": {
+        "rights": 21,
+        "sources": 10
+      }
+    }
+  ]
+}
