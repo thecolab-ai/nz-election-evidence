@@ -1,0 +1,63 @@
+{
+  "input_findings": null,
+  "receipt_version": 1,
+  "source_id": "nz_parliament_written_questions",
+  "mode": "incremental",
+  "dry_run": false,
+  "status": "failed",
+  "complete_snapshot": false,
+  "error_class": "parser_not_enabled",
+  "error_detail": "publisher page is reachable; no parser is enabled for this source, so nothing was imported and no count is implied",
+  "manifest_hash": "sha256:f6db0aa8eef043deb5c13526e4908ff99b78d5abfc5b0670a96e28d537cf4518",
+  "manifest": {
+    "manifest_version": 1,
+    "config_version": 1,
+    "source_id": "nz_parliament_written_questions",
+    "adapter_name": "availability_probe",
+    "adapter_version": "1.0.0",
+    "mode": "incremental",
+    "allowed_hosts": [
+      "questions.parliament.nz"
+    ],
+    "snapshot_semantics": "rolling_window",
+    "source_config_hash": "sha256:6ab44337cdcd3cf6511f9fbfad834bbc44d61aa4723e02e6291843f47f24e5fa",
+    "max_records": 2000
+  },
+  "run_id": "36adcee7-6512-48f0-89b8-bbb2559c71ae",
+  "resumed_from_run_id": null,
+  "totals": {
+    "seen": 0,
+    "versions_inserted": 0,
+    "observations_inserted": 0,
+    "unchanged": 0,
+    "rejected": 0
+  },
+  "tombstoned": 0,
+  "pages": 0,
+  "projection": null,
+  "fetches": [
+    {
+      "method": "GET",
+      "url": "https://questions.parliament.nz/robots.txt",
+      "attempt": 1,
+      "outcome": "ok",
+      "http_status": 200,
+      "bytes": 23,
+      "body_sha256": "sha256:eaeaa8d3511d1622227d89707d995b8b1f0902f5b86fdbe58882d1cef260d4d7",
+      "retrieved_at": "2026-09-20T06:51:49.893Z",
+      "duration_ms": 167
+    },
+    {
+      "method": "GET",
+      "url": "https://questions.parliament.nz/",
+      "attempt": 1,
+      "outcome": "ok",
+      "http_status": 200,
+      "bytes": 13626,
+      "body_sha256": "sha256:9fabe3cf1b49acd10fdd01ef1f2688f7066e10eb01e403b4efbc941987679470",
+      "retrieved_at": "2026-09-20T06:51:49.893Z",
+      "duration_ms": 5115
+    }
+  ],
+  "receipt_note": "Real retrieval from the official publisher on 2026-09-20 (UTC), written to a disposable local database. Counts, hashes, statuses and publisher URLs only; no payloads or response bodies."
+}

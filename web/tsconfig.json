@@ -1,0 +1,41 @@
+{
+  "compilerOptions": {
+    "target": "ES2023",
+    "lib": [
+      "ES2023",
+      "DOM",
+      "DOM.Iterable"
+    ],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "jsx": "react-jsx",
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "verbatimModuleSyntax": true,
+    "isolatedModules": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+    "types": [
+      "vite/client",
+      "node"
+    ],
+    "paths": {
+      "@/*": [
+        "./src/*"
+      ]
+    },
+    "allowImportingTsExtensions": true
+  },
+  "include": [
+    "src",
+    "e2e",
+    "scripts",
+    "vite.config.ts",
+    "playwright.config.ts",
+    "playwright.pages.config.ts",
+    "playwright.shared.ts"
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "imports": {
+    "postgres": "npm:postgres@3.4.9"
+  },
+  "lint": { "rules": { "exclude": ["require-yield"] } }
+}

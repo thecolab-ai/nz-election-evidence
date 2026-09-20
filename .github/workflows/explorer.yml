@@ -1,0 +1,175 @@
+name: Evidence store and explorer
+# CI for the Supabase evidence store, the TypeScript ingestion and release tooling, and the public
+# read-only explorer, followed by a gated GitHub Pages deployment. Order: every check job, then the R10 release gate, then deploy.
+#
+# What this workflow never does: apply migrations to a hosted project, deploy Edge Functions,
+# activate a schedule, or hold a privileged Supabase key. Those are manual, reviewed release steps
+# (docs/database/runbook.md). The only Supabase values used here are the public project URL and the
+# public anon key, supplied as repository variables for the static build.
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: explorer-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+env:
+  PAGES_BASE_PATH: /nz-election-evidence/
+
+jobs:
+  compliance:
+    name: Existing compliance checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        # Full history is required to prove CORRECTIONS.md remained append-only.
+        with: { fetch-depth: 0, persist-credentials: false }
+      - name: Catalogue and publication boundary
+        run: python3 scripts/validate.py
+      - name: Red lines (includes election-day freeze)
+        run: python3 scripts/red_lines.py --freeze-check
+      - name: Compliance, release-gate and red-line unit tests
+        run: python3 -m unittest discover -s tests -v
+
+  tooling:
+    name: TypeScript tooling - ingestion, release gate, receipts (typecheck and unit tests)
+    runs-on: ubuntu-latest
+    defaults: { run: { working-directory: ingest } }
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with: { node-version: "24", cache: npm, cache-dependency-path: ingest/package-lock.json }
+      - run: npm ci --no-audit --no-fund
+      - run: npm run typecheck
+      - name: Source configuration is valid and every schedule is inactive by default
+        run: node src/cli.ts validate
+      - name: Unit tests - adapters, fetch guard, release gate, workflow invariants, receipts (no network)
+        run: npm test
+      - name: Edge Function type-check (Deno)
+        run: npm run check:deno
+      - name: Red lines R1 and R4 in explorer copy (TypeScript and TSX strings, JSX text)
+        run: node ../tools/red_lines_copy.ts
+
+  database:
+    name: Migrations and role tests on a disposable database
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
+      - uses: supabase/setup-cli@46f7f98c7f948ad727d22c1e67fab04c223a0520 # v3.0.0
+        with: { version: 2.113.0 }
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with: { node-version: "24", cache: npm, cache-dependency-path: ingest/package-lock.json }
+      - name: Start a throwaway local Postgres and apply every migration from scratch
+        run: supabase db start
+      - name: pgTAP - provenance, replay, tombstones, role allow/deny, anonymous projections, civic rules, schedules, gates
+        run: supabase test db
+      - name: Generated database types match the migrations (drift check)
+        working-directory: web
+        run: |
+          npm ci --no-audit --no-fund
+          npm run types:check
+      - name: Runner integration tests against that database (crash/resume, replay, overlap, blocked, export import)
+        working-directory: ingest
+        env:
+          # No connection string and no password here. The explicit bootstrap below creates the scoped worker
+          # login on THIS job's throwaway database with a random value (it has no target option and refuses any
+          # non-local Docker daemon); test/local-stack.ts reads that value and the tests assert they are signed
+          # in as exactly that login. REQUIRE turns a skipped integration test into a failure.
+          EVIDENCE_TEST_LOCAL_STACK: "1"
+          EVIDENCE_REQUIRE_INTEGRATION: "1"
+        run: |
+          npm ci --no-audit --no-fund
+          node src/local_bootstrap.ts
+          node --test --test-reporter=spec test/integration.test.ts
+      - if: always()
+        run: supabase stop --no-backup
+
+  web:
+    name: Explorer typecheck, unit tests and Pages build
+    runs-on: ubuntu-latest
+    defaults: { run: { working-directory: web } }
+    env:
+      # One value for the build AND the bundle check, so they can never disagree about the base path.
+      VITE_BASE_PATH: /nz-election-evidence/
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with: { node-version: "24", cache: npm, cache-dependency-path: web/package-lock.json }
+      - run: npm ci --no-audit --no-fund
+      - run: npm run typecheck
+      - run: npm test
+      - name: Build for the repository base path
+        env:
+          # Public values only. Empty is valid: the shell then renders its "not connected" state.
+          VITE_SUPABASE_URL: ${{ vars.EXPLORER_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ vars.EXPLORER_SUPABASE_ANON_KEY }}
+        run: npm run build
+      - name: Built shell is routable on Pages and carries no evidence, private name or privileged key material
+        run: npm run check:bundle
+      - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        with: { path: web/dist }
+
+  web-e2e:
+    name: Explorer browser tests - anonymous browsing, private and write denial, release gate, Pages routing
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
+      - uses: supabase/setup-cli@46f7f98c7f948ad727d22c1e67fab04c223a0520 # v3.0.0
+        with: { version: 2.113.0 }
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with: { node-version: "24", cache: npm, cache-dependency-path: web/package-lock.json }
+      - name: Start local database, auth and REST gateway only
+        run: supabase start -x studio,imgproxy,storage-api,realtime,logflare,vector,supavisor,postgres-meta,mailpit,edge-runtime
+      - working-directory: web
+        run: |
+          npm ci --no-audit --no-fund
+          npx playwright install --with-deps chromium
+          npm run e2e
+          npm run e2e:pages
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: failure()
+        with: { name: playwright-report, path: web/playwright-report, retention-days: 7 }
+      - if: always()
+        run: supabase stop --no-backup
+
+  release-gate:
+    name: R10 release gate and election-day freeze
+    runs-on: ubuntu-latest
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { fetch-depth: 0, persist-credentials: false }
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with: { node-version: "24" }
+      - name: Election-day freeze (R3)
+        run: python3 scripts/red_lines.py --freeze-check
+      - name: Surface review recorded and approved (R10). Pending fails closed.
+        run: node tools/release_gate.ts --surface-id explorer-pages
+
+  deploy:
+    name: Deploy explorer shell to GitHub Pages
+    # CI first, gate second, owner switch third. A green build alone never publishes.
+    needs: [compliance, tooling, database, web, web-e2e, release-gate]
+    if: >-
+      github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+      && vars.PAGES_DEPLOY_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1

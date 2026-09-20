@@ -1,0 +1,75 @@
+{
+  "input_findings": null,
+  "receipt_version": 1,
+  "source_id": "ec_2023_official_results",
+  "mode": "incremental",
+  "dry_run": false,
+  "status": "blocked",
+  "complete_snapshot": false,
+  "error_class": "publisher_challenge",
+  "error_detail": "publisher answered HTTP 403",
+  "manifest_hash": "sha256:0eb9500a15f23e3cd6918440bb1dd21701c1101913370a21d6e37c43048c4564",
+  "manifest": {
+    "manifest_version": 1,
+    "config_version": 1,
+    "source_id": "ec_2023_official_results",
+    "adapter_name": "availability_probe",
+    "adapter_version": "1.0.0",
+    "mode": "incremental",
+    "allowed_hosts": [
+      "electionresults.govt.nz",
+      "www.electionresults.govt.nz"
+    ],
+    "snapshot_semantics": "complete_snapshot",
+    "source_config_hash": "sha256:dce17cd6fe197b3611923067fbc82209c3644cd0f80696871a54357acb444a9c",
+    "max_records": 2000
+  },
+  "run_id": "0b7174e1-7c23-4fd3-b8e9-4888a3025336",
+  "resumed_from_run_id": null,
+  "totals": {
+    "seen": 0,
+    "versions_inserted": 0,
+    "observations_inserted": 0,
+    "unchanged": 0,
+    "rejected": 0
+  },
+  "tombstoned": 0,
+  "pages": 0,
+  "projection": null,
+  "fetches": [
+    {
+      "method": "GET",
+      "url": "https://electionresults.govt.nz/robots.txt",
+      "attempt": 1,
+      "outcome": "robots_advisory_unreadable",
+      "http_status": 403,
+      "bytes": 4846,
+      "body_sha256": "sha256:32df1ada54199356c24637dce8386ecac96931c01782e6e8ca9a840f70d2347d",
+      "retrieved_at": "2026-09-20T07:13:05.934Z",
+      "duration_ms": 60
+    },
+    {
+      "method": "GET",
+      "url": "https://electionresults.govt.nz/electionresults_2023/",
+      "attempt": 1,
+      "outcome": "robots_advisory_unreadable",
+      "http_status": null,
+      "bytes": null,
+      "body_sha256": null,
+      "retrieved_at": "2026-09-20T07:13:05.994Z",
+      "duration_ms": 0
+    },
+    {
+      "method": "GET",
+      "url": "https://electionresults.govt.nz/electionresults_2023/",
+      "attempt": 1,
+      "outcome": "challenge",
+      "http_status": 403,
+      "bytes": 6145,
+      "body_sha256": "sha256:a984e797416c05191432fdafe9352433b18f504505155fb3fb1af4b78bb9e76b",
+      "retrieved_at": "2026-09-20T07:13:05.930Z",
+      "duration_ms": 5030
+    }
+  ],
+  "receipt_note": "Real retrieval from the official publisher on 2026-09-20 (UTC), written to a disposable local database. Counts, hashes, statuses and publisher URLs only; no payloads or response bodies."
+}

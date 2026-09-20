@@ -1,0 +1,64 @@
+{
+  "input_findings": null,
+  "receipt_version": 1,
+  "source_id": "ec_2026_nominations",
+  "mode": "incremental",
+  "dry_run": false,
+  "status": "blocked",
+  "complete_snapshot": false,
+  "error_class": "publisher_challenge",
+  "error_detail": "publisher answered with a bot-challenge page instead of content",
+  "manifest_hash": "sha256:ecb63b26da659f16b1455c86cd35ceed1eb075f3135aee759c7d50bceec68aed",
+  "manifest": {
+    "manifest_version": 1,
+    "config_version": 1,
+    "source_id": "ec_2026_nominations",
+    "adapter_name": "availability_probe",
+    "adapter_version": "1.0.0",
+    "mode": "incremental",
+    "allowed_hosts": [
+      "elections.nz",
+      "vote.nz"
+    ],
+    "snapshot_semantics": "complete_snapshot",
+    "source_config_hash": "sha256:e2a2d1d3052d1b80635f61c99987b66ea0e32e7f5f03e06cc7ce6dcfe511b718",
+    "max_records": 2000
+  },
+  "run_id": "0f0bcb05-1785-441a-84f6-25b3aa2d60b9",
+  "resumed_from_run_id": null,
+  "totals": {
+    "seen": 0,
+    "versions_inserted": 0,
+    "observations_inserted": 0,
+    "unchanged": 0,
+    "rejected": 0
+  },
+  "tombstoned": 0,
+  "pages": 0,
+  "projection": null,
+  "fetches": [
+    {
+      "method": "GET",
+      "url": "https://vote.nz/robots.txt",
+      "attempt": 1,
+      "outcome": "ok",
+      "http_status": 200,
+      "bytes": 95,
+      "body_sha256": "sha256:c98676c2e5570065359053fc8c8375d5cebe1da0e2514c7ae174ec7aa7f5d249",
+      "retrieved_at": "2026-09-20T07:13:00.282Z",
+      "duration_ms": 507
+    },
+    {
+      "method": "GET",
+      "url": "https://vote.nz/2026-general-election/about/overview/key-dates",
+      "attempt": 1,
+      "outcome": "challenge",
+      "http_status": 200,
+      "bytes": 212,
+      "body_sha256": "sha256:d02032286070b4dd9d8fbd985a7bdca8af8edf52b89ff177db3bfcb2c8a9c43d",
+      "retrieved_at": "2026-09-20T07:13:00.273Z",
+      "duration_ms": 5500
+    }
+  ],
+  "receipt_note": "Real retrieval from the official publisher on 2026-09-20 (UTC), written to a disposable local database. Counts, hashes, statuses and publisher URLs only; no payloads or response bodies."
+}

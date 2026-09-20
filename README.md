@@ -39,6 +39,19 @@ python3 -m http.server 8000
 
 You can also open `atlas/index.html` directly. No packages, network access, server, database or API key are required.
 
+## Evidence store and explorer (in review, not live)
+
+This branch adds a Supabase evidence store, repeatable ingestion from official sources, and a **public read-only** explorer with no sign-in. The public layer is default deny: a dataset is projected only with provable source lineage, a pending publisher gets links and metadata only, content appears only for fields a publisher has approved, and anything withheld is listed with its reason. **This work is not complete**: 3 of 24 catalogue products have a live adapter, 1 (the 2023 candidacy product, 963 rows) imports through a pinned, verified export contract on a local disposable database only, and 20 have no route into the store. Two independent reviews returned NO-GO on earlier revisions and this revision addresses their bounded findings; a security re-review is incomplete, so nothing here is security signed off. **Nothing is published yet**: no migration has been applied to a hosted project, the database returns evidence rows to the public only once the R8 and R10 gates are recorded as open (both are closed), every publisher rights row is still pending, no schedule is active, and the GitHub Pages deployment is blocked until the [review register](REVIEW-REGISTER.md) records an approved review. The catalogue and atlas above still need no packages, network, server or API key.
+
+- [Architecture](docs/database/architecture.md) · [Runbook and release checklist](docs/database/runbook.md) · [Source-by-source reconciliation](docs/database/source-reconciliation.md) · [Publication policy](docs/database/publication-policy.md) · [Implementation checklist](docs/database/implementation-checklist.md) · [Recommended branch protection](docs/database/branch-protection.md) · [Ingestion receipts](docs/database/receipts/README.md)
+- `supabase/` — migrations, pgTAP tests, the `ingest-run` Edge Function and shared adapters
+- `ingest/` — TypeScript CLI for dry runs, bounded live runs, backfills and reviewed export imports
+- `tools/` — TypeScript release tooling: R10 deployment gate, receipt publisher, workflow invariant tests
+- `web/` — the explorer (static shell; ships no evidence data; public anon key only; generated database types)
+- `scripts/db/` — versioned operator SQL scripts
+
+Coverage is partial and enumerated, not claimed: three live adapters run (3 of 24 catalogue products): the members listing (122 rows), current bills (93) and the releases feed window (10) in fresh runs on 2026-09-20. Under the [owner collection policy of 2026-09-20](docs/database/pr8-review-disposition.md#owner-collection-policy-2026-09-20-supersedes-parts-of-rows-6-7-and-89), collection is limited to read-only pages and endpoints served to the anonymous public, with nothing behind a sign-in or a paywall; robots.txt, undocumented-endpoint status and the absence of a person's terms review are recorded and reported, not vetoes (the members listing host's robots.txt does disallow automated clients, and that is on record with every run). No publisher permission is claimed and nothing is published: every rights row is pending and the release gates are closed. The Electoral Commission endpoints answer automated requests with a bot challenge, which is never worked around; they are recorded as unavailable, which is not the same as empty.
+
 ## Start here
 
 Read [FIRST-STEPS.md](FIRST-STEPS.md) for three bounded contributions that are ready to pick up. Roles include data research, source research, quality assurance, policy analysis and visualisation. See [CONTRIBUTING.md](CONTRIBUTING.md) before making evidence claims.

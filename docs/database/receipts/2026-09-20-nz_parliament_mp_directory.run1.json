@@ -1,0 +1,56 @@
+{
+  "input_findings": null,
+  "receipt_version": 1,
+  "source_id": "nz_parliament_mp_directory",
+  "mode": "incremental",
+  "dry_run": false,
+  "status": "succeeded",
+  "complete_snapshot": true,
+  "error_class": null,
+  "error_detail": null,
+  "manifest_hash": "sha256:71cdd3a02d4e0d194f34f730be1d9857c69a71a2253edad793e7571c4c6351b6",
+  "manifest": {
+    "manifest_version": 1,
+    "config_version": 1,
+    "source_id": "nz_parliament_mp_directory",
+    "adapter_name": "nz_parliament_mp_directory",
+    "adapter_version": "1.0.0",
+    "mode": "incremental",
+    "allowed_hosts": [
+      "www3.parliament.nz"
+    ],
+    "snapshot_semantics": "complete_snapshot",
+    "source_config_hash": "sha256:a26112d75097cffdd07985daa0a8d4961dce0ee264a7e28439f23119878e2be2",
+    "max_records": 2000
+  },
+  "run_id": "599bc939-0bf4-4331-b83b-535b81506ea1",
+  "resumed_from_run_id": null,
+  "totals": {
+    "seen": 122,
+    "versions_inserted": 122,
+    "observations_inserted": 122,
+    "unchanged": 0,
+    "rejected": 0
+  },
+  "tombstoned": 0,
+  "pages": 1,
+  "projection": {
+    "documents": 0,
+    "mp_directory": 122,
+    "baseline_candidacies": 0
+  },
+  "fetches": [
+    {
+      "method": "GET",
+      "url": "https://www3.parliament.nz/en/mps-and-electorates/members-of-parliament/",
+      "attempt": 1,
+      "outcome": "ok",
+      "http_status": 200,
+      "bytes": 354159,
+      "body_sha256": "sha256:927a777ac708fec24cbb076022ed2ea2e004489268b4cdcc44d516ee0e598b5f",
+      "retrieved_at": "2026-09-20T05:28:40.189Z",
+      "duration_ms": 2032
+    }
+  ],
+  "receipt_note": "Real retrieval from the official publisher on 2026-09-20 (UTC), written to a disposable local database. Counts, hashes, statuses and publisher URLs only; no payloads or response bodies."
+}

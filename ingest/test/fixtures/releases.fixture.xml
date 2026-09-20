@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- TEST FIXTURE: synthetic feed. Invented titles and ids. -->
+<rss version="2.0"><channel><title>Releases</title>
+<item><title>TEST FIXTURE release one &amp; more</title><link>https://www.beehive.govt.nz/release/test-fixture-one</link>
+<description>TEST FIXTURE summary text that must never be stored.</description><pubDate>Sat, 19 Sep 2026 11:56:18 +1200</pubDate><guid isPermaLink="false">900001</guid></item>
+<item><title>TEST FIXTURE release two</title><link>https://www.beehive.govt.nz/release/test-fixture-two</link>
+<description>TEST FIXTURE summary two.</description><guid isPermaLink="false">900002</guid></item>
+</channel></rss>

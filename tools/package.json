@@ -1,0 +1,5 @@
+{
+  "private": true,
+  "type": "module",
+  "description": "Repository release tooling in TypeScript. No dependencies; runs on Node 24 directly. Type-checked and tested through ingest/."
+}

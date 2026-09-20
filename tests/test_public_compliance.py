@@ -83,8 +83,15 @@ class PublicComplianceTests(unittest.TestCase):
 
     def test_review_register_rows_are_pending_not_approval(self):
         register = (ROOT / "REVIEW-REGISTER.md").read_text()
-        self.assertEqual(register.count("**PENDING — NOT REVIEWED**"), 2)
-        self.assertEqual(register.count("| Not appointed |"), 2)
+        rows = [line for line in register.splitlines()
+                if line.startswith("| 20")]
+        self.assertGreaterEqual(len(rows), 4)
+        # Every registered surface, including the new explorer and evidence store, is still pending.
+        self.assertEqual(register.count("**PENDING — NOT REVIEWED**"), len(rows))
+        self.assertEqual(register.count("| Not appointed |"), len(rows))
+        for surface in ("Repository README and source catalogue", "Evidence atlas",
+                        "Evidence explorer", "Supabase evidence store"):
+            self.assertIn(surface, register)
         self.assertIn("cannot substitute for the independent legal review", register)
         self.assertNotIn("| APPROVED |", register.upper())
 
@@ -93,8 +100,9 @@ class PublicComplianceTests(unittest.TestCase):
         with (ROOT / "catalogue/rights-register.csv").open(newline="") as handle:
             csv_rows = list(csv.DictReader(handle))
 
-        self.assertEqual(len(rows), 19)
-        self.assertEqual(len(csv_rows), 19)
+        # 19 original publisher rows plus two pending rows added so every live source has a rights reference.
+        self.assertEqual(len(rows), 21)
+        self.assertEqual(len(csv_rows), 21)
         self.assertEqual(rows, csv_rows_as_json(csv_rows))
         for row in rows:
             self.assertEqual(row["review_status"], "pending")
@@ -133,7 +141,7 @@ def csv_rows_as_json(rows):
     converted = []
     for row in rows:
         item = dict(row)
-        item["product_ids"] = item["product_ids"].split(";")
+        item["product_ids"] = item["product_ids"].split(";") if item["product_ids"] else []
         converted.append(item)
     return converted
 

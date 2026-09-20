@@ -1,0 +1,53 @@
+{
+  "input_findings": null,
+  "receipt_version": 1,
+  "source_id": "ec_2026_nominations",
+  "mode": "incremental",
+  "dry_run": false,
+  "status": "blocked",
+  "complete_snapshot": false,
+  "error_class": "publisher_challenge",
+  "error_detail": "publisher answered with a bot-challenge page instead of content",
+  "manifest_hash": "sha256:7e86c56bb3447f04d642fd397d550123d8111100e35372723e1f4199b0d20770",
+  "manifest": {
+    "manifest_version": 1,
+    "config_version": 1,
+    "source_id": "ec_2026_nominations",
+    "adapter_name": "availability_probe",
+    "adapter_version": "1.0.0",
+    "mode": "incremental",
+    "allowed_hosts": [
+      "elections.nz",
+      "vote.nz"
+    ],
+    "snapshot_semantics": "complete_snapshot",
+    "source_config_hash": "sha256:d06b0e60c4a4e76e7be7940eaaa4a35cf68110a40f1cfa9624770ac2e0d9baea",
+    "max_records": 2000
+  },
+  "run_id": "b3ed83e0-f145-4e6e-bead-6537398efcae",
+  "resumed_from_run_id": null,
+  "totals": {
+    "seen": 0,
+    "versions_inserted": 0,
+    "observations_inserted": 0,
+    "unchanged": 0,
+    "rejected": 0
+  },
+  "tombstoned": 0,
+  "pages": 0,
+  "projection": null,
+  "fetches": [
+    {
+      "method": "GET",
+      "url": "https://vote.nz/2026-general-election/about/overview/key-dates",
+      "attempt": 1,
+      "outcome": "challenge",
+      "http_status": 200,
+      "bytes": 212,
+      "body_sha256": "sha256:d02032286070b4dd9d8fbd985a7bdca8af8edf52b89ff177db3bfcb2c8a9c43d",
+      "retrieved_at": "2026-09-20T05:28:45.608Z",
+      "duration_ms": 63
+    }
+  ],
+  "receipt_note": "Real retrieval from the official publisher on 2026-09-20 (UTC), written to a disposable local database. Counts, hashes, statuses and publisher URLs only; no payloads or response bodies."
+}

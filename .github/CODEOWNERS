@@ -4,3 +4,32 @@
 /tests/test_red_lines.py @adam91holt
 /.github/workflows/ @adam91holt
 /.github/CODEOWNERS @adam91holt
+
+# Release decisions, rights and everything that enforces them. A change here can publish data or
+# weaken a gate, so it needs owner review. Listing a path here is not an approval of anything.
+/REVIEW-REGISTER.md @adam91holt
+/CORRECTIONS.md @adam91holt
+/catalogue/rights-register.json @adam91holt
+/catalogue/rights-register.csv @adam91holt
+/scripts/validate.py @adam91holt
+/scripts/db/ @adam91holt
+/tools/ @adam91holt
+/supabase/migrations/ @adam91holt
+/supabase/config.toml @adam91holt
+/supabase/functions/ @adam91holt
+/supabase/tests/ @adam91holt
+/web/scripts/ @adam91holt
+
+# Application code, generated database types, package manifests and lockfiles. A dependency or a type
+# change can alter what the public shell requests or ships, so these need owner review as well.
+/web/ @adam91holt
+/web/src/lib/database.types.ts @adam91holt
+/web/package.json @adam91holt
+/web/package-lock.json @adam91holt
+/ingest/ @adam91holt
+/ingest/package.json @adam91holt
+/ingest/package-lock.json @adam91holt
+/supabase/functions/deno.json @adam91holt
+/supabase/functions/deno.lock @adam91holt
+/tools/package.json @adam91holt
+/docs/database/ @adam91holt
