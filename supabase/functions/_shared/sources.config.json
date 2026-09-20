@@ -58,7 +58,7 @@
       "view_scope": "current_parliament",
       "expected_cadence_seconds": 86400,
       "snapshot_semantics": "complete_snapshot",
-      "enabled": true,
+      "enabled": false,
       "catalogue_products": [
         {
           "product_id": "P10",
@@ -68,7 +68,11 @@
       "adapter_options": {
         "min_rows": 100,
         "max_rows": 130
-      }
+      },
+      "access_basis": "public_page",
+      "min_interval_ms": 5000,
+      "blocked_reason": "The publisher's robots.txt (read 2026-09-20) disallows every path for clients it does not name, which includes this one. The adapter honours that and ends each run as blocked. Needs the publisher's permission or a documented data route. Blocked is not the same as no members.",
+      "access_note": "Public listing page. robots.txt on this host: 'User-agent: *' then 'Disallow: /'."
     },
     {
       "source_id": "nz_parliament_current_bills",
@@ -85,13 +89,17 @@
       "view_scope": "current_parliament",
       "expected_cadence_seconds": 21600,
       "snapshot_semantics": "complete_snapshot",
-      "enabled": true,
+      "enabled": false,
       "catalogue_products": [
         {
           "product_id": "P03",
           "mapping_note": "Current bills index. P02 (bill publications) is a different upstream product and is not covered by this adapter."
         }
-      ]
+      ],
+      "access_basis": "undocumented_endpoint",
+      "min_interval_ms": 3000,
+      "blocked_reason": "The only machine-readable route found on 2026-09-20 is the site's own internal search endpoint, which has no published terms of use or documentation. No documented official bills data route was found. The adapter therefore never contacts it: every run ends as blocked until Parliament documents a route or gives written permission. Blocked is not the same as no bills.",
+      "access_note": "robots.txt on this host allows all paths, but a permissive robots.txt is not permission to use an internal API."
     },
     {
       "source_id": "nz_government_releases_feed",
@@ -114,7 +122,10 @@
           "product_id": "P01",
           "mapping_note": "Incremental feed window only. The 4,735-record historical product needs the export import route; the feed does not backfill it."
         }
-      ]
+      ],
+      "access_basis": "public_feed",
+      "min_interval_ms": 2000,
+      "access_note": "Public RSS feed offered by the publisher; robots.txt does not disallow it (read 2026-09-20)."
     },
     {
       "source_id": "nz_parliament_written_questions",
@@ -138,7 +149,9 @@
           "product_id": "P24",
           "mapping_note": "Probe only. The 187,956-record product is not imported by this source."
         }
-      ]
+      ],
+      "access_basis": "public_page",
+      "min_interval_ms": 5000
     },
     {
       "source_id": "ec_register_of_political_parties",
@@ -155,7 +168,10 @@
       "expected_cadence_seconds": 86400,
       "snapshot_semantics": "complete_snapshot",
       "enabled": false,
-      "blocked_reason": "Publisher refused automated requests from the build host (HTTP 403) on 2026-09-20. Current registrations are therefore unknown here, not zero. The 33 upstream historical party identities are not a current register."
+      "blocked_reason": "Publisher refused automated requests from the build host (HTTP 403) on 2026-09-20. Current registrations are therefore unknown here, not zero. The 33 upstream historical party identities are not a current register.",
+      "access_basis": "public_page",
+      "min_interval_ms": 5000,
+      "rights_id": "RIGHTS-20"
     },
     {
       "source_id": "ec_2026_nominations",
@@ -173,7 +189,10 @@
       "expected_cadence_seconds": 21600,
       "snapshot_semantics": "complete_snapshot",
       "enabled": false,
-      "blocked_reason": "No official nominations have been loaded. Official lists follow the close of nominations; until an official list is retrieved the number of candidates is unknown, not zero. Party announcements are a different status and are not collected by this source."
+      "blocked_reason": "No official nominations have been loaded. Official lists follow the close of nominations; until an official list is retrieved the number of candidates is unknown, not zero. Party announcements are a different status and are not collected by this source.",
+      "access_basis": "public_page",
+      "min_interval_ms": 5000,
+      "rights_id": "RIGHTS-21"
     },
     {
       "source_id": "ec_2023_official_results",
@@ -201,7 +220,9 @@
           "product_id": "P09",
           "mapping_note": "Probe only; electorate results are not imported by this source."
         }
-      ]
+      ],
+      "access_basis": "public_page",
+      "min_interval_ms": 5000
     },
     {
       "source_id": "ec_party_finance_returns",
@@ -228,7 +249,9 @@
           "product_id": "P17",
           "mapping_note": "Probe only."
         }
-      ]
+      ],
+      "access_basis": "public_page",
+      "min_interval_ms": 5000
     },
     {
       "source_id": "baseline_2023_candidacies_export",
@@ -396,22 +419,6 @@
     }
   ],
   "schedules": [
-    {
-      "schedule_key": "mp-directory-daily",
-      "source_id": "nz_parliament_mp_directory",
-      "cron_expr": "20 17 * * *",
-      "function_slug": "ingest-run",
-      "max_runtime_seconds": 60,
-      "max_records": 200
-    },
-    {
-      "schedule_key": "current-bills-6-hourly",
-      "source_id": "nz_parliament_current_bills",
-      "cron_expr": "35 */6 * * *",
-      "function_slug": "ingest-run",
-      "max_runtime_seconds": 120,
-      "max_records": 1000
-    },
     {
       "schedule_key": "releases-feed-hourly",
       "source_id": "nz_government_releases_feed",

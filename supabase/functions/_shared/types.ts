@@ -87,6 +87,17 @@ export interface SourceConfig {
   blocked_reason?: string;
   catalogue_products?: { product_id: string; mapping_note: string }[];
   adapter_options?: { [key: string]: Json };
+  /**
+   * What makes automated access to this endpoint legitimate, as far as this project has established:
+   *   public_page / public_feed   a page or feed the publisher offers to the public; still subject to robots.txt
+   *   documented_api              an interface the publisher documents for reuse
+   *   undocumented_endpoint       an internal endpoint with no published terms of use. NEVER fetched: every run
+   *                               ends as blocked until the publisher documents a route or gives permission
+   */
+  access_basis?: "public_page" | "public_feed" | "documented_api" | "undocumented_endpoint";
+  access_note?: string;
+  /** Minimum gap between two requests to one host in a run (ms). robots.txt Crawl-delay can only raise it. */
+  min_interval_ms?: number;
   export_contract?: ExportContract;
 }
 
@@ -137,7 +148,10 @@ export type FetchOutcome =
   | "timeout"
   | "too_large"
   | "host_denied"
-  | "parse_error";
+  | "parse_error"
+  | "robots_disallowed"
+  | "robots_unavailable"
+  | "robots_crawl_delay_exceeds_budget";
 
 export interface FetchLogEntry {
   method: "GET" | "POST";
@@ -207,8 +221,8 @@ export class IngestError extends Error {
 /** The publisher refused or challenged the request. An availability fact, not evidence of absence. */
 export class SourceUnavailableError extends IngestError {
   outcome: FetchOutcome;
-  constructor(outcome: FetchOutcome, message: string) {
-    super(outcome === "challenge" ? "publisher_challenge" : "publisher_" + outcome, message);
+  constructor(outcome: FetchOutcome, message: string, errorClass?: string) {
+    super(errorClass ?? (outcome === "challenge" ? "publisher_challenge" : "publisher_" + outcome), message);
     this.name = "SourceUnavailableError";
     this.outcome = outcome;
   }

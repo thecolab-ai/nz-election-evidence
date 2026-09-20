@@ -861,8 +861,12 @@ export type Database = {
       policy_sources: {
         Row: {
           classification_basis: string | null
+          confidence: number | null
+          confidence_basis: string | null
+          confidence_status: string | null
           document_id: string | null
           election_id: string | null
+          model_run_id: string | null
           party_identity_id: string | null
           policy_class: string | null
         }
@@ -879,6 +883,13 @@ export type Database = {
             columns: ["election_id"]
             isOneToOne: false
             referencedRelation: "elections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "policy_sources_model_run_id_fkey"
+            columns: ["model_run_id"]
+            isOneToOne: false
+            referencedRelation: "model_runs"
             referencedColumns: ["id"]
           },
           {
@@ -1024,6 +1035,76 @@ export type Database = {
           reason?: string | null
         }
         Relationships: []
+      }
+      publisher_access_checks: {
+        Row: {
+          body_sha256: string | null
+          check_kind: string | null
+          checked_at: string | null
+          checked_host: string | null
+          checked_url: string | null
+          crawl_delay_seconds: number | null
+          finding: string | null
+          http_status: number | null
+          id: number | null
+          outcome: string | null
+          recorded_at: string | null
+          response_bytes: number | null
+          source_id: string | null
+          target_path: string | null
+          tool_version: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "publisher_access_checks_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "sources"
+            referencedColumns: ["source_id"]
+          },
+        ]
+      }
+      publisher_terms_reviews: {
+        Row: {
+          automated_access: string | null
+          id: number | null
+          reviewed_at: string | null
+          rights_id: string | null
+          robots_check_id: number | null
+          source_id: string | null
+          terms_check_id: number | null
+          terms_url: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "publisher_terms_reviews_rights_id_fkey"
+            columns: ["rights_id"]
+            isOneToOne: false
+            referencedRelation: "source_rights"
+            referencedColumns: ["rights_id"]
+          },
+          {
+            foreignKeyName: "publisher_terms_reviews_robots_check_id_fkey"
+            columns: ["robots_check_id"]
+            isOneToOne: false
+            referencedRelation: "publisher_access_checks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "publisher_terms_reviews_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "sources"
+            referencedColumns: ["source_id"]
+          },
+          {
+            foreignKeyName: "publisher_terms_reviews_terms_check_id_fkey"
+            columns: ["terms_check_id"]
+            isOneToOne: false
+            referencedRelation: "publisher_access_checks"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       record_lifecycle_events: {
         Row: {
@@ -1337,6 +1418,39 @@ export type Database = {
           },
         ]
       }
+      schema_agreement_validations: {
+        Row: {
+          agreement_rate: number | null
+          agreements: number | null
+          id: string | null
+          method_url: string | null
+          output_kind: string | null
+          prompt_or_schema_version: string | null
+          sample_size: number | null
+          validated_at: string | null
+        }
+        Insert: {
+          agreement_rate?: number | null
+          agreements?: number | null
+          id?: string | null
+          method_url?: string | null
+          output_kind?: string | null
+          prompt_or_schema_version?: string | null
+          sample_size?: number | null
+          validated_at?: string | null
+        }
+        Update: {
+          agreement_rate?: number | null
+          agreements?: number | null
+          id?: string | null
+          method_url?: string | null
+          output_kind?: string | null
+          prompt_or_schema_version?: string | null
+          sample_size?: number | null
+          validated_at?: string | null
+        }
+        Relationships: []
+      }
       source_freshness: {
         Row: {
           consecutive_failures: number | null
@@ -1543,6 +1657,7 @@ export type Database = {
       }
       sources: {
         Row: {
+          access_basis: string | null
           adapter_kind: string | null
           adapter_name: string | null
           allowed_hosts: string[] | null
@@ -1755,6 +1870,9 @@ export type Database = {
       }
       summary_versions: {
         Row: {
+          confidence: number | null
+          confidence_basis: string | null
+          confidence_status: string | null
           created_at: string | null
           id: string | null
           model_run_id: string | null
@@ -1764,6 +1882,9 @@ export type Database = {
           uncertainty_note: string | null
         }
         Insert: {
+          confidence?: number | null
+          confidence_basis?: string | null
+          confidence_status?: string | null
           created_at?: string | null
           id?: string | null
           model_run_id?: string | null
@@ -1773,6 +1894,9 @@ export type Database = {
           uncertainty_note?: string | null
         }
         Update: {
+          confidence?: number | null
+          confidence_basis?: string | null
+          confidence_status?: string | null
           created_at?: string | null
           id?: string | null
           model_run_id?: string | null
@@ -2433,6 +2557,53 @@ export type Database = {
           },
         ]
       }
+      policy_classifications: {
+        Row: {
+          classification_basis: string | null
+          confidence: number | null
+          confidence_basis: string | null
+          confidence_status: string | null
+          document_id: string | null
+          election_id: string | null
+          model_metadata_status: string | null
+          model_name: string | null
+          model_run_id: string | null
+          model_version: string | null
+          official_url: string | null
+          party_identity_id: string | null
+          policy_class: string | null
+          prompt_or_schema_version: string | null
+          provider: string | null
+          schema_agreement_documented: boolean | null
+          schema_agreement_method_url: string | null
+          schema_agreement_rate: number | null
+          schema_agreement_sample: number | null
+          view_scope: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "policy_sources_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: true
+            referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "policy_sources_election_id_fkey"
+            columns: ["election_id"]
+            isOneToOne: false
+            referencedRelation: "elections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "policy_sources_party_identity_id_fkey"
+            columns: ["party_identity_id"]
+            isOneToOne: false
+            referencedRelation: "party_identities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       polls: {
         Row: {
           document_id: string | null
@@ -2843,6 +3014,9 @@ export type Database = {
       }
       summaries: {
         Row: {
+          confidence: number | null
+          confidence_basis: string | null
+          confidence_status: string | null
           created_at: string | null
           id: string | null
           model_metadata_status: string | null
@@ -2852,6 +3026,11 @@ export type Database = {
           prompt_or_schema_version: string | null
           provider: string | null
           review_status: string | null
+          schema_agreement_documented: boolean | null
+          schema_agreement_method_url: string | null
+          schema_agreement_rate: number | null
+          schema_agreement_sample: number | null
+          schema_agreement_validated_at: string | null
           summary_text: string | null
           uncertainty_note: string | null
         }

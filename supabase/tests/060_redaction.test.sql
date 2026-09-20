@@ -3,10 +3,10 @@
 begin;
 select plan(7);
 
-select evidence_private.sync_registry(jsonb_build_object('sources', jsonb_build_array(
+select evidence_private.sync_registry(jsonb_build_object('rights', jsonb_build_array(jsonb_build_object('rights_id', 'RIGHTS-94', 'publisher', 'Fixture Publisher', 'source_url', 'https://fixture.example/', 'review_status', 'pending', 'default_release', 'link-only', 'register_hash', 'h1')), 'sources', jsonb_build_array(
   jsonb_build_object('source_id', 'pgtap_redact', 'title', 'Fixture', 'publisher', 'Fixture Publisher',
-    'official_url', 'https://fixture.example/', 'adapter_kind', 'live_fetch', 'adapter_name', 'fixture',
-    'allowed_hosts', jsonb_build_array('fixture.example'), 'view_scope', 'general',
+    'official_url', 'https://fixture.example/', 'adapter_kind', 'live_fetch', 'adapter_name', 'fixture', 'access_basis', 'public_page',
+    'allowed_hosts', jsonb_build_array('fixture.example'), 'rights_id', 'RIGHTS-94', 'view_scope', 'general',
     'snapshot_semantics', 'append_only_feed', 'enabled', false, 'config_hash', 'c'))));
 select evidence_private.acquire_lease('pgtap_redact', '66666666-6666-6666-6666-666666666666', 60);
 create temp table t as select evidence_private.start_run('pgtap_redact', '66666666-6666-6666-6666-666666666666', 'v1', 'incremental', 'test', 'm') as v;

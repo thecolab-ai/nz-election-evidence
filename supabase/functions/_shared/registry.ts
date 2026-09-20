@@ -28,6 +28,14 @@ export function validateSourcesFile(file: SourcesFile): string[] {
       }
     }
     if (source.adapter_kind === "live_fetch") {
+      // A live source contacts a publisher, so the register must already hold a row for that publisher and
+      // the config must say on what basis the endpoint may be fetched. Neither has a default.
+      if (!source.rights_id || !/^RIGHTS-[0-9]{2,}$/.test(source.rights_id)) problems.push(`${where}: a live source needs a rights_id from the rights register`);
+      if (!source.access_basis) problems.push(`${where}: a live source must state its access_basis`);
+      if (source.access_basis === "undocumented_endpoint" && (source.enabled || !source.blocked_reason)) {
+        problems.push(`${where}: an undocumented endpoint is never enabled and must carry its blocker`);
+      }
+      if (source.min_interval_ms !== undefined && (source.min_interval_ms < 1000 || source.min_interval_ms > 60000)) problems.push(`${where}: min_interval_ms must be 1000-60000`);
       if (source.allowed_hosts.length === 0) problems.push(`${where}: live sources need an allowlist`);
       if (official && !source.allowed_hosts.includes(official.hostname)) problems.push(`${where}: official_url host is not on the allowlist`);
     } else {
@@ -121,7 +129,7 @@ export async function registryPayload(file: SourcesFile, rightsRegister: { [key:
     sources.push({
       source_id: source.source_id, registry_key: source.registry_key ?? "", title: source.title, publisher: source.publisher,
       official_url: source.official_url, adapter_kind: source.adapter_kind, adapter_name: source.adapter_name,
-      allowed_hosts: source.allowed_hosts, rights_id: source.rights_id ?? "", view_scope: source.view_scope,
+      allowed_hosts: source.allowed_hosts, rights_id: source.rights_id ?? "", access_basis: source.access_basis ?? "", view_scope: source.view_scope,
       expected_cadence_seconds: source.expected_cadence_seconds ? String(source.expected_cadence_seconds) : "",
       snapshot_semantics: source.snapshot_semantics, enabled: source.enabled, blocked_reason: source.blocked_reason ?? "",
       catalogue_products: (source.catalogue_products ?? []) as unknown as Json, config_hash: await configHash(source),

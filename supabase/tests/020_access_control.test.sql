@@ -14,10 +14,10 @@ values ('aaaaaaaa-0000-0000-0000-000000000001', 'inspector', 'test', 'fixture in
 insert into evidence_private.app_memberships (user_id, app_role, granted_by, grant_reason, revoked_at, revoked_by)
 values ('aaaaaaaa-0000-0000-0000-000000000003', 'inspector', 'test', 'fixture revoked inspector', now(), 'test');
 
-select evidence_private.sync_registry(jsonb_build_object('sources', jsonb_build_array(
+select evidence_private.sync_registry(jsonb_build_object('rights', jsonb_build_array(jsonb_build_object('rights_id', 'RIGHTS-92', 'publisher', 'Fixture Publisher', 'source_url', 'https://fixture.example/', 'review_status', 'pending', 'default_release', 'link-only', 'register_hash', 'h1')), 'sources', jsonb_build_array(
   jsonb_build_object('source_id', 'pgtap_access', 'title', 'Fixture access source', 'publisher', 'Fixture Publisher',
-    'official_url', 'https://fixture.example/list', 'adapter_kind', 'live_fetch', 'adapter_name', 'fixture',
-    'allowed_hosts', jsonb_build_array('fixture.example'), 'view_scope', 'general',
+    'official_url', 'https://fixture.example/list', 'adapter_kind', 'live_fetch', 'adapter_name', 'fixture', 'access_basis', 'public_page',
+    'allowed_hosts', jsonb_build_array('fixture.example'), 'rights_id', 'RIGHTS-92', 'view_scope', 'general',
     'snapshot_semantics', 'complete_snapshot', 'enabled', false, 'config_hash', 'c1'))));
 select evidence_private.acquire_lease('pgtap_access', '11111111-1111-1111-1111-111111111111', 60);
 create temp table t as select evidence_private.start_run('pgtap_access', '11111111-1111-1111-1111-111111111111', 'v1', 'incremental', 'test', 'm') as v;

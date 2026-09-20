@@ -26,6 +26,8 @@ export interface RunOptions {
   fetchImpl?: typeof fetch;
   sleep?: (ms: number) => Promise<void>;
   now?: () => Date;
+  /** Tests only: override the per-host pacing interval. Production uses the source's min_interval_ms. */
+  minIntervalMs?: number;
   /** Test hook: throw after this many stored batches to simulate a crash mid-run. */
   failAfterBatches?: number;
 }
@@ -73,7 +75,7 @@ export async function runSource(options: RunOptions): Promise<RunReport> {
   };
 
   const safeFetch = createSafeFetch({
-    allowedHosts: options.source.allowed_hosts, log: fetches, deadline,
+    allowedHosts: options.source.allowed_hosts, log: fetches, deadline, minIntervalMs: options.minIntervalMs ?? options.source.min_interval_ms,
     fetchImpl: options.fetchImpl, sleep: options.sleep, now,
   });
 
@@ -110,6 +112,10 @@ export async function runSource(options: RunOptions): Promise<RunReport> {
   };
 
   try {
+    // Fail closed before any network request: an endpoint with no established basis for automated access.
+    if (options.source.access_basis === "undocumented_endpoint") {
+      throw new SourceUnavailableError("blocked", "no documented or permitted route to this data exists; the endpoint was not contacted", "access_basis_not_established");
+    }
     const planned: NonNullable<RunReport["planned_records"]> = [];
     for await (const page of options.adapter.pages({
       source: options.source, fetch: safeFetch, resumeCursor, maxRecords: options.maxRecords, deadline, now,

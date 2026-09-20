@@ -8,7 +8,7 @@ select evidence_private.sync_registry(jsonb_build_object(
     'review_status', 'approved', 'default_release', 'approved-fields', 'reviewed_on', '2026-09-20',
     'approved_fields', jsonb_build_array('title', 'external_record_id', 'source_date_text'), 'register_hash', 'h')),
   'sources', jsonb_build_array(jsonb_build_object('source_id', 'pgtap_hostile', 'title', 'Fixture hostile', 'publisher', 'Fixture',
-    'official_url', 'https://fixture.example/l', 'adapter_kind', 'live_fetch', 'adapter_name', 'fixture',
+    'official_url', 'https://fixture.example/l', 'adapter_kind', 'live_fetch', 'adapter_name', 'fixture', 'access_basis', 'public_page',
     'allowed_hosts', jsonb_build_array('fixture.example'), 'rights_id', 'RIGHTS-89', 'view_scope', 'general',
     'snapshot_semantics', 'append_only_feed', 'enabled', false, 'config_hash', 'c'))));
 select evidence_private.acquire_lease('pgtap_hostile', '88888888-8888-8888-8888-888888888888', 120);

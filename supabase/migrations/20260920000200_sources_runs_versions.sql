@@ -64,6 +64,7 @@ create table evidence_private.sources (
   adapter_name text not null,
   allowed_hosts text[] not null check (cardinality(allowed_hosts) > 0 or adapter_kind = 'export_import'),
   rights_id text references evidence_private.source_rights (rights_id),
+  access_basis text check (access_basis in ('public_page', 'public_feed', 'documented_api', 'undocumented_endpoint')),
   view_scope text not null check (view_scope in (
     'primary_2026', 'baseline_2023', 'finance_2025', 'current_parliament', 'statistics', 'general')),
   expected_cadence_seconds integer check (expected_cadence_seconds is null or expected_cadence_seconds >= 300),
@@ -71,9 +72,15 @@ create table evidence_private.sources (
   enabled boolean not null default false,
   blocked_reason text,
   config_hash text not null,
-  synced_at timestamptz not null default now()
+  synced_at timestamptz not null default now(),
+  -- A source that contacts a publisher must name its rights row and the basis for automated access.
+  check (adapter_kind <> 'live_fetch' or (rights_id is not null and access_basis is not null)),
+  -- An internal endpoint with no published terms is never enabled.
+  check (access_basis is distinct from 'undocumented_endpoint' or (not enabled and blocked_reason is not null))
 );
 
+comment on column evidence_private.sources.access_basis is
+  'What this project has established about automated access. undocumented_endpoint is never fetched. A value here is not a legal approval; see publisher_terms_reviews.';
 comment on column evidence_private.sources.view_scope is
   'Keeps the 2026 primary view apart from the 2023 baseline and 2025 finance material. Never merged for display.';
 comment on column evidence_private.sources.snapshot_semantics is
@@ -161,7 +168,8 @@ create table evidence_private.fetch_log (
   attempt integer not null check (attempt >= 1),
   outcome text not null check (outcome in (
     'ok', 'not_modified', 'blocked', 'challenge', 'http_error', 'network_error',
-    'timeout', 'too_large', 'host_denied', 'parse_error')),
+    'timeout', 'too_large', 'host_denied', 'parse_error',
+    'robots_disallowed', 'robots_unavailable', 'robots_crawl_delay_exceeds_budget')),
   http_status integer,
   response_bytes bigint,
   body_sha256 text,

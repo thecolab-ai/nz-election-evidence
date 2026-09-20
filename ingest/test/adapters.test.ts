@@ -3,7 +3,7 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { test } from "node:test";
-import { parseBillsPage } from "../../supabase/functions/_shared/adapters/bills.ts";
+import { billsAdapter, parseBillsPage } from "../../supabase/functions/_shared/adapters/bills.ts";
 import { parseMpDirectory } from "../../supabase/functions/_shared/adapters/mp_directory.ts";
 import { parseReleasesFeed } from "../../supabase/functions/_shared/adapters/releases_rss.ts";
 import { authoriseCronRequest, parseIngestRequest, timingSafeEqual } from "../../supabase/functions/_shared/auth.ts";
@@ -124,4 +124,55 @@ test("adversarial export rows: hostile column names, identifiers and links never
   for (const badUrl of ["https://user:pw@electionresults.govt.nz/", "https://electionresults.govt.nz/?token=abc", "http://electionresults.govt.nz/", "file:///x"]) {
     await assert.rejects(projectExportRow(source, contract, { ...good, source_url: badUrl }, "x"), (e: IngestError) => e.errorClass === "parse_error" && !e.message.includes("pw") && !e.message.includes("abc"), badUrl);
   }
+});
+
+test("review 8/9: a live source without a rights row or an access basis is a configuration error, not a default", () => {
+  for (const source of file.sources) {
+    if (source.adapter_kind !== "live_fetch") continue;
+    assert.match(source.rights_id ?? "", /^RIGHTS-\d{2,}$/, source.source_id + " names its rights row");
+    assert.ok(source.access_basis, source.source_id + " states its access basis");
+    assert.ok((source.min_interval_ms ?? 0) >= 1000, source.source_id + " paces its requests");
+  }
+  const noRights = structuredClone(file);
+  delete noRights.sources.find((s) => s.source_id === "ec_2026_nominations")!.rights_id;
+  assert.match(validateSourcesFile(noRights).join("\n"), /ec_2026_nominations.*needs a rights_id/);
+  const emptyRights = structuredClone(file);
+  emptyRights.sources.find((s) => s.source_id === "ec_register_of_political_parties")!.rights_id = "";
+  assert.match(validateSourcesFile(emptyRights).join("\n"), /ec_register_of_political_parties.*needs a rights_id/);
+  const noBasis = structuredClone(file);
+  delete noBasis.sources.find((s) => s.source_id === "nz_government_releases_feed")!.access_basis;
+  assert.match(validateSourcesFile(noBasis).join("\n"), /must state its access_basis/);
+  const tooFast = structuredClone(file);
+  tooFast.sources.find((s) => s.source_id === "nz_government_releases_feed")!.min_interval_ms = 50;
+  assert.match(validateSourcesFile(tooFast).join("\n"), /min_interval_ms/);
+});
+
+test("review 8: every rights id a source names exists in the public rights register, and every such row is still pending", async () => {
+  const register = JSON.parse(await readFile(new URL("../../catalogue/rights-register.json", import.meta.url), "utf-8")) as { rights_id: string; review_status: string; reviewed_on: string }[];
+  const byId = new Map(register.map((r) => [r.rights_id, r]));
+  for (const source of file.sources) {
+    if (!source.rights_id) continue;
+    const row = byId.get(source.rights_id);
+    assert.ok(row, source.source_id + " -> " + source.rights_id + " is in the register");
+    assert.deepEqual([row.review_status, row.reviewed_on], ["pending", ""], "no review is invented: " + source.rights_id + " stays pending and undated");
+  }
+});
+
+test("review 6: the bills endpoint is classed undocumented, can never be enabled or scheduled, and the adapter sends no Origin or Referer", async () => {
+  const bills = file.sources.find((s) => s.source_id === "nz_parliament_current_bills")!;
+  assert.deepEqual([bills.access_basis, bills.enabled], ["undocumented_endpoint", false]);
+  assert.match(bills.blocked_reason ?? "", /no published terms|No documented/i);
+  assert.ok(!file.schedules.some((s) => s.source_id === bills.source_id), "no schedule points at it");
+  const enabled = structuredClone(file);
+  enabled.sources.find((s) => s.source_id === bills.source_id)!.enabled = true;
+  assert.match(validateSourcesFile(enabled).join("\n"), /undocumented endpoint is never enabled/);
+
+  const sent: { [key: string]: string }[] = [];
+  const pages = billsAdapter.pages({
+    source: bills, resumeCursor: null, maxRecords: 10, deadline: Date.now() + 5000,
+    fetch: async (request: { headers?: { [key: string]: string } }) => { sent.push(request.headers ?? {}); return { text: JSON.stringify({ totalResults: 0, results: [] }) }; },
+  } as never);
+  try { await pages.next(); } catch { /* an empty listing faults by design; only the request matters here */ }
+  assert.equal(sent.length, 1);
+  assert.deepEqual(Object.keys(sent[0]).map((k) => k.toLowerCase()).filter((k) => k === "origin" || k === "referer"), []);
 });

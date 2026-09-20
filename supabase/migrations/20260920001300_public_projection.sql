@@ -113,6 +113,9 @@ insert into evidence_private.public_withheld (object_schema, object_name, column
   ('evidence_private', 'release_batches', 'created_by', 'Names an individual operator; batch status and dates stay public (R7).'),
   ('evidence_private', 'ingest_schedules', 'activated_by', 'Names an individual operator; schedule state and proof of activation stay public (R7).'),
   ('evidence_views', 'schedules', 'activated_by', 'Names an individual operator; schedule state and proof of activation stay public (R7).'),
+  ('evidence_private', 'publisher_terms_reviews', 'reviewed_by', 'Names an individual; the conclusion, the terms URL, the checks it rests on and the date stay public (R7).'),
+  ('evidence_private', 'publisher_terms_reviews', 'conditions', 'Free-text reviewer note that may summarise private correspondence with a publisher.'),
+  ('evidence_private', 'schema_agreement_validations', 'validated_by', 'Names an individual; the agreement rate, sample size, method link and date stay public (R7).'),
   ('evidence_private', 'stat_route_reconciliation', 'decided_by', 'Names an individual; the route decision, note and date stay public (R7).'),
   ('evidence_views', 'stat_route_reconciliation', 'decided_by', 'Names an individual; the route decision, note and date stay public (R7).');
 
@@ -233,9 +236,13 @@ insert into evidence_private.public_lineage (object_schema, object_name, lineage
   ('evidence_views', 'records', 'source', 'b.source_id', 'Every row resolves to exactly one source through foreign keys; rows that do not are not shown.'),
   ('evidence_views', 'schedules', 'source', 'b.source_id', 'Every row resolves to exactly one source through foreign keys; rows that do not are not shown.'),
   ('evidence_views', 'service_terms', 'source', 'b.source_id', 'Every row resolves to exactly one source through foreign keys; rows that do not are not shown.'),
+  ('evidence_views', 'policy_classifications', 'source', '(select l.source_id from evidence_private.lineage_document l where l.document_id = b.document_id)', 'Every row resolves to exactly one source through foreign keys; rows that do not are not shown.'),
   ('evidence_views', 'sources', 'source', 'b.source_id', 'Every row resolves to exactly one source through foreign keys; rows that do not are not shown.'),
   ('evidence_views', 'stat_observations', 'source', '(select l.source_id from evidence_private.lineage_stat_series l where l.series_id = b.series_id)', 'Every row resolves to exactly one source through foreign keys; rows that do not are not shown.'),
   ('evidence_views', 'stat_series', 'source', 'b.source_id', 'Every row resolves to exactly one source through foreign keys; rows that do not are not shown.'),
+  ('evidence_private', 'publisher_access_checks', 'source', 'b.source_id', 'Every row resolves to exactly one source through foreign keys; rows that do not are not shown.'),
+  ('evidence_private', 'publisher_terms_reviews', 'source', 'b.source_id', 'Every row resolves to exactly one source through foreign keys; rows that do not are not shown.'),
+  ('evidence_private', 'schema_agreement_validations', 'not_source_data', null, 'Project-recorded human-agreement studies per schema version (R9); no source content.'),
   ('evidence_private', 'contests', 'not_source_data', null, 'Structural keys only (election and electorate version ids); no source content.'),
   ('evidence_private', 'corrections', 'not_source_data', null, 'Project-authored corrections log entries (R5).'),
   ('evidence_private', 'elections', 'not_source_data', null, 'Project-authored reference rows with a stated basis for each date.'),
@@ -283,6 +290,7 @@ begin
            when l.lineage_kind = 'not_source_data' then 'link'
            when c.relname in ('sources', 'source_freshness', 'catalogue_product_map', 'import_runs', 'fetch_log', 'ingest_errors',
                               'run_checkpoints', 'source_leases', 'ingest_schedules', 'schedules', 'schedule_dispatch_log',
+                              'publisher_access_checks', 'publisher_terms_reviews',
                               'source_observations', 'record_lifecycle_events', 'release_items') then 'link'
            when a.attname in ('external_id', 'external_record_id', 'publisher_item_id') then 'content'
            when a.attname = 'id' or a.attname like '%\_id' escape '\' or a.attname like '%\_at' escape '\'
@@ -291,6 +299,12 @@ begin
                               'tombstone_reason', 'is_current', 'version_count', 'observation_count', 'link_status',
                               'review_status', 'method', 'subject_kind', 'decision', 'service_terms', 'candidacies',
                               'open_proposals', 'edge_id', 'from_kind', 'to_kind', 'omitted_fields',
+                              -- R9 labelling travels with a model output unconditionally: a class or summary can
+                              -- never be released by a rights row while its model label stays hidden
+                              'classification_basis', 'model_metadata_status', 'provider', 'model_name', 'model_version',
+                              'prompt_or_schema_version', 'confidence', 'confidence_status', 'confidence_basis',
+                              'schema_agreement_rate', 'schema_agreement_sample', 'schema_agreement_method_url',
+                              'schema_agreement_documented',
                               -- the project's own reference data and review flags, not publisher content
                               'election_slug', 'boundary_edition', 'boundary_edition_verified') then 'link'
            else 'content'
@@ -514,7 +528,8 @@ begin
            (select count(*) from evidence_private.public_columns pc
              where pc.object_schema = n.nspname and pc.object_name = c.relname and pc.release_class = 'content'
                and l.lineage_kind = 'source')::integer as columns_rights_gated,
-           case when c.relkind = 'r' and c.reltuples >= 0 then c.reltuples::bigint end as approximate_rows
+           -- No size for a withheld table: the count of app_memberships, say, is the number of inspector accounts.
+           case when c.relkind = 'r' and c.reltuples >= 0 and ww.object_name is null then c.reltuples::bigint end as approximate_rows
     from pg_catalog.pg_class c
     join pg_catalog.pg_namespace n on n.oid = c.relnamespace
     left join evidence_private.public_withheld ww
@@ -589,6 +604,9 @@ comment on table evidence_private.stat_datasets is 'Statistical datasets by sour
 comment on table evidence_private.stat_releases is 'Release vintages of a dataset. Overlapping releases are never merged.';
 comment on table evidence_private.stat_series is 'Series definitions: unit, magnitude, seasonal adjustment, dimensions.';
 comment on table evidence_private.stat_observations is 'Aggregate observations with value status. Suppressed, confidential or missing is never zero.';
+comment on table evidence_private.publisher_access_checks is 'Append-only provenance of automated robots.txt and terms-page retrievals: URL, status, hash, finding. Not a legal review.';
+comment on table evidence_private.publisher_terms_reviews is 'A named person''s reading of a publisher''s terms for one source; the only thing that can clear a schedule for activation.';
+comment on table evidence_private.schema_agreement_validations is 'Documented human-agreement studies per schema or prompt version (R9); distinct from per-output review.';
 comment on table evidence_private.model_runs is 'Provenance of any model output: provider, model, version, prompt version, or explicitly historical-unknown.';
 comment on table evidence_private.summary_versions is 'Model summaries. Public only after a human review of that exact output.';
 comment on table evidence_private.summary_inputs is 'Which record versions a summary was generated from.';

@@ -210,11 +210,40 @@ select p.document_id, d.official_url, p.pollster, p.sponsor, p.fieldwork_start, 
 from evidence_private.polls p
 join evidence_private.documents d on d.id = p.document_id;
 
+-- R9 in one row: the output, the run that made it, the confidence the run reported (or that it reported none),
+-- and whether a human-agreement study exists for that schema version. No study means the reader is told the
+-- schema is not yet checked against human review, however many individual outputs were approved.
 create view evidence_views.summaries as
 select s.id, s.summary_text, s.output_hash, s.uncertainty_note, s.review_status, s.created_at,
-       m.metadata_status as model_metadata_status, m.provider, m.model_name, m.model_version, m.prompt_or_schema_version
+       m.metadata_status as model_metadata_status, m.provider, m.model_name, m.model_version, m.prompt_or_schema_version,
+       s.confidence, s.confidence_status, s.confidence_basis,
+       v.agreement_rate as schema_agreement_rate, v.sample_size as schema_agreement_sample,
+       v.method_url as schema_agreement_method_url, v.validated_at as schema_agreement_validated_at,
+       (v.id is not null) as schema_agreement_documented
 from evidence_private.summary_versions s
-join evidence_private.model_runs m on m.id = s.model_run_id;
+join evidence_private.model_runs m on m.id = s.model_run_id
+left join lateral (
+  select a.* from evidence_private.schema_agreement_validations a
+  where a.output_kind = 'summary' and a.prompt_or_schema_version = m.prompt_or_schema_version
+  order by a.validated_at desc limit 1) v on true;
+
+-- Policy page classifications with the same R9 labelling as summaries. A class produced by a model always
+-- shows its run; any other basis shows no model columns.
+create view evidence_views.policy_classifications as
+select p.document_id, d.official_url, d.view_scope, p.party_identity_id, p.election_id,
+       p.policy_class, p.classification_basis, p.model_run_id,
+       m.metadata_status as model_metadata_status, m.provider, m.model_name, m.model_version, m.prompt_or_schema_version,
+       p.confidence, p.confidence_status, p.confidence_basis,
+       v.agreement_rate as schema_agreement_rate, v.sample_size as schema_agreement_sample,
+       v.method_url as schema_agreement_method_url,
+       (v.id is not null) as schema_agreement_documented
+from evidence_private.policy_sources p
+join evidence_private.documents d on d.id = p.document_id
+left join evidence_private.model_runs m on m.id = p.model_run_id
+left join lateral (
+  select a.* from evidence_private.schema_agreement_validations a
+  where a.output_kind = 'policy_classification' and a.prompt_or_schema_version = m.prompt_or_schema_version
+  order by a.validated_at desc limit 1) v on true;
 
 -- Statistics ---------------------------------------------------------------------------------
 

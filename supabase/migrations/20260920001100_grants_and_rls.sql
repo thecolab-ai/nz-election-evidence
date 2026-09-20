@@ -35,7 +35,8 @@ begin
     'party_list_entries', 'candidate_results', 'result_sets', 'documents', 'bills', 'finance_return_references',
     'polls', 'summary_versions', 'model_runs', 'stat_datasets', 'stat_series', 'stat_releases',
     'geography_versions', 'stat_observations', 'stat_route_reconciliation', 'ingest_schedules',
-    'schedule_dispatch_log', 'release_gates', 'version_person_links']
+    'schedule_dispatch_log', 'release_gates', 'version_person_links', 'publisher_access_checks',
+    'publisher_terms_reviews', 'schema_agreement_validations', 'policy_sources']
   loop
     execute format('grant select on evidence_private.%I to evidence_inspector_reader', v_name);
     execute format('create policy %I on evidence_private.%I for select to evidence_inspector_reader using (true)',
@@ -92,8 +93,17 @@ grant update (source_id, cron_expr, function_slug, max_runtime_seconds, max_reco
 create policy ingest_schedules_ingest_select on evidence_private.ingest_schedules for select to evidence_ingest using (true);
 create policy ingest_schedules_ingest_insert on evidence_private.ingest_schedules for insert to evidence_ingest
   with check (state = 'inactive' and cron_jobid is null and activation_proof is null);
+-- Only while inactive: an active schedule's source, cadence and budgets are what its activation proof covered,
+-- so the worker cannot repoint or retime a running job. with check keeps it from flipping state as well.
 create policy ingest_schedules_ingest_update on evidence_private.ingest_schedules for update to evidence_ingest
-  using (true) with check (true);
+  using (state = 'inactive') with check (state = 'inactive');
+
+-- The worker records robots.txt and terms-page retrievals. It can read terms reviews but never write one.
+grant select, insert on evidence_private.publisher_access_checks to evidence_ingest;
+create policy publisher_access_checks_ingest_select on evidence_private.publisher_access_checks for select to evidence_ingest using (true);
+create policy publisher_access_checks_ingest_insert on evidence_private.publisher_access_checks for insert to evidence_ingest with check (true);
+grant select on evidence_private.publisher_terms_reviews to evidence_ingest;
+create policy publisher_terms_reviews_ingest_select on evidence_private.publisher_terms_reviews for select to evidence_ingest using (true);
 
 -- The worker may file identity proposals. It can never approve or reject one.
 grant select, insert on evidence_private.identity_decisions to evidence_ingest;

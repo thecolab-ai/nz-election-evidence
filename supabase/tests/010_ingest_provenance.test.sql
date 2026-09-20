@@ -11,11 +11,11 @@ select evidence_private.sync_registry(jsonb_build_object(
     'review_status', 'pending', 'default_release', 'link-only', 'register_hash', 'h1')),
   'sources', jsonb_build_array(
     jsonb_build_object('source_id', 'pgtap_snapshot', 'title', 'Fixture snapshot source', 'publisher', 'Fixture Publisher',
-      'official_url', 'https://fixture.example/list', 'adapter_kind', 'live_fetch', 'adapter_name', 'fixture',
+      'official_url', 'https://fixture.example/list', 'adapter_kind', 'live_fetch', 'adapter_name', 'fixture', 'access_basis', 'public_page',
       'allowed_hosts', jsonb_build_array('fixture.example'), 'rights_id', 'RIGHTS-90', 'view_scope', 'general',
       'expected_cadence_seconds', 3600, 'snapshot_semantics', 'complete_snapshot', 'enabled', true, 'config_hash', 'c1'),
     jsonb_build_object('source_id', 'pgtap_feed', 'title', 'Fixture feed source', 'publisher', 'Fixture Publisher',
-      'official_url', 'https://fixture.example/feed', 'adapter_kind', 'live_fetch', 'adapter_name', 'fixture',
+      'official_url', 'https://fixture.example/feed', 'adapter_kind', 'live_fetch', 'adapter_name', 'fixture', 'access_basis', 'public_page',
       'allowed_hosts', jsonb_build_array('fixture.example'), 'rights_id', 'RIGHTS-90', 'view_scope', 'general',
       'expected_cadence_seconds', 3600, 'snapshot_semantics', 'append_only_feed', 'enabled', true, 'config_hash', 'c2'))));
 

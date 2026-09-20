@@ -16,16 +16,73 @@ create table evidence_private.model_runs (
              and prompt_or_schema_version is not null))
 );
 
+-- R9 for derived policy classifications: a model's class label always names the run that produced it, and
+-- carries the same explicit confidence semantics as a summary. Any other basis has no model run.
+alter table evidence_private.policy_sources
+  add column model_run_id uuid references evidence_private.model_runs (id),
+  add column confidence numeric check (confidence is null or (confidence >= 0 and confidence <= 1)),
+  add column confidence_status text not null default 'not_applicable'
+    check (confidence_status in ('reported', 'not_reported', 'not_applicable')),
+  add column confidence_basis text,
+  add constraint policy_sources_model_run_iff_model
+    check ((classification_basis = 'unreviewed_model') = (model_run_id is not null)),
+  add constraint policy_sources_confidence_value_iff_reported
+    check ((confidence_status = 'reported') = (confidence is not null)),
+  add constraint policy_sources_confidence_basis
+    check (confidence_status <> 'reported' or coalesce(trim(confidence_basis), '') <> ''),
+  -- a model label states whether the run reported a confidence; only non-model labels are not_applicable
+  add constraint policy_sources_confidence_applies_to_models
+    check ((classification_basis = 'unreviewed_model') = (confidence_status <> 'not_applicable'));
+
+comment on column evidence_private.policy_sources.model_run_id is
+  'The model run that produced policy_class. Required exactly when classification_basis = unreviewed_model (R9).';
+
 create table evidence_private.summary_versions (
   id uuid primary key default gen_random_uuid(),
   model_run_id uuid not null references evidence_private.model_runs (id),
   summary_text text not null,
   output_hash text not null check (output_hash ~ '^sha256:[0-9a-f]{64}$'),
   uncertainty_note text,
+  -- R9 confidence. Only a value the model run itself reported is stored; nothing here is estimated or defaulted.
+  -- not_reported: the run gave none (unknown, which is not 0). not_applicable: the schema has no such notion.
+  confidence numeric check (confidence is null or (confidence >= 0 and confidence <= 1)),
+  confidence_status text not null default 'not_reported'
+    check (confidence_status in ('reported', 'not_reported', 'not_applicable')),
+  confidence_basis text,
   review_status text not null default 'unreviewed'
     check (review_status in ('unreviewed', 'in_review', 'approved', 'rejected')),
-  created_at timestamptz not null default now()
+  created_at timestamptz not null default now(),
+  check ((confidence_status = 'reported') = (confidence is not null)),
+  check (confidence_status <> 'reported' or coalesce(trim(confidence_basis), '') <> '')
 );
+
+comment on column evidence_private.summary_versions.confidence is
+  'The confidence the model run reported for this output, 0-1. Null unless confidence_status = reported. It describes the model''s output, never the accuracy or honesty of any person or party (R1, R4).';
+comment on column evidence_private.summary_versions.confidence_basis is
+  'What the reported number is, in the run''s own terms (for example "mean token log-probability" or "self-reported 0-1"). Required with a value.';
+
+-- R9: "a documented human-agreement rate ... for that schema". This is a property of a schema or prompt
+-- version measured on a sample, NOT of any one output: approving one summary (review_decisions) says nothing
+-- about how often the schema agrees with people, and an agreement study approves no individual output.
+create table evidence_private.schema_agreement_validations (
+  id uuid primary key default gen_random_uuid(),
+  prompt_or_schema_version text not null check (trim(prompt_or_schema_version) <> ''),
+  output_kind text not null check (output_kind in ('summary', 'policy_classification')),
+  sample_size integer not null check (sample_size > 0),
+  agreements integer not null check (agreements >= 0),
+  agreement_rate numeric generated always as (round(agreements::numeric / sample_size, 4)) stored,
+  method_url text not null check (method_url ~ '^https://'),
+  validated_by text not null check (trim(validated_by) <> ''),
+  validated_at timestamptz not null default now(),
+  check (agreements <= sample_size)
+);
+
+comment on table evidence_private.schema_agreement_validations is
+  'Documented human-agreement studies per schema/prompt version (R9). Until a row exists for a version, every output of that version is shown as not yet checked against human review. Distinct from per-output review_decisions. Written only by an administrator on a person''s instruction.';
+
+create trigger schema_agreement_validations_append_only
+  before update or delete on evidence_private.schema_agreement_validations
+  for each row execute function evidence_private.reject_mutation();
 
 create table evidence_private.summary_inputs (
   summary_id uuid not null references evidence_private.summary_versions (id),
@@ -57,7 +114,10 @@ set search_path = ''
 as $$
 begin
   if tg_op = 'UPDATE' and (new.summary_text <> old.summary_text or new.output_hash <> old.output_hash
-                            or new.model_run_id <> old.model_run_id) then
+                            or new.model_run_id <> old.model_run_id
+                            or new.confidence is distinct from old.confidence
+                            or new.confidence_status <> old.confidence_status
+                            or new.confidence_basis is distinct from old.confidence_basis) then
     raise exception 'summary text is immutable; a regenerated summary is a new row' using errcode = 'P0001';
   end if;
   if new.review_status = 'approved' and not exists (

@@ -3,7 +3,12 @@
 //  * HTTPS only, exact-hostname allowlist per source, default port, no credentials in the URL
 //  * redirects followed by hand (max 3) and every hop re-checked against the allowlist
 //  * IP-literal and single-label hosts refused outright (SSRF hardening)
-//  * bounded time, bounded body size, bounded retries with exponential backoff and jitter
+//  * one abort signal per exchange covers connect, headers AND body, firing at the earlier of the request
+//    timeout and the run deadline; an aborted body stream is cancelled, never left open
+//  * robots.txt is read once per host per run and honoured (disallow, Crawl-delay); unreadable fails closed
+//  * every request to a host is paced, success or not; backoff is only for failures
+//  * no Origin, Referer, Cookie or Authorization header is ever sent; adapter headers stay on their own origin
+//  * bounded body size, bounded retries with exponential backoff and jitter
 //  * 401/403 and bot-challenge interstitials are reported as "unavailable" and never retried
 //    in a tight loop, never worked around, and never read as "no records"
 //  * every attempt lands in the fetch log with a body hash, not the body
@@ -30,11 +35,17 @@ export interface SafeFetchOptions {
   maxBytes?: number;
   maxAttempts?: number;
   baseDelayMs?: number;
+  /** Minimum gap between ANY two requests to the same host in this run. robots.txt Crawl-delay can only raise it. */
+  minIntervalMs?: number;
   fetchImpl?: typeof fetch;
   sleep?: (ms: number) => Promise<void>;
   random?: () => number;
   now?: () => Date;
 }
+
+export const DEFAULT_MIN_INTERVAL_MS = 1500;
+/** A Crawl-delay above this cannot be honoured inside a bounded run, so the run is blocked rather than ignoring it. */
+export const MAX_HONOURED_CRAWL_DELAY_MS = 30_000;
 
 const CHALLENGE_MARKERS = [
   "_Incapsula_Resource",
@@ -71,22 +82,34 @@ export function assertAllowedUrl(rawUrl: string, allowedHosts: string[]): URL {
   return url;
 }
 
-async function readBounded(response: Response, maxBytes: number): Promise<Uint8Array> {
+/** Reads at most maxBytes. An abort (timeout or run deadline) cancels the stream instead of leaving it open. */
+async function readBounded(response: Response, maxBytes: number, signal: AbortSignal): Promise<Uint8Array> {
   const declared = Number(response.headers.get("content-length") ?? "0");
-  if (declared > maxBytes) throw new IngestError("too_large", `response declares ${declared} bytes; cap is ${maxBytes}`);
+  if (declared > maxBytes) {
+    await response.body?.cancel().catch(() => undefined);
+    throw new IngestError("too_large", `response declares ${declared} bytes; cap is ${maxBytes}`);
+  }
   if (!response.body) return new Uint8Array(await response.arrayBuffer());
   const reader = response.body.getReader();
+  const aborted = new Promise<never>((_, reject) => {
+    const fail = () => reject(new DOMException("aborted while reading the body", "AbortError"));
+    if (signal.aborted) fail();
+    else signal.addEventListener("abort", fail, { once: true });
+  });
   const chunks: Uint8Array[] = [];
   let total = 0;
-  for (;;) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    total += value.byteLength;
-    if (total > maxBytes) {
-      await reader.cancel();
-      throw new IngestError("too_large", `response exceeded ${maxBytes} bytes`);
+  try {
+    for (;;) {
+      const { done, value } = await Promise.race([reader.read(), aborted]);
+      if (done) break;
+      total += value.byteLength;
+      if (total > maxBytes) throw new IngestError("too_large", `response exceeded ${maxBytes} bytes`);
+      chunks.push(value);
     }
-    chunks.push(value);
+  } catch (error) {
+    // Whatever went wrong, the publisher's stream is released rather than held to the platform wall clock.
+    await reader.cancel().catch(() => undefined);
+    throw error;
   }
   const out = new Uint8Array(total);
   let offset = 0;
@@ -97,6 +120,89 @@ async function readBounded(response: Response, maxBytes: number): Promise<Uint8A
   return out;
 }
 
+// robots.txt -------------------------------------------------------------------------------------------------
+
+/** The product token this client answers to in robots.txt, before falling back to `*`. */
+export const ROBOTS_TOKEN = "nz-election-evidence-ingest";
+
+export interface RobotsGroup {
+  agents: string[];
+  rules: { allow: boolean; pattern: string }[];
+  crawlDelaySeconds: number | null;
+}
+
+export function parseRobots(text: string): RobotsGroup[] {
+  const groups: RobotsGroup[] = [];
+  let current: RobotsGroup | null = null;
+  let lastWasAgent = false;
+  for (const raw of text.split(/\r?\n/)) {
+    const line = raw.replace(/#.*$/, "").trim();
+    const colon = line.indexOf(":");
+    if (!line || colon < 0) continue;
+    const field = line.slice(0, colon).trim().toLowerCase();
+    const value = line.slice(colon + 1).trim();
+    if (field === "user-agent") {
+      if (!current || !lastWasAgent) {
+        current = { agents: [], rules: [], crawlDelaySeconds: null };
+        groups.push(current);
+      }
+      current.agents.push(value.toLowerCase());
+      lastWasAgent = true;
+      continue;
+    }
+    lastWasAgent = false;
+    if (!current) continue;
+    if (field === "allow" || field === "disallow") {
+      if (value !== "") current.rules.push({ allow: field === "allow", pattern: value });
+    } else if (field === "crawl-delay") {
+      const seconds = Number(value);
+      if (Number.isFinite(seconds) && seconds >= 0) current.crawlDelaySeconds = seconds;
+    }
+  }
+  return groups;
+}
+
+/**
+ * robots.txt path pattern: `*` matches any run of characters, a trailing `$` anchors the end, otherwise prefix match.
+ * Matched piece by piece with indexOf, not with a generated regular expression, so a publisher's rule full of
+ * wildcards cannot make matching slow.
+ */
+export function robotsPatternMatches(pattern: string, path: string): boolean {
+  const anchored = pattern.endsWith("$");
+  const parts = (anchored ? pattern.slice(0, -1) : pattern).split("*");
+  if (!path.startsWith(parts[0])) return false;
+  let position = parts[0].length;
+  if (parts.length === 1) return anchored ? position === path.length : true;
+  for (let index = 1; index < parts.length; index++) {
+    const part = parts[index];
+    const last = index === parts.length - 1;
+    if (last && anchored) return part.length <= path.length - position && path.endsWith(part);
+    const found = path.indexOf(part, position);
+    if (found < 0) return false;
+    position = found + part.length;
+  }
+  return true;
+}
+
+/** RFC 9309: most specific user-agent group, longest matching rule wins, Allow wins a tie, no match allows. */
+export function evaluateRobots(groups: RobotsGroup[], pathWithQuery: string): { allowed: boolean; crawlDelaySeconds: number | null; group: string | null } {
+  // Our group is one that names our product token: exactly, or followed by a version ("token/1.0"). A substring test
+  // would let a group written for some other agent ("ingest", "evidence") override the publisher's `*` rules.
+  const mine = groups.filter((g) => g.agents.some((a) => a === ROBOTS_TOKEN || a.startsWith(ROBOTS_TOKEN + "/") || a.startsWith(ROBOTS_TOKEN + " ")));
+  const chosen = mine.length ? mine : groups.filter((g) => g.agents.includes("*"));
+  if (chosen.length === 0) return { allowed: true, crawlDelaySeconds: null, group: null };
+  let best: { allow: boolean; length: number } | null = null;
+  let crawlDelay: number | null = null;
+  for (const group of chosen) {
+    if (group.crawlDelaySeconds !== null) crawlDelay = Math.max(crawlDelay ?? 0, group.crawlDelaySeconds);
+    for (const rule of group.rules) {
+      if (!robotsPatternMatches(rule.pattern, pathWithQuery)) continue;
+      if (!best || rule.pattern.length > best.length || (rule.pattern.length === best.length && rule.allow)) best = { allow: rule.allow, length: rule.pattern.length };
+    }
+  }
+  return { allowed: best ? best.allow : true, crawlDelaySeconds: crawlDelay, group: mine.length ? ROBOTS_TOKEN : "*" };
+}
+
 export function backoffDelayMs(attempt: number, baseDelayMs: number, random: () => number, retryAfterSeconds?: number): number {
   const exponential = baseDelayMs * 2 ** (attempt - 1);
   const jittered = exponential / 2 + random() * (exponential / 2);
@@ -104,7 +210,24 @@ export function backoffDelayMs(attempt: number, baseDelayMs: number, random: () 
   return Math.min(Math.max(jittered, retryAfter), 30000);
 }
 
-export function createSafeFetch(options: SafeFetchOptions): SafeFetch {
+interface HostState {
+  lastRequestAt: number | null;
+  robots: RobotsGroup[] | "unavailable" | null;
+  intervalMs: number;
+}
+
+/** What robots.txt on a host says about one URL, without requesting that URL. */
+export interface RobotsVerdict {
+  /** False when robots.txt could not be read (refused, challenged, failing): access is then not assumed. */
+  readable: boolean;
+  /** False when the host publishes no robots.txt (404/410) or an empty one. */
+  rulesPublished: boolean;
+  allowed: boolean;
+  crawlDelaySeconds: number | null;
+}
+export type InspectingSafeFetch = SafeFetch & { inspectRobots(rawUrl: string): Promise<RobotsVerdict> };
+
+export function createSafeFetch(options: SafeFetchOptions): InspectingSafeFetch {
   const fetchImpl = options.fetchImpl ?? fetch;
   const sleep = options.sleep ?? ((ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms)));
   const random = options.random ?? Math.random;
@@ -113,62 +236,157 @@ export function createSafeFetch(options: SafeFetchOptions): SafeFetch {
   const maxBytes = options.maxBytes ?? 5 * 1024 * 1024;
   const maxAttempts = options.maxAttempts ?? 3;
   const baseDelayMs = options.baseDelayMs ?? 750;
+  const minIntervalMs = options.minIntervalMs ?? DEFAULT_MIN_INTERVAL_MS;
+  const hosts = new Map<string, HostState>();
+  const hostState = (host: string): HostState => {
+    let state = hosts.get(host);
+    if (!state) {
+      state = { lastRequestAt: null, robots: null, intervalMs: minIntervalMs };
+      hosts.set(host, state);
+    }
+    return state;
+  };
 
-  return async function safeFetch(request: SafeFetchRequest): Promise<SafeFetchResponse> {
+  /** Politeness, not only backoff: every request to a host waits out that host's interval, success or not. */
+  async function pace(host: string): Promise<void> {
+    const state = hostState(host);
+    if (state.lastRequestAt !== null) {
+      const wait = state.lastRequestAt + state.intervalMs - now().getTime();
+      if (wait > 0) {
+        if (now().getTime() + wait >= options.deadline) throw new IngestError("timeout", "run deadline reached while pacing requests to the publisher");
+        await sleep(wait);
+      }
+    }
+    state.lastRequestAt = now().getTime();
+  }
+
+  /**
+   * One network exchange, bounded END TO END: the same abort signal covers connect, headers AND the body,
+   * and it fires at the earlier of the request timeout and the run deadline.
+   */
+  async function exchange(url: URL, init: { method: "GET" | "POST"; headers: { [key: string]: string }; body?: string }): Promise<{ response: Response; bytes: Uint8Array | null }> {
+    // Pace FIRST: waiting our turn is not the publisher being slow, so it must not eat the request's own time budget
+    // (a 25 s Crawl-delay under a 20 s timeout would otherwise abort every request before it was sent).
+    await pace(url.hostname.toLowerCase());
+    const budget = Math.min(timeoutMs, options.deadline - now().getTime());
+    if (budget <= 0) throw new IngestError("timeout", "run deadline reached before request");
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), budget);
+    try {
+      const response = await fetchImpl(url.toString(), { method: init.method, headers: init.headers, body: init.body, redirect: "manual", signal: controller.signal });
+      if (response.status >= 300 && response.status < 400 && response.headers.get("location")) {
+        await response.body?.cancel().catch(() => undefined);
+        return { response, bytes: null };
+      }
+      return { response, bytes: await readBounded(response, maxBytes, controller.signal) };
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
+  /** robots.txt, once per host per run, through the same guard and into the same log. */
+  async function robotsFor(url: URL): Promise<RobotsGroup[] | "unavailable"> {
+    const host = url.hostname.toLowerCase();
+    const state = hostState(host);
+    if (state.robots !== null) return state.robots;
+    const robotsUrl = new URL("/robots.txt", url);
+    const started = now();
+    const entry: FetchLogEntry = { method: "GET", url: robotsUrl.toString(), host, attempt: 1, outcome: "network_error", retrieved_at: started.toISOString(), duration_ms: 0 };
+    try {
+      const { response, bytes } = await exchange(robotsUrl, { method: "GET", headers: { "User-Agent": USER_AGENT, Accept: "text/plain,*/*;q=0.5" } });
+      entry.http_status = response.status;
+      const text = bytes ? new TextDecoder("utf-8").decode(bytes) : "";
+      if (bytes) {
+        entry.bytes = bytes.byteLength;
+        entry.body_sha256 = "sha256:" + (await sha256Hex(text));
+      }
+      if (response.status === 404 || response.status === 410) {
+        // RFC 9309: no robots.txt means no restriction.
+        entry.outcome = "ok";
+        state.robots = [];
+      } else if (response.status >= 200 && response.status < 300 && bytes && !looksLikeChallenge(text)) {
+        entry.outcome = "ok";
+        state.robots = parseRobots(text);
+      } else {
+        // Redirected, refused, challenged or failing: the rules cannot be read, so access is not assumed.
+        entry.outcome = "robots_unavailable";
+        state.robots = "unavailable";
+      }
+    } catch (error) {
+      entry.outcome = error instanceof Error && error.name === "AbortError" ? "timeout" : "robots_unavailable";
+      state.robots = "unavailable";
+    }
+    entry.duration_ms = now().getTime() - started.getTime();
+    options.log.push(entry);
+    return state.robots;
+  }
+
+  async function assertRobotsAllow(url: URL, method: "GET" | "POST"): Promise<void> {
+    const robots = await robotsFor(url);
+    const denied = (outcome: FetchOutcome, message: string): never => {
+      options.log.push({ method, url: url.toString(), host: url.hostname.toLowerCase(), attempt: 1, outcome, retrieved_at: now().toISOString(), duration_ms: 0 });
+      throw new SourceUnavailableError(outcome, message);
+    };
+    if (robots === "unavailable") denied("robots_unavailable", "the publisher's robots.txt could not be read, so automated access is not assumed");
+    const verdict = evaluateRobots(robots as RobotsGroup[], url.pathname + url.search);
+    if (!verdict.allowed) denied("robots_disallowed", "the publisher's robots.txt disallows this path for this client");
+    if (verdict.crawlDelaySeconds !== null) {
+      const delayMs = verdict.crawlDelaySeconds * 1000;
+      if (delayMs > MAX_HONOURED_CRAWL_DELAY_MS) denied("robots_crawl_delay_exceeds_budget", `robots.txt asks for ${verdict.crawlDelaySeconds}s between requests, more than a bounded run can honour`);
+      const state = hostState(url.hostname.toLowerCase());
+      state.intervalMs = Math.max(state.intervalMs, delayMs);
+    }
+  }
+
+  async function inspectRobots(rawUrl: string): Promise<RobotsVerdict> {
+    const url = assertAllowedUrl(rawUrl, options.allowedHosts);
+    const robots = await robotsFor(url);
+    if (robots === "unavailable") return { readable: false, rulesPublished: false, allowed: false, crawlDelaySeconds: null };
+    const verdict = evaluateRobots(robots, url.pathname + url.search);
+    return { readable: true, rulesPublished: robots.length > 0, allowed: verdict.allowed, crawlDelaySeconds: verdict.crawlDelaySeconds };
+  }
+
+  return Object.assign(safeFetch, { inspectRobots });
+
+  async function safeFetch(request: SafeFetchRequest): Promise<SafeFetchResponse> {
     const method = request.method ?? "GET";
     let lastError: IngestError = new IngestError("network_error", "no attempt made");
 
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       let currentUrl = request.url;
       const started = now();
-      const entry: FetchLogEntry = {
-        method,
-        url: request.url,
-        host: "",
-        attempt,
-        outcome: "network_error",
-        retrieved_at: started.toISOString(),
-        duration_ms: 0,
-      };
+      const entry: FetchLogEntry = { method, url: request.url, host: "", attempt, outcome: "network_error", retrieved_at: started.toISOString(), duration_ms: 0 };
       let retryAfterSeconds: number | undefined;
       let retryable = false;
 
       try {
         if (now().getTime() >= options.deadline) throw new IngestError("timeout", "run deadline reached before request");
-        let response: Response | undefined;
+        const origin = assertAllowedUrl(request.url, options.allowedHosts).origin;
+        let result: { response: Response; bytes: Uint8Array | null } | undefined;
         for (let hop = 0; hop <= 3; hop++) {
           const url = assertAllowedUrl(currentUrl, options.allowedHosts);
           entry.host = url.hostname.toLowerCase();
-          const controller = new AbortController();
-          const budget = Math.max(1000, Math.min(timeoutMs, options.deadline - now().getTime()));
-          const timer = setTimeout(() => controller.abort(), budget);
-          try {
-            response = await fetchImpl(url.toString(), {
-              method: hop === 0 ? method : "GET",
-              headers: {
-                "User-Agent": USER_AGENT,
-                Accept: request.accept ?? "text/html,application/json,application/xml;q=0.9,*/*;q=0.5",
-                ...(request.headers ?? {}),
-              },
-              body: hop === 0 && method === "POST" ? request.body : undefined,
-              redirect: "manual",
-              signal: controller.signal,
-            });
-          } finally {
-            clearTimeout(timer);
-          }
-          if (response.status >= 300 && response.status < 400 && response.headers.get("location")) {
+          await assertRobotsAllow(url, hop === 0 ? method : "GET");
+          // Adapter-supplied headers and the body belong to the origin the adapter addressed. A redirect to any
+          // other origin, even an allowlisted one, gets the honest user agent and an Accept header, nothing else.
+          const sameOrigin = url.origin === origin;
+          const headers: { [key: string]: string } = {
+            ...(sameOrigin ? stripForbiddenHeaders(request.headers ?? {}) : {}),
+            "User-Agent": USER_AGENT,
+            Accept: request.accept ?? "text/html,application/json,application/xml;q=0.9,*/*;q=0.5",
+          };
+          result = await exchange(url, { method: hop === 0 ? method : "GET", headers, body: hop === 0 && method === "POST" ? request.body : undefined });
+          if (result.bytes === null) {
             if (hop === 3) throw new IngestError("http_error", "too many redirects");
-            currentUrl = new URL(response.headers.get("location") as string, url).toString();
-            await response.body?.cancel();
+            currentUrl = new URL(result.response.headers.get("location") as string, url).toString();
             continue;
           }
           break;
         }
-        if (!response) throw new IngestError("network_error", "no response");
+        if (!result || result.bytes === null) throw new IngestError("network_error", "no response");
+        const { response, bytes } = result;
 
         entry.http_status = response.status;
-        const bytes = await readBounded(response, maxBytes);
         entry.bytes = bytes.byteLength;
         const text = new TextDecoder("utf-8").decode(bytes);
         entry.body_sha256 = "sha256:" + (await sha256Hex(text));
@@ -195,26 +413,23 @@ export function createSafeFetch(options: SafeFetchOptions): SafeFetch {
         entry.outcome = "ok";
         entry.duration_ms = now().getTime() - started.getTime();
         options.log.push(entry);
-        return {
-          status: response.status,
-          text,
-          bodySha256: entry.body_sha256,
-          retrievedAt: entry.retrieved_at,
-          finalUrl: currentUrl,
-        };
+        return { status: response.status, text, bodySha256: entry.body_sha256, retrievedAt: entry.retrieved_at, finalUrl: currentUrl };
       } catch (error) {
         let ingestError: IngestError;
+        if (error instanceof SourceUnavailableError && error.outcome.startsWith("robots_")) {
+          // Already logged by the robots check; a publisher's robots decision is never retried.
+          throw error;
+        }
         if (error instanceof IngestError) {
           ingestError = error;
           if (!(error instanceof SourceUnavailableError) && entry.outcome === "network_error") {
-            entry.outcome = (["host_denied", "too_large", "timeout", "http_error"].includes(error.errorClass)
-              ? error.errorClass
-              : "network_error") as FetchOutcome;
+            entry.outcome = (["host_denied", "too_large", "timeout", "http_error"].includes(error.errorClass) ? error.errorClass : "network_error") as FetchOutcome;
           }
         } else if (error instanceof Error && error.name === "AbortError") {
           entry.outcome = "timeout";
-          retryable = true;
-          ingestError = new IngestError("timeout", "request timed out");
+          // A timeout caused by the run deadline is final; only a per-request timeout may be retried.
+          retryable = now().getTime() < options.deadline;
+          ingestError = new IngestError("timeout", "request timed out before the response was fully read");
         } else {
           entry.outcome = "network_error";
           retryable = true;
@@ -231,5 +446,12 @@ export function createSafeFetch(options: SafeFetchOptions): SafeFetch {
       }
     }
     throw lastError;
-  };
+  }
+}
+
+/** Headers an adapter may never set: they would misstate who is calling or where the call came from. */
+const FORBIDDEN_REQUEST_HEADERS = new Set(["origin", "referer", "user-agent", "cookie", "authorization", "host", "x-forwarded-for", "forwarded"]);
+
+export function stripForbiddenHeaders(headers: { [key: string]: string }): { [key: string]: string } {
+  return Object.fromEntries(Object.entries(headers).filter(([name]) => !FORBIDDEN_REQUEST_HEADERS.has(name.toLowerCase())));
 }

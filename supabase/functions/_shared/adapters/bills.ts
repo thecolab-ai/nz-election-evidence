@@ -1,4 +1,6 @@
 // New Zealand Parliament: current bills catalogue (metadata only, never bill text).
+// NOT IN USE: the endpoint is the site's internal search API (access_basis undocumented_endpoint), so the runner
+// blocks every run before any request. Kept, with its parser tests, for the day a documented route exists.
 // Paginated JSON search endpoint; resumable by page; total must stay stable across pages.
 
 import { contentHash } from "../canonical.ts";
@@ -84,7 +86,8 @@ export const billsAdapter: Adapter = {
         method: "POST",
         body: billsRequestBody(page),
         accept: "application/json",
-        headers: { "Content-Type": "application/json; charset=utf-8", Origin: origin, Referer: origin + "/" },
+        // No Origin or Referer: this client never presents itself as the publisher's own front end.
+        headers: { "Content-Type": "application/json; charset=utf-8" },
       });
       const parsed = parseBillsPage(response.text, publicBase);
       if (total !== null && parsed.total !== total) {

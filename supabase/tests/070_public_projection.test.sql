@@ -45,7 +45,7 @@ $$;
 
 create function pg_temp.src(p_id text, p_rights text) returns jsonb language sql as $$
   select jsonb_build_object('source_id', p_id, 'title', 'Fixture ' || p_id, 'publisher', 'Fixture Publisher',
-    'official_url', 'https://fixture.example/' || p_id, 'adapter_kind', 'live_fetch', 'adapter_name', 'fixture',
+    'official_url', 'https://fixture.example/' || p_id, 'adapter_kind', 'live_fetch', 'adapter_name', 'fixture', 'access_basis', 'public_page',
     'allowed_hosts', jsonb_build_array('fixture.example'), 'rights_id', p_rights, 'view_scope', 'general',
     'snapshot_semantics', 'append_only_feed', 'enabled', false, 'config_hash', 'c');
 $$;
@@ -95,7 +95,9 @@ select evidence_private.sync_registry(jsonb_build_object(
       'approved_fields', jsonb_build_array('title', 'bill_number'), 'register_hash', 'h'),
     jsonb_build_object('rights_id', 'RIGHTS-799', 'publisher', 'Fixture', 'source_url', 'https://fixture.example/', 'review_status', 'pending', 'default_release', 'approved-fields', 'register_hash', 'h')),
   'sources', jsonb_build_array(pg_temp.src('pgtap_refused', 'RIGHTS-794'), pg_temp.src('pgtap_restricted', 'RIGHTS-795'),
-    pg_temp.src('pgtap_withheld', 'RIGHTS-796'), pg_temp.src('pgtap_norights', ''))));
+    pg_temp.src('pgtap_withheld', 'RIGHTS-796'),
+    -- only an export import may lack a rights row now; a live source without one is refused by the table itself
+    pg_temp.src('pgtap_norights', '') || jsonb_build_object('adapter_kind', 'export_import', 'allowed_hosts', jsonb_build_array(), 'access_basis', ''))));
 select pg_temp.seed('pgtap_refused', 'refused');
 select pg_temp.seed('pgtap_restricted', 'restricted');
 select pg_temp.seed('pgtap_withheld', 'withheld');

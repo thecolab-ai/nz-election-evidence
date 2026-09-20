@@ -208,14 +208,14 @@ begin
   for v_item in select * from jsonb_array_elements(coalesce(p_registry -> 'sources', '[]'::jsonb)) loop
     insert into evidence_private.sources (
       source_id, registry_key, title, publisher, official_url, adapter_kind, adapter_name,
-      allowed_hosts, rights_id, view_scope, expected_cadence_seconds, snapshot_semantics,
+      allowed_hosts, rights_id, access_basis, view_scope, expected_cadence_seconds, snapshot_semantics,
       enabled, blocked_reason, config_hash)
     values (
       v_item ->> 'source_id', nullif(v_item ->> 'registry_key', ''), v_item ->> 'title',
       v_item ->> 'publisher', v_item ->> 'official_url', v_item ->> 'adapter_kind',
       v_item ->> 'adapter_name',
       coalesce((select array_agg(h) from jsonb_array_elements_text(v_item -> 'allowed_hosts') h), '{}'),
-      nullif(v_item ->> 'rights_id', ''), v_item ->> 'view_scope',
+      nullif(v_item ->> 'rights_id', ''), nullif(v_item ->> 'access_basis', ''), v_item ->> 'view_scope',
       nullif(v_item ->> 'expected_cadence_seconds', '')::integer, v_item ->> 'snapshot_semantics',
       coalesce((v_item ->> 'enabled')::boolean, false), nullif(v_item ->> 'blocked_reason', ''),
       v_item ->> 'config_hash')
@@ -223,7 +223,7 @@ begin
       registry_key = excluded.registry_key, title = excluded.title, publisher = excluded.publisher,
       official_url = excluded.official_url, adapter_kind = excluded.adapter_kind,
       adapter_name = excluded.adapter_name, allowed_hosts = excluded.allowed_hosts,
-      rights_id = excluded.rights_id, view_scope = excluded.view_scope,
+      rights_id = excluded.rights_id, access_basis = excluded.access_basis, view_scope = excluded.view_scope,
       expected_cadence_seconds = excluded.expected_cadence_seconds,
       snapshot_semantics = excluded.snapshot_semantics, enabled = excluded.enabled,
       blocked_reason = excluded.blocked_reason, config_hash = excluded.config_hash, synced_at = now();
