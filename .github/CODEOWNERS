@@ -1,0 +1,6 @@
+# Policy and enforcement changes require Adam review.
+/RED-LINES.md @adam91holt
+/scripts/red_lines.py @adam91holt
+/tests/test_red_lines.py @adam91holt
+/.github/workflows/ @adam91holt
+/.github/CODEOWNERS @adam91holt
