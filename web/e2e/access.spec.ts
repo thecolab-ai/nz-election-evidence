@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 import { accessToken, REST, restHeaders, SCREENS, setGates, type Profile } from './support/helpers'
-import { LOCAL_API_URL, localKeys } from './support/local-stack'
+import { LOCAL_API_URL, localKeys, psql } from './support/local-stack'
 
 test.describe('public read-only boundary', () => {
   test('an anonymous visitor browses evidence with no sign-in, and sees the accountability footer', async ({ page }) => {
@@ -91,7 +91,7 @@ test.describe('public read-only boundary', () => {
     await expect(page.getByTestId('release-tier')).toContainText('Links and metadata only')
     await page.goto('/records?source=fixture_pending_rights')
     await expect(page.getByTestId('data-row')).toHaveCount(2)
-    await expect(page.getByTestId('data-row').first()).toContainText('not shown — not stated by the source, or withheld under publisher rights')
+    await expect(page.getByTestId('data-row').first()).toContainText('not shown — not stated by the source, or not released for this source')
     await expect(page.locator('body')).not.toContainText('WITHHELD')
     await page.getByTestId('data-row').first().getByRole('link').first().click()
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('Record (label not shown)')
@@ -251,5 +251,75 @@ test.describe('public read-only boundary', () => {
     await expect(page.getByTestId('dataset-withheld')).toContainText('no single provable source')
     await page.goto('/datasets/evidence_open/summary_versions')
     await expect(page.getByTestId('dataset-row-rule')).toContainText('human review')
+  })
+})
+
+test.describe('owner override: a separate, stated decision, never a review and never a publisher approval', () => {
+  test('gates closed plus a current owner decision: rows and the named fields of ONE source show, the notice says why, and revoking withholds everything', async ({ page, request }) => {
+    // LOCAL DISPOSABLE STACK ONLY. A fixture decision recorded the way an administrator would mirror the real file.
+    const today = new Date().toISOString().slice(0, 10)
+    const expires = new Date(Date.now() + 30 * 86_400_000).toISOString().slice(0, 10)
+    const sequence = psql('select lpad((count(*) % 100)::text, 2, \'0\') from evidence_private.owner_authorizations;')
+    const id = `OWNER-AUTH-${today}-${sequence}`
+    const decision = (status: 'active' | 'revoked') => JSON.stringify({
+      schema_version: 1,
+      authorizations: [{
+        authorization_id: id, status, decided_on: today, expires_on: expires,
+        decided_by: 'Fixture Owner (TEST FIXTURE)', decided_by_role: 'repository owner',
+        request_source: 'TEST FIXTURE: owner request over a messaging app, relayed by the coordinator',
+        statement: 'TEST FIXTURE: the owner authorizes release of rows and listed fields ahead of the reviews.',
+        revoked_reason: 'TEST FIXTURE: end of the browser test',
+        not_claimed: ['no R10 review exists', 'nobody has accepted the R8 role', 'no publisher licence is claimed'],
+        scopes: [
+          { scope: 'public_rows', surface_id: 'evidence-store' },
+          { scope: 'source_fields', source_id: 'fixture_pending_rights', rights_id: 'RIGHTS-98', fields: ['label', 'name_display', 'name_at_source', 'member_name', 'party_label'], basis: 'TEST FIXTURE: name and party as the publisher lists them, shown with the official link.' },
+        ],
+      }],
+    })
+    const sync = (status: 'active' | 'revoked') => psql(`select evidence_private.sync_owner_authorizations(:'doc'::jsonb, 'sha256:' || repeat('e', 64));`, { doc: decision(status) })
+
+    setGates('closed')
+    try {
+      sync('active')
+      const status = (await (await request.get(`${REST}/surface_status?select=gate_key,state,public_rows_released,release_basis,owner_authorization_id`, { headers: restHeaders() })).json()) as Array<{ state: string; public_rows_released: boolean; release_basis: string; owner_authorization_id: string }>
+      expect(status.length).toBeGreaterThan(0)
+      for (const gate of status) expect(gate).toMatchObject({ state: 'closed', public_rows_released: true, release_basis: 'owner_override', owner_authorization_id: id })
+      const rights = (await (await request.get(`${REST}/rights_register?select=review_status&rights_id=eq.RIGHTS-98`, { headers: restHeaders() })).json()) as Array<{ review_status: string }>
+      expect(rights[0]?.review_status).toBe('pending')
+
+      // The named fields of the named source, and nothing else of it.
+      const versions = (await (await request.get(`${REST}/record_versions?select=record_kind,safe_payload&source_id=eq.fixture_pending_rights`, { headers: restHeaders() })).json()) as Array<{ record_kind: string; safe_payload: Record<string, unknown> | null }>
+      expect(versions.find((v) => v.record_kind === 'mp_directory_entry')?.safe_payload).toEqual({ name_display: 'WITHHELD Fixture Pending Member', party_label: 'WITHHELD Fixture Pending Party' })
+      expect(versions.find((v) => v.record_kind === 'bill')?.safe_payload).toEqual({})
+      // A refused publisher stays invisible whatever the owner decided.
+      expect(await (await request.get(`${REST}/records?select=id&source_id=eq.fixture_refused_rights`, { headers: restHeaders() })).json()).toEqual([])
+
+      await page.goto('/parliament?source=fixture_pending_rights')
+      const notice = page.getByTestId('owner-override-notice')
+      await expect(notice).toBeVisible()
+      await expect(notice).toContainText('repository owner’s decision')
+      await expect(notice).toContainText('still pending')
+      await expect(notice).toContainText('No publisher has approved or licensed anything')
+      await expect(notice).toContainText(id)
+      await expect(page.getByTestId('data-row').first()).toContainText('Fixture Pending Member')
+      await page.goto('/sources/fixture_pending_rights')
+      await expect(page.getByTestId('owner-fields-note')).toContainText('not on the publisher’s approval')
+      await expect(page.getByTestId('owner-fields-note')).toContainText('name_display')
+      await page.goto('/')
+      await expect(page.getByTestId('coverage-missing-note')).toContainText('20 of the 24 catalogue products are not in this store')
+      await expect(page.getByTestId('coverage-missing').locator('li')).toHaveCount(20)
+      await expect(page.getByTestId('release-gates')).not.toContainText('Open')
+      await expect(page.getByTestId('accountable-person')).toContainText('not yet confirmed')
+      await page.screenshot({ path: `${SCREENS}/20-owner-override.png`, fullPage: true })
+
+      sync('revoked')
+      expect(await (await request.get(`${REST}/records?select=id&limit=5`, { headers: restHeaders() })).json()).toEqual([])
+      await page.goto('/records')
+      await expect(page.getByTestId('release-pending')).toBeVisible()
+      await expect(page.getByTestId('owner-override-notice')).toHaveCount(0)
+    } finally {
+      sync('revoked')
+      setGates('open')
+    }
   })
 })

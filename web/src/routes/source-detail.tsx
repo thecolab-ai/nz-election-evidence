@@ -85,6 +85,22 @@ export function SourceDetailPage() {
         </div>
       ) : null}
 
+      <div className="mb-8" data-testid="source-release-basis">
+        {s.owner_authorized_fields.length > 0 ? (
+          <Note tone="caution" testId="owner-fields-note">
+            <strong className="font-semibold">Fields shown on the repository owner’s decision, not on the publisher’s approval.</strong> {s.publisher} has
+            not approved or licensed these fields and its rights review reads {humanise(s.rights_review_status).toLowerCase()}. They are shown as the
+            official source published them, with a link to it: <Mono>{s.owner_authorized_fields.join(', ')}</Mono>. Every other field of this source
+            stays blank.
+          </Note>
+        ) : s.public_release_tier === 'fields' ? null : (
+          <Note testId="link-only-note">
+            Links, identifiers, dates and hashes only. No field of this source is released: its rights review reads{' '}
+            {humanise(s.rights_review_status).toLowerCase()} and no owner decision names a field for it.
+          </Note>
+        )}
+      </div>
+
       <Section id="freshness" title="Freshness" description="Retrieval time is when this project fetched the source. Publisher date is what the publisher wrote on its newest item.">
         <KeyValueList
           columns={3}

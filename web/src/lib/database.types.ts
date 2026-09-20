@@ -602,6 +602,100 @@ export type Database = {
         }
         Relationships: []
       }
+      owner_authorization_scopes: {
+        Row: {
+          authorization_id: string | null
+          basis: string | null
+          field_token: string | null
+          rights_id: string | null
+          scope_kind: string | null
+          source_id: string | null
+          surface_id: string | null
+        }
+        Insert: {
+          authorization_id?: string | null
+          basis?: string | null
+          field_token?: string | null
+          rights_id?: string | null
+          scope_kind?: string | null
+          source_id?: string | null
+          surface_id?: string | null
+        }
+        Update: {
+          authorization_id?: string | null
+          basis?: string | null
+          field_token?: string | null
+          rights_id?: string | null
+          scope_kind?: string | null
+          source_id?: string | null
+          surface_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "owner_authorization_scopes_authorization_id_fkey"
+            columns: ["authorization_id"]
+            isOneToOne: false
+            referencedRelation: "owner_authorizations"
+            referencedColumns: ["authorization_id"]
+          },
+          {
+            foreignKeyName: "owner_authorization_scopes_rights_id_fkey"
+            columns: ["rights_id"]
+            isOneToOne: false
+            referencedRelation: "source_rights"
+            referencedColumns: ["rights_id"]
+          },
+          {
+            foreignKeyName: "owner_authorization_scopes_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "sources"
+            referencedColumns: ["source_id"]
+          },
+        ]
+      }
+      owner_authorizations: {
+        Row: {
+          authorization_id: string | null
+          decided_by_role: string | null
+          decided_on: string | null
+          expires_on: string | null
+          file_hash: string | null
+          not_claimed: string[] | null
+          recorded_at: string | null
+          request_source: string | null
+          revoked_at: string | null
+          revoked_reason: string | null
+          statement: string | null
+        }
+        Insert: {
+          authorization_id?: string | null
+          decided_by_role?: string | null
+          decided_on?: string | null
+          expires_on?: string | null
+          file_hash?: string | null
+          not_claimed?: string[] | null
+          recorded_at?: string | null
+          request_source?: string | null
+          revoked_at?: string | null
+          revoked_reason?: string | null
+          statement?: string | null
+        }
+        Update: {
+          authorization_id?: string | null
+          decided_by_role?: string | null
+          decided_on?: string | null
+          expires_on?: string | null
+          file_hash?: string | null
+          not_claimed?: string[] | null
+          recorded_at?: string | null
+          request_source?: string | null
+          revoked_at?: string | null
+          revoked_reason?: string | null
+          statement?: string | null
+        }
+        Relationships: []
+      }
       parliamentary_service_terms: {
         Row: {
           basis: string | null
@@ -2908,6 +3002,7 @@ export type Database = {
           latest_source_published_at: string | null
           live_records: number | null
           official_url: string | null
+          owner_authorized_fields: string[] | null
           public_approved_fields: string[] | null
           public_release_tier: string | null
           publisher: string | null
@@ -3042,22 +3137,13 @@ export type Database = {
           decided_at: string | null
           evidence_reference: string | null
           gate_key: string | null
+          owner_authorization_id: string | null
+          owner_decided_on: string | null
+          owner_expires_on: string | null
+          owner_request_source: string | null
           public_rows_released: boolean | null
+          release_basis: string | null
           state: string | null
-        }
-        Insert: {
-          decided_at?: string | null
-          evidence_reference?: string | null
-          gate_key?: string | null
-          public_rows_released?: never
-          state?: string | null
-        }
-        Update: {
-          decided_at?: string | null
-          evidence_reference?: string | null
-          gate_key?: string | null
-          public_rows_released?: never
-          state?: string | null
         }
         Relationships: []
       }

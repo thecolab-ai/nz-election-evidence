@@ -1,6 +1,7 @@
 import { Link } from '@tanstack/react-router'
 import { StateBadge } from '@/components/badges'
 import { Note, PageHeader, Section } from '@/components/page'
+import { ReleaseCoveragePanel } from '@/components/release-coverage'
 import { EmptyBlock, ErrorBlock, LoadingBlock } from '@/components/states'
 import { formatCount, formatDateTime, humanise, SCOPE_LABELS, SCOPE_ORDER, type ViewScope } from '@/lib/format'
 import { coverageFromSources, type CoverageSource } from '@/lib/coverage'
@@ -87,6 +88,10 @@ export function OverviewPage() {
         <p data-testid="rights-note">{RIGHTS_NOTE}</p>
       </PageHeader>
 
+      <Section id="release-coverage" title="What this release holds, and what it does not" description="Counted against the project's public catalogue of 24 products. Most of the catalogue is not in this store yet.">
+        <ReleaseCoveragePanel />
+      </Section>
+
       <Section id="election-scopes" title="Election scopes" description="Three scopes, always kept apart.">
         {coverage.isPending ? (
           <LoadingBlock label="Loading coverage" rows={4} />
@@ -114,7 +119,7 @@ export function OverviewPage() {
         </Section>
       ) : null}
 
-      <Section id="release-gates" title="Release gates" description="The database gives the public evidence rows only while the R8 and R10 gates are both open. The election-day gate governs new releases and deployments, not reading. A closed gate is the normal state before review.">
+      <Section id="release-gates" title="Release gates" description="A gate records an independent review: R10 (legal review of this surface) and R8 (a named accountable person). A gate is open only when that review is on record. While a gate reads closed, any rows shown here are shown on the repository owner's own recorded decision, stated at the top of every page, which does not open or replace a gate. The election-day gate governs new releases and deployments, not reading.">
         {gates.isPending ? (
           <LoadingBlock label="Loading release gates" rows={3} />
         ) : gates.isError ? (
@@ -149,7 +154,7 @@ export function OverviewPage() {
             {rightsRows.length === 0
               ? 'No publisher rights rows are loaded. Rights are treated as pending for every source: nothing is cleared for release.'
               : notPending === 0
-                ? `All ${formatCount(rightsRows.length)} publisher rights rows are pending. No publisher has been cleared for release; every source is link-only.`
+                ? `All ${formatCount(rightsRows.length)} publisher rights rows are pending. No publisher has approved or licensed any field. Where a source shows names or titles, it does so on the repository owner's recorded decision for that source, listed on the source's page.`
                 : `${formatCount(rightsRows.length - notPending)} of ${formatCount(rightsRows.length)} publisher rights rows are pending review.`}{' '}
             <Link to="/rights" className="doc-link">
               Rights register

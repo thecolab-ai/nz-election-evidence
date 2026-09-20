@@ -2,6 +2,10 @@ name: Evidence store and explorer
 # CI for the Supabase evidence store, the TypeScript ingestion and release tooling, and the public
 # read-only explorer, followed by a gated GitHub Pages deployment. Order: every check job, then the R10 release gate, then deploy.
 #
+# The release gate opens on an approved REVIEW-REGISTER.md row, or, while that row is still PENDING, on a current
+# owner decision in governance/owner-authorizations.json (scope pages_deploy). The second is the owner's own decision
+# and is logged as "OWNER OVERRIDE (NOT A REVIEW)"; it never edits the register and never counts as the review.
+#
 # What this workflow never does: apply migrations to a hosted project, deploy Edge Functions,
 # activate a schedule, or hold a privileged Supabase key. Those are manual, reviewed release steps
 # (docs/database/runbook.md). The only Supabase values used here are the public project URL and the
@@ -55,6 +59,8 @@ jobs:
         run: npm run check:deno
       - name: Red lines R1 and R4 in explorer copy (TypeScript and TSX strings, JSX text)
         run: node ../tools/red_lines_copy.ts
+      - name: Owner authorization file is well formed, narrow, and claims no review or publisher licence
+        run: node ../tools/owner_authorization.ts
 
   database:
     name: Migrations and role tests on a disposable database
@@ -114,6 +120,12 @@ jobs:
         run: npm run build
       - name: Built shell is routable on Pages and carries no evidence, private name or privileged key material
         run: npm run check:bundle
+      - name: Release build is connected with the public project URL and the public anon key only
+        # Only where a deployment can follow. A missing, non-https or mismatched pair, or any other key, fails here.
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main' && vars.PAGES_DEPLOY_ENABLED == 'true'
+        env:
+          VITE_SUPABASE_URL: ${{ vars.EXPLORER_SUPABASE_URL }}
+        run: npm run check:bundle -- --require-connected
       - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
         with: { path: web/dist }
@@ -153,12 +165,14 @@ jobs:
         with: { node-version: "24" }
       - name: Election-day freeze (R3)
         run: python3 scripts/red_lines.py --freeze-check
-      - name: Surface review recorded and approved (R10). Pending fails closed.
-        run: node tools/release_gate.ts --surface-id explorer-pages
+      - name: Surface review approved (R10), or a current owner decision while the review is PENDING. Anything else fails closed.
+        # The owner override is reported as such in this log. It cannot stand against a REJECTED or WITHDRAWN review,
+        # lapses on its expiry date, and leaves REVIEW-REGISTER.md untouched.
+        run: node tools/release_gate.ts --surface-id explorer-pages --allow-owner-override
 
   deploy:
     name: Deploy explorer shell to GitHub Pages
-    # CI first, gate second, owner switch third. A green build alone never publishes.
+    # CI first, gate second (review, or a recorded owner decision), owner switch third. A green build alone never publishes.
     needs: [compliance, tooling, database, web, web-e2e, release-gate]
     if: >-
       github.event_name != 'pull_request' && github.ref == 'refs/heads/main'

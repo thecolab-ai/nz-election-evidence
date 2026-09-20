@@ -39,6 +39,8 @@ export function resolveConfig(env: RawEnv): AppConfig | null {
     return null
   }
   if (looksLikeServiceRoleKey(key)) return null
+  // Only a PUBLIC key may run in a browser: a publishable key, or a token whose role is exactly "anon".
+  if (!isPublicBrowserKey(key)) return null
   return { supabaseUrl: url.replace(/\/+$/, ''), supabaseAnonKey: key }
 }
 
@@ -57,6 +59,25 @@ export function looksLikeServiceRoleKey(key: string): boolean {
   } catch {
     return false
   }
+}
+
+/** The role claim of a JWT-style key, or null when the key is not a decodable JWT. */
+export function keyRole(key: string): string | null {
+  const parts = key.split('.')
+  if (parts.length !== 3 || !parts[1]) return null
+  try {
+    const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/'))) as { role?: unknown }
+    return typeof payload.role === 'string' ? payload.role : null
+  } catch {
+    return null
+  }
+}
+
+/** Allowlist, not blocklist: a new-style publishable key, or a JWT whose role is exactly "anon". Anything else is refused. */
+export function isPublicBrowserKey(key: string): boolean {
+  if (looksLikeServiceRoleKey(key)) return false
+  if (/^sb_publishable_[A-Za-z0-9_-]{8,}$/.test(key)) return true
+  return keyRole(key) === 'anon'
 }
 
 /** Router basepath: no trailing slash except for root. */

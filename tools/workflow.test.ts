@@ -76,3 +76,19 @@ test("PR 8: older workflows pin checkout by commit and keep no credentials; the 
   assert.ok(bootstrap > 0 && bootstrap < workflow.indexOf("node --test --test-reporter=spec test/integration.test.ts"), "the login is bootstrapped explicitly, before the integration tests");
   assert.ok(!workflow.includes("seed.sql") && !/password/i.test(workflow.replace(/no password here/g, "")), "no seed path and no password in CI config");
 });
+
+test("connected release: public pair only, owner override explicit, the register never the thing that changes", async () => {
+  const web = workflow.slice(workflow.indexOf("\n  web:"), workflow.indexOf("\n  web-e2e:"));
+  // The only Supabase values in the whole workflow are the two PUBLIC repository variables.
+  const references = [...workflow.matchAll(/\$\{\{\s*([^}]+?)\s*\}\}/g)].map((m) => m[1] ?? "").filter((ref) => /supabase/i.test(ref));
+  assert.deepEqual([...new Set(references)].sort(), ["vars.EXPLORER_SUPABASE_ANON_KEY", "vars.EXPLORER_SUPABASE_URL"]);
+  assert.ok(!/service[_-]?role|SUPABASE_ACCESS_TOKEN|SUPABASE_DB_PASSWORD|EVIDENCE_INGEST_DB_URL|EVIDENCE_CRON_SECRET/i.test(workflow), "no privileged Supabase setting is named in CI");
+  assert.ok(web.includes("npm run check:bundle -- --require-connected"), "a deployable build must prove it is connected with the public pair");
+  // The override is opt-in on the command line, validated on every push, and the deploy still needs every other gate.
+  assert.ok(workflow.includes("node tools/release_gate.ts --surface-id explorer-pages --allow-owner-override"));
+  assert.ok(workflow.includes("node ../tools/owner_authorization.ts"));
+  assert.ok(deploy.includes("vars.PAGES_DEPLOY_ENABLED == 'true'") && deploy.includes("release-gate"));
+  assert.ok(workflow.includes("scripts/red_lines.py --freeze-check"), "an owner decision does not lift the election-day freeze");
+  const owners = await readFile(new URL("../.github/CODEOWNERS", import.meta.url), "utf-8");
+  assert.match(owners, /^\/governance\/\s+@adam91holt\s*$/m, "the owner decision file is owner-reviewed");
+});

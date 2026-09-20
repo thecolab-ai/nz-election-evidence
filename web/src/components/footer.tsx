@@ -8,13 +8,15 @@ export const POLICY_LINKS = [
   { file: 'RED-LINES.md', label: 'Red lines (RED-LINES.md)' },
   { file: 'CORRECTIONS.md', label: 'Corrections log (CORRECTIONS.md)' },
   { file: 'REVIEW-REGISTER.md', label: 'Review register (REVIEW-REGISTER.md)' },
+  { file: 'governance/owner-authorizations.json', label: 'Owner decisions (owner-authorizations.json)' },
 ] as const
 
 /**
  * R8: named accountability on every surface. Rendered by the shell, so every route carries it.
  * The accountable person is a HUMAN decision: this component names one only after that person has accepted the
  * role in writing (README and REVIEW-REGISTER.md). Until then it says so plainly, and the database gate
- * r8_accountable_legal_entity keeps every evidence row from anonymous readers.
+ * r8_accountable_legal_entity stays closed. Rows can then reach anonymous readers only on a recorded owner decision,
+ * which the shell announces on every page (OwnerOverrideNotice) and which never names an accountable person.
  */
 export function AccountabilityFooter() {
   return (
@@ -30,7 +32,8 @@ export function AccountabilityFooter() {
           </p>
           <p data-testid="accountable-person">
             <strong className="font-semibold">Accountable person:</strong> not yet confirmed. Nobody has formally accepted that role, so none is named
-            here, and the evidence in this explorer stays withheld until a named person has accepted it and that is recorded.
+            here. Where evidence is shown before that acceptance and before the independent legal review, it is shown on the repository
+            owner’s own recorded decision, which is stated at the top of every page and is not a substitute for either.
           </p>
           <p>
             This is an independent project. It is not affiliated with, endorsed by, or acting for the New Zealand Parliament, the

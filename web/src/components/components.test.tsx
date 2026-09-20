@@ -1,11 +1,13 @@
 import { render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 import { renderCell } from '@/routes/datasets'
+import { coverageCounts, RELEASE_COVERAGE } from '@/lib/release-coverage'
 import { AccountabilityFooter } from './footer'
+import { OwnerOverrideNotice, ownerOverride } from './owner-override-notice'
 import { PREVIEW_BANNER, PreviewBanner } from './shell'
 import { EmptyBlock, ErrorBlock } from './states'
 import { SummaryCard } from './summary-card'
-import type { SummaryRow } from '@/lib/types'
+import type { SummaryRow, SurfaceStatusRow } from '@/lib/types'
 
 describe('compliance text on every page', () => {
   it('footer names the project, the maintainer, independence, pending review, and links the three policy documents (R8)', () => {
@@ -17,7 +19,8 @@ describe('compliance text on every page', () => {
     // R8 is a human gate: until someone accepts the role the footer must say so, and must not present the maintainer as that person.
     expect(screen.getByTestId('accountable-person').textContent).toContain('Accountable person: not yet confirmed')
     expect(screen.getByTestId('accountable-person').textContent).not.toContain('Adam Holt')
-    expect(footer.textContent).toContain('stays withheld until a named person has accepted it')
+    expect(footer.textContent).toContain('repository owner’s own recorded decision')
+    expect(footer.textContent).toContain('is not a substitute for either')
     const hrefs = Array.from(footer.querySelectorAll('a')).map((a) => a.getAttribute('href'))
     expect(hrefs).toContain('https://github.com/thecolab-ai/nz-election-evidence/issues')
     for (const file of ['RED-LINES.md', 'CORRECTIONS.md', 'REVIEW-REGISTER.md']) expect(hrefs).toContain(`https://github.com/thecolab-ai/nz-election-evidence/blob/main/${file}`)
@@ -78,5 +81,41 @@ describe('model output card (R9)', () => {
     expect(screen.queryByTestId('not-human-reviewed')).toBeNull()
     expect(screen.getByTestId('summary-agreement').textContent).toContain('85.0% agreement with human reviewers on a sample of 40')
     expect(screen.getByRole('link', { name: /method/ }).getAttribute('href')).toBe('https://fixture.example/method')
+  })
+})
+
+describe('owner override: stated as what it is, never as a review or a publisher approval', () => {
+  const gate = (patch: Partial<SurfaceStatusRow>): SurfaceStatusRow => ({
+    gate_key: 'r10_public_surface_review', state: 'closed', evidence_reference: null, decided_at: null, public_rows_released: true,
+    release_basis: 'owner_override', owner_authorization_id: 'OWNER-AUTH-2026-09-20-01', owner_decided_on: '2026-09-20', owner_expires_on: '2026-11-06', ...patch,
+  })
+  it('names the decision, its dates, the pending reviews and the absence of any publisher approval', () => {
+    render(<OwnerOverrideNotice status={[gate({})]} />)
+    const text = screen.getByTestId('owner-override-notice').textContent ?? ''
+    for (const phrase of ['repository owner’s decision', 'ahead of independent review', '(R10)', '(R8)', 'still pending', 'remain closed', 'No publisher has approved or licensed anything', 'OWNER-AUTH-2026-09-20-01', 'in force until']) {
+      expect(text).toContain(phrase)
+    }
+    expect(text).not.toMatch(/\b(legally reviewed|review complete|approved by (the )?(publisher|reviewer)|licensed by)\b/i)
+    const hrefs = Array.from(screen.getByTestId('owner-override-notice').querySelectorAll('a')).map((a) => a.getAttribute('href'))
+    expect(hrefs).toContain('https://github.com/thecolab-ai/nz-election-evidence/blob/main/governance/owner-authorizations.json')
+    expect(hrefs).toContain('https://github.com/thecolab-ai/nz-election-evidence/blob/main/REVIEW-REGISTER.md')
+  })
+  it('is absent when nothing is released, when the recorded reviews release the rows, and before the database has answered', () => {
+    expect(ownerOverride(undefined)).toBeNull()
+    expect(ownerOverride([])).toBeNull()
+    expect(ownerOverride([gate({ release_basis: 'none', public_rows_released: false })])).toBeNull()
+    expect(ownerOverride([gate({ release_basis: 'reviews_recorded', state: 'open' })])).toBeNull()
+    // A claimed basis without released rows is not an override in force.
+    expect(ownerOverride([gate({ public_rows_released: false })])).toBeNull()
+    const { container } = render(<OwnerOverrideNotice status={[gate({ release_basis: 'none', public_rows_released: false })]} />)
+    expect(container.textContent).toBe('')
+  })
+})
+
+describe('release coverage is stated with what is missing', () => {
+  it('counts 3 live adapters, 1 historical export and 20 products not in the store, out of 24', () => {
+    expect(coverageCounts()).toEqual({ total: 24, live: 3, export: 1, none: 20 })
+    expect(RELEASE_COVERAGE.filter((row) => row.route !== 'none').map((row) => row.product_id)).toEqual(['P01', 'P03', 'P04', 'P10'])
+    expect(RELEASE_COVERAGE.find((row) => row.product_id === 'P04')?.note).toContain('963')
   })
 })

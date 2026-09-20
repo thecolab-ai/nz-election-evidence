@@ -1,7 +1,9 @@
 import { Link, Outlet } from '@tanstack/react-router'
 import { Eye } from 'lucide-react'
 import { appConfig } from '@/lib/env'
+import { useSurfaceStatus } from '@/routes/access'
 import { AccountabilityFooter } from './footer'
+import { OwnerOverrideNotice } from './owner-override-notice'
 
 export const PREVIEW_BANNER = 'Public read-only evidence register. Records are links and metadata from official publishers, shown with their provenance. Nothing here is a finding, a ranking or a recommendation.'
 
@@ -49,12 +51,15 @@ export function PreviewBanner() {
 
 export function Shell() {
   const showNav = appConfig !== null
+  // Disabled (no request) when the shell is not connected. The notice reflects the database's answer, nothing else.
+  const surface = useSurfaceStatus()
   return (
     <div className="flex min-h-dvh flex-col">
       <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:bg-paper focus:px-3 focus:py-2 focus:shadow">
         Skip to main content
       </a>
       <PreviewBanner />
+      <OwnerOverrideNotice status={surface.data} />
       <header className="border-b border-rule bg-paper">
         <div className="mx-auto flex max-w-[92rem] items-center justify-between gap-4 px-5 py-4 lg:px-8">
           <Link to="/" className="group flex items-baseline gap-3 no-underline">

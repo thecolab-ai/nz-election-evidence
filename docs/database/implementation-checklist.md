@@ -140,3 +140,18 @@ Verified on the task-local stack after confirming exclusive use: database rebuil
 3. A hosted Supabase project reference, administrator connection and release approval.
 4. R8 legal entity, R10 reviews and rights decisions — human gates; not something code can satisfy. Release review should also confirm the withheld register and the decision that typed fields (titles, names of public office-holders, party labels, dates) are metadata within the pending link-only tier.
 5. Unimplemented adapters and loaders are enumerated, with their blockers, in [source-reconciliation.md](source-reconciliation.md#adapters-and-loaders-that-are-not-implemented).
+
+## Connected release preparation on the owner's authorization (2026-09-20)
+
+Details, field decisions, open blockers and the hosted command sequence: [connected-release.md](connected-release.md). **Not pushed, not merged, not deployed; no hosted project touched.** The owner's decision is a stated departure from R8 and R10, not a review; every register row stays PENDING and every rights row stays pending.
+
+- [x] Owner decision is its own record (`governance/owner-authorizations.json`): scope, date, expiry, request source, what it departs from, what it does not claim. Validator refuses wildcards, missing expiry, more than 90 days, other surfaces, wording that passes it off as a review or licence, and any contact, body, image, figure or publisher-identifier field
+- [x] Release gate: plain gate unchanged and closed; `--allow-owner-override` opens only `explorer-pages`, only while its row is exactly PENDING, only on a current decision; REJECTED / WITHDRAWN / malformed beats the owner; logged as an override
+- [x] Database: migration `…001400`; gates and rights rows untouched; `release_basis` reported publicly; per-source, per-field, key-by-key; tier `none` always wins; immutable, revocable, lapsing; administrator only (worker and browser roles denied). pgTAP file `100` (47 assertions)
+- [x] Explorer: owner notice on every page driven by the database's answer; per-source list of owner-shown fields; footer and rights wording corrected; coverage panel with the 20 missing products listed first
+- [x] Bundle key safety: browser key allowlist (anon token or publishable key only); `check:bundle -- --require-connected` proven on real builds (public pair passes; service-role key, other project's key, unconnected build fail); workflow references only the two public variables
+- [x] Pre-existing lineage flaw fixed: result sets are now per source (a second candidacy source no longer inherits the first one's tier); `070` passes with two candidacy sources present
+- [x] Verified on a separate disposable stack (own project id and ports; the shared stack was not reset): pgTAP **360/360** on an empty and on a populated database; ingest + tooling **96 pass, 3 skipped (no database selected), 0 fail**; integration **16/16**, skipping forbidden; vitest **39/39**; browser **26/26**; Pages routing **4/4**; generated types match; Python validation, red lines with freeze check, 20 unit tests; copy scan clean (63 files). Rehearsal with real data: 122 / 93 / 10 live rows and the 963-row import, owner file mirrored with the real script, read back as an anonymous client
+- [ ] **Not run here:** the Deno type-check of the Edge Function (no Deno on this host; the function code is unchanged by this work)
+- [ ] Independent readiness review of this branch; then the hosted steps (coordinator)
+- [ ] R10 review, R8 acceptance, every publisher rights review, security re-review: all still open, none claimed

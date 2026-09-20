@@ -4,11 +4,19 @@
 // withdrawal or an unnamed reviewer all fail closed. CI runs this before any Pages deployment;
 // passing CI never substitutes for the review.
 //
+// OWNER OVERRIDE (only with --allow-owner-override). The repository owner may decide to deploy ahead of the review.
+// That is a separate, dated, expiring decision recorded in governance/owner-authorizations.json. It does not edit,
+// satisfy or stand in for the register: the row stays PENDING, the output says so, and the result carries
+// basis "owner_override", never "review_approved". It applies only while the latest register row is PENDING:
+// a REJECTED or WITHDRAWN review, an unknown outcome or a malformed register stays closed whatever the owner file says.
+//
 //   node tools/release_gate.ts --surface-id explorer-pages
+//   node tools/release_gate.ts --surface-id explorer-pages --allow-owner-override
 
 import { readFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { authorizationProblems, deployAuthorization, readAuthorizationFile, todayUtc } from "./owner_authorization.ts";
 
 export interface RegisterRow {
   date: string;
@@ -82,17 +90,63 @@ export function gate(text: string, surfaceId: string): { open: boolean; reason: 
   return { open: true, reason: `approved on ${latest.date} by ${plain(latest.reviewedBy)}` };
 }
 
+export const PENDING_OUTCOME = "PENDING — NOT REVIEWED";
+
+export interface GateDecision {
+  open: boolean;
+  /** How the gate opened. An owner override is never reported as a review. */
+  basis: "review_approved" | "owner_override" | "none";
+  reason: string;
+}
+
+/**
+ * The gate with the owner override considered. The register is asked first and wins whenever it is approved.
+ * Otherwise the override applies only if: the register is well formed, the latest row for this surface exists and is
+ * exactly PENDING, and the owner file is valid and holds a pages_deploy scope for exactly this surface in force today.
+ */
+export function gateWithOwnerOverride(registerText: string, surfaceId: string, ownerFile: unknown, today: string): GateDecision {
+  const review = gate(registerText, surfaceId);
+  if (review.open) return { open: true, basis: "review_approved", reason: review.reason };
+  const closed = (reason: string): GateDecision => ({ open: false, basis: "none", reason });
+  const wanted = normaliseSurfaceId(surfaceId);
+  if (!wanted || !(SURFACE_IDS as readonly string[]).includes(wanted)) return closed(review.reason);
+  if (unknownOutcomes(registerText).length) return closed(review.reason);
+  const rows = registerRows(registerText);
+  if (rows.some((row) => rowSurfaceId(row) === null)) return closed(review.reason);
+  const latest = rows.filter((row) => rowSurfaceId(row) === wanted).at(-1);
+  if (!latest) return closed(review.reason);
+  if (plain(latest.outcome) !== PENDING_OUTCOME) return closed(`${review.reason}; an owner override cannot stand against a recorded ${plain(latest.outcome)} review`);
+  if (ownerFile === null || ownerFile === undefined) return closed(`${review.reason}; no owner authorization file`);
+  const problems = authorizationProblems(ownerFile);
+  if (problems.length) return closed(`${review.reason}; owner authorization file is invalid (${problems[0]})`);
+  const authorization = deployAuthorization(ownerFile, wanted, today);
+  if (!authorization) return closed(`${review.reason}; no owner authorization in force today for pages_deploy of '${wanted}'`);
+  return {
+    open: true,
+    basis: "owner_override",
+    reason: `owner decision ${authorization.authorization_id} of ${authorization.decided_on} (in force until ${authorization.expires_on}). ` +
+      `The independent review of '${wanted}' is still PENDING and is not replaced by this decision`,
+  };
+}
+
 async function main(argv: string[]): Promise<number> {
   const index = argv.indexOf("--surface-id");
   const surface = index >= 0 ? argv[index + 1] : undefined;
   if (!surface) {
-    console.error(`usage: node tools/release_gate.ts --surface-id <${SURFACE_IDS.join("|")}>`);
+    console.error(`usage: node tools/release_gate.ts --surface-id <${SURFACE_IDS.join("|")}> [--allow-owner-override]`);
     return 2;
   }
   const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-  const result = gate(await readFile(resolve(root, "REVIEW-REGISTER.md"), "utf-8"), surface);
-  (result.open ? console.log : console.error)((result.open ? "RELEASE GATE OPEN: " : "RELEASE GATE CLOSED: ") + result.reason);
-  return result.open ? 0 : 1;
+  const register = await readFile(resolve(root, "REVIEW-REGISTER.md"), "utf-8");
+  if (!argv.includes("--allow-owner-override")) {
+    const result = gate(register, surface);
+    (result.open ? console.log : console.error)((result.open ? "RELEASE GATE OPEN: " : "RELEASE GATE CLOSED: ") + result.reason);
+    return result.open ? 0 : 1;
+  }
+  const decision = gateWithOwnerOverride(register, surface, await readAuthorizationFile(root), todayUtc());
+  const head = !decision.open ? "RELEASE GATE CLOSED: " : decision.basis === "owner_override" ? "RELEASE GATE OPEN BY OWNER OVERRIDE (NOT A REVIEW): " : "RELEASE GATE OPEN: ";
+  (decision.open ? console.log : console.error)(head + decision.reason);
+  return decision.open ? 0 : 1;
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {

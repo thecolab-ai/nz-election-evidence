@@ -21,7 +21,48 @@ export function bundleProblems(files: ReadonlyArray<{ name: string; text: string
     }
     if (/evidence_private|evidence_views|postgres(ql)?:\/\//.test(text)) problems.push(`${name}: private schema name or connection string`)
     if (/TEST FIXTURE (Bill|Release|members)/.test(text)) problems.push(`${name}: fixture evidence in the bundle`)
+    // Names of the server-side settings. Their values live in function secrets and Vault, never in a build.
+    if (/EVIDENCE_INGEST_DB_URL|EVIDENCE_CRON_SECRET|SERVICE_ROLE_KEY|SUPABASE_ACCESS_TOKEN|SUPABASE_DB_PASSWORD/.test(text)) problems.push(`${name}: names a server-side secret setting`)
   }
+  return problems
+}
+
+/**
+ * A CONNECTED release build (--require-connected): the bundle must carry exactly the public pair and nothing else.
+ *   - one https API origin in connect-src, and it is the configured project URL
+ *   - a public key is present: a publishable key, or a token whose role is "anon"
+ *   - a token that names a project ("ref") names the SAME project as the URL, so a key can never be paired with
+ *     another project by accident
+ * Privileged material is already refused by bundleProblems; this proves the shell is connected with the public pair only.
+ */
+export function connectedProblems(files: ReadonlyArray<{ name: string; text: string }>, indexHtml: string, configuredUrl: string | undefined): string[] {
+  const problems: string[] = []
+  let origin: URL | null = null
+  try {
+    origin = configuredUrl ? new URL(configuredUrl) : null
+  } catch {
+    origin = null
+  }
+  if (!origin || origin.protocol !== 'https:') return ['a connected build needs VITE_SUPABASE_URL set to the https project URL']
+  if (origin.username || origin.password || origin.search || origin.pathname.replace(/\/+$/, '') !== '') problems.push('VITE_SUPABASE_URL must be the bare project URL: no credentials, path or query')
+  const policy = /http-equiv="Content-Security-Policy"\s+content="([^"]*)"/i.exec(indexHtml)?.[1] ?? /content="([^"]*)"\s+http-equiv="Content-Security-Policy"/i.exec(indexHtml)?.[1] ?? ''
+  const connect = (policy.split(';').map((d) => d.trim()).find((d) => d.startsWith('connect-src')) ?? '').split(/\s+/).slice(1)
+  const remote = connect.filter((o) => /^[a-z]+:\/\//i.test(o))
+  if (remote.length !== 1 || remote[0] !== origin.origin) problems.push(`connect-src must allow exactly the project origin ${origin.origin} (found: ${remote.join(' ') || 'none'})`)
+  const all = files.map((f) => f.text).join('\n')
+  const projectRef = /^([a-z0-9]{16,})\.supabase\.co$/.exec(origin.hostname)?.[1] ?? null
+  let publicKeys = (all.match(/sb_publishable_[A-Za-z0-9_-]{8,}/g) ?? []).length
+  for (const match of all.matchAll(/eyJ[A-Za-z0-9_-]{8,}\.(eyJ[A-Za-z0-9_-]{8,})\.[A-Za-z0-9_-]{8,}/g)) {
+    try {
+      const payload = JSON.parse(Buffer.from(match[1] ?? '', 'base64url').toString('utf-8')) as { role?: string; ref?: string }
+      if (payload.role === 'anon') publicKeys += 1
+      if (payload.ref && projectRef && payload.ref !== projectRef) problems.push('the embedded key belongs to a different project than the configured URL')
+    } catch {
+      // bundleProblems reports undecodable tokens
+    }
+  }
+  if (publicKeys === 0) problems.push('a connected build needs the public anon (or publishable) key; none is in the bundle')
+  if (!all.includes(origin.origin)) problems.push('the configured project URL is not in the bundle (built without it?)')
   return problems
 }
 
@@ -64,10 +105,11 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
     problems.push(...cspTransportProblems(index, process.env.VITE_LOCAL_TEST_STACK === '1'))
     const files = walk(dist).filter((f) => /\.(js|css|html|json|map|txt)$/.test(f)).map((f) => ({ name: f.slice(dist.length + 1), text: readFileSync(f, 'utf-8') }))
     problems.push(...bundleProblems(files))
+    if (process.argv.includes('--require-connected')) problems.push(...connectedProblems(files, index, process.env.VITE_SUPABASE_URL))
   }
   if (problems.length) {
     for (const p of problems) console.error(`check-bundle: ${p}`)
     process.exit(1)
   }
-  console.log('check-bundle: routable on Pages; no evidence, private names or privileged key material')
+  console.log(`check-bundle: routable on Pages; no evidence, private names or privileged key material${process.argv.includes('--require-connected') ? '; connected with the public URL and public key only' : ''}`)
 }
