@@ -457,8 +457,6 @@ export type Database = {
           person_identity_id: string | null
           subject_kind: string | null
           supersedes_id: string | null
-          target_party_id: string | null
-          target_person_id: string | null
         }
         Relationships: [
           {
@@ -690,25 +688,6 @@ export type Database = {
           },
         ]
       }
-      party_aliases: {
-        Row: {
-          alias: string | null
-          evidence_version_id: string | null
-          id: string | null
-          party_id: string | null
-          valid_from: string | null
-          valid_to: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "party_aliases_evidence_version_id_fkey"
-            columns: ["evidence_version_id"]
-            isOneToOne: false
-            referencedRelation: "source_record_versions"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       party_list_entries: {
         Row: {
           candidacy_id: string | null
@@ -839,7 +818,6 @@ export type Database = {
           is_independent_label: boolean | null
           link_status: string | null
           name_at_source: string | null
-          party_id: string | null
           source_id: string | null
         }
         Relationships: [
@@ -861,7 +839,6 @@ export type Database = {
           identity_scheme: string | null
           link_status: string | null
           name_at_source: string | null
-          person_id: string | null
           source_id: string | null
         }
         Relationships: [
@@ -1980,6 +1957,7 @@ export type Database = {
           election_slug: string | null
           electorate_name: string | null
           electorate_type: string | null
+          electorate_version_id: string | null
           evidence_version_id: string | null
           id: string | null
           identity_link_status: string | null
@@ -2013,6 +1991,13 @@ export type Database = {
             columns: ["person_identity_id"]
             isOneToOne: false
             referencedRelation: "person_identities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contests_electorate_version_id_fkey"
+            columns: ["electorate_version_id"]
+            isOneToOne: false
+            referencedRelation: "electorates"
             referencedColumns: ["id"]
           },
         ]
@@ -2271,8 +2256,6 @@ export type Database = {
           person_identity_id: string | null
           subject_kind: string | null
           supersedes_id: string | null
-          target_party_id: string | null
-          target_person_id: string | null
         }
         Relationships: [
           {
@@ -2407,9 +2390,7 @@ export type Database = {
           id: string | null
           is_independent_label: boolean | null
           link_status: string | null
-          linked_party_name: string | null
           name_at_source: string | null
-          party_id: string | null
           source_id: string | null
         }
         Relationships: [
@@ -2430,10 +2411,8 @@ export type Database = {
           id: string | null
           identity_scheme: string | null
           link_status: string | null
-          linked_person_name: string | null
           name_at_source: string | null
           open_proposals: number | null
-          person_id: string | null
           service_terms: number | null
           source_id: string | null
         }

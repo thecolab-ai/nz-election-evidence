@@ -67,10 +67,31 @@ export function nodeCount(state: GraphState): number {
   return Object.keys(state.nodes).length
 }
 
-/** The PostgREST `or` filter for one node's edges. Values are quoted; ids are validated upstream. */
-export function edgeFilterFor(id: string): string {
+const KIND_SHAPE = /^[a-z][a-z_]{1,40}$/
+const UUID_SHAPE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
+/**
+ * The PostgREST `or` filter for one node's edges. A node is (kind, id): the same id can exist under two
+ * kinds, so the filter names BOTH on each side. Values are quoted; ids are validated upstream.
+ */
+export function edgeFilterFor(kind: string, id: string): string {
+  if (!KIND_SHAPE.test(kind)) throw new Error('graph node kind is not a plain identifier')
   const quoted = `"${id.replace(/["\\]/g, '')}"`
-  return `from_id.eq.${quoted},to_id.eq.${quoted}`
+  return `and(from_kind.eq.${kind},from_id.eq.${quoted}),and(to_kind.eq.${kind},to_id.eq.${quoted})`
+}
+
+export type EntityRoute =
+  | { to: '/people/$identityId'; params: { identityId: string } }
+  | { to: '/parties/$identityId'; params: { identityId: string } }
+  | { to: '/electorates/$versionId'; params: { versionId: string } }
+
+/** The detail page for a node, when its kind has one. Labels and elections have no page of their own. */
+export function entityRoute(kind: string, id: string): EntityRoute | null {
+  if (!UUID_SHAPE.test(id)) return null
+  if (kind === 'person_identity') return { to: '/people/$identityId', params: { identityId: id } }
+  if (kind === 'party_identity') return { to: '/parties/$identityId', params: { identityId: id } }
+  if (kind === 'electorate_version') return { to: '/electorates/$versionId', params: { versionId: id } }
+  return null
 }
 
 export function mergeExpansion(state: GraphState, expandedKey: string, rows: readonly EdgeRow[]): GraphState {
@@ -98,9 +119,12 @@ export function mergeExpansion(state: GraphState, expandedKey: string, rows: rea
     return key
   }
 
+  const expandedNode = state.nodes[expandedKey]
   for (const row of accepted) {
     if (edges[row.edge_id]) continue
     if (!row.from_id || !row.to_id) continue
+    // Defence in depth behind the server filter: keep an edge only if one END is the expanded (kind, id).
+    if (expandedNode && nodeKey(row.from_kind, row.from_id) !== expandedKey && nodeKey(row.to_kind, row.to_id) !== expandedKey) continue
     const sourceExists = !!nodes[nodeKey(row.from_kind, row.from_id)]
     const targetExists = !!nodes[nodeKey(row.to_kind, row.to_id)]
     const needed = (sourceExists ? 0 : 1) + (targetExists ? 0 : 1)
@@ -140,7 +164,6 @@ export function canExpand(state: GraphState, key: string): boolean {
 export const NODE_KIND_LABELS: Record<string, string> = {
   person_identity: 'Source identity',
   party_identity: 'Party label at source',
-  person: 'Reviewed person',
   electorate_label: 'Electorate label at source',
   electorate_version: 'Electorate (boundary edition)',
   election: 'Election',

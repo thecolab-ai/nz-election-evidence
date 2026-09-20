@@ -6,11 +6,15 @@ Public, read-only, no sign-in. A static React shell for GitHub Pages that reads 
 
 | Layer | Schema | Purpose |
 |---|---|---|
-| Curated views | `evidence_public` | Sources and freshness, records with versions and provenance, people and identities, Parliament, elections, documents, finance, statistics, relationships, rights, operations |
+| Curated views | `evidence_public` | Sources and freshness, records with versions and provenance, source identities, party labels, electorate versions, Parliament, elections, documents, finance, statistics, relationships, rights, operations. Reviewed canonical people and parties are withheld everywhere |
 | Every domain table | `evidence_open` | Generic browser under **Datasets and schema**: every table, every column, and for anything withheld, the reason |
 | Catalogue | `evidence_public.dataset_catalogue`, `dataset_columns`, `surface_status` | Always readable, even while evidence rows are withheld |
 
 The database, not this app, decides what is visible, and it honours source rights: a source with pending publisher rights shows links, identifiers, dates and hashes only, with every content field blank; content appears only for fields a publisher has approved; a refused, restricted or rights-less source does not appear at all. The pages say why a field is blank and show each source's release tier. While the R8 and R10 release gates are closed it returns no evidence rows and the app shows "Public release is pending review". The app holds the public anon key only, stores no session, calls `.select()` only, and there is no RPC. `src/lib/env.ts` refuses to start with a service-role or secret key.
+
+## Navigation and the relationship graph
+
+Party labels and electorates link to their own pages (`/parties/$identityId`, `/electorates/$versionId`), as names link to source identities. The graph starts from one node of a supported kind (source identity, party label, electorate version, record version), chosen by search or by id; a node is a (kind, id) pair and every expansion filters on both; each node links to its own page where it has one. URL search is strict: a page sees only what its validator returned.
 
 ## Set-up
 
@@ -40,7 +44,7 @@ Node 24. `npm ci`, then copy `.env.example` to `.env.local`:
 
 They need the local stack from the repository root (`supabase start …`, see `docs/database/runbook.md`). Global set-up reads the local anon and service-role keys from `supabase status -o env` at run time (local demo keys; held in memory, never written or printed), creates two fixture accounts through the local auth admin API, seeds clearly labelled fixtures (`fixture_*` sources, "TEST FIXTURE" titles) through the real ingestion SQL functions, and records the two release gates as open **on the local disposable database only**. One test closes the gates again to prove the withheld state. It refuses to run against a non-local API host.
 
-Fixtures include one publisher standing in for an approved-fields publisher (so content pages can be tested) and one pending publisher whose stored content contains the word WITHHELD; a test walks **every** public dataset and requires that word never to appear.
+Fixtures are mixed-rights on purpose: one approved publisher with an explicit, limited field list (fields it does not name stay blank), one pending publisher whose stored content contains the word WITHHELD, one refusing publisher (REFUSED) and one privately linked canonical person (CANONICAL). A test walks **every** public dataset and requires none of those words to appear.
 
 Covered: anonymous browsing with no sign-in and nothing stored in the browser; every public view and table readable; catalogue completeness (public tables readable, withheld tables absent, withheld columns non-existent, each with a reason); private, base, inspector, release, `vault` and `auth` schemas closed; every write verb refused on both public layers, through REST and through the app's own client; signed-in accounts gain nothing; gates closed returns no rows while the catalogue stays readable; sources and freshness wording; server pagination, sorting and filters; empty, loading and error states; record provenance and version history; tombstones; Parliament and election rules (announced is not nominated, unknown is not zero, no ordering by votes); unresolved identities; bounded graph; Pages deep links, reload, base-path assets and navigation; bundle safety.
 

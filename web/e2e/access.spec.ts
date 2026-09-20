@@ -68,6 +68,8 @@ test.describe('public read-only boundary', () => {
         expect(response.status(), `${entry.exposed_schema}.${entry.dataset}`).toBe(200)
         const body = await response.text()
         expect(body.includes('WITHHELD'), `${entry.exposed_schema}.${entry.dataset} leaks pending-rights content`).toBe(false)
+        expect(body.includes('REFUSED') || body.includes('fixture_refused_rights') || body.includes('/refused/'), `${entry.exposed_schema}.${entry.dataset} leaks a refused source`).toBe(false)
+        expect(body.includes('CANONICAL'), `${entry.exposed_schema}.${entry.dataset} leaks a canonical entity`).toBe(false)
         const rows = JSON.parse(body) as unknown[]
         rowsSeen += rows.length
         if (rows.length < 200) break
@@ -99,6 +101,22 @@ test.describe('public read-only boundary', () => {
     await page.goto('/parliament?source=fixture_pending_rights')
     await expect(page.getByTestId('data-row')).toHaveCount(1)
     await expect(page.locator('body')).not.toContainText('WITHHELD')
+  })
+
+  test('mixed rights within one approved publisher: named fields show, unnamed fields stay blank', async ({ request }) => {
+    const bills = (await (await request.get(`${REST}/documents?select=title,bill_number,current_stage,bill_type,select_committee,parliament_number,member_name_at_source&source_id=eq.fixture_bills&limit=5`, { headers: restHeaders() })).json()) as Array<Record<string, unknown>>
+    expect(bills.length).toBe(5)
+    for (const bill of bills) {
+      expect(bill.title, 'approved field').toEqual(expect.stringContaining('TEST FIXTURE Bill'))
+      expect(bill.current_stage, 'approved field').toBeTruthy()
+      for (const unnamed of ['bill_type', 'select_committee', 'parliament_number', 'member_name_at_source']) expect(bill[unnamed], `${unnamed} was not approved by this publisher`).toBeNull()
+    }
+    const [version] = (await (await request.get(`${REST}/record_versions?select=safe_payload&source_id=eq.fixture_bills&limit=1`, { headers: restHeaders() })).json()) as Array<{ safe_payload: Record<string, unknown> }>
+    // Field tokens are shared by payload keys and typed columns: approving member_name and party_label covers both.
+    expect(Object.keys(version?.safe_payload ?? {}).sort()).toEqual(['bill_number', 'current_stage', 'member_name', 'party_label', 'title'])
+    const tiers = (await (await request.get(`${REST}/sources?select=source_id,public_release_tier&source_id=like.fixture_*`, { headers: restHeaders() })).json()) as Array<{ source_id: string; public_release_tier: string }>
+    expect(Object.fromEntries(tiers.map((t) => [t.source_id, t.public_release_tier]))).toMatchObject({ fixture_bills: 'fields', fixture_pending_rights: 'link_only' })
+    expect(tiers.map((t) => t.source_id)).not.toContain('fixture_refused_rights')
   })
 
   test('operational text is not published: error classes only, no messages, details, references or checkpoints', async ({ request }) => {

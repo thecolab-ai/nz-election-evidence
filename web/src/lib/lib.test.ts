@@ -3,9 +3,9 @@ import { bundleProblems } from '../../scripts/check-bundle.ts'
 import { coverageFromSources } from './coverage'
 import { looksLikeServiceRoleKey, resolveConfig, routerBasePath } from './env'
 import { formatMoney, formatStatValue, formatVotes } from './format'
-import { EDGES_PER_EXPANSION, initialGraph, MAX_NODES, mergeExpansion, nodeCount, edgeFilterFor, type EdgeRow } from './graph'
+import { EDGES_PER_EXPANSION, edgeFilterFor, entityRoute, initialGraph, MAX_NODES, mergeExpansion, nodeCount, type EdgeRow } from './graph'
 import { describeRange, hasNextPage, pageCount, pageRange, SERVER_MAX_ROWS } from './pagination'
-import { effectiveSort, ilikeContains, parseGraphSearch, parseListSearch } from './search'
+import { effectiveSort, GRAPH_ROOT_KINDS, ilikeContains, parseGraphSearch, parseListSearch } from './search'
 import { candidaciesSpec, recordsSpec } from './specs'
 
 const jwt = (role: string) => `eyJhbGciOiJIUzI1NiJ9.${Buffer.from(JSON.stringify({ role, iss: 'fixture' })).toString('base64url')}.c2lnbmF0dXJlLWZpeHR1cmU`
@@ -65,7 +65,8 @@ describe('URL search validation', () => {
   it('escapes pattern characters and validates graph start nodes', () => {
     expect(ilikeContains('50%_a*')).not.toMatch(/^%.*[^\\]%.*%$/)
     expect(parseGraphSearch({ kind: 'table; drop', id: 'x' })).toEqual({})
-    expect(edgeFilterFor('ab"c\\d')).toBe('from_id.eq."abcd",to_id.eq."abcd"')
+    expect(edgeFilterFor('person_identity', 'ab"c\\d')).toBe('and(from_kind.eq.person_identity,from_id.eq."abcd"),and(to_kind.eq.person_identity,to_id.eq."abcd")')
+    expect(() => edgeFilterFor('person_identity),or(id.neq.x', 'abc')).toThrow()
   })
 })
 
@@ -121,5 +122,40 @@ describe('coverage is derived from the rights-filtered sources view', () => {
     expect(rows.find((r) => r.view_scope === 'primary_2026')).toMatchObject({ sources: 1, sources_with_a_successful_run: 0, sources_currently_unavailable: 1, latest_successful_retrieval: null })
     expect(rows.find((r) => r.view_scope === 'baseline_2023')).toBeUndefined()
     expect(coverageFromSources([])).toEqual([])
+  })
+})
+
+describe('graph nodes are (kind, id): the same id under two kinds is two nodes', () => {
+  const SHARED = '11111111-1111-4111-8111-111111111111'
+  const row = (edge: string, fromKind: string, toKind: string, toId: string): EdgeRow => ({ edge_id: edge, from_kind: fromKind, from_id: SHARED, from_label: `Fixture ${fromKind}`, to_kind: toKind, to_id: toId, to_label: `Fixture ${toId}`, relationship: 'fixture', evidence_version_id: null })
+
+  it('asks the server for edges of that kind AND that id, never the id alone', () => {
+    const filter = edgeFilterFor('party_identity', SHARED)
+    expect(filter).toContain('from_kind.eq.party_identity')
+    expect(filter).toContain('to_kind.eq.party_identity')
+    expect(filter).not.toMatch(/^from_id\.eq/)
+  })
+
+  it('collision regression: expanding one kind never pulls in the edges of another kind with the same id', () => {
+    // What an id-only query would have returned: edges of BOTH the person identity and the party identity.
+    const mixed = [row('e-person', 'person_identity', 'electorate_label', 'electorate:Fixture North'), row('e-party', 'party_identity', 'election', 'fixture-election')]
+    const state = mergeExpansion(initialGraph('person_identity', SHARED), `person_identity:${SHARED}`, mixed)
+    expect(Object.keys(state.edges)).toEqual(['e-person'])
+    expect(Object.keys(state.nodes).sort()).toEqual(['electorate_label:electorate:Fixture North', `person_identity:${SHARED}`])
+    expect(state.nodes[`party_identity:${SHARED}`]).toBeUndefined()
+    // And the other way round.
+    const party = mergeExpansion(initialGraph('party_identity', SHARED), `party_identity:${SHARED}`, mixed)
+    expect(Object.keys(party.edges)).toEqual(['e-party'])
+  })
+
+  it('offers only supported roots, and routes each entity kind to its own page', () => {
+    expect([...GRAPH_ROOT_KINDS]).toEqual(['person_identity', 'party_identity', 'electorate_version', 'record_version'])
+    expect(parseGraphSearch({ kind: 'person', id: SHARED })).toEqual({})
+    expect(parseGraphSearch({ kind: 'party_identity', id: SHARED })).toEqual({ kind: 'party_identity', id: SHARED })
+    expect(entityRoute('person_identity', SHARED)).toEqual({ to: '/people/$identityId', params: { identityId: SHARED } })
+    expect(entityRoute('party_identity', SHARED)).toEqual({ to: '/parties/$identityId', params: { identityId: SHARED } })
+    expect(entityRoute('electorate_version', SHARED)).toEqual({ to: '/electorates/$versionId', params: { versionId: SHARED } })
+    expect(entityRoute('electorate_label', 'electorate:Fixture North')).toBeNull()
+    expect(entityRoute('party_identity', 'not-a-uuid')).toBeNull()
   })
 })

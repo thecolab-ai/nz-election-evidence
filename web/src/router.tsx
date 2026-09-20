@@ -8,6 +8,7 @@ import { ConfiguredOnly, PublicGate } from '@/routes/access'
 import { DatasetDetailPage, DatasetsPage } from '@/routes/datasets'
 import { DocumentsPage } from '@/routes/documents'
 import { ElectionDetailPage, ElectionsPage } from '@/routes/elections'
+import { ElectorateVersionDetailPage, PartyIdentityDetailPage } from '@/routes/entity-detail'
 import { FinancePage } from '@/routes/finance'
 import { GraphPage } from '@/routes/graph'
 import { IdentityDetailPage } from '@/routes/identity-detail'
@@ -55,6 +56,8 @@ const recordsRoute = createRoute({ getParentRoute: inspector, path: '/records', 
 const recordDetailRoute = createRoute({ getParentRoute: inspector, path: '/records/$recordId', component: RecordDetailPage })
 const peopleRoute = createRoute({ getParentRoute: inspector, path: '/people', validateSearch: listSearch(peopleRouteSpec), component: PeoplePage })
 const identityDetailRoute = createRoute({ getParentRoute: inspector, path: '/people/$identityId', component: IdentityDetailPage })
+const partyIdentityRoute = createRoute({ getParentRoute: inspector, path: '/parties/$identityId', component: PartyIdentityDetailPage })
+const electorateVersionRoute = createRoute({ getParentRoute: inspector, path: '/electorates/$versionId', component: ElectorateVersionDetailPage })
 const parliamentRoute = createRoute({ getParentRoute: inspector, path: '/parliament', validateSearch: listSearch(parliamentSpec), component: ParliamentPage })
 const electionsRoute = createRoute({ getParentRoute: inspector, path: '/elections', component: ElectionsPage })
 const electionDetailRoute = createRoute({ getParentRoute: inspector, path: '/elections/$slug', validateSearch: listSearch(candidaciesSpec), component: ElectionDetailPage })
@@ -75,6 +78,8 @@ const routeTree = rootRoute.addChildren([
     recordDetailRoute,
     peopleRoute,
     identityDetailRoute,
+    partyIdentityRoute,
+    electorateVersionRoute,
     parliamentRoute,
     electionsRoute,
     electionDetailRoute,
@@ -91,6 +96,10 @@ export function createAppRouter() {
   return createRouter({
     routeTree,
     basepath: basePath,
+    // Strict search: a route sees ONLY what its validateSearch returned. Without this the router merges the raw
+    // query string into every match, so a value a validator dropped (an unknown enum, a withheld graph kind)
+    // would still reach the page and its queries.
+    search: { strict: true },
     defaultPreload: false,
     scrollRestoration: true,
     defaultNotFoundComponent: NotFound,

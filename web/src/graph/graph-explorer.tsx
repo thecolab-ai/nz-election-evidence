@@ -3,12 +3,13 @@ import { useQueryClient } from '@tanstack/react-query'
 import { Background, Controls, Handle, MarkerType, Position, ReactFlow, type Edge, type Node, type NodeProps } from '@xyflow/react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Pill } from '@/components/badges'
+import { EntityLink } from '@/components/entity-link'
 import { EvidenceVersionLink } from '@/components/evidence-link'
 import { Note } from '@/components/page'
 import { ErrorBlock } from '@/components/states'
 import { Button } from '@/components/ui/button'
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { canExpand, edgeFilterFor, EDGES_PER_EXPANSION, initialGraph, MAX_NODES, mergeExpansion, NODE_KIND_LABELS, nodeCount, type EdgeRow, type GraphNode, type GraphState } from '@/lib/graph'
+import { canExpand, edgeFilterFor, entityRoute, EDGES_PER_EXPANSION, initialGraph, MAX_NODES, mergeExpansion, NODE_KIND_LABELS, nodeCount, type EdgeRow, type GraphNode, type GraphState } from '@/lib/graph'
 import { toDataError, type DataError } from '@/lib/queries'
 import { requireSupabase } from '@/lib/supabase'
 import { layoutGraph, NODE_HEIGHT, NODE_WIDTH } from './layout'
@@ -42,10 +43,10 @@ function EvidenceNode({ data }: NodeProps<FlowNode>) {
 
 const nodeTypes = { evidence: EvidenceNode }
 
-async function fetchEdges(id: string, signal?: AbortSignal): Promise<EdgeRow[]> {
+async function fetchEdges(kind: string, id: string, signal?: AbortSignal): Promise<EdgeRow[]> {
   const supabase = requireSupabase()
   // One node, one bounded page. The whole graph is never requested.
-  let query = supabase.from('graph_edges').select('*').or(edgeFilterFor(id)).order('edge_id').limit(EDGES_PER_EXPANSION)
+  let query = supabase.from('graph_edges').select('*').or(edgeFilterFor(kind, id)).order('edge_id').limit(EDGES_PER_EXPANSION)
   if (signal) query = query.abortSignal(signal)
   const { data, error, status } = await query
   if (error) throw toDataError(error, status)
@@ -68,7 +69,7 @@ export default function GraphExplorer({ kind, id, height = 560 }: { kind: string
       setBusyKey(key)
       setError(null)
       try {
-        const rows = await queryClient.fetchQuery({ queryKey: ['graph-edges', node.id], queryFn: ({ signal }) => fetchEdges(node.id, signal), staleTime: 60_000 })
+        const rows = await queryClient.fetchQuery({ queryKey: ['graph-edges', node.kind, node.id], queryFn: ({ signal }) => fetchEdges(node.kind, node.id, signal), staleTime: 60_000 })
         setGraph((current) => mergeExpansion(current, key, rows))
       } catch (caught) {
         setError({ key, error: caught instanceof Error ? (caught as DataError) : toDataError({ message: String(caught) }) })
@@ -180,6 +181,14 @@ export default function GraphExplorer({ kind, id, height = 560 }: { kind: string
         <h2 id="graph-fallback-heading" className="text-lg">The same relationships, as a list</h2>
         <p className="mt-1 text-sm text-muted-foreground">Everything on the canvas is also here, for keyboard and screen-reader use.</p>
 
+        <div className="mb-3" data-testid="graph-entity-links">
+          <p className="eyebrow mb-1.5">Open a node's own page</p>
+          <ul className="flex flex-wrap gap-x-4 gap-y-1 text-sm">
+            {Object.values(graph.nodes).filter((n) => entityRoute(n.kind, n.id) !== null).slice(0, 60).map((n) => (
+              <li key={n.key}><EntityLink kind={n.kind} id={n.id} testId="graph-entity-link">{n.label}</EntityLink> <span className="text-xs text-muted-foreground">({NODE_KIND_LABELS[n.kind] ?? n.kind})</span></li>
+            ))}
+          </ul>
+        </div>
         {unexpanded.length > 0 ? (
           <div className="mt-3">
             <p className="eyebrow mb-1.5">Nodes not yet expanded</p>

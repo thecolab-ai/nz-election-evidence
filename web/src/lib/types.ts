@@ -161,8 +161,6 @@ export interface PersonIdentityRow {
   identity_scheme: string
   name_at_source: string | null
   link_status: string
-  person_id: string | null
-  linked_person_name: string | null
   first_version_id: string | null
   service_terms: Numeric
   candidacies: Numeric
@@ -174,8 +172,6 @@ export interface IdentityDecisionRow {
   subject_kind: string
   person_identity_id: string | null
   party_identity_id: string | null
-  target_person_id: string | null
-  target_party_id: string | null
   decision: string
   method: string
   evidence: Json
@@ -250,6 +246,7 @@ export interface CandidacyRow {
   votes_status: string | null
   result_status: string | null
   evidence_version_id: string
+  electorate_version_id: string | null
 }
 
 export interface DocumentRow {
@@ -414,4 +411,26 @@ export interface DatasetColumnRow {
   withheld_reason: string | null
   field_token: string | null
   description: string | null
+}
+
+export interface PartyIdentityRow {
+  id: string
+  source_id: string
+  external_id: string | null
+  name_at_source: string | null
+  link_status: string
+  is_independent_label: boolean | null
+}
+
+export interface ElectorateVersionRow {
+  id: string
+  electorate_id: string
+  slug: string | null
+  name: string | null
+  electorate_type: string | null
+  official_code: string | null
+  boundary_edition: string | null
+  boundary_edition_title: string | null
+  boundary_edition_verified: boolean | null
+  evidence_version_id: string | null
 }

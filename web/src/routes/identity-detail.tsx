@@ -9,6 +9,7 @@ import { formatDateTime, formatServiceDate, formatVotes, humanise, scopeLabel, N
 import { useOneQuery, useRowsQuery } from '@/lib/queries'
 import type { CandidacyRow, IdentityDecisionRow, PartyAffiliationRow, PersonIdentityRow, ServiceTermRow } from '@/lib/types'
 import { UNRESOLVED_NOTE } from './people'
+import { EntityLink } from '@/components/entity-link'
 import { Cell, Panel } from './source-detail'
 
 const route = getRouteApi('/_released/people/$identityId')
@@ -44,13 +45,13 @@ export function IdentityDetailPage() {
         <div className="flex flex-wrap gap-2 pt-1"><LinkStatusBadge status={i.link_status} /></div>
       </PageHeader>
 
-      {!i.person_id ? <div className="mb-8"><Note tone="caution" testId="identity-unresolved">{UNRESOLVED_NOTE}.</Note></div> : null}
+      <div className="mb-8"><Note tone="caution" testId="identity-unresolved">{UNRESOLVED_NOTE}. Reviewed canonical people are not published; this page shows one identity as one source wrote it.</Note></div>
 
       <Section id="identity" title="Identity">
         <KeyValueList
           columns={3}
           items={[
-            { label: 'Canonical person', value: i.person_id ? `${i.linked_person_name} (reviewed link)` : UNRESOLVED_NOTE },
+            { label: 'Review state of this identity', value: humanise(i.link_status) },
             { label: 'Identity scheme', value: humanise(i.identity_scheme) },
             { label: 'External id', value: i.external_id ? <Mono>{i.external_id}</Mono> : NOT_SHOWN },
             { label: 'First evidence', value: <EvidenceVersionLink versionId={i.first_version_id} /> },
@@ -65,7 +66,7 @@ export function IdentityDetailPage() {
             <TableRow key={t.id}>
               <Cell>{humanise(t.representation)}</Cell>
               <Cell>{t.electorate_name_at_source ?? (t.representation === 'list' ? 'none (list member)' : NOT_SHOWN)}</Cell>
-              <Cell>{t.party_label ?? NOT_SHOWN}</Cell>
+              <Cell><EntityLink kind="party_identity" id={t.party_identity_id}>{t.party_label ?? NOT_SHOWN}</EntityLink></Cell>
               <Cell>{formatDateTime(t.observed_first_at)}</Cell>
               <Cell>{formatDateTime(t.observed_last_at)}</Cell>
               <Cell>{formatServiceDate(t.valid_from)}</Cell>
@@ -80,7 +81,7 @@ export function IdentityDetailPage() {
         <Panel query={affiliations} caption="Party affiliations" head={['Party label', 'Basis', 'Observed from', 'Observed to', 'Valid from', 'Evidence']}>
           {(a) => (
             <TableRow key={a.id}>
-              <Cell>{a.party_label ?? NOT_SHOWN}</Cell>
+              <Cell><EntityLink kind="party_identity" id={a.party_identity_id}>{a.party_label ?? NOT_SHOWN}</EntityLink></Cell>
               <Cell>{humanise(a.basis)}</Cell>
               <Cell>{formatDateTime(a.observed_first_at)}</Cell>
               <Cell>{formatDateTime(a.observed_last_at)}</Cell>
@@ -97,8 +98,8 @@ export function IdentityDetailPage() {
             <TableRow key={c.id}>
               <Cell><Link to="/elections/$slug" params={{ slug: c.election_slug }} className="doc-link">{c.election_slug}</Link><span className="block text-xs text-muted-foreground">{scopeLabel(c.view_scope)}</span></Cell>
               <Cell>{humanise(c.candidacy_type)}{c.list_rank ? ` · list position ${c.list_rank}` : ''}</Cell>
-              <Cell>{c.electorate_name ?? (c.candidacy_type === 'list' ? 'none (party list)' : NOT_SHOWN)}</Cell>
-              <Cell>{c.party_label ?? NOT_SHOWN}</Cell>
+              <Cell><EntityLink kind="electorate_version" id={c.electorate_version_id}>{c.electorate_name ?? (c.candidacy_type === 'list' ? 'none (party list)' : NOT_SHOWN)}</EntityLink></Cell>
+              <Cell><EntityLink kind="party_identity" id={c.party_identity_id}>{c.party_label ?? NOT_SHOWN}</EntityLink></Cell>
               <Cell><CandidacyStatusBadge status={c.current_status} /></Cell>
               <Cell>{formatVotes(c.votes, c.votes_status, c.candidacy_type)}</Cell>
               <Cell><EvidenceVersionLink versionId={c.evidence_version_id} /></Cell>

@@ -1,5 +1,6 @@
 import { createColumnHelper } from '@tanstack/react-table'
 import { getRouteApi, Link } from '@tanstack/react-router'
+import { EntityLink } from '@/components/entity-link'
 import { DataTable, type CoreFeatures } from '@/components/data-table'
 import { FilterBar, SelectFilter, TextFilter } from '@/components/filters'
 import { Note, PageHeader } from '@/components/page'
@@ -23,9 +24,9 @@ const columns = helper.columns([
       </Link>
     ),
   }),
-  helper.accessor('party_label', { header: 'Party label at source', cell: ({ getValue }) => getValue() ?? NOT_SHOWN }),
+  helper.accessor('party_label', { header: 'Party label at source', cell: ({ row }) => <EntityLink kind="party_identity" id={row.original.party_identity_id} testId="party-link">{row.original.party_label ?? NOT_SHOWN}</EntityLink> }),
   helper.accessor('representation', { header: 'Representation', cell: ({ getValue }) => humanise(getValue()) }),
-  helper.accessor('electorate_name_at_source', { header: 'Electorate at source', cell: ({ row }) => row.original.electorate_name_at_source ?? (row.original.representation === 'list' ? 'none (list member)' : NOT_SHOWN) }),
+  helper.accessor('electorate_name_at_source', { header: 'Electorate at source', cell: ({ row }) => <EntityLink kind="electorate_version" id={row.original.electorate_version_id}>{row.original.electorate_name_at_source ?? (row.original.representation === 'list' ? 'none (list member)' : NOT_SHOWN)}</EntityLink> }),
   helper.accessor('observed_first_at', { header: 'Observed in directory from', cell: ({ getValue }) => formatDateTime(getValue()) }),
   helper.accessor('observed_last_at', {
     header: 'Observed in directory to',
@@ -46,7 +47,7 @@ export function ParliamentPage() {
   const setSearch = useSetSearch()
   const query = useListQuery<ServiceTermRow, keyof typeof parliamentSpec.filters>({
     view: 'service_terms',
-    select: 'id,person_identity_id,member_name,source_id,representation,electorate_name_at_source,party_label,valid_from,valid_to,observed_first_at,observed_last_at,observed_absent_at',
+    select: 'id,person_identity_id,party_identity_id,electorate_version_id,member_name,source_id,representation,electorate_name_at_source,party_label,valid_from,valid_to,observed_first_at,observed_last_at,observed_absent_at',
     spec: parliamentSpec,
     search,
     filter: (q, s) => {

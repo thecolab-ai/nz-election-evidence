@@ -2,6 +2,7 @@ import { createColumnHelper } from '@tanstack/react-table'
 import { getRouteApi, Link } from '@tanstack/react-router'
 import { CandidacyStatusBadge, LinkStatusBadge, Pill } from '@/components/badges'
 import { DataTable, type CoreFeatures } from '@/components/data-table'
+import { EntityLink } from '@/components/entity-link'
 import { EvidenceVersionLink } from '@/components/evidence-link'
 import { FilterBar, SelectFilter, TextFilter } from '@/components/filters'
 import { KeyValueList, Note, PageHeader, Section } from '@/components/page'
@@ -74,7 +75,7 @@ export function ElectionsPage() {
 const route = getRouteApi('/_released/elections/$slug')
 const helper = createColumnHelper<CoreFeatures, CandidacyRow>()
 const columns = helper.columns([
-  helper.accessor('electorate_name', { header: 'Electorate', cell: ({ row }) => row.original.electorate_name ?? (row.original.candidacy_type === 'list' ? 'none (party list)' : 'not stated by source') }),
+  helper.accessor('electorate_name', { header: 'Electorate', cell: ({ row }) => <EntityLink kind="electorate_version" id={row.original.electorate_version_id} testId="electorate-link">{row.original.electorate_name ?? (row.original.candidacy_type === 'list' ? 'none (party list)' : NOT_SHOWN)}</EntityLink> }),
   helper.accessor('candidate_name', {
     header: 'Candidate (name at source)',
     cell: ({ row }) => (
@@ -84,7 +85,7 @@ const columns = helper.columns([
       </div>
     ),
   }),
-  helper.accessor('party_label', { header: 'Party label at source', cell: ({ row }) => <>{row.original.party_label ?? NOT_SHOWN}{row.original.stood_as_independent ? <span className="ml-1.5"><Pill tone="muted">label, not a registered party</Pill></span> : null}</> }),
+  helper.accessor('party_label', { header: 'Party label at source', cell: ({ row }) => <><EntityLink kind="party_identity" id={row.original.party_identity_id} testId="party-link">{row.original.party_label ?? NOT_SHOWN}</EntityLink>{row.original.stood_as_independent ? <span className="ml-1.5"><Pill tone="muted">label, not a registered party</Pill></span> : null}</> }),
   helper.accessor('candidacy_type', { header: 'Type', cell: ({ row }) => `${humanise(row.original.candidacy_type)}${row.original.list_rank ? ` · list position ${row.original.list_rank}` : ''}` }),
   helper.accessor('current_status', { header: 'Status', cell: ({ getValue }) => <CandidacyStatusBadge status={getValue()} /> }),
   helper.accessor('votes', {

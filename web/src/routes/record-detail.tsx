@@ -6,8 +6,8 @@ import { ExternalLink, KeyValueList, Mono, PageHeader, Section } from '@/compone
 import { EmptyBlock, ErrorBlock, LoadingBlock } from '@/components/states'
 import { formatCount, formatDateTime, formatPublisherDate, humanise, scopeLabel, NOT_SHOWN } from '@/lib/format'
 import { EDGES_PER_EXPANSION, type EdgeRow } from '@/lib/graph'
+import { isGraphRootKind } from '@/lib/search'
 import { useOneQuery, useRowsQuery } from '@/lib/queries'
-import type { GraphNodeKind } from '@/lib/search'
 import type { LifecycleEventRow, RecordRow, RecordVersionRow } from '@/lib/types'
 import { Cell, Panel } from './source-detail'
 
@@ -161,7 +161,7 @@ export function RecordDetailPage() {
                 <Cell>{edge.relationship}</Cell>
                 <Cell>{edge.to_label ?? edge.to_id}</Cell>
                 <Cell>
-                  <Link to="/graph" search={{ kind: edge.from_kind as GraphNodeKind, id: edge.from_id }} className="doc-link">Open in graph</Link>
+                  {isGraphRootKind(edge.from_kind) && edge.from_id ? <Link to="/graph" search={{ kind: edge.from_kind, id: edge.from_id }} className="doc-link">Open in graph</Link> : '—'}
                 </Cell>
               </TableRow>
             )}

@@ -123,19 +123,20 @@ export function isUuid(value: unknown): value is string {
   return typeof value === 'string' && UUID_PATTERN.test(value)
 }
 
-export const GRAPH_NODE_KINDS = [
-  'person_identity',
-  'party_identity',
-  'person',
-  'electorate_label',
-  'electorate_version',
-  'election',
-  'record_version',
-] as const
+/** Kinds a graph may START from: each has rows a reader can find and a page of its own (or a record). */
+export const GRAPH_ROOT_KINDS = ['person_identity', 'party_identity', 'electorate_version', 'record_version'] as const
+export type GraphRootKind = (typeof GRAPH_ROOT_KINDS)[number]
+
+/** Kinds that can appear as nodes. Canonical people and parties are withheld, so they are not among them. */
+export const GRAPH_NODE_KINDS = [...GRAPH_ROOT_KINDS, 'electorate_label', 'election'] as const
 export type GraphNodeKind = (typeof GRAPH_NODE_KINDS)[number]
 
+export function isGraphRootKind(value: string | null | undefined): value is GraphRootKind {
+  return (GRAPH_ROOT_KINDS as readonly string[]).includes(value ?? '')
+}
+
 export interface GraphSearch {
-  kind?: GraphNodeKind
+  kind?: GraphRootKind
   id?: string
 }
 
@@ -144,7 +145,7 @@ export interface GraphSearch {
  * to characters that cannot break out of that expression.
  */
 export function parseGraphSearch(raw: Record<string, unknown>): GraphSearch {
-  const kind = parseEnum(raw.kind, GRAPH_NODE_KINDS) as GraphNodeKind | undefined
+  const kind = parseEnum(raw.kind, GRAPH_ROOT_KINDS) as GraphRootKind | undefined
   const id = parseText(raw.id, 200)
   if (!kind || !id || !isSafeGraphId(id)) return {}
   return { kind, id }

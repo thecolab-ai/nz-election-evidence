@@ -21,6 +21,8 @@ select evidence_private.sync_registry(jsonb_build_object(
   'rights', jsonb_build_array(jsonb_build_object(
     'rights_id', 'RIGHTS-99', 'publisher', 'Fixture Publisher (TEST FIXTURE)', 'source_url', 'https://fixture.example/',
     'review_status', 'pending', 'default_release', 'link-only', 'register_hash', 'fixture-h1'),
+    jsonb_build_object('rights_id', 'RIGHTS-97', 'publisher', 'Fixture Refusing Publisher (TEST FIXTURE)', 'source_url', 'https://fixture.example/',
+    'review_status', 'pending', 'default_release', 'link-only', 'register_hash', 'fixture-h3'),
     -- A second fixture publisher that stays pending, so the link-only presentation can be tested.
     jsonb_build_object('rights_id', 'RIGHTS-98', 'publisher', 'Fixture Pending Publisher (TEST FIXTURE)', 'source_url', 'https://fixture.example/',
     'review_status', 'pending', 'default_release', 'link-only', 'register_hash', 'fixture-h2')),
@@ -49,7 +51,12 @@ select evidence_private.sync_registry(jsonb_build_object(
     jsonb_build_object('source_id', 'fixture_pending_rights', 'title', 'TEST FIXTURE source with pending publisher rights', 'publisher', 'Fixture Pending Publisher (TEST FIXTURE)',
       'official_url', 'https://fixture.example/pending', 'adapter_kind', 'live_fetch', 'adapter_name', 'fixture',
       'allowed_hosts', jsonb_build_array('fixture.example'), 'rights_id', 'RIGHTS-98', 'view_scope', 'current_parliament',
-      'expected_cadence_seconds', 86400, 'snapshot_semantics', 'complete_snapshot', 'enabled', true, 'config_hash', 'fixture-c6'))));
+      'expected_cadence_seconds', 86400, 'snapshot_semantics', 'complete_snapshot', 'enabled', true, 'config_hash', 'fixture-c6'),
+    jsonb_build_object('source_id', 'fixture_refused_rights', 'title', 'TEST FIXTURE source whose publisher refused', 'publisher', 'Fixture Refusing Publisher (TEST FIXTURE)',
+      'official_url', 'https://fixture.example/refused', 'adapter_kind', 'live_fetch', 'adapter_name', 'fixture',
+      'allowed_hosts', jsonb_build_array('fixture.example'), 'rights_id', 'RIGHTS-97', 'view_scope', 'current_parliament',
+      'expected_cadence_seconds', 86400, 'snapshot_semantics', 'complete_snapshot', 'enabled', false,
+      'blocked_reason', 'TEST FIXTURE: publisher refused', 'config_hash', 'fixture-c7'))));
 
 -- Bills: 65 records in one source (pagination), two versions of bill 001, bill 065 tombstoned,
 -- and one record refused by the payload guard (so the errors panel has a row).
@@ -192,8 +199,8 @@ begin
 end
 $$;
 
--- 2023 baseline export: invented candidacies and numbers. One upstream zero, which the
--- projection stores as "not reported" and the UI must never show as 0.
+-- 2023 baseline export: invented candidacies and numbers. One candidate with no figure at all (not reported,
+-- never shown as 0) and one with a genuine reported zero (shown as 0, never as missing).
 do $$
 declare
   v_holder uuid := 'f1f1f1f1-0000-4000-8000-000000000004';
@@ -219,9 +226,10 @@ begin
     from (values
       ('e1', 'Fixture Candidate Aroha', 'electorate', 'Fixture Party A', 'Fixture Electorate A', 1200, null::int),
       ('e2', 'Fixture Candidate Bryn',  'electorate', 'Fixture Party B', 'Fixture Electorate A', 950,  null),
-      ('e3', 'Fixture Candidate Cass',  'electorate', 'Independent',     'Fixture Electorate A', 0,    null),
+      -- Cass: the source gave no figure (key absent after strip_nulls) -> not reported. Eru: a genuine reported zero.
+      ('e3', 'Fixture Candidate Cass',  'electorate', 'Independent',     'Fixture Electorate A', null, null),
       ('e4', 'Fixture Candidate Dale',  'electorate', 'Fixture Party A', 'Fixture Electorate B', 701,  null),
-      ('e5', 'Fixture Candidate Eru',   'electorate', 'Fixture Party B', 'Fixture Electorate B', 688,  null),
+      ('e5', 'Fixture Candidate Eru',   'electorate', 'Fixture Party B', 'Fixture Electorate B', 0,    null),
       ('l1', 'Fixture Candidate Aroha', 'list',       'Fixture Party A', null,                   null, 2),
       ('l2', 'Fixture Candidate Fern',  'list',       'Fixture Party B', null,                   null, 1)
     ) as c(id, name, kind, party, electorate, votes, list_rank)));
@@ -277,21 +285,72 @@ begin
 end
 $$;
 
--- The main fixture publisher stands in for a publisher whose review is APPROVED with release mode
--- approved-fields and who has cleared every content field, so the content pages can be tested. This is a
--- fixture decision on the local disposable database only; no real publisher has approved anything.
+-- MIXED RIGHTS, as a real register would look. Nothing here approves "everything":
+--   RIGHTS-99  approved, release mode approved-fields, with an explicit and LIMITED field list. Fields it does
+--              not name (select committee, bill type, parliament number, member in charge, publisher item id,
+--              page URL key, electorate type, party selection status ...) stay blank even for this publisher.
+--   RIGHTS-98  pending: links and metadata only (fixture_pending_rights).
+--   RIGHTS-97  refused: nothing at all, including everything descended from it (fixture_refused_rights).
+-- These are fixture decisions on the local disposable database only; no real publisher has approved anything.
 -- (The worker role cannot do this: only an administrator can record a rights row that is not pending.)
 update evidence_private.source_rights
    set review_status = 'approved', default_release = 'approved-fields', reviewed_on = date '2026-09-20',
-       approved_fields = (
-         select array_agg(distinct f order by f) from (
-           select field_token as f from evidence_private.public_columns where release_class = 'content'
-           union
-           select k from evidence_private.source_record_versions v
-             join evidence_private.source_records r on r.id = v.record_id, lateral jsonb_object_keys(v.safe_payload) k
-            where r.source_id like 'fixture\_%' escape '\') x
-         where f ~ '^[a-z][a-z0-9_]*$')
+       approved_fields = array[
+         'title', 'label', 'current_stage', 'bill_number', 'external_record_id', 'external_id',
+         'name_at_source', 'name_display', 'member_name', 'person_name', 'candidate_name', 'party_label', 'party_name',
+         'representation', 'electorate_name', 'electorate_name_at_source', 'electorate_label', 'name',
+         'candidacy_type', 'current_status', 'status', 'stood_as_independent', 'is_independent_label', 'list_rank',
+         'votes', 'votes_status', 'value_status', 'result_status', 'source_class',
+         'from_id', 'to_id', 'from_label', 'to_label', 'relationship', 'evidence']
  where rights_id = 'RIGHTS-99';
+
+do $$
+declare
+  v_holder uuid := 'f1f1f1f1-0000-4000-8000-000000000007';
+  v_run uuid;
+begin
+  if exists (select 1 from evidence_private.import_runs where source_id = 'fixture_refused_rights') then
+    raise notice 'fixture_refused_rights already seeded';
+    return;
+  end if;
+  perform evidence_private.acquire_lease('fixture_refused_rights', v_holder, 120);
+  v_run := (evidence_private.start_run('fixture_refused_rights', v_holder, 'fixture-v1', 'incremental', 'test', 'fixture-m1') ->> 'run_id')::uuid;
+  perform evidence_private.ingest_batch(v_run, v_holder, jsonb_build_array(
+    jsonb_build_object('external_record_id', 'fixture-refused-member', 'record_kind', 'mp_directory_entry',
+      'content_hash', 'sha256:' || encode(sha256('fixture-refused-member'::bytea), 'hex'),
+      'source_url', 'https://fixture.example/refused/member', 'retrieved_at', now(),
+      'safe_payload', jsonb_build_object('name_display', 'REFUSED Fixture Member', 'party_label', 'REFUSED Fixture Party', 'representation', 'list')),
+    jsonb_build_object('external_record_id', 'fixture-refused-bill', 'record_kind', 'bill',
+      'content_hash', 'sha256:' || encode(sha256('fixture-refused-bill'::bytea), 'hex'),
+      'source_url', 'https://fixture.example/refused/bill', 'retrieved_at', now(),
+      'safe_payload', jsonb_build_object('title', 'REFUSED TEST FIXTURE bill', 'public_page_url', 'https://fixture.example/refused/bill'))));
+  perform evidence_private.project_run(v_run, v_holder);
+  perform evidence_private.finish_run(v_run, v_holder, 'succeeded', true, null, null, null);
+end
+$$;
+
+update evidence_private.source_rights
+   set review_status = 'refused', default_release = 'withheld', reviewed_on = date '2026-09-20'
+ where rights_id = 'RIGHTS-97';
+
+-- A reviewed canonical person, linked to one fixture identity by a recorded decision. Canonical people are
+-- withheld from every public projection, so the word CANONICAL and this id must never reach a reader.
+do $$
+declare
+  v_person constant uuid := 'f1f1f1f1-0000-4000-8000-0000000000aa';
+  v_identity uuid;
+begin
+  if exists (select 1 from evidence_private.people where id = v_person) then
+    return;
+  end if;
+  select id into v_identity from evidence_private.person_source_identities
+   where source_id = 'fixture_mp_directory' and external_id = 'fixture-member-02';
+  insert into evidence_private.people (id, display_name, public_role_basis) values (v_person, 'CANONICAL Fixture Person', 'member_of_parliament');
+  insert into evidence_private.identity_decisions (subject_kind, person_identity_id, target_person_id, decision, method, decided_by)
+  values ('person', v_identity, v_person, 'approved', 'manual_source_review', 'Fixture Reviewer (TEST FIXTURE)');
+  update evidence_private.person_source_identities set person_id = v_person, link_status = 'approved' where id = v_identity;
+end
+$$;
 
 -- One inactive schedule, so the schedules panel has a row. Never activated.
 insert into evidence_private.ingest_schedules (schedule_key, source_id, cron_expr, function_slug, max_runtime_seconds, max_records, config_hash)

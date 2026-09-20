@@ -28,11 +28,7 @@ const identityColumns = identityHelper.columns([
   identityHelper.accessor('link_status', {
     header: 'Canonical person',
     cell: ({ row }) =>
-      row.original.person_id ? (
-        <div className="space-y-0.5"><LinkStatusBadge status={row.original.link_status} /><p>{row.original.linked_person_name}</p></div>
-      ) : (
-        <div className="space-y-0.5"><LinkStatusBadge status={row.original.link_status} /><p className="text-xs text-muted-foreground">{UNRESOLVED_NOTE}</p></div>
-      ),
+        <div className="space-y-0.5"><LinkStatusBadge status={row.original.link_status} /><p className="text-xs text-muted-foreground">{UNRESOLVED_NOTE}</p></div>,
   }),
   identityHelper.accessor('service_terms', { header: 'Service terms', cell: ({ getValue }) => <span className="num">{formatCount(getValue())}</span> }),
   identityHelper.accessor('candidacies', { header: 'Candidacies', cell: ({ getValue }) => <span className="num">{formatCount(getValue())}</span> }),
@@ -47,7 +43,7 @@ export function PeoplePage() {
 
   const identities = useListQuery<PersonIdentityRow, F>({
     view: 'person_identities',
-    select: 'id,source_id,name_at_source,link_status,person_id,linked_person_name,service_terms,candidacies,open_proposals',
+    select: 'id,source_id,name_at_source,link_status,service_terms,candidacies,open_proposals',
     spec: identitiesSpec,
     search,
     filter: (q, s) => {

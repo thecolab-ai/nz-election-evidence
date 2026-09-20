@@ -169,6 +169,12 @@ test.describe('anonymous browsing', () => {
     await expect(cass.getByTestId('votes-cell')).toHaveText('not reported')
     await expect(cass.getByTestId('votes-cell')).toHaveAttribute('data-votes-status', 'not_reported')
     await expect(cass).toContainText('label, not a registered party')
+    // The opposite case must hold too: a figure the source reported as zero is shown as 0, not as missing.
+    await page.goto('/elections/general-2023?electorate=Fixture%20Electorate%20B')
+    const eru = page.getByTestId('data-row').filter({ hasText: 'Fixture Candidate Eru' })
+    await expect(eru.getByTestId('votes-cell')).toContainText('0')
+    await expect(eru.getByTestId('votes-cell')).toHaveAttribute('data-votes-status', 'reported')
+    await page.goto('/elections/general-2023?electorate=Fixture%20Electorate%20A')
     await expect(page.getByTestId('data-row').nth(0).getByTestId('votes-cell')).toContainText('1,200')
     await expect(page.getByTestId('status-officially_nominated').first()).toHaveText('Officially nominated')
     // Votes cannot be used to order the list.
@@ -218,9 +224,79 @@ test.describe('anonymous browsing', () => {
     expect(edgeRequests.length).toBeGreaterThanOrEqual(3)
     for (const url of edgeRequests) {
       expect(url).toContain('limit=50')
-      expect(url).toMatch(/or=\(from_id\.eq\."[^"]+",to_id\.eq\."[^"]+"\)/)
+      // A node is (kind, id): every expansion names BOTH on each side, never the id alone.
+      expect(url).toMatch(/or=\(and\(from_kind\.eq\.[a-z_]+,from_id\.eq\."[^"]+"\),and\(to_kind\.eq\.[a-z_]+,to_id\.eq\."[^"]+"\)\)/)
     }
     await page.screenshot({ path: `${SCREENS}/12-graph-expanded.png`, fullPage: true })
+  })
+
+  test('party labels and electorates link to their own pages, and each page opens its own graph', async ({ page }) => {
+    await page.goto('/parliament?source=fixture_mp_directory&party=Fixture%20Party%20B')
+    await page.getByTestId('party-link').first().click()
+    await expect(page).toHaveURL(/\/parties\/[0-9a-f-]{36}$/)
+    await expect(page.getByRole('heading', { level: 1, name: 'Fixture Party B' })).toBeVisible()
+    await expect(page.getByText('It is not a registered party')).toBeVisible()
+    await expect(page.getByTestId('party-member-row').first()).toContainText('Fixture Member')
+    // A member row links on to that member's identity page.
+    await expect(page.getByTestId('party-member-row').first().getByRole('link').first()).toHaveAttribute('href', /\/people\/[0-9a-f-]{36}$/)
+    await page.screenshot({ path: `${SCREENS}/18-party-identity.png`, fullPage: true })
+    await page.getByTestId('open-graph').click()
+    await expect(page).toHaveURL(/kind=party_identity/)
+    await expect(page.getByTestId('graph-node').first()).toBeVisible()
+
+    await page.goto('/elections/general-2023?electorate=Fixture%20Electorate%20A')
+    await page.getByTestId('electorate-link').first().click()
+    await expect(page).toHaveURL(/\/electorates\/[0-9a-f-]{36}$/)
+    await expect(page.getByRole('heading', { level: 1, name: 'Fixture Electorate A' })).toBeVisible()
+    await expect(page.getByTestId('electorate-unverified')).toContainText('have not been verified')
+    await expect(page.getByTestId('electorate-candidacy-row')).toHaveCount(3)
+    // Alphabetical, never by votes; a missing figure is words.
+    await expect(page.getByTestId('electorate-candidacy-row').nth(0)).toContainText('Fixture Candidate Aroha')
+    await expect(page.getByTestId('electorate-candidacy-row').nth(2).getByTestId('votes-cell')).toHaveText('not reported')
+    await page.screenshot({ path: `${SCREENS}/19-electorate-version.png`, fullPage: true })
+    await page.getByTestId('open-graph').click()
+    await expect(page).toHaveURL(/kind=electorate_version/)
+
+    // Unknown or malformed ids are "not found", never an error and never a broadened query.
+    await page.goto('/parties/not-a-uuid')
+    await expect(page.getByRole('heading', { level: 1, name: 'Party identity not found' })).toBeVisible()
+    await page.goto('/electorates/00000000-0000-4000-8000-000000000000')
+    await expect(page.getByRole('heading', { level: 1, name: 'Electorate version not found' })).toBeVisible()
+  })
+
+  test('the graph offers only supported start kinds, finds a root of the chosen kind, and nodes link to their pages', async ({ page }) => {
+    await page.goto('/graph')
+    const kinds = await page.getByLabel('Start from a').locator('option').allInnerTexts()
+    expect(kinds.join('|')).toContain('Party label at source')
+    expect(kinds.join('|')).toContain('Electorate (boundary edition)')
+    expect(kinds.join('|')).not.toMatch(/Reviewed person|canonical/i)
+
+    await page.getByLabel('Start from a').selectOption('party_identity')
+    await page.getByLabel('Party label contains').fill('Fixture Party B')
+    await page.getByLabel('Party label contains').press('Enter')
+    await page.getByTestId('root-results').getByRole('link', { name: 'Fixture Party B' }).first().click()
+    await expect(page).toHaveURL(/kind=party_identity&id=[0-9a-f-]{36}/)
+    await expect(page.getByTestId('graph-node').first()).toBeVisible()
+    const entityLinks = page.getByTestId('graph-entity-links').getByTestId('graph-entity-link')
+    await expect(entityLinks.first()).toBeVisible()
+    const hrefs = await entityLinks.evaluateAll((links) => links.map((a) => a.getAttribute('href') ?? ''))
+    expect(hrefs.some((h) => /\/parties\//.test(h))).toBe(true)
+    expect(hrefs.some((h) => /\/people\//.test(h))).toBe(true)
+    // The canonical person linked to one of these members privately is not a node and not a link.
+    await expect(page.locator('body')).not.toContainText('CANONICAL')
+
+    // Unexpected URL input never reaches a page: dropped keys do not survive through the router's search merge.
+    await page.goto('/records?scope=everything&sort=safe_payload&dir=sideways&evil=1&source=fixture_bills')
+    await expect(page.getByTestId('data-row').first()).toBeVisible()
+    await expect(page.getByLabel('Scope')).toHaveValue('')
+    await page.getByRole('button', { name: 'Next' }).click()
+    expect(new URL(page.url()).searchParams.has('evil')).toBe(false)
+    expect(new URL(page.url()).searchParams.get('sort')).toBeNull()
+
+    // A withheld kind cannot be forced through the URL.
+    await page.goto('/graph?kind=person&id=f1f1f1f1-0000-4000-8000-0000000000aa')
+    await expect(page.getByRole('heading', { name: 'Choose one start node' })).toBeVisible()
+    await page.screenshot({ path: `${SCREENS}/20-graph-roots.png`, fullPage: true })
   })
 
   test('loading state is announced while a request is in flight', async ({ page }) => {

@@ -32,6 +32,8 @@ export const CONTRACT: {
   party_affiliations: Check<T.PartyAffiliationRow, 'party_affiliations'>
   elections: Check<T.ElectionRow, 'elections'>
   candidacies: Check<T.CandidacyRow, 'candidacies'>
+  party_identities: Check<T.PartyIdentityRow, 'party_identities'>
+  electorates: Check<T.ElectorateVersionRow, 'electorates'>
   documents: Check<T.DocumentRow, 'documents'>
   finance_returns: Check<T.FinanceReturnRow, 'finance_returns'>
   summaries: Check<T.SummaryRow, 'summaries'>
@@ -46,7 +48,7 @@ export const CONTRACT: {
 } = {
   sources: true, rights_register: true, import_runs: true, fetch_log: true, ingest_errors: true, records: true,
   record_versions: true, record_lifecycle_events: true, person_identities: true, identity_decisions: true,
-  service_terms: true, party_affiliations: true, elections: true, candidacies: true, documents: true, finance_returns: true,
+  service_terms: true, party_affiliations: true, elections: true, candidacies: true, party_identities: true, electorates: true, documents: true, finance_returns: true,
   summaries: true, stat_series: true, stat_observations: true, stat_route_reconciliation: true, schedules: true,
   release_gates: true, surface_status: true, dataset_catalogue: true, dataset_columns: true,
 }
