@@ -603,6 +603,22 @@ export type Database = {
           },
         ]
       }
+      electorate_version_attestations: {
+        Row: {
+          boundary_edition_id: string | null
+          electorate_id: string | null
+          evidence_version_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "electorate_version_attestations_evidence_version_id_fkey"
+            columns: ["evidence_version_id"]
+            isOneToOne: false
+            referencedRelation: "source_record_versions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       electorate_versions: {
         Row: {
           boundary_edition_id: string | null
