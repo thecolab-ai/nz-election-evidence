@@ -1,161 +1,228 @@
 #!/usr/bin/env node
-// Ingestion CLI. Every write goes through the versioned evidence_private functions.
+// The one ingestion CLI. Registry-driven: every source of every family is reached through the same six commands and the
+// same receipt. Every write goes through the versioned evidence_private functions.
 //
-//   node src/cli.ts validate
-//   node src/cli.ts plan <source_id>                      deterministic manifest, no network, no writes
-//   node src/cli.ts run <source_id> --dry-run             real fetch and parse, no writes
-//   node src/cli.ts run <source_id> [--backfill]          bounded live run (needs EVIDENCE_INGEST_DB_URL)
-//   node src/cli.ts import <source_id> [--dry-run]        reviewed export import (file named by env var)
-//   node src/cli.ts registry-sync                         upsert sources, rights mirror, inactive schedules
+//   node src/cli.ts validate [TARGET...]            the merged registry, rights rows and route coverage; with a target,
+//                                                   also the private inputs (re-hashed, checked row by row). No database.
+//   node src/cli.ts plan TARGET...                  what would be read and written. No database, no network.
+//   node src/cli.ts dry-run TARGET...               the whole import path short of a write. No database.
+//   node src/cli.ts import TARGET...                backfill: private artifact -> store (replay-safe, resumable)
+//   node src/cli.ts refresh TARGET... [--dry-run] [--backfill]   current-refresh route: fresh anonymous fetch -> store
+//   node src/cli.ts reconcile TARGET...             read-only: the store against the private inputs
+//   node src/cli.ts coverage                        routes of the 24 catalogue products, with their true state
+//   node src/cli.ts registry-sync [--dry-run]       upsert sources, rights mirror, schedules (always inactive)
 //
-// Flags: --max-records N  --max-runtime-seconds N  --receipt FILE
-// Connect with a login that is only a member of evidence_ingest (node src/operator.ts set-ingest-login).
-// The connection string comes from the environment only and is never printed.
+// TARGET: all | a family (core, election, parliament, statistics) | a catalogue product (P01..P24) | a unit or source id.
+// Older spellings still work: `run SOURCE` is `refresh SOURCE`, and `import SOURCE --dry-run` is `dry-run SOURCE`.
+// Flags: --receipt FILE  --receipt-dir DIR  --max-records N  --max-runtime-seconds N  --continue-on-error
+//
+// Private inputs are named by environment variables only (EVIDENCE_EXPORT_*), the store by EVIDENCE_INGEST_DB_URL: a login
+// that is a member of evidence_ingest and nothing more (node src/operator.ts set-ingest-login). Neither is ever printed.
+// Exit codes: 0 ok, 1 usage or configuration, 2 a run failed, 3 an input was refused, 4 not reconciled, 5 route blocked.
 
-import { readFile, writeFile } from "node:fs/promises";
-import { dirname, resolve } from "node:path";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import postgres from "postgres";
-import { LIVE_ADAPTERS } from "../../supabase/functions/_shared/adapters/index.ts";
-import { createPostgresDb, type IngestDb } from "../../supabase/functions/_shared/db.ts";
-import { buildManifest, registryPayload, schedulePayload, validateSourcesFile } from "../../supabase/functions/_shared/registry.ts";
-import { type RunReport, runSource } from "../../supabase/functions/_shared/runner.ts";
-import type { Json, SourcesFile } from "../../supabase/functions/_shared/types.ts";
+import { registryPayload, schedulePayload } from "../../supabase/functions/_shared/registry.ts";
+import { IngestError, type Json, type SourcesFile } from "../../supabase/functions/_shared/types.ts";
 import sourcesFile from "../../supabase/functions/_shared/sources.config.json" with { type: "json" };
-import { resolveHost } from "./resolve_host.ts";
-import { exportAdapter, type ImportFindings, loadExport, preflightExport } from "./export_import.ts";
+import { ContractError } from "./families/stats/contract.ts";
+import { receiptViolations, REPOSITORY_ROOT, sanitize } from "./loaders/access.ts";
+import { connectWorker } from "./loaders/connect.ts";
+import {
+  type ErrorCode, EXIT, exitCodeFor, LOADER_COMMANDS, type LoaderCommand, type LoaderContext, LoaderError, type LoaderFamily, type LoaderUnit,
+  newReceipt, type TargetReceipt,
+} from "./loaders/contract.ts";
+import { productCoverage, SOURCE_ROUTES, STATS_REFRESH, UNPUBLISHED_2026 } from "./loaders/coverage.ts";
+import { coreFamily } from "./loaders/families/core.ts";
+import { electionFamily } from "./loaders/families/election.ts";
+import { parliamentFamily } from "./loaders/families/parliament.ts";
+import { statsFamily } from "./loaders/families/stats.ts";
+import { mergeRegistry, rightsProblems, type RightsRow } from "./loaders/registry.ts";
+import { withRetry } from "./loaders/retry.ts";
 
-const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
-const file = sourcesFile as unknown as SourcesFile;
+export interface Loaders { file: SourcesFile; problems: string[]; families: LoaderFamily[] }
+
+export async function loaders(): Promise<Loaders> {
+  const { file, problems } = mergeRegistry(sourcesFile as unknown as SourcesFile);
+  const register = JSON.parse(await readFile(resolve(REPOSITORY_ROOT, "catalogue/rights-register.json"), "utf-8")) as RightsRow[];
+  const committed = JSON.stringify(sourcesFile) === JSON.stringify(file) ? [] : ["the committed registry is out of date: run `node src/loaders/registry_build.ts --write`"];
+  const families = [coreFamily(file), electionFamily(file), parliamentFamily(file), statsFamily()];
+  const uncovered = file.sources.filter((s) => !SOURCE_ROUTES[s.source_id]).map((s) => `source ${s.source_id} has no stated route coverage`);
+  return { file, problems: [...problems, ...rightsProblems(file, register), ...committed, ...uncovered], families };
+}
+
+/** all | family | product | unit | source id  ->  units, in registry order, each once. */
+export function resolveTargets(families: LoaderFamily[], targets: string[]): { family: LoaderFamily; unit: LoaderUnit }[] {
+  const all = families.flatMap((family) => family.units().map((unit) => ({ family, unit })));
+  const picked = new Set<string>();
+  for (const target of targets) {
+    const matches = all.filter(({ family, unit }) =>
+      target === "all" || family.family === target || unit.unit === target || unit.product_ids.includes(target)
+      || unit.backfill_source_ids.includes(target) || unit.refresh_source_ids.includes(target));
+    if (matches.length === 0) throw new LoaderError("target_unknown", `unknown target "${target}". Use all, a family (${families.map((f) => f.family).join(", ")}), a product id, or one of: ${all.map((u) => u.unit.unit).join(", ")}`);
+    for (const match of matches) picked.add(match.family.family + "\n" + match.unit.unit);
+  }
+  return all.filter(({ family, unit }) => picked.has(family.family + "\n" + unit.unit));
+}
+
+const INPUT_CLASSES: { [errorClass: string]: ErrorCode } = {
+  missing_input: "input_missing", input_not_accepted: "input_contract_violation", parse_error: "input_contract_violation", config_error: "config_invalid",
+};
+
+/** A thrown error becomes a receipt with a code from the closed list; nothing escapes as free text with a location in it. */
+function refusal(family: LoaderFamily, unit: LoaderUnit, command: LoaderCommand, error: unknown): TargetReceipt {
+  const receipt = newReceipt(family, unit, command, "unknown", "unknown");
+  const message = sanitize(error instanceof Error ? error.message : String(error));
+  if (error instanceof LoaderError) {
+    receipt.error_code = error.code;
+    receipt.status = error.code.startsWith("input_") ? "refused_input" : error.code.startsWith("route_") ? "blocked" : "failed";
+  } else if (error instanceof ContractError) {
+    receipt.error_code = /manifest|does not match|no readable artifact/.test(message) ? (/no readable/.test(message) ? "input_missing" : "input_pin_mismatch") : "input_contract_violation";
+    receipt.status = "refused_input";
+  } else if (error instanceof IngestError && INPUT_CLASSES[error.errorClass]) {
+    receipt.error_code = /checksum|pinned|pin\b|manifest/i.test(message) && error.errorClass === "input_not_accepted" ? "input_pin_mismatch" : INPUT_CLASSES[error.errorClass];
+    receipt.status = receipt.error_code === "config_invalid" ? "failed" : "refused_input";
+  } else {
+    receipt.error_code = "unexpected";
+    receipt.status = "failed";
+  }
+  receipt.error_detail = message;
+  return receipt;
+}
+
+export async function runCommand(command: LoaderCommand, family: LoaderFamily, unit: LoaderUnit, ctx: LoaderContext, dryRun: boolean): Promise<TargetReceipt> {
+  try {
+    switch (command) {
+      case "plan": return await family.plan(unit, ctx);
+      case "validate": return await family.validate(unit, ctx);
+      case "dry-run": return await family.import(unit, ctx, true);
+      case "import": return await withRetry(() => family.import(unit, ctx, false));
+      case "refresh": return dryRun ? await family.refresh(unit, ctx, true) : await withRetry(() => family.refresh(unit, ctx, false));
+      case "reconcile": return await family.reconcile(unit, ctx);
+    }
+  } catch (error) {
+    return refusal(family, unit, command, error);
+  }
+}
 
 function flag(args: string[], name: string): string | undefined {
   const index = args.indexOf(name);
   return index >= 0 ? args[index + 1] : undefined;
 }
 
-async function connect(): Promise<IngestDb> {
-  const url = process.env.EVIDENCE_INGEST_DB_URL;
-  if (!url) throw new Error("EVIDENCE_INGEST_DB_URL is not set (see docs/database/runbook.md)");
-  // prepare:false and no session state: safe behind a transaction-mode pooler.
-  const sql = postgres(url, { max: 1, prepare: false, onnotice: () => undefined, connection: { application_name: "evidence-ingest-cli" } });
-  const [{ me, elevated }] = await sql`select current_user as me, (select rolsuper or rolbypassrls or rolcreaterole from pg_roles where rolname = current_user) as elevated`;
-  if (elevated && process.env.EVIDENCE_ALLOW_ELEVATED_LOGIN !== "1") {
-    await sql.end({ timeout: 5 });
-    throw new Error(`refusing to ingest as "${me}": use a login that is only a member of evidence_ingest`);
+const VALUE_FLAGS = new Set(["--receipt", "--receipt-dir", "--max-records", "--max-runtime-seconds"]);
+
+function positional(args: string[]): string[] {
+  const out: string[] = [];
+  for (let i = 0; i < args.length; i++) {
+    if (VALUE_FLAGS.has(args[i])) i++;
+    else if (!args[i].startsWith("--")) out.push(args[i]);
   }
-  return createPostgresDb(sql);
+  return out;
 }
 
-/** Receipt: counts, hashes, statuses and publisher URLs. No payloads, bodies, hosts of ours, or credentials. */
-function receipt(report: RunReport, findings?: ImportFindings): { [key: string]: unknown } {
-  return {
-    input_findings: findings ?? null,
-    receipt_version: 1,
-    source_id: report.source_id, mode: report.mode, dry_run: report.dry_run, status: report.status,
-    complete_snapshot: report.complete_snapshot, error_class: report.error_class, error_detail: report.error_detail,
-    manifest_hash: report.manifest_hash, manifest: report.manifest, run_id: report.run_id,
-    resumed_from_run_id: report.resumed_from_run_id, totals: report.totals, tombstoned: report.tombstoned, pages: report.pages,
-    projection: report.projection ?? null,
-    fetches: report.fetches.map((f) => ({
-      method: f.method, url: f.url, attempt: f.attempt, outcome: f.outcome, http_status: f.http_status ?? null,
-      bytes: f.bytes ?? null, body_sha256: f.body_sha256 ?? null, retrieved_at: f.retrieved_at, duration_ms: f.duration_ms,
-    })),
-    planned_record_count: report.planned_records?.length ?? null,
-    planned_records_digest_sample: report.planned_records?.slice(0, 5) ?? null,
-  };
+async function emit(out: unknown, receiptFile: string | undefined): Promise<void> {
+  const problems = receiptViolations(out);
+  if (problems.length) throw new Error("the receipt holds a value that may not leave this process (" + problems.slice(0, 3).join("; ") + "); nothing was written");
+  const text = JSON.stringify(out, null, 2) + "\n";
+  if (receiptFile) await writeFile(resolve(process.cwd(), receiptFile), text, { mode: 0o600 });
+  process.stdout.write(text);
 }
 
 async function main(argv: string[]): Promise<number> {
-  const [command, sourceId, ...rest] = argv;
-  const args = [sourceId ?? "", ...rest];
-  const problems = validateSourcesFile(file);
-  if (command === "validate") {
-    if (problems.length) {
-      for (const p of problems) console.error("- " + p);
-      return 1;
-    }
-    console.log(`OK: ${file.sources.length} sources, ${file.schedules.length} schedules (all schedules sync as inactive)`);
-    return 0;
+  let [command, ...args] = argv;
+  if (command === "run") command = "refresh";
+  let dryRun = args.includes("--dry-run");
+  if (command === "import" && dryRun) command = "dry-run";
+  const { file, problems, families } = await loaders();
+  const targets = positional(args);
+
+  if (command === "validate" && targets.length === 0) {
+    for (const p of problems) console.error("- " + p);
+    if (problems.length) return EXIT.usage_or_config;
+    console.log(`OK: ${file.sources.length} sources in ${families.length} families, ${file.schedules.length} schedules (all schedules sync as inactive), config version ${file.config_version}`);
+    return EXIT.ok;
   }
-  if (problems.length) throw new Error("source configuration is invalid: " + problems.join("; "));
+  if (problems.length) throw new LoaderError("config_invalid", "source configuration is invalid: " + problems.join("; "));
+
+  if (command === "coverage") {
+    const catalogue = JSON.parse(await readFile(resolve(REPOSITORY_ROOT, "catalogue/sources.json"), "utf-8")) as { product_id: string; title: string; record_count: number }[];
+    await emit({ contract: "route coverage of the 24 catalogue products", products: productCoverage(file, catalogue), statistics_refresh_routes: STATS_REFRESH, not_published_for_2026: UNPUBLISHED_2026 }, flag(args, "--receipt"));
+    return EXIT.ok;
+  }
 
   if (command === "registry-sync") {
-    const rights = JSON.parse(await readFile(resolve(ROOT, "catalogue/rights-register.json"), "utf-8")) as { [key: string]: Json }[];
-    const payload = await registryPayload(file, rights);
-    if (argv.includes("--dry-run")) {
-      console.log(JSON.stringify({ dry_run: true, rights: rights.length, sources: file.sources.length, schedules: file.schedules.length }, null, 2));
-      return 0;
+    const rights = JSON.parse(await readFile(resolve(REPOSITORY_ROOT, "catalogue/rights-register.json"), "utf-8")) as { [key: string]: Json }[];
+    if (dryRun) {
+      await emit({ dry_run: true, rights: rights.length, sources: file.sources.length, schedules: file.schedules.length, config_version: file.config_version }, undefined);
+      return EXIT.ok;
     }
-    const db = await connect();
+    const connection = await connectWorker(process.env);
     try {
-      const synced = await db.syncRegistry(payload);
-      const schedules = await db.syncSchedules(await schedulePayload(file));
-      console.log(JSON.stringify({ synced, schedules_synced_inactive: schedules }, null, 2));
+      const synced = await connection.db.syncRegistry(await registryPayload(file, rights));
+      await emit({ synced, schedules_synced_inactive: await connection.db.syncSchedules(await schedulePayload(file)) }, flag(args, "--receipt"));
     } finally {
-      await db.close();
+      await connection.close();
     }
-    return 0;
+    return EXIT.ok;
   }
 
-  const source = file.sources.find((s) => s.source_id === sourceId);
-  if (!source) throw new Error(`unknown source "${sourceId ?? ""}". Known: ${file.sources.map((s) => s.source_id).join(", ")}`);
-  const dryRun = args.includes("--dry-run");
-  const backfill = args.includes("--backfill");
-  const maxRecords = Number(flag(args, "--max-records") ?? (backfill ? 200000 : 2000));
-  const maxRuntimeSeconds = Number(flag(args, "--max-runtime-seconds") ?? (backfill ? 3300 : 300));
-  if (!Number.isInteger(maxRecords) || maxRecords < 1) throw new Error("--max-records must be a positive integer");
-  if (!Number.isInteger(maxRuntimeSeconds) || maxRuntimeSeconds < 10 || maxRuntimeSeconds > 3500) throw new Error("--max-runtime-seconds must be 10-3500");
+  if (!(LOADER_COMMANDS as readonly string[]).includes(command ?? "")) throw new LoaderError("usage", `commands: ${LOADER_COMMANDS.join(" | ")} | coverage | registry-sync`);
+  if (targets.length === 0) throw new LoaderError("usage", `${command} needs a target: all, a family, a product id, or a unit`);
+  if (command !== "refresh") dryRun = command === "dry-run";
 
-  if (command === "plan") {
-    const adapter = source.adapter_kind === "live_fetch" ? LIVE_ADAPTERS[source.adapter_name] : { version: "1.0.0" };
-    if (!adapter) throw new Error("adapter not found");
-    const mode = source.adapter_kind === "export_import" ? "export_import" : backfill ? "backfill" : "incremental";
-    console.log(JSON.stringify(await buildManifest(file, source, adapter.version, mode, maxRecords), null, 2));
-    return 0;
-  }
+  const number = (name: string): number | undefined => {
+    const raw = flag(args, name);
+    if (raw === undefined) return undefined;
+    const value = Number(raw);
+    if (!Number.isInteger(value) || value < 1) throw new LoaderError("usage", `${name} must be a positive integer`);
+    return value;
+  };
+  const ctx: LoaderContext = {
+    env: process.env, log: (message) => console.error(message), backfill: args.includes("--backfill"),
+    maxRecords: number("--max-records"), maxRuntimeSeconds: number("--max-runtime-seconds"),
+  };
+  if (ctx.maxRuntimeSeconds !== undefined && (ctx.maxRuntimeSeconds < 10 || ctx.maxRuntimeSeconds > 3500)) throw new LoaderError("usage", "--max-runtime-seconds must be 10-3500");
 
-  let report: RunReport;
-  let findings: ImportFindings | undefined;
-  if (command === "run") {
-    if (source.adapter_kind !== "live_fetch") throw new Error("use `import` for export sources");
-    const adapter = LIVE_ADAPTERS[source.adapter_name];
-    if (!adapter) throw new Error(`adapter ${source.adapter_name} not found`);
-    const db = dryRun ? null : await connect();
-    try {
-      report = await runSource({ file, source, adapter, mode: backfill ? "backfill" : "incremental", triggerKind: "cli", maxRecords, maxRuntimeSeconds, dryRun, db, resolveHost });
-    } finally {
-      await db?.close();
+  const receiptDir = flag(args, "--receipt-dir");
+  if (receiptDir) await mkdir(resolve(process.cwd(), receiptDir), { recursive: true, mode: 0o700 });
+  const receipts: TargetReceipt[] = [];
+  let worst: number = EXIT.ok;
+  for (const { family, unit } of resolveTargets(families, targets)) {
+    // For a refresh, a unit without any refresh source is only reported when it was asked for by name.
+    if (command === "refresh" && unit.refresh_source_ids.length === 0 && !targets.includes(unit.unit)) continue;
+    if (command !== "refresh" && command !== "reconcile" && unit.backfill_source_ids.length === 0 && !targets.includes(unit.unit)) continue;
+    ctx.log(`${command} ${family.family}/${unit.unit} ...`);
+    const receipt = await runCommand(command as LoaderCommand, family, unit, ctx, dryRun);
+    receipts.push(receipt);
+    ctx.log(`${command} ${family.family}/${unit.unit}: ${receipt.status}${receipt.error_code ? " (" + receipt.error_code + ")" : ""}`);
+    if (receiptDir) {
+      const problemsInReceipt = receiptViolations(receipt);
+      if (problemsInReceipt.length) throw new Error("a receipt holds a value that may not leave this process (" + problemsInReceipt.slice(0, 3).join("; ") + ")");
+      await writeFile(resolve(process.cwd(), receiptDir, `${command}-${family.family}-${unit.unit}.json`), JSON.stringify(receipt, null, 2) + "\n", { mode: 0o600 });
     }
-  } else if (command === "import") {
-    if (source.adapter_kind !== "export_import" || !source.export_contract) throw new Error("use `run` for live sources");
-    const loaded = await loadExport(source.export_contract, process.env);
-    // The whole file is validated before a run exists: a rejected input writes nothing and skips nothing.
-    findings = await preflightExport(source, source.export_contract, loaded, process.env);
-    const db = dryRun ? null : await connect();
-    try {
-      report = await runSource({
-        file, source, adapter: exportAdapter(loaded), mode: "export_import", triggerKind: "cli", maxRecords, maxRuntimeSeconds,
-        dryRun, db, inputDigest: loaded.digest,
-      });
-    } finally {
-      await db?.close();
-    }
-  } else {
-    throw new Error("commands: validate | plan | run | import | registry-sync");
+    const code = exitCodeFor(receipt.status);
+    // A blocked route is an availability fact, not a failure of the run: it decides the exit code only when nothing ran.
+    if (code !== EXIT.blocked) worst = Math.max(worst, code);
+    if (code !== EXIT.ok && code !== EXIT.blocked && !args.includes("--continue-on-error")) break;
   }
-
-  const out = receipt(report, findings);
-  const receiptFile = flag(args, "--receipt");
-  if (receiptFile) await writeFile(resolve(process.cwd(), receiptFile), JSON.stringify(out, null, 2) + "\n");
-  console.log(JSON.stringify(out, null, 2));
-  return report.status === "failed" ? 2 : 0;
+  const summary = receipts.map((r) => ({
+    family: r.family, unit: r.unit, status: r.status, error_code: r.error_code, input: r.counts.input, written: r.counts.written,
+    checks_passed: r.counts.checks.filter((c) => c.ok).length, checks_failed: r.counts.checks.filter((c) => !c.ok).length,
+  }));
+  // With a receipt directory the per-unit files hold the detail; the printed output stays a summary.
+  await emit(receiptDir ? { receipt_version: 2, command, summary } : { receipt_version: 2, command, summary, receipts }, flag(args, "--receipt"));
+  return worst === EXIT.ok && receipts.length > 0 && receipts.every((r) => r.status === "blocked") ? EXIT.blocked : worst;
 }
 
-main(process.argv.slice(2)).then(
-  (code) => process.exit(code),
-  (error) => {
-    // Never echo connection strings or stack traces that could carry them.
-    console.error("error: " + String(error instanceof Error ? error.message : error).replace(/postgres(?:ql)?:\/\/\S+/g, "postgres://[redacted]"));
-    process.exit(1);
-  },
-);
+if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  main(process.argv.slice(2)).then(
+    (code) => process.exit(code),
+    (error) => {
+      // Never echo connection strings, locations on a disk or stack traces that could carry them.
+      console.error("error: " + sanitize(String(error instanceof Error ? error.message : error)));
+      process.exit(error instanceof LoaderError && error.code !== "usage" && error.code !== "config_invalid" && error.code !== "target_unknown" ? EXIT.run_failed : EXIT.usage_or_config);
+    },
+  );
+}

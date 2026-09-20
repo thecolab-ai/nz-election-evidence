@@ -101,8 +101,8 @@ class PublicComplianceTests(unittest.TestCase):
             csv_rows = list(csv.DictReader(handle))
 
         # 19 original publisher rows plus two pending rows added so every live source has a rights reference.
-        self.assertEqual(len(rows), 21)
-        self.assertEqual(len(csv_rows), 21)
+        self.assertEqual(len(rows), 22)
+        self.assertEqual(len(csv_rows), 22)
         self.assertEqual(rows, csv_rows_as_json(csv_rows))
         for row in rows:
             self.assertEqual(row["review_status"], "pending")

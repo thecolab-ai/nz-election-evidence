@@ -21,6 +21,7 @@ import {
   toIngestRecord, witnessText,
 } from "../src/families/parliament/payload.ts";
 import { PARLIAMENT_EXPORT_SOURCES, mergeIntoRegistry } from "../src/families/parliament/registry_fragment.ts";
+import { coreOf } from "../src/loaders/registry.ts";
 
 const QID = "11111111-2222-4333-8444-555555555555";
 const OBSERVED = "2026-09-19T01:54:46.231Z";
@@ -235,7 +236,8 @@ const HISTORY: ExportRow[] = [
   questionRow({ id: SECOND, question_number: 102, document_ref: "WQ_102_2026", title: "102 (2026). Example Member to the Minister for Examples" }),
 ];
 
-const merged = mergeIntoRegistry(sourcesFile as unknown as SourcesFile);
+// The committed registry is now the merged one, so the family fragment is merged into its core part (what no family owns).
+const merged = mergeIntoRegistry(coreOf(sourcesFile as unknown as SourcesFile));
 const questionsSource = merged.file.sources.find((s) => s.source_id === "parliament_export_written_questions")!;
 
 test("history is planned into ordered generations, and rows that differ only in unkept fields collapse and are counted", async () => {

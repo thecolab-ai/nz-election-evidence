@@ -97,7 +97,7 @@ export const STATS_SOURCES: StatsSourcePlan[] = [
     title: "2013 Census meshblock dataset: selected totals for 2001, 2006 and 2013 on 2013 boundaries",
     publisher: "Stats NZ",
     official_url: "https://www3.stats.govt.nz/meshblock/2013/csv/2013_mb_dataset_Total_New_Zealand_CSV.zip",
-    rights_id: "RIGHTS-16",
+    rights_id: "RIGHTS-22",
     route: "dedicated_census",
     upstream: { census_datasets: ["statsnz.census.2013.meshblock.selected_totals"] },
     historical: true,

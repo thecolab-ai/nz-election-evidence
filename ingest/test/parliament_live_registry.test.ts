@@ -4,10 +4,12 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { validateSourcesFile } from "../../supabase/functions/_shared/registry.ts";
 import type { SourcesFile } from "../../supabase/functions/_shared/types.ts";
+import { coreOf } from "../src/loaders/registry.ts";
 import sourcesFile from "../../supabase/functions/_shared/sources.config.json" with { type: "json" };
-import { PARLIAMENT_LIVE_ADAPTERS, PARLIAMENT_LIVE_SCHEDULES, PARLIAMENT_LIVE_SOURCES } from "../src/families/parliament/live/index.ts";
+import { PARLIAMENT_LIVE_ADAPTERS, PARLIAMENT_LIVE_SCHEDULES, PARLIAMENT_LIVE_SOURCES } from "../../supabase/functions/_shared/adapters/parliament/live/index.ts";
 
-const base = sourcesFile as unknown as SourcesFile;
+// The committed registry is the merged one; the fragment is checked against its core part (what no family owns).
+const base = coreOf(sourcesFile as unknown as SourcesFile);
 
 test("live sources and schedules pass the shared registry validation and clash with nothing already registered", () => {
   const products = [...base.registry_products];
