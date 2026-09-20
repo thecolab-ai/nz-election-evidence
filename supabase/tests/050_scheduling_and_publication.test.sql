@@ -3,6 +3,9 @@
 begin;
 select plan(17);
 
+-- Start from a known state whatever a developer's local stack holds (rolled back with the test).
+delete from vault.secrets where name in ('evidence_functions_base_url', 'evidence_cron_secret');
+
 select is((select count(*)::int from cron.job where command like '%evidence_private%'), 0, 'migrations schedule no cron job');
 
 select evidence_private.sync_registry(jsonb_build_object(

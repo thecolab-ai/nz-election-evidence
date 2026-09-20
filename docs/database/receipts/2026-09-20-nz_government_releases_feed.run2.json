@@ -1,0 +1,55 @@
+{
+  "receipt_version": 1,
+  "source_id": "nz_government_releases_feed",
+  "mode": "incremental",
+  "dry_run": false,
+  "status": "succeeded",
+  "complete_snapshot": false,
+  "error_class": null,
+  "error_detail": null,
+  "manifest_hash": "sha256:c3378cdbb5eea764f54a1ed25f82830d08cf8a7e8bad44f8bff28bad1d13c4f2",
+  "manifest": {
+    "manifest_version": 1,
+    "config_version": 1,
+    "source_id": "nz_government_releases_feed",
+    "adapter_name": "nz_government_releases_feed",
+    "adapter_version": "1.0.0",
+    "mode": "incremental",
+    "allowed_hosts": [
+      "www.beehive.govt.nz"
+    ],
+    "snapshot_semantics": "append_only_feed",
+    "source_config_hash": "sha256:36a3390fbbb9b3c0172113a38dd63984f29c383e5571dde8640ec14bac3c08bc",
+    "max_records": 2000
+  },
+  "run_id": "8562cb5b-5278-45ac-b743-3f9b7ec60fb5",
+  "resumed_from_run_id": null,
+  "totals": {
+    "seen": 10,
+    "versions_inserted": 0,
+    "observations_inserted": 10,
+    "unchanged": 10,
+    "rejected": 0
+  },
+  "tombstoned": 0,
+  "pages": 1,
+  "projection": {
+    "documents": 10,
+    "mp_directory": 0,
+    "baseline_candidacies": 0
+  },
+  "fetches": [
+    {
+      "method": "GET",
+      "url": "https://www.beehive.govt.nz/releases/feed",
+      "attempt": 1,
+      "outcome": "ok",
+      "http_status": 200,
+      "bytes": 6248,
+      "body_sha256": "sha256:655b68633c4f7a86d894b72e8f2196677edef3411ffd20c472eaaac243b78140",
+      "retrieved_at": "2026-09-20T03:27:19.900Z",
+      "duration_ms": 92
+    }
+  ],
+  "receipt_note": "Real retrieval from the official publisher on 2026-09-20 (UTC), written to a disposable local database. Counts, hashes, statuses and publisher URLs only; no payloads or response bodies."
+}

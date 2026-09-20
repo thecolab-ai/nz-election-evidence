@@ -1,0 +1,51 @@
+{
+  "receipt_version": 1,
+  "source_id": "nz_parliament_written_questions",
+  "mode": "incremental",
+  "dry_run": false,
+  "status": "failed",
+  "complete_snapshot": false,
+  "error_class": "host_denied",
+  "error_detail": "host questions.parliament.nz is not on this source's allowlist",
+  "manifest_hash": "sha256:722b91e2f29ee828285b3f87af6cc1734297a02b9d0367425a88881a7985a84b",
+  "manifest": {
+    "manifest_version": 1,
+    "config_version": 1,
+    "source_id": "nz_parliament_written_questions",
+    "adapter_name": "availability_probe",
+    "adapter_version": "1.0.0",
+    "mode": "incremental",
+    "allowed_hosts": [
+      "www3.parliament.nz"
+    ],
+    "snapshot_semantics": "rolling_window",
+    "source_config_hash": "sha256:32957c5abb38b0d6ac1bf227a319dff2c222b7517b2d42157c755130cbabea48",
+    "max_records": 2000
+  },
+  "run_id": "fc0862fe-4cb1-4e2d-b9d8-cb10c306c9f9",
+  "resumed_from_run_id": null,
+  "totals": {
+    "seen": 0,
+    "versions_inserted": 0,
+    "observations_inserted": 0,
+    "unchanged": 0,
+    "rejected": 0
+  },
+  "tombstoned": 0,
+  "pages": 0,
+  "projection": null,
+  "fetches": [
+    {
+      "method": "GET",
+      "url": "https://www3.parliament.nz/en/pb/order-paper-questions/written-questions/",
+      "attempt": 1,
+      "outcome": "host_denied",
+      "http_status": null,
+      "bytes": null,
+      "body_sha256": null,
+      "retrieved_at": "2026-09-20T03:27:21.635Z",
+      "duration_ms": 1827
+    }
+  ],
+  "receipt_note": "Real retrieval from the official publisher on 2026-09-20 (UTC), written to a disposable local database. Counts, hashes, statuses and publisher URLs only; no payloads or response bodies."
+}

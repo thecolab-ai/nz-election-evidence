@@ -1,0 +1,66 @@
+{
+  "receipt_version": 1,
+  "source_id": "nz_parliament_current_bills",
+  "mode": "incremental",
+  "dry_run": false,
+  "status": "succeeded",
+  "complete_snapshot": true,
+  "error_class": null,
+  "error_detail": null,
+  "manifest_hash": "sha256:dbcd6fc6639627aced041cd2ca87dd5b5fbc575f49dcb260f69cc456399000e9",
+  "manifest": {
+    "manifest_version": 1,
+    "config_version": 1,
+    "source_id": "nz_parliament_current_bills",
+    "adapter_name": "nz_parliament_current_bills",
+    "adapter_version": "1.0.0",
+    "mode": "incremental",
+    "allowed_hosts": [
+      "bills.parliament.nz"
+    ],
+    "snapshot_semantics": "complete_snapshot",
+    "source_config_hash": "sha256:1eb30495eb1ddb65a5eee4bab72232b408ced46e66aa1f057f4b43d6288fe79d",
+    "max_records": 2000
+  },
+  "run_id": "b7a224d1-318c-4234-96d2-de8d0b7fc143",
+  "resumed_from_run_id": null,
+  "totals": {
+    "seen": 93,
+    "versions_inserted": 93,
+    "observations_inserted": 93,
+    "unchanged": 0,
+    "rejected": 0
+  },
+  "tombstoned": 0,
+  "pages": 2,
+  "projection": {
+    "documents": 93,
+    "mp_directory": 0,
+    "baseline_candidacies": 0
+  },
+  "fetches": [
+    {
+      "method": "POST",
+      "url": "https://bills.parliament.nz/api/data/search",
+      "attempt": 1,
+      "outcome": "ok",
+      "http_status": 200,
+      "bytes": 41089,
+      "body_sha256": "sha256:48bfd793ef3afe0782032299ee3cb92d1c79ec67c31ac556aed9a021a5c9565e",
+      "retrieved_at": "2026-09-20T03:27:17.881Z",
+      "duration_ms": 226
+    },
+    {
+      "method": "POST",
+      "url": "https://bills.parliament.nz/api/data/search",
+      "attempt": 1,
+      "outcome": "ok",
+      "http_status": 200,
+      "bytes": 35205,
+      "body_sha256": "sha256:b940796b1bf86662fc3fefafe80ffe779d12b4e6e228b5d13a9cb7559ea677ea",
+      "retrieved_at": "2026-09-20T03:27:18.149Z",
+      "duration_ms": 82
+    }
+  ],
+  "receipt_note": "Real retrieval from the official publisher on 2026-09-20 (UTC), written to a disposable local database. Counts, hashes, statuses and publisher URLs only; no payloads or response bodies."
+}

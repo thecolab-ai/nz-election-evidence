@@ -39,6 +39,18 @@ python3 -m http.server 8000
 
 You can also open `atlas/index.html` directly. No packages, network access, server, database or API key are required.
 
+## Evidence store and explorer (in review, not live)
+
+This branch adds a private Supabase evidence store, repeatable ingestion from official sources, and a read-only explorer for authorised reviewers. **Nothing is published by it**: the published schema is closed, every publisher rights row is still pending, no schedule is active, and the GitHub Pages deployment is blocked until the [review register](REVIEW-REGISTER.md) records an approved review for the new surface. The catalogue and atlas above still need no packages, network, server or API key.
+
+- [Architecture](docs/database/architecture.md) · [Runbook and release checklist](docs/database/runbook.md) · [Source-by-source reconciliation](docs/database/source-reconciliation.md) · [Publication policy](docs/database/publication-policy.md) · [Implementation checklist](docs/database/implementation-checklist.md) · [Ingestion receipts](docs/database/receipts/README.md)
+- `supabase/` — migrations, pgTAP tests, the `ingest-run` Edge Function and shared adapters
+- `ingest/` — CLI for dry runs, bounded live runs, backfills and reviewed export imports
+- `web/` — the explorer (static shell; ships no evidence data; public anon key only)
+- `scripts/db/` — versioned operator scripts; `scripts/release_gate.py` — R10 deployment gate
+
+Coverage is partial and enumerated, not claimed: three official sources are ingested live; the Electoral Commission endpoints were unavailable to automated requests and are recorded as unavailable, which is not the same as empty.
+
 ## Start here
 
 Read [FIRST-STEPS.md](FIRST-STEPS.md) for three bounded contributions that are ready to pick up. Roles include data research, source research, quality assurance, policy analysis and visualisation. See [CONTRIBUTING.md](CONTRIBUTING.md) before making evidence claims.
