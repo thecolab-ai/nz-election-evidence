@@ -2,7 +2,7 @@
 -- Narrow override versus absent authorization; private denial; rights stay independent; immutability; roles.
 -- TEST FIXTURES ONLY: synthetic, rolled back. Rights ids RIGHTS-78x are distinct from every other fixture.
 begin;
-select plan(47);
+select plan(55);
 grant evidence_ingest to current_user;
 
 -- Isolation: these assertions are about the recorded reviews and rights alone, so any owner decision already in this
@@ -87,20 +87,39 @@ reset role;
 select is((select owner_fields from evidence_private.source_release where source_id = 'pgtap_own'), '{}'::text[], 'and no fields');
 
 -- a decision for the Pages deployment ONLY does not release database rows
-select evidence_private.sync_owner_authorizations(pg_temp.auth('OWNER-AUTH-2026-01-01-02', current_date, current_date + 30,
-  jsonb_build_array(jsonb_build_object('scope', 'pages_deploy', 'surface_id', 'explorer-pages'))), pg_temp.hash());
+select evidence_private.sync_owner_authorizations(jsonb_build_object('schema_version', 1, 'authorizations',
+  (pg_temp.auth('OWNER-AUTH-2026-01-01-01', current_date - 30, current_date - 1,
+     jsonb_build_array(jsonb_build_object('scope', 'public_rows', 'surface_id', 'evidence-store'), pg_temp.fields('pgtap_own', 'RIGHTS-781', array['name_at_source']))) -> 'authorizations')
+  || (pg_temp.auth('OWNER-AUTH-2026-01-01-02', current_date, current_date + 30, jsonb_build_array(jsonb_build_object('scope', 'pages_deploy', 'surface_id', 'explorer-pages'))) -> 'authorizations')), pg_temp.hash());
 set local role anon;
 select is((select count(*) from evidence_public.records), 0::bigint, 'a pages_deploy decision alone releases no database rows: scopes do not imply each other');
 reset role;
 
 -- 2. NARROW override ---------------------------------------------------------------------------------------------
-select is(evidence_private.sync_owner_authorizations(pg_temp.auth('OWNER-AUTH-2026-01-01-03', current_date, current_date + 30,
+create temp table decision_03 as select pg_temp.auth('OWNER-AUTH-2026-01-01-03', current_date, current_date + 30,
   jsonb_build_array(jsonb_build_object('scope', 'public_rows', 'surface_id', 'evidence-store'),
-                    pg_temp.fields('pgtap_own', 'RIGHTS-781', array['label', 'name_at_source', 'member_name', 'party_label', 'name_display', 'title']))), pg_temp.hash()),
-  '{"recorded": 1, "revoked": 0, "unchanged": 0}'::jsonb, 'the owner decision is recorded');
-select is(evidence_private.sync_owner_authorizations(pg_temp.auth('OWNER-AUTH-2026-01-01-03', current_date, current_date + 30,
-  jsonb_build_array(jsonb_build_object('scope', 'public_rows', 'surface_id', 'evidence-store'))), pg_temp.hash()),
-  '{"recorded": 0, "revoked": 0, "unchanged": 1}'::jsonb, 'syncing again changes nothing, even if the file was edited: a decision is never rewritten');
+                    pg_temp.fields('pgtap_own', 'RIGHTS-781', array['label', 'name_at_source', 'member_name', 'party_label', 'name_display', 'title']))) as doc;
+-- every sync carries the WHOLE file, as the real script does
+create function pg_temp.file(p_extra jsonb default '[]'::jsonb, p_status_03 text default 'active') returns jsonb language sql as $$
+  select jsonb_build_object('schema_version', 1, 'authorizations',
+    (pg_temp.auth('OWNER-AUTH-2026-01-01-01', current_date - 30, current_date - 1,
+       jsonb_build_array(jsonb_build_object('scope', 'public_rows', 'surface_id', 'evidence-store'), pg_temp.fields('pgtap_own', 'RIGHTS-781', array['name_at_source']))) -> 'authorizations')
+    || (pg_temp.auth('OWNER-AUTH-2026-01-01-02', current_date, current_date + 30, jsonb_build_array(jsonb_build_object('scope', 'pages_deploy', 'surface_id', 'explorer-pages'))) -> 'authorizations')
+    || jsonb_build_array(jsonb_set((select doc -> 'authorizations' -> 0 from decision_03), '{status}', to_jsonb(p_status_03)))
+    || p_extra);
+$$;
+select is(evidence_private.sync_owner_authorizations(pg_temp.file(), pg_temp.hash()),
+  '{"recorded": 1, "revoked": 0, "unchanged": 2}'::jsonb, 'the owner decision is recorded');
+select is(evidence_private.sync_owner_authorizations(pg_temp.file(), pg_temp.hash()), '{"recorded": 0, "revoked": 0, "unchanged": 3}'::jsonb, 'syncing the same file again changes nothing');
+select throws_ok(format($$select evidence_private.sync_owner_authorizations(%L::jsonb, pg_temp.hash())$$,
+  jsonb_set(pg_temp.file(), '{authorizations,2,expires_on}', to_jsonb((current_date + 60)::text))), 'P0001', null,
+  'the same id with different content is refused: a decision is never rewritten, in either direction');
+select throws_ok(format($$select evidence_private.sync_owner_authorizations(%L::jsonb, pg_temp.hash())$$,
+  jsonb_build_object('schema_version', 1, 'authorizations', '[]'::jsonb)), 'P0001', null,
+  'a file that no longer lists a decision in force is refused, so deleting an entry can never leave it running unnoticed');
+select throws_ok(format($$select evidence_private.sync_owner_authorizations(%L::jsonb, pg_temp.hash())$$,
+  pg_temp.file(pg_temp.auth('OWNER-AUTH-2026-01-03-01', current_date, current_date + 30, jsonb_build_array(jsonb_build_object('scope', 'public_rows', 'surface_id', 'evidence-store'))) -> 'authorizations' #- '{0,status}')),
+  'P0001', null, 'an entry without a status is refused, not treated as active');
 
 select is((select count(*) from evidence_private.release_gates g join gates_before b using (gate_key) where g.state = b.state and g.state = 'closed'
            and g.decided_by is null and g.evidence_reference is null), 3::bigint, 'NO release gate was opened or given an evidence reference by the owner decision');
@@ -140,24 +159,24 @@ select throws_ok($$select evidence_private.sync_owner_authorizations('{}'::jsonb
 reset role;
 
 -- 3. PRIVATE denial: what no owner decision can release ---------------------------------------------------------------
-select throws_ok(format($$select evidence_private.sync_owner_authorizations(%L::jsonb, pg_temp.hash())$$, pg_temp.auth('OWNER-AUTH-2026-01-02-01', current_date, current_date + 30,
-  jsonb_build_array(pg_temp.fields('pgtap_own', 'RIGHTS-781', array['contact_email'])))), '23514', null, 'contact data can never be named');
-select throws_ok(format($$select evidence_private.sync_owner_authorizations(%L::jsonb, pg_temp.hash())$$, pg_temp.auth('OWNER-AUTH-2026-01-02-02', current_date, current_date + 30,
-  jsonb_build_array(pg_temp.fields('pgtap_own', 'RIGHTS-781', array['safe_payload'])))), '23514', null, 'nor the whole payload');
-select throws_ok(format($$select evidence_private.sync_owner_authorizations(%L::jsonb, pg_temp.hash())$$, pg_temp.auth('OWNER-AUTH-2026-01-02-03', current_date, current_date + 30,
-  jsonb_build_array(pg_temp.fields('pgtap_own', 'RIGHTS-781', array['release_text'])))), '23514', null, 'nor a body');
-select throws_ok(format($$select evidence_private.sync_owner_authorizations(%L::jsonb, pg_temp.hash())$$, pg_temp.auth('OWNER-AUTH-2026-01-02-04', current_date, current_date + 30,
-  jsonb_build_array(pg_temp.fields('pgtap_own', 'RIGHTS-781', array['votes'])))), '23514', null, 'nor vote figures');
-select throws_ok(format($$select evidence_private.sync_owner_authorizations(%L::jsonb, pg_temp.hash())$$, pg_temp.auth('OWNER-AUTH-2026-01-02-05', current_date, current_date + 30,
-  jsonb_build_array(pg_temp.fields('pgtap_own', 'RIGHTS-781', array['*'])))), '23514', null, 'there is no wildcard');
-select throws_ok(format($$select evidence_private.sync_owner_authorizations(%L::jsonb, pg_temp.hash())$$, pg_temp.auth('OWNER-AUTH-2026-01-02-06', current_date, current_date + 30,
-  jsonb_build_array(pg_temp.fields('pgtap_no', 'RIGHTS-783', array['name_at_source'])))), 'P0001', null, 'a field decision against a REFUSED rights row is rejected outright');
-select throws_ok(format($$select evidence_private.sync_owner_authorizations(%L::jsonb, pg_temp.hash())$$, pg_temp.auth('OWNER-AUTH-2026-01-02-07', current_date, current_date + 30,
-  jsonb_build_array(pg_temp.fields('pgtap_own', 'RIGHTS-782', array['name_at_source'])))), 'P0001', null, 'a field decision must name the source''s real rights row');
-select throws_ok(format($$select evidence_private.sync_owner_authorizations(%L::jsonb, pg_temp.hash())$$, pg_temp.auth('OWNER-AUTH-2026-01-02-08', current_date, current_date + 91,
-  jsonb_build_array(jsonb_build_object('scope', 'public_rows', 'surface_id', 'evidence-store')))), '23514', null, 'a decision in force for more than 90 days is refused');
-select throws_ok(format($$select evidence_private.sync_owner_authorizations(%L::jsonb, pg_temp.hash())$$, pg_temp.auth('OWNER-AUTH-2026-01-02-09', current_date, current_date + 30,
-  jsonb_build_array(jsonb_build_object('scope', 'public_rows', 'surface_id', 'evidence-atlas')))), '23514', null, 'and so is any surface other than the two it is defined for');
+select throws_ok(format($$select evidence_private.sync_owner_authorizations(%L::jsonb, pg_temp.hash())$$, pg_temp.file(pg_temp.auth('OWNER-AUTH-2026-01-02-01', current_date, current_date + 30,
+  jsonb_build_array(pg_temp.fields('pgtap_own', 'RIGHTS-781', array['contact_email']))) -> 'authorizations')), '23514', null, 'contact data can never be named');
+select throws_ok(format($$select evidence_private.sync_owner_authorizations(%L::jsonb, pg_temp.hash())$$, pg_temp.file(pg_temp.auth('OWNER-AUTH-2026-01-02-02', current_date, current_date + 30,
+  jsonb_build_array(pg_temp.fields('pgtap_own', 'RIGHTS-781', array['safe_payload']))) -> 'authorizations')), '23514', null, 'nor the whole payload');
+select throws_ok(format($$select evidence_private.sync_owner_authorizations(%L::jsonb, pg_temp.hash())$$, pg_temp.file(pg_temp.auth('OWNER-AUTH-2026-01-02-03', current_date, current_date + 30,
+  jsonb_build_array(pg_temp.fields('pgtap_own', 'RIGHTS-781', array['release_text']))) -> 'authorizations')), '23514', null, 'nor a body');
+select throws_ok(format($$select evidence_private.sync_owner_authorizations(%L::jsonb, pg_temp.hash())$$, pg_temp.file(pg_temp.auth('OWNER-AUTH-2026-01-02-04', current_date, current_date + 30,
+  jsonb_build_array(pg_temp.fields('pgtap_own', 'RIGHTS-781', array['votes']))) -> 'authorizations')), '23514', null, 'nor vote figures');
+select throws_ok(format($$select evidence_private.sync_owner_authorizations(%L::jsonb, pg_temp.hash())$$, pg_temp.file(pg_temp.auth('OWNER-AUTH-2026-01-02-05', current_date, current_date + 30,
+  jsonb_build_array(pg_temp.fields('pgtap_own', 'RIGHTS-781', array['*']))) -> 'authorizations')), '23514', null, 'there is no wildcard');
+select throws_ok(format($$select evidence_private.sync_owner_authorizations(%L::jsonb, pg_temp.hash())$$, pg_temp.file(pg_temp.auth('OWNER-AUTH-2026-01-02-06', current_date, current_date + 30,
+  jsonb_build_array(pg_temp.fields('pgtap_no', 'RIGHTS-783', array['name_at_source']))) -> 'authorizations')), 'P0001', null, 'a field decision against a REFUSED rights row is rejected outright');
+select throws_ok(format($$select evidence_private.sync_owner_authorizations(%L::jsonb, pg_temp.hash())$$, pg_temp.file(pg_temp.auth('OWNER-AUTH-2026-01-02-07', current_date, current_date + 30,
+  jsonb_build_array(pg_temp.fields('pgtap_own', 'RIGHTS-782', array['name_at_source']))) -> 'authorizations')), 'P0001', null, 'a field decision must name the source''s real rights row');
+select throws_ok(format($$select evidence_private.sync_owner_authorizations(%L::jsonb, pg_temp.hash())$$, pg_temp.file(pg_temp.auth('OWNER-AUTH-2026-01-02-08', current_date, current_date + 91,
+  jsonb_build_array(jsonb_build_object('scope', 'public_rows', 'surface_id', 'evidence-store'))) -> 'authorizations')), '23514', null, 'a decision in force for more than 90 days is refused');
+select throws_ok(format($$select evidence_private.sync_owner_authorizations(%L::jsonb, pg_temp.hash())$$, pg_temp.file(pg_temp.auth('OWNER-AUTH-2026-01-02-09', current_date, current_date + 30,
+  jsonb_build_array(jsonb_build_object('scope', 'public_rows', 'surface_id', 'evidence-atlas'))) -> 'authorizations')), '23514', null, 'and so is any surface other than the two it is defined for');
 
 -- the ingest worker holds nothing here (the worker role cannot call the test functions, so outcomes go through a table)
 create temp table outcome (name text primary key, state text);
@@ -170,6 +189,10 @@ begin
     insert into outcome values ('widen', 'allowed');
   exception when insufficient_privilege then insert into outcome values ('widen', 'denied');
   end;
+  -- The worker's registry sync arrives saying "pending" for a row the administrator recorded as refused.
+  perform evidence_private.sync_registry(jsonb_build_object('rights', jsonb_build_array(
+    jsonb_build_object('rights_id', 'RIGHTS-783', 'publisher', 'Fixture', 'source_url', 'https://fixture.example/', 'review_status', 'pending', 'default_release', 'link-only', 'register_hash', 'worker-says-pending')),
+    'sources', jsonb_build_array(pg_temp.src('pgtap_no', 'RIGHTS-782') || jsonb_build_object('config_hash', 'worker-repoint'))));
   begin
     perform evidence_private.sync_owner_authorizations('{}'::jsonb, 'x');
     insert into outcome values ('record', 'allowed');
@@ -180,6 +203,15 @@ $$;
 reset role;
 select is((select state from outcome where name = 'widen'), 'denied', 'the ingest worker cannot widen an owner decision');
 select is((select state from outcome where name = 'record'), 'denied', 'or record one');
+select is((select review_status || '/' || default_release from evidence_private.source_rights where rights_id = 'RIGHTS-783'), 'refused/withheld',
+  'the worker cannot turn a publisher''s refusal back into pending: the row is left as the administrator recorded it');
+select is((select rights_id from evidence_private.sources where source_id = 'pgtap_no'), 'RIGHTS-783', 'nor move the source to another rights row');
+select is((select tier from evidence_private.source_release where source_id = 'pgtap_no'), 'none', 'so the refused source stays at tier none under an owner decision');
+update evidence_private.source_rights set review_status = 'restricted' where rights_id = 'RIGHTS-783';
+select is((select review_status from evidence_private.source_rights where rights_id = 'RIGHTS-783'), 'restricted', 'an administrator can still change it');
+set local role anon;
+select is((select bool_or(owner_fields_in_force) from evidence_public.surface_status), true, 'surface_status says owner-shown fields are in force');
+reset role;
 
 -- 4. Audited: never edited, never deleted; revocation is immediate; a publisher restriction always wins -------------------
 select throws_ok($$update evidence_private.owner_authorizations set expires_on = expires_on + 30 where authorization_id = 'OWNER-AUTH-2026-01-01-03'$$, 'P0001', null, 'a decision cannot be extended by editing it');
@@ -190,7 +222,7 @@ set local role anon;
 select is((select count(*) from evidence_public.records where source_id = 'pgtap_own'), 0::bigint, 'when the publisher''s rights row turns restricted, the owner decision shows nothing of that source');
 reset role;
 
-select evidence_private.sync_owner_authorizations(pg_temp.auth('OWNER-AUTH-2026-01-01-03', current_date, current_date + 30, '[]'::jsonb, 'revoked'), pg_temp.hash());
+select evidence_private.sync_owner_authorizations(pg_temp.file('[]'::jsonb, 'revoked'), pg_temp.hash());
 set local role anon;
 select is((select count(*)::text || '/' || (select string_agg(distinct release_basis, ',') from evidence_public.surface_status) from evidence_public.records), '0/none',
   'revoking the decision withholds every row again at once, with no deployment');

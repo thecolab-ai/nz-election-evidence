@@ -25,7 +25,7 @@ export const ROW_RELEASE_SURFACES = ["evidence-store"] as const;
  * (owner_field_scope_forbidden in the migration) by a test.
  */
 export const FORBIDDEN_FIELD =
-  /(email|e_mail|phone|mobile|fax|address|postal|contact|twitter|facebook|instagram|linkedin|handle|body|content|html|text|passage|description|summary|excerpt|transcript|portrait|image|photo|donor|birth|gender|ethnic|vote|share|rank|seats|score|confidence|payload|external_id|external_record_id|publisher_item_id)/;
+  /(email|e_mail|phone|mobile|fax|address|postal|contact|twitter|facebook|instagram|linkedin|handle|body|content|html|text|passage|description|summary|excerpt|transcript|portrait|image|photo|donor|birth|gender|ethnic|vote|share|rank|seats|score|confidence|value|pct|percent|total|amount|sample|payload|external_id|external_record_id|publisher_item_id)/;
 
 const FIELD_SHAPE = /^[a-z][a-z0-9_]{1,62}$/;
 const ID_SHAPE = /^OWNER-AUTH-\d{4}-\d{2}-\d{2}-\d{2}$/;
@@ -62,7 +62,8 @@ export interface AuthorizationFile {
   authorizations: Authorization[];
 }
 
-const isDate = (value: unknown): value is string => typeof value === "string" && ISO_DATE.test(value) && !Number.isNaN(Date.parse(value + "T00:00:00Z"));
+// Round trip, so 2026-02-31 (which the parser rolls into March) is not a date.
+const isDate = (value: unknown): value is string => typeof value === "string" && ISO_DATE.test(value) && !Number.isNaN(Date.parse(value + "T00:00:00Z")) && new Date(value + "T00:00:00Z").toISOString().slice(0, 10) === value;
 const text = (value: unknown, min: number): value is string => typeof value === "string" && value.trim().length >= min;
 const days = (from: string, to: string) => Math.round((Date.parse(to + "T00:00:00Z") - Date.parse(from + "T00:00:00Z")) / 86_400_000);
 
@@ -112,7 +113,7 @@ export function authorizationProblems(doc: unknown): string[] {
       problems.push(`${at}: departs_from must state that this decision departs from R10 and R8 as written`);
     }
     if (!Array.isArray(a.never_in_scope) || a.never_in_scope.length === 0) problems.push(`${at}: never_in_scope is missing`);
-    for (const value of [a.statement, a.decided_by_role, a.request_source]) {
+    for (const value of [file.notice, a.statement, a.decided_by_role, a.request_source, a.revoked_reason, ...(Array.isArray(a.departs_from) ? a.departs_from : [])]) {
       if (typeof value === "string" && MISREPRESENTS.test(value)) problems.push(`${at}: wording presents the owner decision as a review, licence or approval`);
     }
     if (!Array.isArray(a.scopes) || a.scopes.length === 0) {

@@ -46,6 +46,23 @@ export function registerRows(text: string): RegisterRow[] {
   return rows;
 }
 
+/**
+ * Table lines the parser above would silently skip: a row with the wrong number of cells (a stray pipe in the
+ * notes), or a line that names a surface id without being a table row. Skipping is safe when only APPROVED can open
+ * a gate. It is NOT safe for the owner override, where a skipped REJECTED row would leave an older PENDING row
+ * looking like the latest, so the override path refuses any register that has one.
+ */
+export function unparsedRegisterLines(text: string): string[] {
+  return text.split("\n").filter((line) => {
+    const trimmed = line.trim();
+    // A row that lost its leading pipe is not a table row to the parser, but it is still somebody's entry.
+    if (!trimmed.startsWith("|")) return trimmed.includes("|") && SURFACE_IDS.some((id) => trimmed.includes("`" + id + "`"));
+    const cells = trimmed.replace(/^\||\|$/g, "").split("|").map((c) => c.trim());
+    if (cells[0]?.toLowerCase() === "date" || cells.every((c) => /^:?-{3,}:?$/.test(c))) return false;
+    return cells.length !== 6;
+  });
+}
+
 export function unknownOutcomes(text: string): string[] {
   return registerRows(text).map((row) => plain(row.outcome)).filter((outcome) => !OUTCOMES.has(outcome));
 }
@@ -111,6 +128,8 @@ export function gateWithOwnerOverride(registerText: string, surfaceId: string, o
   const wanted = normaliseSurfaceId(surfaceId);
   if (!wanted || !(SURFACE_IDS as readonly string[]).includes(wanted)) return closed(review.reason);
   if (unknownOutcomes(registerText).length) return closed(review.reason);
+  const unparsed = unparsedRegisterLines(registerText);
+  if (unparsed.length) return closed(`${review.reason}; ${unparsed.length} register line(s) could not be read as a row, so the latest review of '${wanted}' is not certain`);
   const rows = registerRows(registerText);
   if (rows.some((row) => rowSurfaceId(row) === null)) return closed(review.reason);
   const latest = rows.filter((row) => rowSurfaceId(row) === wanted).at(-1);

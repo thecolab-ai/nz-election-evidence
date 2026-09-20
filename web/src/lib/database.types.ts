@@ -659,6 +659,7 @@ export type Database = {
           authorization_id: string | null
           decided_by_role: string | null
           decided_on: string | null
+          entry_hash: string | null
           expires_on: string | null
           file_hash: string | null
           not_claimed: string[] | null
@@ -672,6 +673,7 @@ export type Database = {
           authorization_id?: string | null
           decided_by_role?: string | null
           decided_on?: string | null
+          entry_hash?: string | null
           expires_on?: string | null
           file_hash?: string | null
           not_claimed?: string[] | null
@@ -685,6 +687,7 @@ export type Database = {
           authorization_id?: string | null
           decided_by_role?: string | null
           decided_on?: string | null
+          entry_hash?: string | null
           expires_on?: string | null
           file_hash?: string | null
           not_claimed?: string[] | null
@@ -3140,6 +3143,7 @@ export type Database = {
           owner_authorization_id: string | null
           owner_decided_on: string | null
           owner_expires_on: string | null
+          owner_fields_in_force: boolean | null
           owner_request_source: string | null
           public_rows_released: boolean | null
           release_basis: string | null

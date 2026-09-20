@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { test } from "node:test";
 import { authorizationProblems, deployAuthorization, FORBIDDEN_FIELD, MAX_DAYS_IN_FORCE, scopesInForce, type AuthorizationFile } from "./owner_authorization.ts";
-import { gate, gateWithOwnerOverride, registerRows } from "./release_gate.ts";
+import { gate, gateWithOwnerOverride, registerRows, unparsedRegisterLines } from "./release_gate.ts";
 
 const root = new URL("../", import.meta.url);
 const HEADER = "| Date | Surface | Reviewed by | Red lines checked | Outcome | Notes |\n|---|---|---|---|---|---|\n";
@@ -104,6 +104,27 @@ test("a review always wins: an owner override cannot stand against REJECTED, WIT
   // A genuine approval is reported as a review, not as an override.
   const approved = gateWithOwnerOverride(PENDING + row("explorer-pages", "Fixture Reviewer", "**APPROVED**", "2026-10-01"), "explorer-pages", null, "2026-10-02");
   assert.deepEqual([approved.open, approved.basis], [true, "review_approved"]);
+});
+
+test("a review row the parser cannot read closes the override: a REJECTED row is never skipped into an older PENDING one", async () => {
+  // A stray pipe in the notes makes seven cells; the plain parser drops the row. The override must not open past it.
+  const strayPipe = PENDING + "| 2026-10-01 | `explorer-pages` — x | Fixture Reviewer | R6 | **REJECTED** | copied text | see section 3 |\n";
+  assert.equal(registerRows(strayPipe).length, 2, "premise: the parser skips the malformed row");
+  assert.equal(unparsedRegisterLines(strayPipe).length, 1);
+  const result = gateWithOwnerOverride(strayPipe, "explorer-pages", fixture(), "2026-10-02");
+  assert.equal(result.open, false);
+  assert.match(result.reason, /could not be read as a row/);
+  const lostPipe = PENDING + "2026-10-01 | `explorer-pages` — x | Fixture Reviewer | R6 | **REJECTED** | x |\n";
+  assert.equal(gateWithOwnerOverride(lostPipe, "explorer-pages", fixture(), "2026-10-02").open, false);
+  assert.deepEqual(unparsedRegisterLines(await readFile(new URL("REVIEW-REGISTER.md", root), "utf-8")), [], "the live register is fully readable");
+  assert.equal(gateWithOwnerOverride(PENDING, "explorer-pages", fixture(), "2026-10-02").open, true, "control");
+});
+
+test("figures of every kind and impossible dates are refused; misrepresenting wording is checked everywhere", () => {
+  for (const field of ["value_pct", "value_double", "raw_value", "approved_total", "sample_size", "amount_nzd", "percent_support"]) assert.ok(FORBIDDEN_FIELD.test(field), field);
+  assert.match(authorizationProblems(fixture((f) => { f.authorizations[0]!.expires_on = "2026-09-31"; })).join("\n"), /expires_on must be an ISO date/);
+  assert.match(authorizationProblems(fixture((f) => { f.notice = f.notice + " Rights cleared for every source, with permission granted by each publisher in writing."; })).join("\n"), /presents the owner decision as/);
+  assert.match(authorizationProblems(fixture((f) => { f.authorizations[0]!.departs_from.push("None in practice: legal review complete as of today for R10 and R8 departure."); })).join("\n"), /presents the owner decision as/);
 });
 
 test("an invalid file authorizes nothing: no expiry, too long, no source, wildcard, wrong surface, unknown scope", () => {

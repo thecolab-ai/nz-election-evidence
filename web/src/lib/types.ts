@@ -398,6 +398,8 @@ export interface SurfaceStatusRow {
   owner_authorization_id: string | null
   owner_decided_on: string | null
   owner_expires_on: string | null
+  /** True while any field is shown on an owner decision, whatever releases the rows. */
+  owner_fields_in_force: boolean | null
 }
 
 export interface DatasetCatalogueRow {
