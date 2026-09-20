@@ -10,11 +10,12 @@ Needs Docker, the Supabase CLI (2.113.0 tested) and Node 24. Ports are non-defau
 
 ```bash
 supabase start -x studio,imgproxy,storage-api,realtime,logflare,vector,supavisor,postgres-meta,mailpit,edge-runtime
-supabase test db                      # pgTAP: 145 assertions
+supabase test db                      # pgTAP (7 files)
 cd ingest && npm ci
-npm run typecheck && npm test         # unit tests, scripted publisher, no network
+npm run typecheck && npm test         # ingestion + release tooling unit tests (TypeScript, no network)
 npm run check:deno                    # Edge Function type-check
-export EVIDENCE_INGEST_DB_URL="postgresql://postgres:postgres@127.0.0.1:55322/postgres"   # local CLI default only
+# Scoped worker login created by supabase/seed.sql on the LOCAL stack only (fixed local value, not a secret).
+export EVIDENCE_INGEST_DB_URL="postgresql://evidence_ingest_local:local-only-not-a-secret@127.0.0.1:55322/postgres"
 EVIDENCE_TEST_DB_URL="$EVIDENCE_INGEST_DB_URL" node --test test/integration.test.ts
 node src/cli.ts validate
 node src/cli.ts plan nz_parliament_current_bills           # deterministic manifest; no network, no writes
@@ -25,7 +26,9 @@ node src/cli.ts run nz_parliament_current_bills --receipt receipt.json
 
 `supabase db reset` rebuilds the local database from the migrations. **Never run it against a linked hosted project.** `supabase/seed.sql` is local-only (it lets the local migration role act as the worker).
 
-The CLI drops to the `evidence_ingest` role on connect (`--assume-role none` to disable), so local runs exercise the same privileges as production.
+The CLI connects as a login that is only a member of `evidence_ingest`, exactly as in production, and refuses a superuser, `BYPASSRLS` or `CREATEROLE` login. It keeps no session state, so the connection string may point at a transaction-mode pooler.
+
+Explorer: `cd web && npm ci && npm run typecheck && npm test && npm run build && npm run check:bundle && npm run e2e && npm run e2e:pages`. After any migration change run `npm run types:generate` (CI runs `types:check`). Changing `[api] schemas` in `supabase/config.toml` needs `supabase stop && supabase start` before the REST gateway sees it.
 
 ## 2. Reviewed export imports (backfills)
 
@@ -45,16 +48,17 @@ Pre-conditions: coordinator release review complete; `REVIEW-REGISTER.md` rows f
 
 1. **Pre-flight, read-only:** `psql "$ADMIN_DB_URL" -f scripts/db/inspect_existing_objects.sql`. Keep the output. Stop if any `evidence_*` object, policy or cron job already exists unexpectedly.
 2. **Migrations:** `supabase link --project-ref <ref>`, `supabase db push --dry-run`, review, then `supabase db push`. Re-run the pre-flight and compare.
-3. **API exposure:** in project settings expose `evidence_inspector` only. Do **not** expose `evidence_private` or `evidence_api`. Confirm sign-ups are disabled and the site URL / redirect list contains only the explorer URL.
+3. **API exposure:** in project settings expose `evidence_public`, `evidence_open` and `evidence_inspector` only. Do **not** expose `evidence_private`, `evidence_views` or `evidence_api`. With the gates still closed this publishes the dataset catalogue and no evidence rows. Confirm sign-ups are disabled and the site URL / redirect list contains only the explorer URL.
 4. **Worker login:** `scripts/db/create_ingest_login.sql` with a freshly generated password. Verify the readback row: no superuser, no bypass of row level security, member of `evidence_ingest` only.
 5. **Function secrets:** `supabase secrets set EVIDENCE_INGEST_DB_URL=... EVIDENCE_CRON_SECRET=...` (values from the operator's shell; 32+ characters for the cron secret). **Deploy:** `supabase functions deploy ingest-run` (JWT verification is off for this function by design; it authenticates the scheduler's shared secret).
 6. **Registry:** `node src/cli.ts registry-sync` with the worker connection. Schedules arrive **inactive**.
-7. **Live role checks** (repeat the pgTAP boundary by hand against the hosted project): anon REST call to `/rest/v1/records` is refused; an ordinary signed-in user gets zero rows and `is_inspector = false`; an inspector reads; an inspector `PATCH`/`POST`/`DELETE` is refused; `evidence_private` is not reachable through REST.
+7. **Live role checks** (repeat the boundary tests against the hosted project): with gates closed an anonymous `GET /rest/v1/records` returns `[]` and `dataset_catalogue` returns rows; anonymous `POST`/`PATCH`/`DELETE` are refused on both public schemas; `evidence_private`, `evidence_views`, `vault` and `auth` are unreachable; a withheld column such as `identity_decisions.decided_by` does not exist publicly; an ordinary signed-in user gets zero inspector rows and `my_access.is_inspector = false`.
 8. **Vault:** `scripts/db/set_cron_vault_secrets.sql`. Readback shows names only.
 9. **Function readback (deployment proof):** call the deployed function once per source with the secret and `"trigger_kind": "function_readback"`. Expect HTTP 200 and a `run_id`; without the secret expect 401; with a `url` field expect 400.
 10. **Activate one schedule at a time:** `scripts/db/activate_schedule.sql` with that `run_id`. The database refuses without a successful readback run from the last 24 hours. Check the readback table: desired state and the real `cron.job` row must agree. Watch the first scheduled run in the explorer (Operations) before activating the next.
 11. **Inspectors:** invite the user in Supabase Auth, then `scripts/db/grant_inspector.sql` with a reason.
-12. **Explorer:** set repository variables `EXPLORER_SUPABASE_URL` and `EXPLORER_SUPABASE_ANON_KEY` (public anon key only). Deployment additionally needs an approved `REVIEW-REGISTER.md` row and `PAGES_DEPLOY_ENABLED=true`.
+12. **Open the public gates (only after R8 and R10 are recorded):** `scripts/db/set_release_gate.sql` once per gate, with the evidence reference and the deciding person. Readback must show `public_rows_released = t`. `-v close=1` withholds everything again at once.
+13. **Explorer:** set repository variables `EXPLORER_SUPABASE_URL` and `EXPLORER_SUPABASE_ANON_KEY` (public anon key only). Deployment additionally needs an approved `REVIEW-REGISTER.md` row and `PAGES_DEPLOY_ENABLED=true`.
 
 ## 4. Operating
 

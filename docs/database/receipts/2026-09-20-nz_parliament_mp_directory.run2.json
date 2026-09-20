@@ -22,7 +22,7 @@
     "source_config_hash": "sha256:a26112d75097cffdd07985daa0a8d4961dce0ee264a7e28439f23119878e2be2",
     "max_records": 2000
   },
-  "run_id": "f15d93f7-1c81-4452-8c4c-8a0af58a615b",
+  "run_id": "7584867d-7db0-43ab-b278-ab10fcf0cb15",
   "resumed_from_run_id": null,
   "totals": {
     "seen": 122,
@@ -45,10 +45,10 @@
       "attempt": 1,
       "outcome": "ok",
       "http_status": 200,
-      "bytes": 354558,
-      "body_sha256": "sha256:c0fc63a1bf18abcee83c75280ae0000e188ba3c71c2d22e11a435a1bb6ae4560",
-      "retrieved_at": "2026-09-20T03:27:18.699Z",
-      "duration_ms": 599
+      "bytes": 354666,
+      "body_sha256": "sha256:0d9eef4b9bc8b081d5e2732b3f227c45330b10e05e499f32ee6b3ec55fa6d28f",
+      "retrieved_at": "2026-09-20T04:13:02.861Z",
+      "duration_ms": 646
     }
   ],
   "receipt_note": "Real retrieval from the official publisher on 2026-09-20 (UTC), written to a disposable local database. Counts, hashes, statuses and publisher URLs only; no payloads or response bodies."

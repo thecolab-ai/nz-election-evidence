@@ -4,18 +4,21 @@ This is project process documentation, not legal advice. It restates how the bin
 
 ## Current state: nothing is published
 
-- The published schema `evidence_api` is **not exposed** by the REST API and browser roles hold no privilege on it.
-- All three release gates (`r10_public_surface_review`, `r8_accountable_legal_entity`, `election_day_freeze_clear`) are **closed**. A gate cannot be opened without an evidence reference, a named person and a date.
-- All 19 rights rows are **pending**. The release function refuses pending rights even when every gate is open.
-- The explorer deployment is blocked by `scripts/release_gate.py` until `REVIEW-REGISTER.md` carries an approved row naming a reviewer, and by the repository variable `PAGES_DEPLOY_ENABLED`. Passing CI is not approval.
+- No migration has been applied to a hosted project and the explorer is not deployed.
+- The store is designed for **public read-only transparency**: every domain table has an anonymous projection, minus columns withheld with a published reason ([architecture](architecture.md#no-silent-omissions)).
+- Inside the database, anonymous readers receive evidence rows only while the `r10_public_surface_review` and `r8_accountable_legal_entity` gates are both open. Both are **closed** by default. The dataset catalogue and column list are always readable.
+- All 19 rights rows are **pending**. The store holds only the link-and-metadata tier that the pending state already allows: adapters drop bodies, summaries and contact data at ingestion and record each drop by name. A `refused` or `restricted` row hides that source.
+- The explorer deployment is blocked by `tools/release_gate.ts` until `REVIEW-REGISTER.md` carries an approved row naming a reviewer, and by the repository variable `PAGES_DEPLOY_ENABLED`. Passing CI is not approval.
 
-## What opening publication would require
+## What opening publication requires
 
 1. R8: responsible legal entity and accountable person recorded.
-2. R10: an approved `REVIEW-REGISTER.md` row for each new surface (explorer; evidence store and any API), naming the reviewer and the red lines checked.
-3. Per-publisher rights decisions recorded in the rights register (and mirrored), with field scope.
-4. A **new, reviewed migration** that exposes `evidence_api` and grants `SELECT` to browser roles. It deliberately does not exist yet and must not be written before steps 1–3.
-5. Release through `publish_batch()` only: allowlisted columns, current versions, referential closure (a document's source must be published), and a withdrawal path that removes published rows while keeping the batch record.
+2. R10: an approved `REVIEW-REGISTER.md` row for each new surface (explorer; evidence store), naming the reviewer and the red lines checked.
+3. Release review of the withheld register and of the decision that typed fields such as titles, names of public office-holders, party labels and dates are metadata within the link-only tier.
+4. Apply migrations, then open the two gates with `scripts/db/set_release_gate.sql`, each with its evidence reference and a named person.
+5. Set `PAGES_DEPLOY_ENABLED` for the Pages shell.
+
+Closing either gate with the same script withholds every row from anonymous readers immediately, without a deployment.
 
 ## Standing rules
 
@@ -25,4 +28,5 @@ This is project process documentation, not legal advice. It restates how the bin
 - **No allegation wording.** Findings describe the difference between a statement and a source (R4).
 - **Corrections** supersede and are logged in `CORRECTIONS.md` within the hour (R5); the store's `corrections` rows point at the log entry.
 - **Election-day freeze** (R3): the deploy workflow runs the freeze check; schedules should be deactivated for the freeze window with `scripts/db/activate_schedule.sql -v deactivate=1`, and no release function is run.
-- The inspector role is for reviewers. It is read-only by grant and by view structure, and granting it is an administrator decision recorded with a reason.
+- The inspector layer is for reviewers who need the withheld columns. It is read-only by grant and by view structure, and granting it is an administrator decision recorded with a reason.
+- Adding a table or column: mark anything sensitive in `public_withheld` with its reason in the same migration, then call `rebuild_exposed_views()`. CI fails on drift.

@@ -5,9 +5,9 @@
   "dry_run": false,
   "status": "failed",
   "complete_snapshot": false,
-  "error_class": "host_denied",
-  "error_detail": "host questions.parliament.nz is not on this source's allowlist",
-  "manifest_hash": "sha256:722b91e2f29ee828285b3f87af6cc1734297a02b9d0367425a88881a7985a84b",
+  "error_class": "parser_not_enabled",
+  "error_detail": "publisher page is reachable; no parser is enabled for this source, so nothing was imported and no count is implied",
+  "manifest_hash": "sha256:81c741dd1c654f654a6a78fb9c41cdbd28fe2f7120096360c6254fc51a1b101f",
   "manifest": {
     "manifest_version": 1,
     "config_version": 1,
@@ -16,13 +16,13 @@
     "adapter_version": "1.0.0",
     "mode": "incremental",
     "allowed_hosts": [
-      "www3.parliament.nz"
+      "questions.parliament.nz"
     ],
     "snapshot_semantics": "rolling_window",
-    "source_config_hash": "sha256:32957c5abb38b0d6ac1bf227a319dff2c222b7517b2d42157c755130cbabea48",
+    "source_config_hash": "sha256:d6dcec925bb8934aac4c1dda6e35bf1e20b0480fe58c411241b987c68e1fbcd8",
     "max_records": 2000
   },
-  "run_id": "fc0862fe-4cb1-4e2d-b9d8-cb10c306c9f9",
+  "run_id": "1016b326-b094-4ce0-a9bb-ffb2a580cbca",
   "resumed_from_run_id": null,
   "totals": {
     "seen": 0,
@@ -37,14 +37,14 @@
   "fetches": [
     {
       "method": "GET",
-      "url": "https://www3.parliament.nz/en/pb/order-paper-questions/written-questions/",
+      "url": "https://questions.parliament.nz/",
       "attempt": 1,
-      "outcome": "host_denied",
-      "http_status": null,
-      "bytes": null,
-      "body_sha256": null,
-      "retrieved_at": "2026-09-20T03:27:21.635Z",
-      "duration_ms": 1827
+      "outcome": "ok",
+      "http_status": 200,
+      "bytes": 13626,
+      "body_sha256": "sha256:cdc13d1c84afcfd29737a7e6081efc604cf18f27f667f05a1187bd6b71ff9aae",
+      "retrieved_at": "2026-09-20T04:13:06.613Z",
+      "duration_ms": 19468
     }
   ],
   "receipt_note": "Real retrieval from the official publisher on 2026-09-20 (UTC), written to a disposable local database. Counts, hashes, statuses and publisher URLs only; no payloads or response bodies."

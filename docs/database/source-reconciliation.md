@@ -42,6 +42,27 @@ The project does not work around publisher blocks (R6). Options are an approved 
 
 P02, P04 (contract defined, export not supplied), P05, P06, P07, P08, P09, P11, P12, P13, P14, P15, P16, P17, P18, P19, P20, P21, P22, P23, P24. For each of these the tables and inspector views may exist, but **zero rows have been imported** and the explorer will show an empty state, which is not evidence of absence. Each needs: (1) an export contract with a field allowlist, (2) a reconciliation note against overlapping upstream tables, (3) the exporter's stated row count, (4) an import receipt. Forcing an import to match an upstream count is explicitly not a goal; omissions are itemised instead.
 
+## Adapters and loaders that are NOT implemented
+
+Nothing below is imported, and no count is implied for any of it. "Blocked" means a decision or input outside this repository is needed; "not built" means engineering work remains.
+
+| Dataset | Status | What is missing |
+|---|---|---|
+| 2026 official nominations and party lists | **Blocked + not built** | Official lists are not published until after nominations close (research note: noon, 8 October 2026), and the Electoral Commission sites refuse automated requests from this host. Needs a publisher-approved route, then a parser. The source already carries an explicit not-yet-published state. |
+| Party announcements of candidates | **Not built, needs approval** | A separate, labelled feed with `source_class = party_announcement`. The status model is ready; collection needs an owner decision. |
+| Register of political parties, registrations, aliases | **Blocked + not built** | Same publisher block. The 33 upstream historical identities are not a current register and are not imported. |
+| 2023 official results (candidate, party, nationwide totals) | **Blocked live; export contract built, not run** | Live route blocked. `baseline_2023_candidacies_export` covers candidacies, list ranks and candidate votes and is tested end to end with a fixture; **no reviewed export file was supplied**. Party-vote and nationwide-total loaders (P08, P09) are not built. |
+| Electorate boundaries 2025 review, official codes, General/Māori type | **Blocked + not built** | Electorate type stays `unverified`. No geometry: the published maps are images, not polygons. |
+| Party and candidate finance returns (2023 returns, 2025 annual returns) | **Blocked + not built** | Table holds return status and official URL only. No loader. |
+| Party policy pages | **Not built** | Table and classification-basis field exist. The upstream classification is unreviewed model output with unknown model metadata and would be imported as such, if at all. |
+| Polls | **Not built, rights question** | Upstream source is a secondary aggregation. Needs pollster primary sources and a rights decision. |
+| Written questions | **Not built** | Publisher moved to a separate questions site that renders client-side; needs an approved data route. 187,956 upstream records would go through an export contract. |
+| Bills history, select committee business and reports | **Not built** | Only the current bills index is live. |
+| MP roles, portfolios, party offices | **Not built** | Needs per-profile fetches; the research note found 119 of 122 profile fetches succeeded, so completeness would have to be measured per run. Service start and end dates need an official event source (for example Gazette notices); none is ingested. |
+| Beehive releases history | **Not built** | Feed window only; history needs an export contract. |
+| Statistics (census, series, social and economic samples) | **Not built** | Tables, vintages, suppression status and the one-route guard exist. No loader, and no route decisions are recorded in `stat_route_reconciliation`, so the database would refuse the rows. |
+| Summaries and claims | **Deliberately not built** | Schema and review gates only. No model has been run. |
+
 ## Research handoff received during this work
 
 A separate research note (20 September 2026) reports: 2026 boundaries of 71 electorates (64 general, 7 Māori) rather than the 72 used in 2023; nominations and party lists closing at noon on 8 October 2026; 17 registered parties; and 122 members listed with one vacancy attributed to a specific electorate. **None of this could be verified from the build host** (Electoral Commission sites were unavailable), so none of it is seeded. The schema is compatible with it: boundary editions are versioned, no electorate count is hardcoded, current members are never attached to 2026 boundaries, and the nominations source already carries an explicit not-yet-published state.

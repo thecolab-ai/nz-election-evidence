@@ -2,24 +2,41 @@
 
 Status: implemented in this branch and exercised on a disposable local stack only. Nothing here has been applied to a hosted project, deployed, scheduled or published. Release steps are in [runbook.md](runbook.md); progress is in [implementation-checklist.md](implementation-checklist.md).
 
-## Three schemas, one direction of flow
+## Schemas and who can read what
 
 | Schema | Exposed through the REST API? | Holds | Who can read | Who can write |
 |---|---|---|---|---|
-| `evidence_private` | No | Source registry, rights mirror, run ledger, immutable record versions, civic model, documents, statistics, reviews, summaries, release gates | Scoped server roles only | Ingestion worker (through versioned SQL functions), administrator |
-| `evidence_inspector` | Yes | Read-only views over allowlisted columns | Signed-in users **with a current inspector membership**. Everyone else gets zero rows | Nobody |
-| `evidence_api` | **No (closed)** | Physically separate published projections | Nobody yet | Gated release function only |
+| `evidence_private` | No | Every table: registry, rights mirror, run ledger, immutable record versions, civic model, documents, statistics, reviews, summaries, release gates, memberships | Scoped server roles only | Ingestion worker (through versioned SQL functions), administrator |
+| `evidence_views` | No | The single definition of each curated, joined view | Owner roles only | Nobody |
+| `evidence_public` | Yes | Curated views for **anonymous** readers, withheld columns removed; plus the always-readable catalogue (`dataset_catalogue`, `dataset_columns`, `surface_status`) | Anyone, read-only. Evidence rows only while the release gates are open | Nobody |
+| `evidence_open` | Yes | One projection per domain table for **anonymous** readers, withheld columns removed | Anyone, read-only, same gate | Nobody |
+| `evidence_inspector` | Yes | The curated views with every column | Signed-in users **with a current inspector membership**; everyone else gets zero rows | Nobody |
+| `evidence_api` | No (closed) | Reviewed release batches (for future reviewed summaries) | Nobody yet | Gated release function only |
 
-The GitHub Pages explorer is a static shell. It ships no evidence. A visitor who is not signed in sees only the shell; a signed-in user without a membership sees an explanation and zero rows. **A public shell is not public evidence.**
+The explorer is a static shell with no sign-in. It ships no evidence; it reads `evidence_public` and `evidence_open` with the public anon key.
 
-## Access control has two independent layers
+### No silent omissions
 
-1. **SQL grants.** `anon` and `authenticated` hold no privilege on `evidence_private` or `evidence_api`. On `evidence_inspector` they hold `SELECT` on views and `EXECUTE` on one boolean function, nothing else.
-2. **Row level security** is enabled on every table with policies only for the scoped server roles, so a mistaken future grant to a browser role still reads and writes nothing.
+Every column of every domain table is public unless `evidence_private.public_withheld` lists it (or its whole table) **with a reason**; row conditions live in `public_row_rules`, also with a reason. `rebuild_exposed_views()` generates all three exposed schemas from the base views, the tables and those two registers, so an omission cannot happen by forgetting a column. A pgTAP drift test fails if any non-withheld column is missing from its projection, or any withheld column appears in one. The registers themselves are published, so a reader can see what is withheld and why.
 
-Memberships live in `evidence_private.app_memberships`, written only by an administrator through `scripts/db/grant_inspector.sql`. Claims inside user-editable auth metadata are ignored (tested). Sign-ups are disabled. There is no RPC that accepts SQL text, table names or column lists; the inspector schema exposes exactly one function, `is_inspector()` (tested).
+Withheld today: the membership table (account holders); names of individual reviewers, deciders, operators and redaction requesters; two free-text working-note columns. Row rules: model summaries and their inputs are public only once a human review of that exact output is recorded (R9). Rows of a source whose rights row is `refused` or `restricted` are hidden from every projection that carries a `source_id`.
 
-Roles: `evidence_ingest` (worker; cannot update or delete history, approve identities, touch schedule state, read Vault, open a gate or publish), `evidence_inspector_reader` (owns the views; `SELECT` on an enumerated table list), `evidence_publisher` (gated release functions only). The browser never holds a privileged key: the explorer uses the public anon key only.
+Never projected because it is not domain data and is not in these schemas at all: auth accounts, Vault secrets, scheduler and network internals, storage, role passwords. Not stored anywhere, so nothing to project: donor contacts, document bodies, file or archive locations (adapter allowlists plus the database payload guard).
+
+### Release gate inside the database
+
+Anonymous readers receive evidence rows only while **both** `r10_public_surface_review` and `r8_accountable_legal_entity` are recorded as open (`scripts/db/set_release_gate.sql`, which demands an evidence reference and a named person). Both are closed by default, so applying the migrations publishes the catalogue and nothing else. Closing either gate withholds every row at once. All 19 rights rows stay pending: what the store holds is, by construction, the link-and-metadata tier the rights register already allows while pending.
+
+## Access control
+
+1. **SQL grants.** `anon` and `authenticated` hold `SELECT` on views in the exposed schemas and nothing else: no table, no function, no sequence, no write. They hold nothing on `evidence_private`, `evidence_views` or `evidence_api`.
+2. **Least-privilege owners.** Public views are owned by `evidence_public_reader`, which holds **column-level** `SELECT` on non-withheld columns only; a withheld column is unreachable even if a view were mis-defined. Inspector and base views are owned by `evidence_inspector_reader` (`SELECT` on an enumerated table list).
+3. **Row level security** is enabled on every table with policies only for scoped server roles, so a mistaken future grant to a browser role still reads and writes nothing.
+4. **No `SECURITY DEFINER` anywhere** (tested). Membership and gate checks are inline subqueries that run with the view owner's read-only privileges; views are `security_barrier`. There is **no RPC surface**: the exposed schemas contain no function (tested). The earlier membership function was removed in review.
+
+Memberships live in `evidence_private.app_memberships`, written only by an administrator through `scripts/db/grant_inspector.sql`. Claims inside user-editable auth metadata are ignored (tested). Sign-ups are disabled. Other roles: `evidence_ingest` (worker; cannot update or delete history, approve identities, clear a rights row, touch schedule state, read Vault, open a gate or publish) and `evidence_publisher` (gated release functions only).
+
+**Pooler correctness.** The worker connects with a login that is only a member of `evidence_ingest`. Every call is a single autocommit statement; nothing depends on session state (no `SET ROLE`, no session advisory locks, no prepared statements, no temp tables; leases are rows; the one custom setting is transaction-local), so the connection is safe behind a transaction-mode pooler. The CLI refuses to ingest with a superuser, `BYPASSRLS` or `CREATEROLE` login. Membership checks read PostgREST's transaction-local JWT claims.
 
 ## Provenance model
 
@@ -70,6 +87,8 @@ Migrations schedule nothing. `activate_schedule()` refuses unless it is given a 
 
 ## Known limits
 
+- A `refused`/`restricted` rights row hides projections that carry a `source_id`. Derived civic tables reach their source through an evidence version, so a refusal there also needs the redaction or takedown path in the runbook.
+- Table row estimates in the catalogue come from planner statistics and can lag.
 - Hostname allowlisting does not defend against DNS rebinding of an official domain; the allowlist holds government and parliamentary hosts only.
-- Typed projections exist for the MP directory, bills, releases and 2023 baseline candidacies. Tables for finance returns, policies, polls, questions, reports and statistics exist with constraints and inspector views, but have no loader yet (see the checklist).
+- Typed projections exist for the MP directory, bills, releases and 2023 baseline candidacies. Tables for finance returns, policies, polls, questions, reports and statistics exist with constraints and public projections, but have no loader yet (see the checklist).
 - Summaries, reviews and the release path are schema and gates only. No summary has been generated and nothing has been published.

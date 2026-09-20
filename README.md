@@ -41,13 +41,14 @@ You can also open `atlas/index.html` directly. No packages, network access, serv
 
 ## Evidence store and explorer (in review, not live)
 
-This branch adds a private Supabase evidence store, repeatable ingestion from official sources, and a read-only explorer for authorised reviewers. **Nothing is published by it**: the published schema is closed, every publisher rights row is still pending, no schedule is active, and the GitHub Pages deployment is blocked until the [review register](REVIEW-REGISTER.md) records an approved review for the new surface. The catalogue and atlas above still need no packages, network, server or API key.
+This branch adds a Supabase evidence store, repeatable ingestion from official sources, and a **public read-only** explorer with no sign-in. Every domain table has an anonymous read-only projection; any withheld column is listed with its reason. **Nothing is published yet**: no migration has been applied to a hosted project, the database returns evidence rows to the public only once the R8 and R10 gates are recorded as open (both are closed), every publisher rights row is still pending, no schedule is active, and the GitHub Pages deployment is blocked until the [review register](REVIEW-REGISTER.md) records an approved review. The catalogue and atlas above still need no packages, network, server or API key.
 
 - [Architecture](docs/database/architecture.md) · [Runbook and release checklist](docs/database/runbook.md) · [Source-by-source reconciliation](docs/database/source-reconciliation.md) · [Publication policy](docs/database/publication-policy.md) · [Implementation checklist](docs/database/implementation-checklist.md) · [Ingestion receipts](docs/database/receipts/README.md)
 - `supabase/` — migrations, pgTAP tests, the `ingest-run` Edge Function and shared adapters
-- `ingest/` — CLI for dry runs, bounded live runs, backfills and reviewed export imports
-- `web/` — the explorer (static shell; ships no evidence data; public anon key only)
-- `scripts/db/` — versioned operator scripts; `scripts/release_gate.py` — R10 deployment gate
+- `ingest/` — TypeScript CLI for dry runs, bounded live runs, backfills and reviewed export imports
+- `tools/` — TypeScript release tooling: R10 deployment gate, receipt publisher, workflow invariant tests
+- `web/` — the explorer (static shell; ships no evidence data; public anon key only; generated database types)
+- `scripts/db/` — versioned operator SQL scripts
 
 Coverage is partial and enumerated, not claimed: three official sources are ingested live; the Electoral Commission endpoints were unavailable to automated requests and are recorded as unavailable, which is not the same as empty.
 

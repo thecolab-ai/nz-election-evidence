@@ -22,7 +22,7 @@
     "source_config_hash": "sha256:36a3390fbbb9b3c0172113a38dd63984f29c383e5571dde8640ec14bac3c08bc",
     "max_records": 2000
   },
-  "run_id": "8562cb5b-5278-45ac-b743-3f9b7ec60fb5",
+  "run_id": "319c8852-63b0-43d9-98cf-7e18e9e52150",
   "resumed_from_run_id": null,
   "totals": {
     "seen": 10,
@@ -47,8 +47,8 @@
       "http_status": 200,
       "bytes": 6248,
       "body_sha256": "sha256:655b68633c4f7a86d894b72e8f2196677edef3411ffd20c472eaaac243b78140",
-      "retrieved_at": "2026-09-20T03:27:19.900Z",
-      "duration_ms": 92
+      "retrieved_at": "2026-09-20T04:13:05.017Z",
+      "duration_ms": 133
     }
   ],
   "receipt_note": "Real retrieval from the official publisher on 2026-09-20 (UTC), written to a disposable local database. Counts, hashes, statuses and publisher URLs only; no payloads or response bodies."
