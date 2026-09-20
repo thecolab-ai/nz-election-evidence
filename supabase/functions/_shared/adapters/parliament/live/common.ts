@@ -1,7 +1,7 @@
 // Shared pieces for the Parliament live-fetch adapters.
 // Erasable TypeScript only: runs unchanged in Node 24 and in Deno.
 
-import { type AdapterContext, IngestError, type IngestRecord, type Json } from "../../../../../supabase/functions/_shared/types.ts";
+import { type AdapterContext, IngestError, type IngestRecord, type Json } from "../../../types.ts";
 import { type BuiltRecord, toIngestRecord, UnusableRecord } from "../payload.ts";
 
 /** Time kept in hand before the run deadline, as the current-bills adapter does. */

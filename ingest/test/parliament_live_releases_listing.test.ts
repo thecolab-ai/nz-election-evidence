@@ -9,8 +9,8 @@ import { runSource } from "../../supabase/functions/_shared/runner.ts";
 import { IngestError, type SourcesFile } from "../../supabase/functions/_shared/types.ts";
 import sourcesFile from "../../supabase/functions/_shared/sources.config.json" with { type: "json" };
 import { PARLIAMENT_PROJECTION_VERSION } from "../src/families/parliament/payload.ts";
-import { parseReleasesListing, releaseListingRecord, releasesListingAdapter } from "../src/families/parliament/live/releases_listing.ts";
-import { cannedFetch, drain, fixtureContext, fixtureSource, payloadProblems } from "../src/families/parliament/live/test_support.ts";
+import { parseReleasesListing, releaseListingRecord, releasesListingAdapter } from "../../supabase/functions/_shared/adapters/parliament/live/releases_listing.ts";
+import { cannedFetch, drain, fixtureContext, fixtureSource, payloadProblems } from "../../supabase/functions/_shared/adapters/parliament/live/test_support.ts";
 
 function row(slug: string, title: string, options: { node?: number; datetime?: string; absolute?: boolean } = {}): string {
   const href = (options.absolute ? "https://www.beehive.govt.nz" : "") + "/release/" + slug;

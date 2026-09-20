@@ -3,7 +3,7 @@
 
 import type {
   Adapter, AdapterContext, AdapterPage, IngestRecord, Json, SafeFetchRequest, SafeFetchResponse, SourceConfig,
-} from "../../../../../supabase/functions/_shared/types.ts";
+} from "../../../types.ts";
 
 export interface CannedCall {
   request: SafeFetchRequest;

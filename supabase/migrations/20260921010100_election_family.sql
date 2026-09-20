@@ -578,8 +578,8 @@ begin
 end
 $$;
 
--- Entry point. The coordinator adds one key to the shared project_run (see the family README); until then the family
--- CLI calls this directly, under the same lease.
+-- Entry point. project_run reaches it through the projector registry (20260921000100_import_shared.sql), which calls
+-- project_election_family_run below after asserting the lease itself. The two-argument form stays for a direct call.
 create or replace function evidence_private.project_election_family(p_run_id uuid, p_holder uuid)
 returns jsonb
 language plpgsql
@@ -595,12 +595,29 @@ begin
 end
 $$;
 
+-- Registered form: project_run has already asserted that the caller holds the run.
+create or replace function evidence_private.project_election_family_run(p_run_id uuid)
+returns jsonb
+language sql
+set search_path = ''
+as $$
+  select jsonb_build_object(
+    'nationwide', evidence_private.project_election_nationwide(p_run_id),
+    'electorates', evidence_private.project_election_electorates(p_run_id),
+    'documents', evidence_private.project_election_documents(p_run_id),
+    'facts', evidence_private.project_election_facts(p_run_id));
+$$;
+
+insert into evidence_private.run_projectors (projector_key, function_name)
+values ('election_family', 'project_election_family_run')
+on conflict (projector_key) do nothing;
+
 do $$
 declare
   v_fn text;
 begin
   foreach v_fn in array array[
-    'election_family_result_set(uuid, text, uuid)', 'election_family_party_vote_check(uuid)',
+    'project_election_family_run(uuid)', 'election_family_result_set(uuid, text, uuid)', 'election_family_party_vote_check(uuid)',
     'project_election_nationwide(uuid)', 'project_election_electorates(uuid)', 'project_election_documents(uuid)',
     'project_election_facts(uuid)', 'project_election_family(uuid, uuid)']
   loop

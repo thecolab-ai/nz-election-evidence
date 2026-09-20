@@ -18,7 +18,7 @@
 
 import {
   type Adapter, type AdapterContext, type AdapterPage, IngestError, type IngestRecord,
-} from "../../../../../supabase/functions/_shared/types.ts";
+} from "../../../types.ts";
 import { buildWrittenQuestion, witnessText } from "../payload.ts";
 import { asRow, builtRecord, convertPage, optionDay, optionInt, parseJsonObject, positiveInt, roomFor } from "./common.ts";
 

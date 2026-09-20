@@ -1,7 +1,7 @@
 // New Zealand Parliament: select committee reports index for one Parliament (metadata and link only; never report
 // text, never an attachment download). Request shape and totals: see LIVE-NOTES.md.
 
-import type { IngestRecord } from "../../../../../supabase/functions/_shared/types.ts";
+import type { IngestRecord } from "../../../types.ts";
 import { buildCommitteeReport } from "../payload.ts";
 import { builtRecord } from "./common.ts";
 import { committeeSearchAdapter, parseCommitteeSearchPage, type ParsedSearchPage } from "./committee_search.ts";

@@ -15,10 +15,10 @@
 // One adapter page per bill: [bill_publication_set, ...bill_publication]. Bills are processed in id order and the
 // cursor is { after_bill_id, total }, so a resumed run continues after the last stored bill even if the list moved.
 
-import { billsRequestBody, parseBillsPage } from "../../../../../supabase/functions/_shared/adapters/bills.ts";
+import { billsRequestBody, parseBillsPage } from "../../../adapters/bills.ts";
 import {
   type Adapter, type AdapterContext, type AdapterPage, IngestError, type IngestRecord, SourceUnavailableError,
-} from "../../../../../supabase/functions/_shared/types.ts";
+} from "../../../types.ts";
 import { BILL_PUBLIC_BASE, buildBillPublication, buildBillPublicationSet, isoDay, isUuid } from "../payload.ts";
 import { builtRecord, DEADLINE_MARGIN_MS, parseJsonObject } from "./common.ts";
 

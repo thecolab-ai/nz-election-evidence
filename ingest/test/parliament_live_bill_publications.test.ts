@@ -7,8 +7,8 @@ import { IngestError, type Json, type SafeFetchRequest, SourceUnavailableError }
 import { PARLIAMENT_PROJECTION_VERSION } from "../src/families/parliament/payload.ts";
 import {
   billPublicationRecords, billPublicationsAdapter, legislationBillPath, parseBillDetail, parseVersionsIndex, versionsIndexUrl,
-} from "../src/families/parliament/live/bill_publications.ts";
-import { cannedFetch, drain, fixtureContext, fixtureSource, payloadProblems } from "../src/families/parliament/live/test_support.ts";
+} from "../../supabase/functions/_shared/adapters/parliament/live/bill_publications.ts";
+import { cannedFetch, drain, fixtureContext, fixtureSource, payloadProblems } from "../../supabase/functions/_shared/adapters/parliament/live/test_support.ts";
 
 const uuid = (n: number) => `00000000-0000-4000-8000-${String(n).padStart(12, "0")}`;
 

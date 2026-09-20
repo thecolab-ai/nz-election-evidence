@@ -5,7 +5,7 @@
 // source is never schedule-enabled: it is run deliberately from the CLI, which does not require `enabled`, and resumed
 // across runs from its checkpoint. Eligibility to COLLECT says nothing about rights to PUBLISH.
 
-import type { Adapter, ScheduleConfig, SourceConfig } from "../../../../../supabase/functions/_shared/types.ts";
+import type { Adapter, ScheduleConfig, SourceConfig } from "../../../types.ts";
 import { billPublicationsAdapter } from "./bill_publications.ts";
 import { committeeBusinessAdapter } from "./committee_business.ts";
 import { committeeReportsAdapter } from "./committee_reports.ts";

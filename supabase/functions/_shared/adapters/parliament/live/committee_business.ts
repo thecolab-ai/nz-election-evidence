@@ -2,7 +2,7 @@
 // The publisher's list shrinks as items are reported back, so a complete walk is a true snapshot of what is before
 // committees now. Request shape and totals: see LIVE-NOTES.md.
 
-import type { IngestRecord } from "../../../../../supabase/functions/_shared/types.ts";
+import type { IngestRecord } from "../../../types.ts";
 import { buildCommitteeBusinessItem } from "../payload.ts";
 import { builtRecord } from "./common.ts";
 import { committeeSearchAdapter, parseCommitteeSearchPage, type ParsedSearchPage } from "./committee_search.ts";

@@ -9,10 +9,10 @@
 // nothing when that structure is absent, and the adapter then faults instead of reporting "no releases".
 // A challenge is final: one attempt, no other headers, no other route (the fetch guard raises SourceUnavailableError).
 
-import { cleanText } from "../../../../../supabase/functions/_shared/canonical.ts";
+import { cleanText } from "../../../canonical.ts";
 import {
   type Adapter, type AdapterContext, type AdapterPage, IngestError, type IngestRecord,
-} from "../../../../../supabase/functions/_shared/types.ts";
+} from "../../../types.ts";
 import { buildRelease, isoInstant } from "../payload.ts";
 import { builtRecord, DEADLINE_MARGIN_MS, optionInt } from "./common.ts";
 

@@ -4,6 +4,7 @@
 // export line is checked again against the closed contract of its record kind. A key the contract does not
 // name, a value of the wrong shape, or a forbidden name anywhere refuses the WHOLE file before a run exists.
 
+import { textViolation } from "../../../../supabase/functions/_shared/text_guard.ts";
 import type { VersionedExportRow } from "./exporter.ts";
 import { isoDate, type SafeJson } from "./mapping.ts";
 
@@ -130,12 +131,6 @@ export const KIND_CONTRACTS: { [recordKind: string]: KindContract } = {
 /** Names that may never appear as a key at any depth, whatever a contract says. Mirrors the database guard. */
 export const FORBIDDEN_KEY = /^(e[-_]?mail|phone|mobile|fax|address|street|postcode|donor.*|contributor.*|body|html|raw.*|full_text|content_html|file_path|archive_path|local_path|storage_url|signed_url|source_record_json|payload_json|source_passage|password|secret|token|api_key|credential.*|document_text|.*ocr.*)$/i;
 
-const TEXT_GUARDS: { name: string; test: RegExp }[] = [
-  { name: "an e-mail-like value", test: /[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/ },
-  { name: "a file location", test: /(^|["\s=:(,])(file:\/\/|~\/|[A-Za-z]:\\|\/(home|Users|root|var|mnt|srv|etc|tmp|opt|data)\/)/ },
-  { name: "control characters", test: /[\x01-\x08\x0b\x0c\x0e-\x1f\x7f]/ },
-];
-
 function typeOk(type: FieldType, value: SafeJson): boolean {
   switch (type) {
     case "string": return typeof value === "string" && value.length > 0 && value.length <= 400;
@@ -198,10 +193,8 @@ export function contractProblem(row: VersionedExportRow): string | null {
   }
   const textOfRow = JSON.stringify(row.payload);
   if (Buffer.byteLength(textOfRow) > 8000) return "payload is larger than the store accepts";
-  for (const guard of TEXT_GUARDS) if (guard.test.test(textOfRow)) return `payload holds ${guard.name}`;
-  // Mirror of the store's phone-number heuristic, so a row it would reject refuses the whole file here, before any write.
-  if (/(^|[^0-9])(\+?64|0)[ -]?[2-9][0-9]?[ -]?[0-9]{3}[ -]?[0-9]{3,4}([^0-9]|$)/.test(textOfRow) && /(ph|phone|mob|tel|call)/i.test(textOfRow)) {
-    return "payload holds a digit run the store would read as a phone number";
-  }
+  // The shared mirror of the store's guard, so a row it would reject refuses the whole file here, before any write.
+  const violation = textViolation(textOfRow);
+  if (violation) return `payload holds a value the store refuses (${violation})`;
   return null;
 }

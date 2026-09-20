@@ -227,7 +227,7 @@ test("review fixes: version-making facts live in the payload; nested vocabularie
 
   assert.equal(letterHex("0123456789abcdef"), "ghijklmnopabcdef", "the same bits with no digit run");
   const phoneLike = foldVersions([mapElectorateResult(voteRow("r9", "STEPHENS, Pat 021 555 1234", "candidate", 5))]);
-  assert.throws(() => preflight(parseProduct("P09", exportFile(phoneLike)), undefined, null), /read as a phone number/);
+  assert.throws(() => preflight(parseProduct("P09", exportFile(phoneLike)), undefined, null), /phone_like_value/);
 
   const twice = foldVersions([mapElectorateResult(voteRow("r1", "Fixture Party", "party", 10, H("1"))), { ...mapElectorateResult(voteRow("r1", "Fixture Party", "party", 11, H("2"))), collected_at: "2026-09-19T11:00:00.000Z" }]);
   twice[1].payload = structuredClone(twice[0].payload);

@@ -12,6 +12,7 @@
 
 import { createHash } from "node:crypto";
 import { canonicalJson } from "../../../../supabase/functions/_shared/canonical.ts";
+import { textViolation as sharedTextViolation } from "../../../../supabase/functions/_shared/text_guard.ts";
 import type { Json } from "../../../../supabase/functions/_shared/types.ts";
 
 export const ARTIFACT_VERSION = 1;
@@ -264,17 +265,9 @@ const SHA = /^[0-9a-f]{64}$/;
 const HASH = /^sha256:[0-9a-f]{64}$/;
 const HTTPS = /^https:\/\/[A-Za-z0-9.-]+(\/[^\s]*)?$/;
 const SECRET_QUERY = /[?&#](key|api_?key|token|access_token|auth|sig|signature|secret|password|session)=/i;
-/** Mirrors evidence_private.text_violation: contact data, locations on a disk, credentials, control characters. */
-const TEXT_VIOLATIONS: [RegExp, string][] = [
-  [/[\u0001-\u0008\u000b\u000c\u000e-\u001f\u007f]/, "control_characters"],
-  [/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/, "email_like_value"],
-  [/(^|["\s=:(,])(file:\/\/|~\/|[A-Za-z]:\\|\/(home|Users|root|var|mnt|srv|etc|tmp|opt|data)\/)/, "filesystem_location_value"],
-];
-
+/** The shared mirror of evidence_private.text_violation: one copy for every family (see _shared/text_guard.ts). */
 export function textViolation(text: string | null | undefined): string | null {
-  if (!text) return null;
-  for (const [pattern, name] of TEXT_VIOLATIONS) if (pattern.test(text)) return name;
-  return null;
+  return sharedTextViolation(text);
 }
 
 function need(condition: unknown, message: string): asserts condition {

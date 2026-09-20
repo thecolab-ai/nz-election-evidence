@@ -7,11 +7,11 @@ import { type Adapter, IngestError, type Json } from "../../supabase/functions/_
 import { PARLIAMENT_PROJECTION_VERSION } from "../src/families/parliament/payload.ts";
 import {
   committeeBusinessAdapter, committeeBusinessRecord, committeeBusinessRequestBody, parseCommitteeBusinessPage,
-} from "../src/families/parliament/live/committee_business.ts";
+} from "../../supabase/functions/_shared/adapters/parliament/live/committee_business.ts";
 import {
   committeeReportRecord, committeeReportsAdapter, committeeReportsRequestBody, parseCommitteeReportsPage,
-} from "../src/families/parliament/live/committee_reports.ts";
-import { cannedFetch, drain, fixtureContext, fixtureSource, payloadProblems } from "../src/families/parliament/live/test_support.ts";
+} from "../../supabase/functions/_shared/adapters/parliament/live/committee_reports.ts";
+import { cannedFetch, drain, fixtureContext, fixtureSource, payloadProblems } from "../../supabase/functions/_shared/adapters/parliament/live/test_support.ts";
 
 const uuid = (n: number) => `00000000-0000-4000-8000-${String(n).padStart(12, "0")}`;
 

@@ -10,47 +10,9 @@
 --
 -- Additive only: no existing row is rewritten and no existing column changes meaning.
 
--- Ledger guard correction (SHARED FUNCTION; see INTEGRATION.md, "Shared guard change") ---------------------------------
--- The phone-number test matched digit runs inside hexadecimal identifiers whenever the same text also held "ph", "tel",
--- "call" or "mob" (as in "telecommunications" or "graph"). Measured on the real exports: 1,380 of 187,956 written
--- questions, 4 releases, 3 bills and 2 report files would have been refused for carrying a publisher id or a digest.
--- The function is otherwise unchanged, word for word. A real phone number beside such a word is still refused.
-
-create or replace function evidence_private.text_violation(p_text text)
-returns text
-language plpgsql
-immutable
-set search_path = ''
-as $$
-begin
-  if p_text is null then
-    return null;
-  end if;
-  if p_text ~ '[\x01-\x08\x0b\x0c\x0e-\x1f\x7f]' then
-    return 'control_characters';
-  end if;
-  if p_text ~ '[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}' then
-    return 'email_like_value';
-  end if;
-  if p_text ~ '(^|["\s=:(,])(file://|~/|[A-Za-z]:\\|/(home|Users|root|var|mnt|srv|etc|tmp|opt|data)/)' then
-    return 'filesystem_location_value';
-  end if;
-  if p_text ~* '(password|passwd|pwd|secret|api[_-]?key|access[_-]?key|token|bearer|authorization)["'']?\s*[=:]\s*\S'
-     or p_text ~ 'eyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.'
-     -- (the pattern is assembled from two pieces so this file does not itself look like it holds a token)
-     or p_text ~ ('(AKIA[0-9A-Z]{16}|gh[pousr]_[A-Za-z0-9]{20,}|github' || '_pat_|sb_secret_|sk-[A-Za-z0-9]{16,}|BEGIN [A-Z ]*PRIVATE KEY)')
-     or p_text ~* '[a-z][a-z0-9+.-]*://[^/\s:@]+:[^/\s@]+@' then
-    return 'credential_like_value';
-  end if;
-  -- Publisher ids (UUIDs) and SHA-256 digests are hexadecimal, so they hold digit runs by chance. They are taken out
-  -- before the phone test and only for it: every other test above still sees the whole text.
-  if regexp_replace(p_text, '[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}|[0-9a-f]{64}', ' ', 'g')
-       ~ '(^|[^0-9])(\+?64|0)[ -]?[2-9][0-9]?[ -]?[0-9]{3}[ -]?[0-9]{3,4}([^0-9]|$)' and p_text ~* '(ph|phone|mob|tel|call)' then
-    return 'phone_like_value';
-  end if;
-  return null;
-end
-$$;
+-- Ledger guard: the correction to the phone-number test that this family measured on its real exports (1,380 of 187,956
+-- written questions refused for carrying a publisher id or a digest) lives in 20260921000100_import_shared.sql, the one
+-- copy all three families share. Nothing in this file replaces evidence_private.text_violation.
 
 -- Document types --------------------------------------------------------------------------------------------------
 
@@ -209,16 +171,7 @@ comment on table evidence_private.record_route_keys is
 
 create index record_route_keys_key on evidence_private.record_route_keys (item_family, route_key);
 
--- Projector registry: lets a family add its projection without replacing another family's -------------------------------
-
-create table if not exists evidence_private.run_projectors (
-  projector_key text primary key check (projector_key ~ '^[a-z][a-z0-9_]{2,60}$'),
-  function_name text not null check (function_name ~ '^[a-z][a-z0-9_]{2,60}$'),
-  registered_at timestamptz not null default now()
-);
-
-comment on table evidence_private.run_projectors is
-  'Projection functions evidence_private.<function_name>(uuid) run by project_run after the core projections. Administrator-written only.';
+-- Projector registry (created in 20260921000100_import_shared.sql): this family registers its projection ------------------
 
 insert into evidence_private.run_projectors (projector_key, function_name)
 values ('parliament_family', 'project_parliament_family')
@@ -467,31 +420,6 @@ begin
 end
 $$;
 
--- project_run: the core projections, then every registered family projector ------------------------------------------------
-
-create or replace function evidence_private.project_run(p_run_id uuid, p_holder uuid)
-returns jsonb
-language plpgsql
-set search_path = ''
-as $$
-declare
-  v_out jsonb;
-  v_projector record;
-  v_result jsonb;
-begin
-  perform evidence_private.assert_run_held(p_run_id, p_holder);
-  v_out := jsonb_build_object(
-    'mp_directory', evidence_private.project_mp_directory(p_run_id),
-    'documents', evidence_private.project_documents(p_run_id),
-    'baseline_candidacies', evidence_private.project_baseline_candidacies(p_run_id));
-  for v_projector in select projector_key, function_name from evidence_private.run_projectors order by projector_key loop
-    execute format('select evidence_private.%I($1)', v_projector.function_name) into v_result using p_run_id;
-    v_out := v_out || jsonb_build_object(v_projector.projector_key, v_result);
-  end loop;
-  return v_out;
-end
-$$;
-
 -- Reconciliation readout ---------------------------------------------------------------------------------------------------
 -- Counts only. What the destination holds for one source, so an import receipt can be checked against the export manifest.
 
@@ -562,7 +490,7 @@ declare
 begin
   foreach v_name in array array[
     'committee_report_files', 'committee_business_items', 'bill_stages', 'bill_publication_sets', 'bill_publications',
-    'release_attributions', 'record_route_keys', 'run_projectors']
+    'release_attributions', 'record_route_keys']
   loop
     execute format('alter table evidence_private.%I enable row level security', v_name);
     execute format('revoke all on evidence_private.%I from public, anon, authenticated', v_name);
@@ -597,10 +525,6 @@ alter view evidence_views.route_coverage_by_source owner to evidence_inspector_r
 revoke all on evidence_views.route_coverage, evidence_views.route_coverage_by_source from public, anon, authenticated;
 revoke create on schema evidence_views from evidence_inspector_reader;
 
--- The registry of projectors is read by the worker and written by an administrator only.
-grant select on evidence_private.run_projectors to evidence_ingest;
-create policy run_projectors_ingest_select on evidence_private.run_projectors for select to evidence_ingest using (true);
-
 revoke execute on function evidence_private.project_parliament_family(uuid) from public;
 revoke execute on function evidence_private.parliament_family_run_rows(uuid) from public;
 grant execute on function evidence_private.parliament_family_run_rows(uuid) to evidence_ingest;
@@ -617,8 +541,7 @@ insert into evidence_private.public_lineage (object_schema, object_name, lineage
   ('evidence_private', 'bill_publication_sets', 'source', '(select l.source_id from evidence_private.lineage_record l where l.record_id = b.source_record_id)', 'Every row resolves to exactly one source through foreign keys; rows that do not are not shown.'),
   ('evidence_private', 'bill_publications', 'source', '(select l.source_id from evidence_private.lineage_record l where l.record_id = b.source_record_id)', 'Every row resolves to exactly one source through foreign keys; rows that do not are not shown.'),
   ('evidence_private', 'release_attributions', 'source', '(select l.source_id from evidence_private.lineage_record l where l.record_id = b.source_record_id)', 'Every row resolves to exactly one source through foreign keys; rows that do not are not shown.'),
-  ('evidence_private', 'record_route_keys', 'source', '(select l.source_id from evidence_private.lineage_record l where l.record_id = b.record_id)', 'Every row resolves to exactly one source through foreign keys; rows that do not are not shown.'),
-  ('evidence_private', 'run_projectors', 'not_source_data', null, 'The list of projection functions. Holds no source data.')
+  ('evidence_private', 'record_route_keys', 'source', '(select l.source_id from evidence_private.lineage_record l where l.record_id = b.record_id)', 'Every row resolves to exactly one source through foreign keys; rows that do not are not shown.')
 on conflict do nothing;
 
 -- The coverage views aggregate across sources, so no single source can vouch for a row: withheld, with the reason recorded.

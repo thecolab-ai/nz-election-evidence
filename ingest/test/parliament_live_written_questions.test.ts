@@ -5,10 +5,10 @@ import { test } from "node:test";
 import { canonicalJson, contentHash } from "../../supabase/functions/_shared/canonical.ts";
 import { IngestError, type Json } from "../../supabase/functions/_shared/types.ts";
 import { PARLIAMENT_PROJECTION_VERSION } from "../src/families/parliament/payload.ts";
-import { cannedFetch, drain, fixtureContext, fixtureSource, payloadProblems } from "../src/families/parliament/live/test_support.ts";
+import { cannedFetch, drain, fixtureContext, fixtureSource, payloadProblems } from "../../supabase/functions/_shared/adapters/parliament/live/test_support.ts";
 import {
   followingMonth, monthPartitions, parseQuestionsPage, partitionBounds, questionRecord, questionsRequestBody, writtenQuestionsAdapter,
-} from "../src/families/parliament/live/written_questions.ts";
+} from "../../supabase/functions/_shared/adapters/parliament/live/written_questions.ts";
 
 const uuid = (n: number) => `00000000-0000-4000-8000-${String(n).padStart(12, "0")}`;
 

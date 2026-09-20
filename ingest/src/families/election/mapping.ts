@@ -7,6 +7,10 @@
 //   - a null upstream number stays absent (value_status "not_reported"); zero is kept only when the source shows zero.
 //   - document text, extracted PDF text, OCR pages, file locations and donor-level detail are never exported.
 
+import { letterHex, publisherDate } from "../../../../supabase/functions/_shared/adapters/election/encoding.ts";
+
+export { letterHex, publisherDate };
+
 export type ProductId = "P08" | "P09" | "P13" | "P14" | "P15" | "P16" | "P17";
 
 export type SafeJson = null | boolean | number | string | SafeJson[] | { [key: string]: SafeJson };
@@ -129,15 +133,6 @@ export function isoDate(value: unknown): string | undefined {
   return !Number.isNaN(ms) && new Date(ms).toISOString().slice(0, 10) === value ? value : undefined;
 }
 
-/** A publisher-stated date-time. A value without a zone is read as UTC on every machine, never in local time. */
-export function publisherDate(value: unknown): string | undefined {
-  if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}/.test(value.trim())) return undefined;
-  const clean = value.trim();
-  const zoned = /[zZ]$|[+-]\d\d:?\d\d$/.test(clean) ? clean : (clean.length === 10 ? clean + "T00:00:00" : clean.replace(" ", "T")) + "Z";
-  const ms = Date.parse(zoned);
-  return Number.isNaN(ms) ? undefined : new Date(ms).toISOString();
-}
-
 /** Collects what a mapper kept, so everything it did not keep is recorded as omitted. */
 class Picker {
   readonly payload: { [key: string]: SafeJson } = {};
@@ -163,15 +158,6 @@ class Picker {
       reason: DROPS[key] ?? REASONS.unlisted,
     }));
   }
-}
-
-/**
- * A SHA-256 with its digits 0-9 written as the letters g-p (a-f unchanged). The store's guard against phone
- * numbers reads a long run of digits beside letters such as "ph" or "tel" as a phone number, and a hex hash next
- * to a name can look like that. The same 256 bits, no digit runs; the plain hex stays in original_content_hash.
- */
-export function letterHex(hex: string): string {
-  return hex.replace(/[0-9]/g, (digit) => String.fromCharCode(103 + Number(digit)));
 }
 
 /**
