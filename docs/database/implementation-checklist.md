@@ -50,13 +50,13 @@ Branch `feat/supabase-evidence-explorer`. Legend: **[x]** done and verified here
 - [x] `pg_cron` → dispatcher → `pg_net` → function, secrets read from Vault, target restricted to a Supabase functions endpoint — **proven locally end to end**, then deactivated (0 cron jobs left)
 - [x] Migrations schedule nothing; activation refused without a function readback run; check constraint forbids `active` without proof
 - [x] Versioned operator steps: activate/deactivate with readback, inspector grant/revoke, read-only pre-flight (SQL); worker login and Vault secrets through `ingest/src/operator.ts` (hidden input, SCRAM verifier, refuses where logging would capture a parameter)
-- [x] Activation and every dispatch also require a rights row, a terms URL, a named person's terms review and a fresh robots.txt check; **no such review exists, so no schedule can activate** (proven locally against a real readback run: refused)
+- [x] Activation needs readback proof, Vault secrets and a named activator, for a public unauthenticated source only; a recorded `not_permitted` terms review blocks activation, dispatch and run start (R6). robots.txt, undocumented status and a missing terms review are advisories, printed before activation and stored in the activation proof (owner collection policy, 2026-09-20). Proven locally: refused without readback, refused on a blocked readback, activated on a real readback, deactivated; 0 cron jobs left
 - [ ] Hosted deployment, Vault secrets, schedule activation — **deliberately not done**; awaits release review
 
 ## 4. Source freshness
 
 - [x] Freshness table and statuses: fresh, stale, partial, unavailable, reachable_not_parsed, never_run; last attempt, last success, last change, latest publisher date, consecutive failures
-- [x] Verified live for nine sources; freshness is part of the public projection. After the PR 8 fixes: one fresh (releases feed), six blocked (one robots.txt disallow, one undocumented endpoint, three bot challenges, one unreadable robots.txt), one reachable-not-parsed, one export-only
+- [x] Verified live for nine sources; freshness is part of the public projection. Latest fresh runs (2026-09-20, owner collection policy): three succeeded (members listing 122, bills 93, releases feed 10), four blocked by a bot challenge, one failed `host_denied` (publisher redirect to a host off the allowlist), one export-only
 
 ## 5. Public read-only access, source rights and the private boundary
 
@@ -119,10 +119,24 @@ Final run, 2026-09-20, after confirming no other session or process was using th
 - [ ] R8 accountable person: **a human gate, not done and not claimed**. The footer says so and the gate stays closed
 - [ ] Terms URLs for the Beehive and Electoral Commission rows, every terms review, publisher permission for the MP directory and a documented bills route: **people's work, not done**
 
+## 10. Owner collection policy (2026-09-20)
+
+An owner decision made after section 9, not a reviewer approval: see [pr8-review-disposition.md](pr8-review-disposition.md#owner-collection-policy-2026-09-20-supersedes-parts-of-rows-6-7-and-89). It supersedes the robots.txt veto, the undocumented-endpoint block and the terms-review activation block in section 9; everything else there stands.
+
+- [x] Eligibility is "read-only, served to the anonymous public"; `authenticated` and `paywalled` sources can never be enabled, scheduled or contacted
+- [x] robots.txt fetched, evaluated and **recorded** per run as an advisory; Crawl-delay paces up to a cap; public undocumented endpoints eligible
+- [x] 401/407, `WWW-Authenticate`, sign-in forms, redirects to sign-in, 402, 403 and bot challenges are final after one attempt; no credential or impersonating header can be sent; DNS check against private addresses
+- [x] Terms review and robots findings are advisories at activation, printed first and stored in the proof; `not_permitted` still blocks (R6); readback proof, secrets, named activator and inactive default unchanged
+- [x] MP directory and bills restored because fresh anonymous requests actually worked (122 and 93); receipts `run5`/`run6`
+- [x] Publication side untouched: every rights row pending, gates closed, withheld registers unchanged, anonymous readers see 0 evidence rows
+- [ ] Publisher permission, terms URLs for the Beehive and Electoral Commission rows, and any person's terms review: **not done and not claimed**
+
+Verified on the task-local stack after confirming exclusive use: database rebuilt from migrations; **pgTAP 313/313**; ingest + tooling **98/98, 0 skipped**; Deno check; config valid (9 sources, 3 schedules, all inactive); copy scan clean; generated types match; vitest 32/32; Pages build and bundle check; browser 25/25; Pages routing 4/4; Python validation, red lines with freeze check, unit tests. Function served under the edge runtime: 401 without the secret; readback 200 for the members listing (122) and bills (93).
+
 ## Missing inputs and blocks
 
 1. Reviewed export files for the 2023 baseline and every other catalogue product (and the exporter's stated row counts).
-2. A publisher-approved route to Electoral Commission data (the sites refused automated requests from this host), permission or a documented route for the Parliament members listing (robots.txt disallows automated clients), and a documented bills data route (only an internal endpoint was found).
+2. A publisher-approved route to Electoral Commission data (the sites refused automated requests from this host), and, for a person's decision rather than as a block: the Parliament members listing host disallows automated clients in robots.txt, and only an undocumented public endpoint was found for bills. No publisher permission has been sought or obtained for either.
 3. A hosted Supabase project reference, administrator connection and release approval.
 4. R8 legal entity, R10 reviews and rights decisions — human gates; not something code can satisfy. Release review should also confirm the withheld register and the decision that typed fields (titles, names of public office-holders, party labels, dates) are metadata within the pending link-only tier.
 5. Unimplemented adapters and loaders are enumerated, with their blockers, in [source-reconciliation.md](source-reconciliation.md#adapters-and-loaders-that-are-not-implemented).

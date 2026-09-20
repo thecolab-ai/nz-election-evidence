@@ -27,4 +27,17 @@ The fetch guard now reads robots.txt before anything else on a host, paces reque
 | other `*-ec_*.run3` | robots.txt readable and permissive; the page itself answered with a bot challenge: `blocked` / `publisher_challenge`. |
 | `*-baseline_2023_candidacies_export.import3/4` | Same pinned input on the rebuilt database: 963 stored, 0 rejected; replay inserted **0** versions. |
 
+### Under the owner's collection policy (run5 / run6 and `publisher-access-checks.policy`, same day, rebuilt database)
+
+The owner then changed the collection policy ([what and why](../pr8-review-disposition.md#owner-collection-policy-2026-09-20-supersedes-parts-of-rows-6-7-and-89)): public unauthenticated pages and endpoints are eligible; robots.txt and undocumented status are recorded, not vetoes; a sign-in, paywall, refusal or bot challenge is final. The `run3` receipts above, where the members listing and bills were blocked, are kept as history.
+
+| Receipt | What it shows |
+|---|---|
+| `*-nz_parliament_mp_directory.run5/6` | robots.txt read, the disallow **recorded** (`robots_advisory_disallowed`), then the public listing: 122 rows; replay inserted **0** versions. (The 122 versions were first stored minutes earlier by the locally served Edge Function's readback run on the same database, so `run5` also shows 0 new.) |
+| `*-nz_parliament_current_bills.run5/6` | robots.txt, then two anonymous POSTs to the public search endpoint: 93 bills; replay **0** new versions (first stored by the function readback, as above). |
+| `*-nz_government_releases_feed.run5/6` | 10 items stored, replay **0**. |
+| `*-ec_*.run5` | Still `blocked` / `publisher_challenge` on all four. For the 2023 results host the unreadable robots.txt (403) is now an advisory, and the page itself answers with a challenge, which is final. |
+| `*-nz_parliament_written_questions.run5` | `failed` / `host_denied`: the publisher's site redirected to a host that is not on the allowlist and the guard refused to follow. |
+| `*-publisher-access-checks.policy.json` | As before, provenance only. New in this run: the Parliament terms page is now retrieved (status, size and hash recorded) although its host's robots.txt disallows crawling, because a public terms page is a public page. |
+
 These receipts prove the adapters, parsers and ledger work against live publishers. They are **not** a coverage claim: see [source-reconciliation.md](../source-reconciliation.md).

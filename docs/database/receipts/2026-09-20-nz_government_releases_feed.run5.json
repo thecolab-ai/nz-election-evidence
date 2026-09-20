@@ -1,0 +1,67 @@
+{
+  "input_findings": null,
+  "receipt_version": 1,
+  "source_id": "nz_government_releases_feed",
+  "mode": "incremental",
+  "dry_run": false,
+  "status": "succeeded",
+  "complete_snapshot": false,
+  "error_class": null,
+  "error_detail": null,
+  "manifest_hash": "sha256:0c1503e32e0aab57b0570a8da83a36389f1291c5e9236ef9be66351440cdf222",
+  "manifest": {
+    "manifest_version": 1,
+    "config_version": 1,
+    "source_id": "nz_government_releases_feed",
+    "adapter_name": "nz_government_releases_feed",
+    "adapter_version": "1.0.0",
+    "mode": "incremental",
+    "allowed_hosts": [
+      "www.beehive.govt.nz"
+    ],
+    "snapshot_semantics": "append_only_feed",
+    "source_config_hash": "sha256:00ee94e374da2bf699fb7e1f74f50c104b551cc447ff0f5c0a96416df96c5a68",
+    "max_records": 2000
+  },
+  "run_id": "7370b955-14c9-4e79-bc42-9380f05db726",
+  "resumed_from_run_id": null,
+  "totals": {
+    "seen": 10,
+    "versions_inserted": 10,
+    "observations_inserted": 10,
+    "unchanged": 0,
+    "rejected": 0
+  },
+  "tombstoned": 0,
+  "pages": 1,
+  "projection": {
+    "documents": 10,
+    "mp_directory": 0,
+    "baseline_candidacies": 0
+  },
+  "fetches": [
+    {
+      "method": "GET",
+      "url": "https://www.beehive.govt.nz/robots.txt",
+      "attempt": 1,
+      "outcome": "ok",
+      "http_status": 200,
+      "bytes": 2027,
+      "body_sha256": "sha256:773fb8d35bb9a39d35335ee6db8dc5c912d2aacbfb823152d9c61cd647dd902d",
+      "retrieved_at": "2026-09-20T07:14:28.467Z",
+      "duration_ms": 127
+    },
+    {
+      "method": "GET",
+      "url": "https://www.beehive.govt.nz/releases/feed",
+      "attempt": 1,
+      "outcome": "ok",
+      "http_status": 200,
+      "bytes": 6248,
+      "body_sha256": "sha256:655b68633c4f7a86d894b72e8f2196677edef3411ffd20c472eaaac243b78140",
+      "retrieved_at": "2026-09-20T07:14:28.455Z",
+      "duration_ms": 2112
+    }
+  ],
+  "receipt_note": "Real retrieval from the official publisher on 2026-09-20 (UTC), written to a disposable local database. Counts, hashes, statuses and publisher URLs only; no payloads or response bodies."
+}
