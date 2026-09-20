@@ -7,11 +7,31 @@
 -- Every view lists its columns explicitly. There is no SECURITY DEFINER function anywhere:
 -- a view reads the private tables with the privileges of its read-only owner role.
 
+-- Release tier of each source, from its rights row. Absent, pending-with-withheld, refused or restricted
+-- rights release nothing; only an approved review with release mode approved-fields can release content,
+-- and then only the fields it names.
+create view evidence_private.source_release as
+select s.source_id,
+       case
+         when r.rights_id is null then 'none'
+         when r.review_status in ('refused', 'restricted') then 'none'
+         when r.default_release = 'withheld' then 'none'
+         when r.review_status = 'approved' and r.default_release = 'approved-fields' then 'fields'
+         else 'link_only'
+       end as tier,
+       case when r.review_status = 'approved' and r.default_release = 'approved-fields' then r.approved_fields else '{}'::text[] end as approved_fields
+from evidence_private.sources s
+left join evidence_private.source_rights r on r.rights_id = s.rights_id;
+
+comment on view evidence_private.source_release is
+  'none | link_only | fields, per source. The only input to what anonymous readers may see of that source and everything descended from it.';
+
 create view evidence_views.sources as
 select s.source_id, s.title, s.publisher, s.official_url, s.adapter_kind, s.adapter_name, s.allowed_hosts,
        s.view_scope, s.snapshot_semantics, s.expected_cadence_seconds, s.enabled, s.blocked_reason,
-       s.registry_key, s.rights_id, coalesce(sr.review_status, 'pending') as rights_review_status,
-       coalesce(sr.default_release, 'link-only') as rights_default_release,
+       s.registry_key, s.rights_id, coalesce(sr.review_status, 'no rights row') as rights_review_status,
+       coalesce(sr.default_release, 'withheld') as rights_default_release,
+       rel.tier as public_release_tier, rel.approved_fields as public_approved_fields,
        f.last_attempt_at, f.last_attempt_status, f.last_success_at, f.last_change_at,
        f.latest_source_published_at, f.consecutive_failures, f.last_error_class,
        case
@@ -33,7 +53,8 @@ select s.source_id, s.title, s.publisher, s.official_url, s.adapter_kind, s.adap
          where m.source_id = s.source_id) as catalogue_product_ids
 from evidence_private.sources s
 left join evidence_private.source_rights sr on sr.rights_id = s.rights_id
-left join evidence_private.source_freshness f on f.source_id = s.source_id;
+left join evidence_private.source_freshness f on f.source_id = s.source_id
+join evidence_private.source_release rel on rel.source_id = s.source_id;
 
 create view evidence_views.rights_register as
 select rights_id, publisher, source_url, review_status, default_release, licence_or_terms_url,
@@ -293,6 +314,7 @@ select * from (
 
 -- Ownership: the read-only reader role owns every base view ----------------------------------------
 
+grant select on evidence_private.source_release to evidence_inspector_reader;
 grant usage, create on schema evidence_views to evidence_inspector_reader;
 do $$
 declare

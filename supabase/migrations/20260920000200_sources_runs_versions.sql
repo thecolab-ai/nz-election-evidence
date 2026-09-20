@@ -16,10 +16,15 @@ create table evidence_private.source_rights (
   excluded_assets text,
   attribution text,
   reviewed_on date,
+  -- Field tokens a publisher has cleared for release. Empty unless the review is approved AND the
+  -- release mode is approved-fields. Nothing but link metadata is public without an entry here.
+  approved_fields text[] not null default '{}',
   register_hash text not null,
   synced_at timestamptz not null default now(),
   -- A rights row cannot leave pending without a dated review.
-  check (review_status = 'pending' or reviewed_on is not null)
+  check (review_status = 'pending' or reviewed_on is not null),
+  check (cardinality(approved_fields) = 0 or (review_status = 'approved' and default_release = 'approved-fields')),
+  check (array_to_string(approved_fields, ',') ~ '^[a-z][a-z0-9_,]*$' or cardinality(approved_fields) = 0)
 );
 
 comment on table evidence_private.source_rights is
@@ -109,7 +114,7 @@ create table evidence_private.import_runs (
   unchanged integer not null default 0,
   rejected integer not null default 0,
   tombstoned integer not null default 0,
-  error_class text,
+  error_class text check (error_class is null or error_class ~ '^[a-z][a-z0-9_]{1,60}$'),
   error_detail text,
   check ((status = 'running') = (finished_at is null)),
   -- A blocked or failed run can never claim to be a complete snapshot.

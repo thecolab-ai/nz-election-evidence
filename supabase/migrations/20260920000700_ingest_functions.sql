@@ -6,6 +6,65 @@
 -- Defence in depth behind the adapter allowlists. Rejects contact fields, bodies,
 -- filesystem locations and oversized payloads before anything is stored.
 
+-- Text that must never be stored from a source or an operation: contact data, credentials,
+-- filesystem locations, control characters. Used for every string a record carries, not only payloads.
+create or replace function evidence_private.text_violation(p_text text)
+returns text
+language plpgsql
+immutable
+set search_path = ''
+as $$
+begin
+  if p_text is null then
+    return null;
+  end if;
+  if p_text ~ '[\x01-\x08\x0b\x0c\x0e-\x1f\x7f]' then
+    return 'control_characters';
+  end if;
+  if p_text ~ '[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}' then
+    return 'email_like_value';
+  end if;
+  if p_text ~ '(^|["\s=:(,])(file://|~/|[A-Za-z]:\\|/(home|Users|root|var|mnt|srv|etc|tmp|opt|data)/)' then
+    return 'filesystem_location_value';
+  end if;
+  if p_text ~* '(password|passwd|pwd|secret|api[_-]?key|access[_-]?key|token|bearer|authorization)["'']?\s*[=:]\s*\S'
+     or p_text ~ 'eyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.'
+     -- (the pattern is assembled from two pieces so this file does not itself look like it holds a token)
+     or p_text ~ ('(AKIA[0-9A-Z]{16}|gh[pousr]_[A-Za-z0-9]{20,}|github' || '_pat_|sb_secret_|sk-[A-Za-z0-9]{16,}|BEGIN [A-Z ]*PRIVATE KEY)')
+     or p_text ~* '[a-z][a-z0-9+.-]*://[^/\s:@]+:[^/\s@]+@' then
+    return 'credential_like_value';
+  end if;
+  if p_text ~ '(^|[^0-9])(\+?64|0)[ -]?[2-9][0-9]?[ -]?[0-9]{3}[ -]?[0-9]{3,4}([^0-9]|$)' and p_text ~* '(ph|phone|mob|tel|call)' then
+    return 'phone_like_value';
+  end if;
+  return null;
+end
+$$;
+
+-- A publisher link may not carry credentials or secret-bearing query parameters.
+create or replace function evidence_private.url_violation(p_url text)
+returns text
+language plpgsql
+immutable
+set search_path = ''
+as $$
+begin
+  if p_url ~ '^[a-z]+://[^/?#]*@' then
+    return 'url_userinfo';
+  end if;
+  if p_url is null or p_url !~ '^https://[A-Za-z0-9.-]+(/|$|[?#])' then
+    return 'url_not_plain_https';
+  end if;
+  if length(p_url) > 2000 then
+    return 'url_too_long';
+  end if;
+  if p_url ~* '[?&#](key|api_?key|token|access_token|auth|signature|sig|secret|password|pwd|session|sid|jwt)=' then
+    return 'url_secret_parameter';
+  end if;
+  return evidence_private.text_violation(p_url);
+end
+$$;
+
 create or replace function evidence_private.payload_violation(p_payload jsonb)
 returns text
 language plpgsql
@@ -14,6 +73,7 @@ set search_path = ''
 as $$
 declare
   v_text text := p_payload::text;
+  v_key text;
 begin
   if jsonb_typeof(p_payload) <> 'object' then
     return 'payload_not_object';
@@ -21,18 +81,84 @@ begin
   if length(v_text) > 8192 then
     return 'payload_too_large';
   end if;
-  if v_text ~* '"(e[-_]?mail|phone|mobile|fax|address|street|postcode|donor[a-z_]*|contributor[a-z_]*|body|html|raw[a-z_]*|full_text|content_html|file_path|archive_path|local_path|storage_url|signed_url|source_record_json|payload_json|source_passage)"\s*:' then
+  -- Field names are part of what gets published: plain snake_case only, at every depth.
+  for v_key in select jsonb_path_query(p_payload, '$.** ? (@.type() == "object").keyvalue().key') #>> '{}' loop
+    if v_key !~ '^[a-z][a-z0-9_]{0,62}$' then
+      return 'hostile_field_name';
+    end if;
+  end loop;
+  if v_text ~* '"(e[-_]?mail|phone|mobile|fax|address|street|postcode|donor[a-z_]*|contributor[a-z_]*|body|html|raw[a-z_]*|full_text|content_html|file_path|archive_path|local_path|storage_url|signed_url|source_record_json|payload_json|source_passage|password|secret|token|api_key|credential[a-z_]*)"\s*:' then
     return 'forbidden_field_name';
   end if;
-  if v_text ~ '[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}' then
-    return 'email_like_value';
-  end if;
-  -- Anchored to the start of a JSON string so official URLs with similar path segments pass.
-  if v_text ~ '"(file://|~/|/(home|Users|root|var|mnt|srv)/)' then
-    return 'filesystem_location_value';
-  end if;
-  return null;
+  return evidence_private.text_violation(v_text);
 end
+$$;
+
+-- Everything else a record carries: identifiers, kind, links, publisher date text, omitted-field names.
+create or replace function evidence_private.record_violation(p_rec jsonb)
+returns text
+language plpgsql
+immutable
+set search_path = ''
+as $$
+declare
+  v_id text := p_rec ->> 'external_record_id';
+  v_item jsonb;
+  v_violation text;
+begin
+  if v_id is null or length(v_id) not between 1 and 400 or v_id ~ '[\s<>"''\\]' or v_id ~ '^[/~.]' or v_id ~ '://' then
+    return 'bad_external_record_id';
+  end if;
+  v_violation := evidence_private.text_violation(v_id);
+  if v_violation is not null then
+    return 'external_record_id_' || v_violation;
+  end if;
+  if coalesce(p_rec ->> 'record_kind', '') !~ '^[a-z][a-z0-9_]{1,60}$' then
+    return 'bad_record_kind';
+  end if;
+  if coalesce(p_rec ->> 'content_hash', '') !~ '^sha256:[0-9a-f]{64}$' then
+    return 'bad_content_hash';
+  end if;
+  if p_rec ->> 'original_content_hash' is not null and p_rec ->> 'original_content_hash' !~ '^[A-Za-z0-9:_-]{8,200}$' then
+    return 'bad_original_content_hash';
+  end if;
+  v_violation := evidence_private.url_violation(p_rec ->> 'source_url');
+  if v_violation is not null then
+    return 'source_' || v_violation;
+  end if;
+  if p_rec ->> 'source_date_text' is not null and p_rec ->> 'source_date_text' !~ '^[A-Za-z0-9 ,:+./()-]{1,80}$' then
+    return 'bad_source_date_text';
+  end if;
+  if jsonb_typeof(coalesce(p_rec -> 'omitted_fields', '[]'::jsonb)) <> 'array' or jsonb_array_length(coalesce(p_rec -> 'omitted_fields', '[]'::jsonb)) > 100 then
+    return 'bad_omitted_fields';
+  end if;
+  for v_item in select * from jsonb_array_elements(coalesce(p_rec -> 'omitted_fields', '[]'::jsonb)) loop
+    if jsonb_typeof(v_item) <> 'object' or coalesce(v_item ->> 'field', '') !~ '^[A-Za-z*][A-Za-z0-9_.*-]{0,79}$'
+       or length(coalesce(v_item ->> 'reason', '')) not between 3 and 300
+       or (select count(*) from jsonb_object_keys(v_item)) <> 2 then
+      return 'hostile_omitted_field';
+    end if;
+    v_violation := evidence_private.text_violation(v_item ->> 'reason');
+    if v_violation is not null then
+      return 'omitted_reason_' || v_violation;
+    end if;
+  end loop;
+  return evidence_private.payload_violation(p_rec -> 'safe_payload');
+end
+$$;
+
+-- Operational free text (run errors) is redacted before storage and is never part of a public projection.
+create or replace function evidence_private.redact_text(p_text text)
+returns text
+language sql
+immutable
+set search_path = ''
+as $$
+  select left(regexp_replace(regexp_replace(regexp_replace(regexp_replace(coalesce(p_text, ''),
+    '[a-z][a-z0-9+.-]*://[^\s]+', '[url]', 'gi'),
+    '[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}', '[contact]', 'g'),
+    '(~|[A-Za-z]:\\|/(home|Users|root|var|mnt|srv|etc|tmp|opt|data))[^\s]*', '[location]', 'g'),
+    '(password|passwd|secret|api[_-]?key|token|bearer|authorization)\S*\s*[=:]?\s*\S+', '[credential]', 'gi'), 500);
 $$;
 
 -- Registry sync ------------------------------------------------------------------
@@ -51,19 +177,22 @@ begin
   for v_item in select * from jsonb_array_elements(coalesce(p_registry -> 'rights', '[]'::jsonb)) loop
     insert into evidence_private.source_rights (
       rights_id, publisher, source_url, review_status, default_release, licence_or_terms_url,
-      verified_permissions, excluded_assets, attribution, reviewed_on, register_hash)
+      verified_permissions, excluded_assets, attribution, reviewed_on, approved_fields, register_hash)
     values (
       v_item ->> 'rights_id', v_item ->> 'publisher', v_item ->> 'source_url',
       v_item ->> 'review_status', v_item ->> 'default_release',
       nullif(v_item ->> 'licence_or_terms_url', ''), v_item ->> 'verified_permissions',
       v_item ->> 'excluded_assets', v_item ->> 'attribution',
-      nullif(v_item ->> 'reviewed_on', '')::date, v_item ->> 'register_hash')
+      nullif(v_item ->> 'reviewed_on', '')::date,
+      coalesce((select array_agg(f) from jsonb_array_elements_text(v_item -> 'approved_fields') f), '{}'),
+      v_item ->> 'register_hash')
     on conflict (rights_id) do update set
       publisher = excluded.publisher, source_url = excluded.source_url,
       review_status = excluded.review_status, default_release = excluded.default_release,
       licence_or_terms_url = excluded.licence_or_terms_url,
       verified_permissions = excluded.verified_permissions, excluded_assets = excluded.excluded_assets,
       attribution = excluded.attribution, reviewed_on = excluded.reviewed_on,
+      approved_fields = excluded.approved_fields,
       register_hash = excluded.register_hash, synced_at = now()
     where evidence_private.source_rights.register_hash is distinct from excluded.register_hash;
     v_rights := v_rights + 1;
@@ -275,6 +404,9 @@ declare
   v_seq integer;
 begin
   v_run := evidence_private.assert_run_held(p_run_id, p_holder);
+  if length(p_cursor_state::text) > 2048 or evidence_private.text_violation(p_cursor_state::text) is not null then
+    raise exception 'checkpoint cursor is too large or carries disallowed text' using errcode = 'P0001';
+  end if;
   select coalesce(max(seq), -1) + 1 into v_seq from evidence_private.run_checkpoints where run_id = p_run_id;
   insert into evidence_private.run_checkpoints (run_id, seq, cursor_state, records_so_far)
   values (p_run_id, v_seq, p_cursor_state, p_records_so_far);
@@ -294,6 +426,10 @@ as $$
 declare
   v_count integer;
 begin
+  if exists (select 1 from jsonb_array_elements(p_entries) e where evidence_private.url_violation(e ->> 'url') is not null
+                or coalesce(e ->> 'host', '') !~ '^[a-z0-9.-]{0,253}$') then
+    raise exception 'fetch log entry carries a URL or host that may not be stored' using errcode = 'P0001';
+  end if;
   insert into evidence_private.fetch_log (
     run_id, source_id, request_method, request_url, request_host, attempt, outcome,
     http_status, response_bytes, body_sha256, retrieved_at, duration_ms)
@@ -336,13 +472,8 @@ begin
 
   for v_rec in select * from jsonb_array_elements(p_records) loop
     v_seen := v_seen + 1;
-    v_violation := evidence_private.payload_violation(v_rec -> 'safe_payload');
-    if v_violation is null and coalesce(v_rec ->> 'content_hash', '') !~ '^sha256:[0-9a-f]{64}$' then
-      v_violation := 'bad_content_hash';
-    end if;
-    if v_violation is null and coalesce(v_rec ->> 'source_url', '') !~ '^https://' then
-      v_violation := 'source_url_not_https';
-    end if;
+    -- Every string the record carries is checked, not only the payload.
+    v_violation := evidence_private.record_violation(v_rec);
     if v_violation is null and not exists (
       select 1 from evidence_private.sources s
       where s.source_id = v_run.source_id
@@ -355,7 +486,8 @@ begin
     if v_violation is not null then
       v_rejected := v_rejected + 1;
       insert into evidence_private.ingest_errors (run_id, source_id, error_class, message, record_ref)
-      values (p_run_id, v_run.source_id, 'record_rejected', v_violation, left(v_rec ->> 'external_record_id', 200));
+      values (p_run_id, v_run.source_id, 'record_rejected', v_violation,
+              'sha256:' || left(encode(sha256(convert_to(coalesce(v_rec ->> 'external_record_id', ''), 'UTF8')), 'hex'), 16));
       continue;
     end if;
 
@@ -514,7 +646,7 @@ begin
      set status = v_status, finished_at = now(),
          complete_snapshot = (v_status = 'succeeded' and coalesce(p_complete_snapshot, false)),
          source_watermark = p_source_watermark, tombstoned = v_tombstoned,
-         error_class = v_error_class, error_detail = left(p_error_detail, 2000)
+         error_class = v_error_class, error_detail = nullif(evidence_private.redact_text(p_error_detail), '')
    where id = p_run_id;
 
   insert into evidence_private.source_freshness as f (

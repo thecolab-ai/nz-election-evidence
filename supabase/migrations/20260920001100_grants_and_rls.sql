@@ -121,16 +121,17 @@ create policy party_source_identities_ingest_update on evidence_private.party_so
 drop policy source_rights_ingest_all on evidence_private.source_rights;
 create policy source_rights_ingest_select on evidence_private.source_rights for select to evidence_ingest using (true);
 create policy source_rights_ingest_insert on evidence_private.source_rights for insert to evidence_ingest
-  with check (review_status = 'pending' and reviewed_on is null);
+  with check (review_status = 'pending' and reviewed_on is null and cardinality(approved_fields) = 0);
 create policy source_rights_ingest_update on evidence_private.source_rights for update to evidence_ingest
-  using (true) with check (review_status = 'pending' and reviewed_on is null);
+  using (true) with check (review_status = 'pending' and reviewed_on is null and cardinality(approved_fields) = 0);
 
 do $$
 declare
   v_fn text;
 begin
   foreach v_fn in array array[
-    'payload_violation(jsonb)', 'sync_registry(jsonb)', 'sync_schedules(jsonb)',
+    'payload_violation(jsonb)', 'text_violation(text)', 'url_violation(text)', 'record_violation(jsonb)', 'redact_text(text)',
+    'sync_registry(jsonb)', 'sync_schedules(jsonb)',
     'acquire_lease(text, uuid, integer)', 'release_lease(text, uuid)', 'assert_run_held(uuid, uuid)',
     'start_run(text, uuid, text, text, text, text)', 'save_checkpoint(uuid, uuid, jsonb, integer, integer)',
     'log_fetch(uuid, text, jsonb)', 'ingest_batch(uuid, uuid, jsonb)',
