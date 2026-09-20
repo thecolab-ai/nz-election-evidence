@@ -33,10 +33,13 @@ blocked=[
  (re.compile(r'(?i)(ghp_|github_pat_|AKIA[0-9A-Z]{16}|BEGIN (?:RSA |OPENSSH )?PRIVATE KEY)'), 'credential signature'),
  (re.compile(r'(?i)donor address'), 'donor address phrase'),
 ]
+UNTRACKED_DIRS={'node_modules','dist','.temp','.branches','test-results','playwright-report','.venv','.receipts-local'}
 allowed_phrase={'DATA-LICENSING.md','README.md','SECURITY.md','CONTRIBUTING.md','docs/coverage-and-limitations.md'}
 for path in ROOT.rglob('*'):
  if not path.is_file() or '.git' in path.parts: continue
- if path.suffix.lower() not in {'.md','.json','.csv','.py','.html','.yml','.yaml','.svg','.txt'}: continue
+ # Installed packages, build output and local tool state are untracked (see .gitignore) and not candidate text.
+ if UNTRACKED_DIRS.intersection(path.parts): continue
+ if path.suffix.lower() not in {'.md','.json','.csv','.py','.html','.yml','.yaml','.svg','.txt','.sql','.ts','.tsx','.mjs','.toml','.css','.jsonl'}: continue
  text=path.read_text(encoding='utf-8',errors='replace')
  rel=str(path.relative_to(ROOT))
  if rel == 'scripts/validate.py': continue  # Scanner signatures are defined here.
