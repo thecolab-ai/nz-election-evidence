@@ -64,11 +64,11 @@ enabled = true
 schema_paths = []
 
 [db.seed]
-# If enabled, seeds the database after migrations during a db reset.
-enabled = true
-# Specifies an ordered list of seed files to load during db reset.
-# Supports glob patterns relative to supabase directory: "./seeds/*.sql"
-sql_paths = ["./seed.sql"]
+# OFF, and there is no seed file. A seed runs on every `db reset`, including `db reset --linked` against a
+# hosted project, so nothing that creates a login may live on that path. The local worker login is created
+# by an explicit, loopback-only step instead: `node ingest/src/local_bootstrap.ts`.
+enabled = false
+sql_paths = []
 
 [db.network_restrictions]
 # Enable management of network restrictions.

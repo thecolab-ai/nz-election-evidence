@@ -9,7 +9,7 @@
 //   node src/cli.ts registry-sync                         upsert sources, rights mirror, inactive schedules
 //
 // Flags: --max-records N  --max-runtime-seconds N  --receipt FILE
-// Connect with a login that is only a member of evidence_ingest (scripts/db/create_ingest_login.sql).
+// Connect with a login that is only a member of evidence_ingest (node src/operator.ts set-ingest-login).
 // The connection string comes from the environment only and is never printed.
 
 import { readFile, writeFile } from "node:fs/promises";

@@ -16,7 +16,6 @@
 /tools/ @adam91holt
 /supabase/migrations/ @adam91holt
 /supabase/config.toml @adam91holt
-/supabase/seed.sql @adam91holt
 /supabase/functions/ @adam91holt
 /supabase/tests/ @adam91holt
 /web/scripts/ @adam91holt

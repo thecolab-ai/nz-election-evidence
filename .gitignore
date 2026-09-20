@@ -10,3 +10,5 @@ playwright-report/
 .env
 .env.*
 !.env.example
+# random per-bootstrap value of the LOCAL disposable worker login (ingest/src/local_bootstrap.ts)
+.local-stack.json

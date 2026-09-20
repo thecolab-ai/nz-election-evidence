@@ -4,7 +4,7 @@
 // (no network) and a `fixture_it_*` source so nothing here can be mistaken for live data.
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
-import { mkdtemp, readFile, writeFile } from "node:fs/promises";
+import { mkdtemp, readdir, readFile, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
@@ -12,18 +12,31 @@ import postgres from "postgres";
 import { billsAdapter } from "../../supabase/functions/_shared/adapters/bills.ts";
 import { createPostgresDb } from "../../supabase/functions/_shared/db.ts";
 import { runSource } from "../../supabase/functions/_shared/runner.ts";
-import { LOCAL_WORKER_LOGIN, localStackChoice, seedDeclaresSameLogin } from "./local-stack.ts";
+import { LOCAL_WORKER_LOGIN, localStackChoice } from "./local-stack.ts";
 import type { SourceConfig, SourcesFile } from "../../supabase/functions/_shared/types.ts";
 import sourcesFile from "../../supabase/functions/_shared/sources.config.json" with { type: "json" };
 import { exportAdapter, loadExport, preflightExport } from "../src/export_import.ts";
+import { bootstrapSql } from "../src/local_bootstrap.ts";
+import { adminConnectionFromEnv, quietLogging } from "../src/operator.ts";
+import { scramSha256Verifier } from "../src/scram.ts";
 
 const choice = localStackChoice();
 const url = choice.url;
-const skip: string | false = url ? false : "local stack not selected (set EVIDENCE_TEST_LOCAL_STACK=1)";
+const skip: string | false = url ? false : (choice.problem ?? "local stack not selected (set EVIDENCE_TEST_LOCAL_STACK=1)");
 
 test("integration tests are not silently skipped where they are required", () => {
-  assert.equal(seedDeclaresSameLogin(), true, "supabase/seed.sql and test/local-stack.ts must declare the same local worker login");
-  if (choice.required) assert.ok(url, "EVIDENCE_REQUIRE_INTEGRATION=1 but the local stack was not selected: integration tests would have been skipped");
+  if (choice.required) assert.ok(url, "EVIDENCE_REQUIRE_INTEGRATION=1 but there is no usable local stack: " + (choice.problem ?? "EVIDENCE_TEST_LOCAL_STACK is not 1"));
+});
+
+test("review 2: no automatic seed path creates a login, and no fixed password exists anywhere", async () => {
+  const config = await readFile(new URL("../../supabase/config.toml", import.meta.url), "utf-8");
+  const seedSection = /\[db\.seed\]([^[]*)/.exec(config)?.[1] ?? "";
+  assert.match(seedSection, /\benabled\s*=\s*false\b/, "seeding stays off: nothing but migrations runs on a reset, local or linked");
+  await assert.rejects(readFile(new URL("../../supabase/seed.sql", import.meta.url)), "the automatic seed file is gone");
+  for (const name of await readdir(new URL("../../supabase/migrations/", import.meta.url))) {
+    const sql = await readFile(new URL("../../supabase/migrations/" + name, import.meta.url), "utf-8");
+    assert.doesNotMatch(sql, /\b(create|alter)\s+role\b[^;]*\bpassword\b/i, name + " must not set any role password");
+  }
 });
 
 /** The tests must run as exactly the scoped worker: not a superuser, not the migration role, nothing more than evidence_ingest. */
@@ -44,8 +57,11 @@ const source: SourceConfig = {
   source_id: "fixture_it_bills_" + suffix, title: "TEST FIXTURE paginated source", publisher: "Fixture Publisher",
   official_url: "https://bills.fixture.example/", adapter_kind: "live_fetch", adapter_name: billsAdapter.name,
   allowed_hosts: ["bills.fixture.example"], view_scope: "general", snapshot_semantics: "complete_snapshot", enabled: false,
-  blocked_reason: "test fixture",
+  blocked_reason: "test fixture", rights_id: "RIGHTS-770", access_basis: "documented_api",
 };
+const fixtureRights = { rights_id: source.rights_id!, publisher: "Fixture Publisher", source_url: "https://bills.fixture.example/", review_status: "pending",
+  default_release: "link-only", licence_or_terms_url: "", verified_permissions: "TEST FIXTURE", excluded_assets: "TEST FIXTURE", attribution: "TEST FIXTURE",
+  reviewed_on: "", approved_fields: [], register_hash: "fixture" };
 const file: SourcesFile = { config_version: 1, registry_products: [], sources: [source], schedules: [] };
 
 function bill(n: number, title?: string) {
@@ -56,7 +72,8 @@ function bill(n: number, title?: string) {
 function publisher(options: { total?: number; amend?: number; failPage?: number; status?: number } = {}) {
   const total = options.total ?? 120;
   const requests: number[] = [];
-  const impl = (async (_url: string | URL | Request, init?: RequestInit) => {
+  const impl = (async (requested: string | URL | Request, init?: RequestInit) => {
+    if (String(requested).endsWith("/robots.txt")) return new Response("User-agent: *\nAllow: /\n", { status: 200 });
     const page = JSON.parse(String(init?.body)).page as number;
     requests.push(page);
     if (options.status) return new Response("<iframe src='/_Incapsula_Resource'></iframe>", { status: options.status });
@@ -68,13 +85,37 @@ function publisher(options: { total?: number; amend?: number; failPage?: number;
   return { impl, requests };
 }
 
+test("review 2/3: the bootstrapped login works, its SQL refuses a network session, and the logging probe runs on a real server", { skip }, async () => {
+  // Signing in at all proves the client-side SCRAM verifier is correct: the server was only ever given the verifier.
+  const stored = new URL(url!);
+  const env = { PGHOST: stored.hostname, PGPORT: stored.port, PGDATABASE: "postgres", PGUSER: LOCAL_WORKER_LOGIN };
+  const admin = adminConnectionFromEnv(env, decodeURIComponent(stored.password));
+  try {
+    await admin.connect(async (tx) => {
+      const [me] = await tx.query("select current_user as login, inet_server_addr() is not null as over_network");
+      assert.deepEqual(me, { login: LOCAL_WORKER_LOGIN, over_network: true });
+      // the worker may zero on-error parameter logging (user-settable) but not server logging (privileged)
+      assert.equal(await tx.trySetLocal("log_parameter_max_length_on_error", "0"), true);
+      assert.equal(await tx.trySetLocal("log_statement", "none"), false);
+      const settings = await quietLogging(tx);
+      assert.equal(settings.log_parameter_max_length_on_error, "0");
+      assert.ok(settings.log_statement !== null, "real settings are read back after a failed savepoint");
+    });
+    // The bootstrap script, sent over TCP instead of the server's own socket: its first statement refuses.
+    await assert.rejects(admin.connect((tx) => tx.query(bootstrapSql(scramSha256Verifier("TEST-FIXTURE-value-never-used-0123456789")))),
+      /local bootstrap refused: this session is a network connection/);
+  } finally {
+    await admin.end();
+  }
+});
+
 test("runner against a real database", { skip }, async (t) => {
   const sql = postgres(url!, { max: 1, prepare: false, onnotice: () => undefined });
   await assertScopedLogin(sql);
   const db = createPostgresDb(sql);
   const holder = crypto.randomUUID();
-  const base = { file, source, adapter: billsAdapter, mode: "incremental" as const, triggerKind: "test" as const, maxRecords: 1000, maxRuntimeSeconds: 120, dryRun: false, db, sleep: async () => {} };
-  await db.syncRegistry({ sources: [{ ...source, registry_key: "", rights_id: "", expected_cadence_seconds: "", config_hash: "fixture", catalogue_products: [] }] } as never);
+  const base = { file, source, adapter: billsAdapter, mode: "incremental" as const, triggerKind: "test" as const, maxRecords: 1000, maxRuntimeSeconds: 120, dryRun: false, db, sleep: async () => {}, minIntervalMs: 0 };
+  await db.syncRegistry({ rights: [fixtureRights], sources: [{ ...source, registry_key: "", expected_cadence_seconds: "", config_hash: "fixture", catalogue_products: [] }] } as never);
   t.after(async () => { await db.close(); });
 
   await t.test("dry run writes nothing and is deterministic", async () => {
@@ -145,6 +186,29 @@ test("runner against a real database", { skip }, async (t) => {
     assert.equal(blocked.status, "blocked");
     assert.equal(blocked.error_class, "publisher_challenge");
     assert.equal(blocked.tombstoned, 0);
+  });
+
+  await t.test("review 7: a robots.txt disallow ends the run as blocked, is stored in fetch_log, and removes nothing", async () => {
+    const pages: string[] = [];
+    const impl = (async (requested: string | URL | Request) => {
+      pages.push(String(requested));
+      return new Response("User-agent: *\nDisallow: /\n", { status: 200 });
+    }) as typeof fetch;
+    const blocked = await runSource({ ...base, holder, fetchImpl: impl });
+    assert.deepEqual([blocked.status, blocked.error_class, blocked.tombstoned], ["blocked", "publisher_robots_disallowed", 0]);
+    assert.deepEqual(pages, ["https://bills.fixture.example/robots.txt"], "only robots.txt was requested; the disallowed endpoint never was");
+    const logged = await sql`select outcome from evidence_private.fetch_log where run_id = ${blocked.run_id} order by id`;
+    assert.deepEqual(logged.map((r) => r.outcome), ["ok", "robots_disallowed"], "the database accepts and keeps the robots outcome");
+  });
+
+  await t.test("review 6: an undocumented endpoint is never contacted - the run is blocked before any request", async () => {
+    let calls = 0;
+    const impl = (async () => { calls++; return new Response("{}", { status: 200 }); }) as typeof fetch;
+    const undocumented = { ...source, access_basis: "undocumented_endpoint" as const };
+    const blocked = await runSource({ ...base, source: undocumented, holder, fetchImpl: impl });
+    assert.deepEqual([blocked.status, blocked.error_class, blocked.tombstoned, calls], ["blocked", "access_basis_not_established", 0, 0]);
+    const dry = await runSource({ ...base, source: undocumented, dryRun: true, db: null, fetchImpl: impl });
+    assert.deepEqual([dry.status, dry.error_class, calls], ["blocked", "access_basis_not_established", 0], "a dry run does not contact it either");
   });
 
   await t.test("a failing page mid-pagination fails the run and removes nothing", async () => {
