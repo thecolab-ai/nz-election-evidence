@@ -35,12 +35,13 @@ export interface IngestDb {
 // deno-lint-ignore no-explicit-any
 type Sql = any;
 
-export async function createPostgresDb(sql: Sql, assumeRole: string | null): Promise<IngestDb> {
-  if (assumeRole) {
-    if (!/^[a-z_]+$/.test(assumeRole)) throw new Error("bad role name");
-    // Drop to the scoped worker role for the whole session.
-    await sql.unsafe(`set role ${assumeRole}`);
-  }
+/**
+ * Pooler-safe by construction: every call is one autocommit statement, nothing relies on session
+ * state (no SET ROLE, no session advisory locks, no prepared statements, no temp tables), so the
+ * connection may go through a transaction-mode pooler. Privileges come from the login itself, which
+ * must be a member of evidence_ingest and nothing more.
+ */
+export function createPostgresDb(sql: Sql): IngestDb {
   const one = async (query: Promise<{ [key: string]: unknown }[]>) => (await query)[0].r;
   return {
     syncRegistry: (payload) => one(sql`select evidence_private.sync_registry(${sql.json(payload)}) as r`) as Promise<Json>,

@@ -1,6 +1,6 @@
 name: Evidence store and explorer
-# CI for the Supabase evidence store, the ingestion code and the read-only explorer, followed by a
-# gated GitHub Pages deployment. Order: every check job, then the R10 release gate, then deploy.
+# CI for the Supabase evidence store, the TypeScript ingestion and release tooling, and the public
+# read-only explorer, followed by a gated GitHub Pages deployment. Order: every check job, then the R10 release gate, then deploy.
 #
 # What this workflow never does: apply migrations to a hosted project, deploy Edge Functions,
 # activate a schedule, or hold a privileged Supabase key. Those are manual, reviewed release steps
@@ -36,8 +36,8 @@ jobs:
       - name: Compliance, release-gate and red-line unit tests
         run: python3 -m unittest discover -s tests -v
 
-  ingest:
-    name: Ingestion typecheck and unit tests
+  tooling:
+    name: TypeScript tooling - ingestion, release gate, receipts (typecheck and unit tests)
     runs-on: ubuntu-latest
     defaults: { run: { working-directory: ingest } }
     steps:
@@ -49,7 +49,7 @@ jobs:
       - run: npm run typecheck
       - name: Source configuration is valid and every schedule is inactive by default
         run: node src/cli.ts validate
-      - name: Unit tests (scripted publisher, no network)
+      - name: Unit tests - adapters, fetch guard, release gate, workflow invariants, receipts (no network)
         run: npm test
       - name: Edge Function type-check (Deno)
         run: npm run check:deno
@@ -66,13 +66,19 @@ jobs:
         with: { node-version: "24", cache: npm, cache-dependency-path: ingest/package-lock.json }
       - name: Start a throwaway local Postgres and apply every migration from scratch
         run: supabase db start
-      - name: pgTAP - provenance, replay, tombstones, role allow/deny, civic rules, schedules, release gates
+      - name: pgTAP - provenance, replay, tombstones, role allow/deny, anonymous projections, civic rules, schedules, gates
         run: supabase test db
+      - name: Generated database types match the migrations (drift check)
+        working-directory: web
+        run: |
+          npm ci --no-audit --no-fund
+          npm run types:check
       - name: Runner integration tests against that database (crash/resume, replay, overlap, blocked)
         working-directory: ingest
         env:
-          # Local throwaway container credentials from the Supabase CLI defaults. Not a secret.
-          EVIDENCE_TEST_DB_URL: postgresql://postgres:postgres@127.0.0.1:55322/postgres
+          # Scoped worker login created by supabase/seed.sql on the throwaway local database only.
+          # A fixed local value, not a secret; hosted projects use a generated password.
+          EVIDENCE_TEST_DB_URL: postgresql://evidence_ingest_local:local-only-not-a-secret@127.0.0.1:55322/postgres
         run: |
           npm ci --no-audit --no-fund
           node --test --test-reporter=spec test/integration.test.ts
@@ -98,18 +104,14 @@ jobs:
           VITE_SUPABASE_URL: ${{ vars.EXPLORER_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ vars.EXPLORER_SUPABASE_ANON_KEY }}
         run: npm run build
-      - name: Built shell is routable on Pages and carries no evidence or privileged key
-        run: |
-          test -f dist/index.html && test -f dist/404.html && test -f dist/.nojekyll
-          cmp dist/index.html dist/404.html
-          grep -q "${PAGES_BASE_PATH}assets/" dist/index.html
-          ! grep -R -l -i -E "service_role|sb_secret_|evidence_private" dist
+      - name: Built shell is routable on Pages and carries no evidence, private name or privileged key material
+        run: node scripts/check-bundle.ts "${PAGES_BASE_PATH}"
       - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
         with: { path: web/dist }
 
   web-e2e:
-    name: Explorer browser tests against a local stack (auth boundary, pagination, Pages routing)
+    name: Explorer browser tests - anonymous browsing, private and write denial, release gate, Pages routing
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -139,15 +141,17 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with: { fetch-depth: 0, persist-credentials: false }
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with: { node-version: "24" }
       - name: Election-day freeze (R3)
         run: python3 scripts/red_lines.py --freeze-check
       - name: Surface review recorded and approved (R10). Pending fails closed.
-        run: python3 scripts/release_gate.py --surface "Evidence explorer"
+        run: node tools/release_gate.ts --surface "Evidence explorer"
 
   deploy:
     name: Deploy explorer shell to GitHub Pages
     # CI first, gate second, owner switch third. A green build alone never publishes.
-    needs: [compliance, ingest, database, web, web-e2e, release-gate]
+    needs: [compliance, tooling, database, web, web-e2e, release-gate]
     if: >-
       github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
       && vars.PAGES_DEPLOY_ENABLED == 'true'

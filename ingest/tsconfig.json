@@ -3,8 +3,15 @@
     "target": "es2023",
     "module": "nodenext",
     "moduleResolution": "nodenext",
-    "lib": ["es2023", "dom", "dom.iterable", "dom.asynciterable"],
-    "types": ["node"],
+    "lib": [
+      "es2023",
+      "dom",
+      "dom.iterable",
+      "dom.asynciterable"
+    ],
+    "types": [
+      "node"
+    ],
     "strict": true,
     "noEmit": true,
     "allowImportingTsExtensions": true,
@@ -15,5 +22,10 @@
     "noUnusedLocals": true,
     "noImplicitReturns": true
   },
-  "include": ["src/**/*.ts", "test/**/*.ts", "../supabase/functions/_shared/**/*.ts"]
+  "include": [
+    "src/**/*.ts",
+    "test/**/*.ts",
+    "../supabase/functions/_shared/**/*.ts",
+    "../tools/**/*.ts"
+  ]
 }

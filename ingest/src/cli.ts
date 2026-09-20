@@ -8,7 +8,8 @@
 //   node src/cli.ts import <source_id> [--dry-run]        reviewed export import (file named by env var)
 //   node src/cli.ts registry-sync                         upsert sources, rights mirror, inactive schedules
 //
-// Flags: --max-records N  --max-runtime-seconds N  --receipt FILE  --assume-role ROLE|none
+// Flags: --max-records N  --max-runtime-seconds N  --receipt FILE
+// Connect with a login that is only a member of evidence_ingest (scripts/db/create_ingest_login.sql).
 // The connection string comes from the environment only and is never printed.
 
 import { readFile, writeFile } from "node:fs/promises";
@@ -31,12 +32,17 @@ function flag(args: string[], name: string): string | undefined {
   return index >= 0 ? args[index + 1] : undefined;
 }
 
-async function connect(args: string[]): Promise<IngestDb> {
+async function connect(): Promise<IngestDb> {
   const url = process.env.EVIDENCE_INGEST_DB_URL;
   if (!url) throw new Error("EVIDENCE_INGEST_DB_URL is not set (see docs/database/runbook.md)");
-  const role = flag(args, "--assume-role") ?? "evidence_ingest";
+  // prepare:false and no session state: safe behind a transaction-mode pooler.
   const sql = postgres(url, { max: 1, prepare: false, onnotice: () => undefined, connection: { application_name: "evidence-ingest-cli" } });
-  return createPostgresDb(sql, role === "none" ? null : role);
+  const [{ me, elevated }] = await sql`select current_user as me, (select rolsuper or rolbypassrls or rolcreaterole from pg_roles where rolname = current_user) as elevated`;
+  if (elevated && process.env.EVIDENCE_ALLOW_ELEVATED_LOGIN !== "1") {
+    await sql.end({ timeout: 5 });
+    throw new Error(`refusing to ingest as "${me}": use a login that is only a member of evidence_ingest`);
+  }
+  return createPostgresDb(sql);
 }
 
 /** Receipt: counts, hashes, statuses and publisher URLs. No payloads, bodies, hosts of ours, or credentials. */
@@ -78,7 +84,7 @@ async function main(argv: string[]): Promise<number> {
       console.log(JSON.stringify({ dry_run: true, rights: rights.length, sources: file.sources.length, schedules: file.schedules.length }, null, 2));
       return 0;
     }
-    const db = await connect(argv);
+    const db = await connect();
     try {
       const synced = await db.syncRegistry(payload);
       const schedules = await db.syncSchedules(await schedulePayload(file));
@@ -111,7 +117,7 @@ async function main(argv: string[]): Promise<number> {
     if (source.adapter_kind !== "live_fetch") throw new Error("use `import` for export sources");
     const adapter = LIVE_ADAPTERS[source.adapter_name];
     if (!adapter) throw new Error(`adapter ${source.adapter_name} not found`);
-    const db = dryRun ? null : await connect(args);
+    const db = dryRun ? null : await connect();
     try {
       report = await runSource({ file, source, adapter, mode: backfill ? "backfill" : "incremental", triggerKind: "cli", maxRecords, maxRuntimeSeconds, dryRun, db });
     } finally {
@@ -120,7 +126,7 @@ async function main(argv: string[]): Promise<number> {
   } else if (command === "import") {
     if (source.adapter_kind !== "export_import" || !source.export_contract) throw new Error("use `run` for live sources");
     const loaded = await loadExport(source.export_contract, process.env);
-    const db = dryRun ? null : await connect(args);
+    const db = dryRun ? null : await connect();
     try {
       report = await runSource({
         file, source, adapter: exportAdapter(loaded), mode: "export_import", triggerKind: "cli", maxRecords, maxRuntimeSeconds,

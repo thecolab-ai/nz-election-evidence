@@ -44,9 +44,10 @@ Deno.serve(async (request: Request) => {
 
   const dbUrl = Deno.env.get("EVIDENCE_INGEST_DB_URL");
   if (!dbUrl) return json(503, { error: "ingest connection is not configured" });
+  // prepare:false keeps the connection valid behind a transaction-mode pooler.
   const sql = postgres(dbUrl, { max: 1, prepare: false, idle_timeout: 5, connect_timeout: 10, connection: { application_name: FUNCTION_VERSION } });
   try {
-    const db = await createPostgresDb(sql, null);
+    const db = createPostgresDb(sql);
     const report = await runSource({
       file, source, adapter, mode: "incremental", triggerKind: body.trigger_kind,
       maxRecords: body.max_records, maxRuntimeSeconds: body.max_runtime_seconds, dryRun: false, db,

@@ -1,5 +1,5 @@
 // End-to-end runner tests against a real disposable Postgres with the migrations applied.
-// Skipped unless EVIDENCE_TEST_DB_URL points at the LOCAL stack. Uses a scripted publisher
+// Skipped unless EVIDENCE_TEST_DB_URL points at the LOCAL stack, signed in as the scoped worker login. Uses a scripted publisher
 // (no network) and a `fixture_it_*` source so nothing here can be mistaken for live data.
 import assert from "node:assert/strict";
 import { test } from "node:test";
@@ -45,7 +45,7 @@ function publisher(options: { total?: number; amend?: number; failPage?: number;
 
 test("runner against a real database", { skip: !url ? "EVIDENCE_TEST_DB_URL not set" : !local ? "refusing: not a local database URL" : false }, async (t) => {
   const sql = postgres(url!, { max: 1, prepare: false, onnotice: () => undefined });
-  const db = await createPostgresDb(sql, "evidence_ingest");
+  const db = createPostgresDb(sql);
   const holder = crypto.randomUUID();
   const base = { file, source, adapter: billsAdapter, mode: "incremental" as const, triggerKind: "test" as const, maxRecords: 1000, maxRuntimeSeconds: 120, dryRun: false, db, sleep: async () => {} };
   await db.syncRegistry({ sources: [{ ...source, registry_key: "", rights_id: "", expected_cadence_seconds: "", config_hash: "fixture", catalogue_products: [] }] } as never);
@@ -151,7 +151,7 @@ test("export import against a real database", { skip: !url ? "EVIDENCE_TEST_DB_U
   const fixtureSource: SourceConfig = { ...real, source_id: "fixture_it_export_" + suffix, title: "TEST FIXTURE export import", catalogue_products: [] };
   const fixtureFile: SourcesFile = { config_version: 1, registry_products: [], sources: [fixtureSource], schedules: [] };
   const sql = postgres(url!, { max: 1, prepare: false, onnotice: () => undefined });
-  const db = await createPostgresDb(sql, "evidence_ingest");
+  const db = createPostgresDb(sql);
   t.after(async () => { await db.close(); });
   await db.syncRegistry({ sources: [{ ...fixtureSource, registry_key: "", rights_id: "", expected_cadence_seconds: "", config_hash: "fixture", catalogue_products: [], export_contract: null }] } as never);
 
