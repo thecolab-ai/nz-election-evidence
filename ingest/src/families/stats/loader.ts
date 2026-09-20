@@ -217,7 +217,7 @@ export async function loadSource(plan: StatsSourcePlan, artifact: OpenArtifact, 
     receipt.status = finished.status === "succeeded" ? "succeeded" : "failed";
     receipt.error_class = errorClass;
     receipt.error_detail = detail;
-    receipt.replay_wrote_nothing = receipt.totals.observations.inserted === 0 && (receipt.totals.meta.catalogue_entries_written ?? 0) === 0
+    receipt.replay_wrote_nothing = receipt.totals.observations.inserted === 0 && (receipt.totals.meta.catalogue_entries_inserted ?? 0) === 0 && (receipt.totals.meta.catalogue_entries_span_widened ?? 0) === 0
       && (receipt.totals.meta.series_inserted ?? 0) === 0 && (receipt.totals.meta.geographies_inserted ?? 0) === 0;
     return receipt;
   } catch (error) {

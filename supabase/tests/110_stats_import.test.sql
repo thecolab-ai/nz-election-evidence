@@ -64,7 +64,7 @@ begin
   perform evidence_private.acquire_lease('pgtap_stats', v_holder, 120);
   v_run := (evidence_private.start_run('pgtap_stats', v_holder, 'v1', 'export_import', 'test', 'm1') ->> 'run_id')::uuid;
   v_result := evidence_private.ingest_stat_meta(v_run, v_holder, v_meta);
-  insert into outcome values ('meta_entries_written', v_result ->> 'catalogue_entries_written');
+  insert into outcome values ('meta_entries_written', (v_result ->> 'catalogue_entries_inserted') || '/' || (v_result ->> 'catalogue_entries_seen'));
   v_result := evidence_private.ingest_stat_observations(v_run, v_holder, v_obs);
   insert into outcome values ('first_inserted', v_result ->> 'inserted');
 
@@ -72,7 +72,7 @@ begin
   v_result := evidence_private.ingest_stat_observations(v_run, v_holder, v_obs);
   insert into outcome values ('replay_inserted', v_result ->> 'inserted'), ('replay_unchanged', v_result ->> 'unchanged');
   v_result := evidence_private.ingest_stat_meta(v_run, v_holder, v_meta);
-  insert into outcome values ('replay_entries_written', v_result ->> 'catalogue_entries_written');
+  insert into outcome values ('replay_entries_written', (v_result ->> 'catalogue_entries_inserted') || '/' || (v_result ->> 'catalogue_entries_unchanged') || '/' || (v_result ->> 'catalogue_entries_span_widened'));
 
   -- Same identity, different content: kept as stored, counted as a conflict, never overwritten.
   v_result := evidence_private.ingest_stat_observations(v_run, v_holder, jsonb_build_array(
@@ -118,10 +118,10 @@ end
 $$;
 reset role;
 
-select is((select state from outcome where name = 'meta_entries_written'), '2', 'two content versions of one catalogue entry are both kept');
+select is((select state from outcome where name = 'meta_entries_written'), '2/2', 'two content versions of one catalogue entry are both kept: two seen, two inserted');
 select is((select state from outcome where name = 'first_inserted'), '3', 'three observations stored on first load');
 select is((select state from outcome where name = 'replay_inserted') || '/' || (select state from outcome where name = 'replay_unchanged'), '0/3', 'a replay inserts nothing and reports every row unchanged');
-select is((select state from outcome where name = 'replay_entries_written'), '0', 'a replay writes no catalogue entry version');
+select is((select state from outcome where name = 'replay_entries_written'), '0/2/0', 'a replay inserts no catalogue entry version: both are unchanged and no span widened');
 select is((select state from outcome where name = 'conflict_count') || '/' || (select state from outcome where name = 'conflict_inserted'), '1/0', 'same identity with other content is a counted conflict, not an overwrite');
 select is((select value::text from evidence_private.stat_observations where row_locator = 'file.csv row 2'), '12.500000000001', 'the stored number is the exact published decimal');
 select is((select count(*)::integer from evidence_private.ingest_errors where error_class = 'stat_identity_conflict'), 1, 'the conflict is on the error ledger');

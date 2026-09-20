@@ -307,8 +307,48 @@ grant execute on function evidence_private.record_stat_source_summary(uuid, uuid
 
 alter table evidence_private.stat_source_summary enable row level security;
 revoke all on evidence_private.stat_source_summary from public, anon, authenticated;
-grant select, insert, update on evidence_private.stat_source_summary to evidence_ingest;
-create policy stat_source_summary_ingest_all on evidence_private.stat_source_summary for all to evidence_ingest using (true) with check (true);
+grant select, insert on evidence_private.stat_source_summary to evidence_ingest;
+grant update (datasets, releases, series, observations, observations_without_a_number, catalogue_entries, import_run_id, counted_at)
+  on evidence_private.stat_source_summary to evidence_ingest;
+create policy stat_source_summary_ingest_select on evidence_private.stat_source_summary for select to evidence_ingest using (true);
+create policy stat_source_summary_ingest_insert on evidence_private.stat_source_summary for insert to evidence_ingest with check (true);
+create policy stat_source_summary_ingest_update on evidence_private.stat_source_summary for update to evidence_ingest using (true) with check (true);
+
+-- The worker holds table privileges (the function above runs with them), so the table itself refuses a summary that is
+-- not true: it must be written inside a running, leased run of its own statistics source, and every count must equal
+-- what the tables hold at that moment. Binds every role and every path.
+create or replace function evidence_private.guard_stat_source_summary()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+declare
+  v_ok boolean;
+begin
+  if tg_op = 'UPDATE' and new.source_id <> old.source_id then
+    raise exception 'a source summary never moves to another source' using errcode = 'P0001';
+  end if;
+  if not evidence_private.stat_source_open(new.source_id, new.import_run_id) then
+    raise exception 'the summary of source % may be written only inside a running run that holds the lease of that statistics source', new.source_id using errcode = 'P0001';
+  end if;
+  select new.datasets = (select count(*) from evidence_private.stat_datasets d where d.source_id = new.source_id)
+     and new.releases = (select count(*) from evidence_private.stat_releases r join evidence_private.stat_datasets d on d.id = r.dataset_id where d.source_id = new.source_id)
+     and new.series = (select count(*) from evidence_private.stat_series s join evidence_private.stat_datasets d on d.id = s.dataset_id where d.source_id = new.source_id)
+     and new.catalogue_entries = (select count(*) from evidence_private.stat_catalogue_entries e where e.source_id = new.source_id and e.is_current)
+     and (new.observations, new.observations_without_a_number) = (
+       select count(*), count(*) filter (where o.value_status not in ('reported', 'provisional'))
+       from evidence_private.stat_observations o join evidence_private.stat_series s on s.id = o.series_id
+       join evidence_private.stat_datasets d on d.id = s.dataset_id where d.source_id = new.source_id)
+    into v_ok;
+  if not v_ok then
+    raise exception 'the summary of source % does not equal what the statistics tables hold; refused', new.source_id using errcode = 'P0001';
+  end if;
+  return new;
+end
+$$;
+revoke execute on function evidence_private.guard_stat_source_summary() from public;
+create trigger stat_source_summary_guard before insert or update on evidence_private.stat_source_summary
+  for each row execute function evidence_private.guard_stat_source_summary();
 grant select on evidence_private.stat_source_summary to evidence_inspector_reader;
 create policy stat_source_summary_reader_select on evidence_private.stat_source_summary for select to evidence_inspector_reader using (true);
 

@@ -11,11 +11,29 @@ import { connectLoader, type DestinationCounts, LOADER_VERSION, type LoadReceipt
 import { STATS_SOURCES, planFor } from "../../families/stats/routes.ts";
 import { assertPrivateInput } from "../access.ts";
 import { connectWorker } from "../connect.ts";
-import { check, type LoaderContext, type LoaderFamily, type LoaderUnit, newReceipt, settle, type TargetReceipt } from "../contract.ts";
+import { check, type CountReceipt, type LoaderContext, type LoaderFamily, type LoaderUnit, newReceipt, settle, type TargetReceipt } from "../contract.ts";
 import { addTypedTally } from "../typed.ts";
 
 const ADAPTER = "stats_family_artifact";
 const WITHHELD = new Set(["suppressed", "confidential", "missing", "not_applicable", "flag_marker"]);
+
+/**
+ * The written blocks of a statistics load, from what the STORE reported for each population. A block exists only for a
+ * population the unit holds: a source of catalogue metadata only has no observation block. A catalogue version whose
+ * observation span merely widened is an unchanged version (nothing new was stored about the publisher's catalogue).
+ */
+export function statWritten(manifestCounts: { observations: number; catalogue_entries: number }, totals: LoadReceipt["totals"]): CountReceipt["written"] {
+  const written: CountReceipt["written"] = {};
+  const o = totals.observations;
+  const meta = totals.meta;
+  if (manifestCounts.observations > 0 || o.seen > 0) {
+    written.stat_observations = { seen: o.seen, inserted: o.inserted, unchanged: o.unchanged, rejected: 0, conflicts: o.conflicts, tombstoned: 0 };
+  }
+  if (manifestCounts.catalogue_entries > 0 || (meta.catalogue_entries_seen ?? 0) > 0) {
+    written.stat_catalogue_entries = { seen: meta.catalogue_entries_seen ?? 0, inserted: meta.catalogue_entries_inserted ?? 0, unchanged: meta.catalogue_entries_unchanged ?? 0, rejected: 0, conflicts: 0, tombstoned: 0 };
+  }
+  return written;
+}
 
 export function statsFamily(): LoaderFamily {
   const family: LoaderFamily = {
@@ -126,7 +144,12 @@ export function statsFamily(): LoaderFamily {
     receipt.provenance.input_digest = { sha256: artifact.digest, bytes: m.files.reduce((sum, f) => sum + f.bytes, 0), rows: m.files.reduce((sum, f) => sum + f.rows, 0) };
     receipt.provenance.collected_from = m.collected_from;
     receipt.provenance.collected_to = m.collected_to;
-    receipt.counts.input = { rows: m.counts.observations + m.counts.catalogue_entries, records: m.counts.observations, versions: m.counts.catalogue_entries };
+    // Two populations, stated apart. `rows` is the number of artifact lines of both kinds; records and versions are not
+    // used by this family (an observation is not a ledger record, a catalogue entry version is not a record version).
+    const by: { stat_observations?: number; stat_catalogue_entries?: number } = {};
+    if (m.counts.observations > 0) by.stat_observations = m.counts.observations;
+    if (m.counts.catalogue_entries > 0) by.stat_catalogue_entries = m.counts.catalogue_entries;
+    receipt.counts.input = { rows: m.counts.observations + m.counts.catalogue_entries, records: null, versions: null, by_population: by };
   }
 
   async function load(unit: LoaderUnit, ctx: LoaderContext, dryRun: boolean, fresh: boolean): Promise<TargetReceipt> {
@@ -143,11 +166,16 @@ export function statsFamily(): LoaderFamily {
     receipt.family_detail = result as unknown as Json;
     if (result.run_id) receipt.provenance.run_ids.push(result.run_id);
     if (result.resumed_from_run_id) receipt.provenance.resumed_from_run_ids.push(result.resumed_from_run_id);
-    const o = result.totals.observations;
-    const entriesWritten = result.totals.meta.catalogue_entries_written ?? 0;
-    // Observations and catalogue entry versions are both rows of the artifact: both are counted as seen, written or unchanged.
-    const entries = dryRun ? 0 : artifact.manifest.counts.catalogue_entries;
-    receipt.counts.written = { seen: o.seen + entries, inserted: o.inserted + entriesWritten, unchanged: o.unchanged + Math.max(0, entries - entriesWritten), rejected: 0, conflicts: o.conflicts, tombstoned: 0 };
+    // Observations and catalogue entry versions are different populations (statWritten): never added together.
+    if (!dryRun) {
+      receipt.counts.written = statWritten(artifact.manifest.counts, result.totals);
+      // A finished load offered every artifact row of each population to the store exactly once. (A resumed run offers
+      // only the observations after its checkpoint; the earlier run of the chain offered the rest. Meta is always sent whole.)
+      if (result.status === "succeeded") {
+        if (result.resumed_from_run_id === null) check(receipt, "observations offered to the store = observations in the artifact", artifact.manifest.counts.observations, result.totals.observations.seen);
+        check(receipt, "catalogue entry versions offered to the store = versions in the artifact", artifact.manifest.counts.catalogue_entries, result.totals.meta.catalogue_entries_seen ?? 0);
+      }
+    }
     if (result.destination) {
       const d = result.destination;
       receipt.counts.destination = { stat_datasets: d.datasets, stat_releases: d.releases, stat_series: d.series, geography_versions: d.geographies, stat_catalogue_entry_versions: d.catalogue_entry_versions, stat_observations: d.observations };

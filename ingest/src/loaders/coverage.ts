@@ -7,7 +7,8 @@ import type { SourcesFile } from "../../../supabase/functions/_shared/types.ts";
 export type RouteKind = "backfill" | "refresh" | "probe";
 
 export type RouteState =
-  | "loaded_and_reconciled"          // backfill: the private artifact was loaded on the isolated stack and every count check passed
+  | "loaded_and_reconciled"          // backfill: GRANTED ONLY BY EVIDENCE (grantedState): the committed manifest shows this unit loaded, replayed without an insert, and reconciled
+  | "built_not_proven"               // backfill: the route is built and tested, but no committed manifest shows a reconciled load of it
   | "working"                        // refresh: run against the publisher end to end, records stored or re-observed
   | "working_cli_only"               // refresh: works from the CLI; the input is larger than the scheduled function's budget
   | "exercised_not_run_in_full"      // refresh: proven on a bounded run; the full walk has not been made
@@ -18,7 +19,9 @@ export type RouteState =
 
 export interface SourceRoute { kind: RouteKind; state: RouteState; evidence: string }
 
-const COMBINED = "combined load on the isolated stack, 2026-09-20: docs/database/receipts/unified/reconciliation-manifest.json";
+/** The committed evidence of a combined load. It names the source commit it tested; it is absent until such a proof is committed. */
+export const MANIFEST_PATH = "docs/database/receipts/unified/reconciliation-manifest.json";
+const COMBINED = `a combined load on an isolated stack, recorded in ${MANIFEST_PATH}. The state is granted only while that manifest shows this unit loaded, replayed without an insert, and reconciled`;
 const CHALLENGE = "publisher challenged or refused this host on 2026-09-20 (one attempt, not worked around)";
 
 export const SOURCE_ROUTES: { [sourceId: string]: SourceRoute } = {
@@ -122,11 +125,31 @@ export interface ProductCoverage {
 
 const WORKING: ReadonlySet<RouteState> = new Set(["working", "working_cli_only"]);
 
-export function productCoverage(file: SourcesFile, catalogue: { product_id: string; title: string; record_count: number }[]): ProductCoverage[] {
+/** The part of the committed manifest a coverage state may rest on. */
+export interface ManifestEvidence {
+  tested_source?: { commit: string | null };
+  units: { source_ids: string[]; import: { status: string }; replay: { status: string; written: { [population: string]: { inserted: number } } } | null; reconcile: { status: string } | null }[];
+}
+
+/**
+ * A claim that something was DONE is never hand-written: "loaded_and_reconciled" is granted to a backfill source only by
+ * the committed manifest, and only when it shows the unit imported, replayed without a single insert, and reconciled.
+ * Without that (no manifest, or a unit it does not show) the state is "built_not_proven".
+ */
+export function grantedState(sourceId: string, route: SourceRoute, evidence: ManifestEvidence | null): SourceRoute {
+  if (route.state !== "loaded_and_reconciled") return route;
+  const unit = evidence?.units.find((u) => u.source_ids.includes(sourceId));
+  const proven = unit !== undefined && unit.import.status === "succeeded" && unit.reconcile?.status === "reconciled"
+    && unit.replay?.status === "succeeded" && Object.values(unit.replay.written).every((w) => w.inserted === 0);
+  if (proven) return { ...route, evidence: `${route.evidence} (tested source commit ${evidence?.tested_source?.commit ?? "not stated"})` };
+  return { kind: route.kind, state: "built_not_proven", evidence: evidence ? `${MANIFEST_PATH} does not show this unit loaded, replayed without an insert, and reconciled` : `no reconciliation manifest is committed (${MANIFEST_PATH}); nothing is claimed about a load` };
+}
+
+export function productCoverage(file: SourcesFile, catalogue: { product_id: string; title: string; record_count: number }[], evidence: ManifestEvidence | null = null): ProductCoverage[] {
   return catalogue.map((product) => {
     const sources = file.sources.filter((s) => (s.catalogue_products ?? []).some((p) => p.product_id === product.product_id));
     const routes = sources.flatMap((s) => {
-      const out = [{ source_id: s.source_id, ...SOURCE_ROUTES[s.source_id] }];
+      const out = [{ source_id: s.source_id, ...grantedState(s.source_id, SOURCE_ROUTES[s.source_id], evidence) }];
       if (STATS_REFRESH[s.source_id]) out.push({ source_id: s.source_id, ...STATS_REFRESH[s.source_id] });
       return out;
     });

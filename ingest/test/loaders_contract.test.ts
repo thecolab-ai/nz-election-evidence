@@ -2,6 +2,7 @@
 // resolution, shared privacy and source-access rules, retries, statuses and exit codes. Offline: no database, no network.
 
 import assert from "node:assert/strict";
+import { execFile } from "node:child_process";
 import { chmod, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
@@ -10,14 +11,16 @@ import { CLI_ONLY_ADAPTERS, LIVE_ADAPTERS } from "../../supabase/functions/_shar
 import { textViolation } from "../../supabase/functions/_shared/text_guard.ts";
 import type { SourcesFile } from "../../supabase/functions/_shared/types.ts";
 import sourcesFile from "../../supabase/functions/_shared/sources.config.json" with { type: "json" };
-import { loaders, resolveTargets, runCommand } from "../src/cli.ts";
+import { loaders, resolveTargets, runCommand, selectUnits, sourceRevision } from "../src/cli.ts";
 import { assertPrivateInput, insideAnyCheckout, insideRepository, receiptViolations, redactReceipt, refreshAccess, REPOSITORY_ROOT, sanitize } from "../src/loaders/access.ts";
 import {
-  check, ERROR_CODES, EXIT, exitCodeFor, LOADER_COMMANDS, LoaderError, type LoaderFamily, type LoaderStatus, type LoaderUnit, newReceipt, settle, type TargetReceipt,
+  check, emptyProvenance, ERROR_CODES, EXIT, exitCodeFor, LOADER_COMMANDS, LoaderError, type LoaderFamily, type LoaderStatus, type LoaderUnit, newReceipt, settle, type TargetReceipt, writtenProblems,
 } from "../src/loaders/contract.ts";
-import { productCoverage, REFRESH_GAPS, SOURCE_ROUTES, STATS_REFRESH, UNPUBLISHED_2026 } from "../src/loaders/coverage.ts";
+import { grantedState, type ManifestEvidence, MANIFEST_PATH, productCoverage, REFRESH_GAPS, SOURCE_ROUTES, STATS_REFRESH, UNPUBLISHED_2026 } from "../src/loaders/coverage.ts";
 import { coreOf, type Fragment, fragments, mergeRegistry, RIGHTS_EXCEPTIONS, rightsProblems, type RightsRow } from "../src/loaders/registry.ts";
 import { buildRegistry } from "../src/loaders/registry_build.ts";
+import { statWritten } from "../src/loaders/families/stats.ts";
+import { buildManifest } from "../src/loaders/manifest_build.ts";
 import { isTransient, withRetry } from "../src/loaders/retry.ts";
 
 const committed = sourcesFile as unknown as SourcesFile;
@@ -140,6 +143,32 @@ test("coverage: all 24 catalogue products have an explicit backfill route and a 
   assert.deepEqual(coverage.filter((c) => !c.has_working_refresh).map((c) => c.product_id), Object.keys(REFRESH_GAPS).sort());
 });
 
+test("coverage: 'loaded and reconciled' is granted by the committed manifest only, never asserted by the code", async () => {
+  const { file } = mergeRegistry(committed);
+  const backfillIds = file.sources.filter((s) => SOURCE_ROUTES[s.source_id].kind === "backfill").map((s) => s.source_id);
+  // Without a manifest nothing is claimed about any load.
+  const bare = productCoverage(file, catalogue, null);
+  assert.ok(bare.every((p) => !p.has_loaded_backfill && p.backfill.every((r) => r.state === "built_not_proven")));
+  // A manifest grants the state to exactly the units it shows imported, replayed without an insert, and reconciled.
+  const w = (inserted: number) => ({ ledger_records: { inserted } });
+  const unit = (id: string, importStatus: string, replayInserted: number | null, reconcile: string | null) => ({ source_ids: [id], import: { status: importStatus }, replay: replayInserted === null ? null : { status: "succeeded", written: w(replayInserted) }, reconcile: reconcile ? { status: reconcile } : null });
+  const [good, replayWrote, notReconciled, noReplay, failed] = backfillIds;
+  const evidence: ManifestEvidence = { tested_source: { commit: "c".repeat(40) }, units: [unit(good, "succeeded", 0, "reconciled"), unit(replayWrote, "succeeded", 2, "reconciled"), unit(notReconciled, "succeeded", 0, "not_reconciled"), unit(noReplay, "succeeded", null, "reconciled"), unit(failed, "failed", 0, "reconciled")] };
+  assert.equal(grantedState(good, SOURCE_ROUTES[good], evidence).state, "loaded_and_reconciled");
+  assert.match(grantedState(good, SOURCE_ROUTES[good], evidence).evidence, /tested source commit c{40}/);
+  for (const id of [replayWrote, notReconciled, noReplay, failed, backfillIds[5]]) assert.equal(grantedState(id, SOURCE_ROUTES[id], evidence).state, "built_not_proven", id);
+  // The committed manifest, when there is one, must be about THIS source: no file of the loaders, the functions or the
+  // migrations may have changed since the commit it tested. (Skipped where there is no manifest or no git history.)
+  const manifestText = await readFile(resolve(REPOSITORY_ROOT, MANIFEST_PATH), "utf-8").catch(() => null);
+  if (manifestText) {
+    const manifest = JSON.parse(manifestText) as ManifestEvidence;
+    const tested = manifest.tested_source?.commit ?? "";
+    assert.match(tested, /^[0-9a-f]{40}$/, "the manifest names the commit it tested");
+    const changed = await new Promise<string | null>((done) => execFile("git", ["-C", REPOSITORY_ROOT, "diff", "--name-only", tested, "HEAD", "--", "ingest/src", "supabase/migrations", "supabase/functions", "ingest/package.json", "ingest/package-lock.json"], (error, stdout) => done(error ? null : stdout)));
+    if (changed !== null) assert.deepEqual(changed.split("\n").filter(Boolean), [], "source changed after the commit the manifest tested: the proof must be re-run, not carried over");
+  }
+});
+
 test("coverage: every registry source states its route, no state is claimed for a source that does not exist", () => {
   const { file } = mergeRegistry(committed);
   assert.deepEqual(Object.keys(SOURCE_ROUTES).sort(), file.sources.map((s) => s.source_id).sort());
@@ -187,6 +216,136 @@ test("targets: all, a family, a product, a unit and a source id resolve to units
   for (const product of catalogue) assert.ok(resolveTargets(families, [product.product_id]).length >= 1, product.product_id);
 });
 
+test("targets: a named source id is an exact identity: never widened, never exchanged for another source", async () => {
+  const { families } = await loaders();
+  const RECENT = "nz_parliament_written_questions_recent";
+  const WALK = "nz_parliament_written_questions_backfill";
+  const UNIT = "parliament_export_written_questions";
+  const sources = (targets: string[], backfill = false) => selectUnits(families, targets, "refresh", { backfill }).map((u) => [u.unit.unit, u.unit.refresh_source_ids]);
+  const usage = (run: () => unknown, pattern: RegExp) => assert.throws(run, (e: unknown) => e instanceof LoaderError && e.code === "usage" && pattern.test(e.message));
+
+  // The defect: the walk's own id used to resolve to its unit and then run the RECENT source. It now runs the walk.
+  assert.deepEqual(sources([WALK]), [[UNIT, [WALK]]]);
+  assert.deepEqual(sources([WALK], true), [[UNIT, [WALK]]], "with the flag as well: same identity");
+  assert.deepEqual(sources([RECENT]), [[UNIT, [RECENT]]]);
+  assert.deepEqual(sources([UNIT]), [[UNIT, [RECENT]]], "a unit name is a plain refresh");
+  assert.deepEqual(sources([UNIT], true), [[UNIT, [WALK]]], "a unit name with --backfill is the walk");
+  assert.deepEqual(sources([RECENT, WALK]), [[UNIT, [RECENT, WALK]]], "both named: both run, nothing else");
+  usage(() => sources([RECENT], true), /contradicts the source that was named/);
+  usage(() => sources(["parliament_export_committee_reports"], true), /no whole-history walk/);
+  usage(() => sources(["statistics"], true), /no unit of statistics has a whole-history walk/);
+  assert.deepEqual(sources(["parliament"], true), [[UNIT, [WALK]]], "through a family the flag selects only the units that have a walk");
+  assert.deepEqual(sources(["P24"]).find(([unit]) => unit === UNIT), [UNIT, [RECENT]], "a product is a plain refresh of its units");
+
+  // One source of a unit with several refresh sources stays one source.
+  const multi = families.flatMap((f) => f.units()).find((u) => u.refresh_source_ids.length > 1);
+  if (multi) assert.deepEqual(sources([multi.refresh_source_ids[1]]), [[multi.unit, [multi.refresh_source_ids[1]]]]);
+
+  // A refresh-only id is not a backfill input: the other commands refuse it instead of importing the unit's export.
+  for (const command of ["import", "reconcile", "plan", "validate", "dry-run"] as const) {
+    usage(() => selectUnits(families, [WALK], command, { backfill: false }), /is a refresh source/);
+    usage(() => selectUnits(families, [RECENT], command, { backfill: false }), /is a refresh source/);
+    assert.deepEqual(selectUnits(families, [UNIT], command, { backfill: false }).map((u) => u.unit.unit), [UNIT]);
+  }
+  assert.deepEqual(selectUnits(families, ["baseline_2023_candidacies_export"], "import", { backfill: true }).map((u) => u.unit.unit), ["baseline_2023_candidacies_export"], "the runbook's older spelling still works");
+  usage(() => selectUnits(families, [UNIT], "reconcile", { backfill: true }), /--backfill belongs to refresh/);
+
+  // The receipt names what ran, and the run mode follows the source, not the flag.
+  // (No command is run here: a refresh, dry or not, contacts the publisher. The receipt is built the way the CLI builds it.)
+  const [{ family, unit }] = selectUnits(families, [WALK], "refresh", { backfill: false });
+  assert.deepEqual(newReceipt(family, unit, "refresh", "live_fetch", "per source").source_ids, [WALK]);
+  const ledger = await readFile(new URL("../src/loaders/ledger.ts", import.meta.url), "utf-8");
+  assert.ok(!/ctx\.backfill/.test(ledger), "the shared refresh never re-decides the source or the mode from a flag");
+  const parliament = await readFile(new URL("../src/loaders/families/parliament.ts", import.meta.url), "utf-8");
+  assert.ok(!/ctx\.backfill/.test(parliament));
+});
+
+test("counts: one block per population, never added across; inserted never exceeds seen", async () => {
+  const receipt = (family: string, unit: string, written: TargetReceipt["counts"]["written"], by: TargetReceipt["counts"]["input"]["by_population"]): TargetReceipt => {
+    const r = newReceipt(fakeFamily, { unit, family: "core", product_ids: [], backfill_source_ids: [unit], refresh_source_ids: [] }, "import", "a", "1");
+    return { ...r, family: family as TargetReceipt["family"], status: "succeeded", counts: { ...r.counts, written, input: { rows: null, records: null, versions: null, by_population: by } } };
+  };
+  const w = (seen: number, inserted: number, unchanged: number, conflicts = 0) => ({ seen, inserted, unchanged, rejected: 0, conflicts, tombstoned: 0 });
+  assert.deepEqual(writtenProblems("p", w(44, 44, 0)), []);
+  assert.match(writtenProblems("p", w(44, 93, 0)).join("|"), /inserted \(93\) > seen \(44\)/, "the old mixed receipt is now a named fault");
+  assert.match(writtenProblems("p", w(10, 4, 4)).join("|"), /<> seen/);
+  assert.match(writtenProblems("p", { ...w(1, 1, 0), tombstoned: -1 }).join("|"), /tombstoned/);
+
+  const broken = receipt("statistics", "u", { stat_observations: w(44, 93, 0) }, {});
+  assert.deepEqual([settle(broken, "succeeded").status, broken.error_code], ["not_reconciled", "not_reconciled"]);
+  assert.match(broken.error_detail ?? "", /count invariants/);
+
+  // Union aggregation: a statistics unit with both populations, one of catalogue metadata only, and a ledger unit.
+  const dir = await mkdtemp(join(tmpdir(), "manifest-"));
+  await mkdir(join(dir, "import"));
+  await mkdir(join(dir, "replay"));
+  const first = [
+    receipt("statistics", "both", { stat_observations: w(44, 44, 0), stat_catalogue_entries: w(49, 49, 0) }, { stat_observations: 44, stat_catalogue_entries: 49 }),
+    receipt("statistics", "metadata_only", { stat_catalogue_entries: w(128, 128, 0) }, { stat_catalogue_entries: 128 }),
+    receipt("parliament", "ledger", { ledger_records: w(10, 7, 3) }, { ledger_records: 9 }),
+  ];
+  const again = [
+    receipt("statistics", "both", { stat_observations: w(44, 0, 44), stat_catalogue_entries: w(49, 0, 49) }, {}),
+    receipt("statistics", "metadata_only", { stat_catalogue_entries: w(128, 0, 128) }, {}),
+    receipt("parliament", "ledger", { ledger_records: w(10, 0, 10) }, {}),
+  ];
+  for (const r of first) await writeFile(join(dir, "import", `import-${r.family}-${r.unit}.json`), JSON.stringify(r));
+  for (const r of again) await writeFile(join(dir, "replay", `import-${r.family}-${r.unit}.json`), JSON.stringify(r));
+  const manifest = await buildManifest(dir, "2026-01-01") as { totals: { first_pass: { [p: string]: { seen: number; inserted: number } }; replay: { [p: string]: { inserted: number; unchanged: number } } & { units_that_inserted_anything: string[] }; input_by_population: { [p: string]: number }; count_invariants: { violations: string[] } }; units: { unit: string; import: { written: { [p: string]: unknown } } }[] };
+  assert.deepEqual(manifest.totals.first_pass, { ledger_records: w(10, 7, 3), stat_observations: w(44, 44, 0), stat_catalogue_entries: w(177, 177, 0) });
+  assert.deepEqual(manifest.totals.input_by_population, { ledger_records: 9, stat_observations: 44, stat_catalogue_entries: 177 });
+  assert.deepEqual([manifest.totals.replay.stat_observations.inserted, manifest.totals.replay.stat_observations.unchanged, manifest.totals.replay.stat_catalogue_entries.unchanged, manifest.totals.replay.units_that_inserted_anything], [0, 44, 177, []]);
+  assert.deepEqual(manifest.totals.count_invariants.violations, []);
+  assert.ok(!("seen" in manifest.totals.first_pass), "there is no total across populations");
+  assert.deepEqual(Object.keys(manifest.units.find((u) => u.unit === "metadata_only")!.import.written), ["stat_catalogue_entries"], "a metadata-only unit has no observation block");
+  for (const [population, block] of Object.entries(manifest.totals.first_pass)) assert.ok(block.inserted <= block.seen, population);
+
+  // A receipt that breaks the rule is named by the manifest, and a receipt of another commit refuses it.
+  await writeFile(join(dir, "import", "import-statistics-bad.json"), JSON.stringify({ ...receipt("statistics", "bad", { stat_observations: w(44, 93, 0) }, {}), status: "not_reconciled" }));
+  const flagged = await buildManifest(dir, "2026-01-01") as { totals: { count_invariants: { violations: string[] } } };
+  assert.equal(flagged.totals.count_invariants.violations.length, 2);
+  await assert.rejects(buildManifest(dir, "2026-01-01", undefined, "a".repeat(40)), /not all produced by a clean checkout/);
+});
+
+test("counts: statistics first load, replay, refresh and metadata-only units each obey the invariants per population", () => {
+  const totals = (o: [number, number, number, number], meta: { [key: string]: number }) => ({ observations: { seen: o[0], inserted: o[1], unchanged: o[2], conflicts: o[3] }, meta, batches: 1 });
+  const holds = (written: ReturnType<typeof statWritten>) => Object.entries(written).flatMap(([population, w]) => writtenProblems(population, w));
+
+  // First load of a source with both populations (the shape that used to print seen=44, inserted=93).
+  const first = statWritten({ observations: 44, catalogue_entries: 49 }, totals([44, 44, 0, 0], { series_inserted: 44, geographies_inserted: 20, catalogue_entries_seen: 49, catalogue_entries_inserted: 49, catalogue_entries_unchanged: 0, catalogue_entries_span_widened: 0 }));
+  assert.deepEqual(first, { stat_observations: { seen: 44, inserted: 44, unchanged: 0, rejected: 0, conflicts: 0, tombstoned: 0 }, stat_catalogue_entries: { seen: 49, inserted: 49, unchanged: 0, rejected: 0, conflicts: 0, tombstoned: 0 } });
+  assert.deepEqual(holds(first), []);
+  // Series and geographies are definitions, not rows of either population: they never leak into a block.
+  assert.ok(Object.values(first).every((w) => w.inserted <= w.seen));
+
+  // Replay: everything unchanged, in both populations.
+  const replay = statWritten({ observations: 44, catalogue_entries: 49 }, totals([44, 0, 44, 0], { catalogue_entries_seen: 49, catalogue_entries_inserted: 0, catalogue_entries_unchanged: 49, catalogue_entries_span_widened: 0 }));
+  assert.deepEqual([replay.stat_observations!.inserted, replay.stat_observations!.unchanged, replay.stat_catalogue_entries!.inserted, replay.stat_catalogue_entries!.unchanged], [0, 44, 0, 49]);
+  assert.deepEqual(holds(replay), []);
+
+  // A refresh that sees known versions again: their span widens, which is NOT an insert.
+  const refresh = statWritten({ observations: 0, catalogue_entries: 128 }, totals([0, 0, 0, 0], { catalogue_entries_seen: 128, catalogue_entries_inserted: 3, catalogue_entries_unchanged: 125, catalogue_entries_span_widened: 125 }));
+  assert.deepEqual(refresh, { stat_catalogue_entries: { seen: 128, inserted: 3, unchanged: 125, rejected: 0, conflicts: 0, tombstoned: 0 } }, "metadata only: no observation block at all");
+  assert.deepEqual(holds(refresh), []);
+
+  // Observations only, with a conflict: the conflict is part of the sum and fails the run.
+  const conflict = statWritten({ observations: 10, catalogue_entries: 0 }, totals([10, 7, 2, 1], {}));
+  assert.deepEqual(Object.keys(conflict), ["stat_observations"]);
+  assert.deepEqual(holds(conflict), []);
+});
+
+test("provenance: every receipt pins the commit of the checkout that produced it", async () => {
+  const revision = await sourceRevision();
+  // In a git checkout: the full commit and whether tracked files differ from it. In a plain copy of the files: unknown,
+  // stated as null. Either way nothing is invented, and the manifest builder refuses a receipt whose commit is unknown.
+  if (revision.commit === null) assert.equal(revision.dirty, null, "no commit, so no claim about cleanliness either");
+  else {
+    assert.match(revision.commit, /^[0-9a-f]{40}$/);
+    assert.equal(typeof revision.dirty, "boolean");
+  }
+  assert.deepEqual(emptyProvenance("a", "1").source_revision, { commit: null, dirty: null }, "unknown until the CLI pins it; never guessed");
+});
+
 test("contract: statistics keeps its typed bulk writer; the ledger families keep theirs", async () => {
   const { families } = await loaders();
   assert.deepEqual(families.map((f) => [f.family, f.writer]), [
@@ -227,10 +386,10 @@ test("contract: a run succeeds only when every count check passes and nothing wa
   check(unknown, "rows", 3, null);
   assert.equal(settle(unknown, "succeeded").status, "not_reconciled", "a count that could not be read is not a pass");
   const rejected = fresh();
-  rejected.counts.written.rejected = 1;
+  rejected.counts.written.ledger_records = { seen: 1, inserted: 0, unchanged: 0, rejected: 1, conflicts: 0, tombstoned: 0 };
   assert.deepEqual([settle(rejected, "succeeded").status, rejected.error_code], ["not_reconciled", "ledger_rejected_rows"]);
   const conflict = fresh();
-  conflict.counts.written.conflicts = 2;
+  conflict.counts.written.stat_observations = { seen: 2, inserted: 0, unchanged: 0, rejected: 0, conflicts: 2, tombstoned: 0 };
   assert.deepEqual([settle(conflict, "succeeded").status, conflict.error_code], ["not_reconciled", "value_conflict"]);
 });
 
@@ -304,7 +463,7 @@ test("source access: a blocked refresh writes nothing and says blocked, never 'n
   const { families } = await loaders();
   const [{ family, unit }] = resolveTargets(families, ["ec_2026_nominations"]);
   const receipt = await runCommand("refresh", family, unit, { env: {}, log: () => undefined }, false);
-  assert.deepEqual([receipt.status, receipt.error_code, receipt.counts.written.seen, receipt.provenance.run_ids.length], ["blocked", "route_blocked", 0, 0]);
+  assert.deepEqual([receipt.status, receipt.error_code, receipt.counts.written, receipt.provenance.run_ids.length], ["blocked", "route_blocked", {}, 0]);
   assert.match(JSON.stringify(receipt.family_detail), /"contacted":false/);
   const [p19] = resolveTargets(families, ["stats_nz_census_2018_highlights"]);
   const none = await runCommand("refresh", p19.family, p19.unit, { env: {}, log: () => undefined }, false);

@@ -2,7 +2,7 @@
 -- no candidate or person is created, new tables are default-deny.
 -- TEST FIXTURES ONLY: invented parties, names, numbers and hosts, rolled back. Not real results, polls or returns.
 begin;
-select plan(24);
+select plan(27);
 
 select evidence_private.sync_registry(jsonb_build_object('sources', jsonb_build_array(
   jsonb_build_object('source_id', 'baseline_2023_candidacies_export', 'title', 'Fixture candidacy product', 'publisher', 'Fixture Publisher',
@@ -10,7 +10,15 @@ select evidence_private.sync_registry(jsonb_build_object('sources', jsonb_build_
     'allowed_hosts', jsonb_build_array(), 'view_scope', 'baseline_2023', 'snapshot_semantics', 'complete_snapshot', 'enabled', false, 'config_hash', 'f0'),
   jsonb_build_object('source_id', 'pgtap_election_family', 'title', 'Fixture election family export', 'publisher', 'Fixture Publisher',
     'official_url', 'https://fixture.example/results', 'adapter_kind', 'export_import', 'adapter_name', 'fixture',
-    'allowed_hosts', jsonb_build_array(), 'view_scope', 'baseline_2023', 'snapshot_semantics', 'complete_snapshot', 'enabled', false, 'config_hash', 'f1'))));
+    'allowed_hosts', jsonb_build_array(), 'view_scope', 'baseline_2023', 'snapshot_semantics', 'complete_snapshot', 'enabled', false, 'config_hash', 'f1'),
+  -- A second publisher of a nationwide total for the same election, and a third source whose electorate lines have no
+  -- total of their own: together they decide whether the cross-route comparison picks its partner by a stated rule.
+  jsonb_build_object('source_id', 'pgtap_election_other', 'title', 'Fixture second nationwide publisher', 'publisher', 'Fixture Publisher Two',
+    'official_url', 'https://fixture.example/other', 'adapter_kind', 'export_import', 'adapter_name', 'fixture',
+    'allowed_hosts', jsonb_build_array(), 'view_scope', 'baseline_2023', 'snapshot_semantics', 'complete_snapshot', 'enabled', false, 'config_hash', 'f2'),
+  jsonb_build_object('source_id', 'pgtap_election_zz_pages', 'title', 'Fixture electorate pages without a total', 'publisher', 'Fixture Publisher Three',
+    'official_url', 'https://fixture.example/pages', 'adapter_kind', 'export_import', 'adapter_name', 'fixture',
+    'allowed_hosts', jsonb_build_array(), 'view_scope', 'baseline_2023', 'snapshot_semantics', 'complete_snapshot', 'enabled', false, 'config_hash', 'f3'))));
 
 create temp table t (k text primary key, v jsonb);
 create function pg_temp.rec(p_id text, p_kind text, p_hash text, p_payload jsonb) returns jsonb language sql as $$
@@ -37,6 +45,15 @@ create temp table mid_counts as select
   (select count(*) from evidence_private.candidacies) as candidacies,
   (select count(*) from evidence_private.candidate_results) as candidate_results,
   (select count(*) from evidence_private.person_source_identities) as identities;
+
+-- A competing nationwide total for the same election, published by another source and loaded FIRST, so the projection
+-- below has to choose its comparison partner while two totals exist.
+select evidence_private.acquire_lease('pgtap_election_other', '55555555-5555-5555-5555-555555555503', 60);
+insert into t select 'other', evidence_private.start_run('pgtap_election_other', '55555555-5555-5555-5555-555555555503', 'v1', 'export_import', 'test', 'm2');
+select evidence_private.ingest_batch((select (v ->> 'run_id')::uuid from t where k = 'other'), '55555555-5555-5555-5555-555555555503', jsonb_build_array(
+  pg_temp.rec('other-total', 'election_nationwide_total', 'f', jsonb_build_object('election_year', 2023, 'result_scope', 'nationwide_party_vote_total', 'party_votes', 999, 'total_seats', 5))));
+select evidence_private.project_run((select (v ->> 'run_id')::uuid from t where k = 'other'), '55555555-5555-5555-5555-555555555503');
+select evidence_private.finish_run((select (v ->> 'run_id')::uuid from t where k = 'other'), '55555555-5555-5555-5555-555555555503', 'succeeded', false, null, null, null);
 
 select evidence_private.acquire_lease('pgtap_election_family', '55555555-5555-5555-5555-555555555502', 60);
 insert into t select 'run', evidence_private.start_run('pgtap_election_family', '55555555-5555-5555-5555-555555555502', 'v1', 'export_import', 'test', 'm1');
@@ -78,6 +95,29 @@ select is((select c.outcome || '/' || c.this_route_votes || '/' || c.other_route
             join evidence_private.source_record_versions v on v.id = c.evidence_version_id join evidence_private.source_records r on r.id = v.record_id
             where r.source_id = 'pgtap_election_family' and c.check_kind = 'party_votes_sum_to_nationwide_total'), 'disagrees/299/300',
   'electorate party votes are compared with the nationwide total and a difference is recorded, not hidden');
+-- The partner of the comparison is chosen by a stated rule, not by whichever surrogate key sorted first: the source's
+-- OWN published total when it has one (300 here, never the other publisher's 999, and never a real total the store may
+-- already hold), and the note says whose figure was used.
+select is((select c.note like '%this source''s own published total.' from evidence_private.result_route_checks c
+            join evidence_private.source_record_versions v on v.id = c.evidence_version_id join evidence_private.source_records r on r.id = v.record_id
+            where r.source_id = 'pgtap_election_family' and c.check_kind = 'party_votes_sum_to_nationwide_total'), true,
+  'the check names the source of the national figure it used');
+-- A source whose electorate lines have no total of their own: the remaining totals are taken in source order, so the
+-- answer is the same however the rows were loaded, and the note names the publisher of the figure.
+select evidence_private.acquire_lease('pgtap_election_zz_pages', '55555555-5555-5555-5555-555555555504', 60);
+insert into t select 'pages', evidence_private.start_run('pgtap_election_zz_pages', '55555555-5555-5555-5555-555555555504', 'v1', 'export_import', 'test', 'm3');
+select evidence_private.ingest_batch((select (v ->> 'run_id')::uuid from t where k = 'pages'), '55555555-5555-5555-5555-555555555504', jsonb_build_array(
+  pg_temp.rec('zz-party-1', 'election_electorate_vote', '0', jsonb_build_object('election_year', 2023, 'electorate_number', 7, 'electorate_name', 'Fixture North', 'vote_type', 'party', 'name_at_source', 'Fixture Party', 'votes', 250))));
+select evidence_private.project_run((select (v ->> 'run_id')::uuid from t where k = 'pages'), '55555555-5555-5555-5555-555555555504');
+select is((select c.this_route_votes || '/' || c.other_route_votes || '/' || (c.note like '%published by pgtap\_election\_family.')::text
+             from evidence_private.result_route_checks c
+             join evidence_private.source_record_versions v on v.id = c.evidence_version_id join evidence_private.source_records r on r.id = v.record_id
+            where r.source_id = 'pgtap_election_zz_pages' and c.check_kind = 'party_votes_sum_to_nationwide_total'), '250/300/true',
+  'without a total of its own, the partner is the first remaining total in source order, and the note says whose it is');
+select is((select count(distinct c.other_route_votes)::int from evidence_private.result_route_checks c
+            join evidence_private.source_record_versions v on v.id = c.evidence_version_id join evidence_private.source_records r on r.id = v.record_id
+            where r.source_id in ('pgtap_election_family', 'pgtap_election_zz_pages') and c.check_kind = 'party_votes_sum_to_nationwide_total'), 1,
+  'and the two sources agree on which national figure exists to compare with');
 select is((select count(*)::int from evidence_private.election_party_totals e join evidence_private.lineage_result_set l on l.result_set_id = e.result_set_id
             where l.source_id = 'pgtap_election_family'), 2, 'the published total line is not a third party row');
 select is((select party_votes from evidence_private.election_result_totals e join evidence_private.lineage_result_set l on l.result_set_id = e.result_set_id

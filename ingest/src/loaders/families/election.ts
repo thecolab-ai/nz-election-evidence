@@ -91,7 +91,7 @@ export function electionFamily(file: SourcesFile): LoaderFamily {
 
   function describeInput(receipt: TargetReceipt, planned: Awaited<ReturnType<typeof planProducts>>["planned"][number]): void {
     receipt.provenance.input_digest = planned.loaded.digest;
-    receipt.counts.input = { rows: planned.findings.rows, records: planned.findings.records, versions: planned.findings.rows };
+    receipt.counts.input = { rows: planned.findings.rows, records: planned.findings.records, versions: planned.findings.rows, by_population: { ledger_records: planned.findings.records } };
     const times = planned.loaded.rows.map((r) => r.collected_at).filter((t): t is string => typeof t === "string").sort();
     receipt.provenance.collected_from = times[0] ?? null;
     receipt.provenance.collected_to = times.at(-1) ?? null;

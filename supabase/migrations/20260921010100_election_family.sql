@@ -172,23 +172,30 @@ declare
   v_total record;
   v_set record;
 begin
-  -- The published nationwide total, if one is loaded. With several, the first result set is used; each source's
-  -- electorate figures are still summed on their own, never together.
-  select t.party_votes, t.evidence_version_id into v_total
-    from evidence_private.election_result_totals t
-    join evidence_private.result_sets rs on rs.id = t.result_set_id
-   where rs.election_id = p_election and t.value_status = 'reported'
-   order by t.result_set_id limit 1;
-
   -- One check per result set that holds electorate party votes: a source's lines are summed within that source only.
   for v_set in
-    select rs.id, rs.source_version_id, sum(pr.votes) as votes
+    select rs.id, rs.source_version_id, sum(pr.votes) as votes, min(sr.source_id) as source_id
       from evidence_private.party_results pr
       join evidence_private.result_sets rs on rs.id = pr.result_set_id
       join evidence_private.contests c on c.id = pr.contest_id
+      join evidence_private.source_record_versions sv on sv.id = rs.source_version_id
+      join evidence_private.source_records sr on sr.id = sv.record_id
      where rs.election_id = p_election and c.contest_type = 'electorate' and pr.value_status = 'reported'
      group by rs.id, rs.source_version_id
   loop
+    -- Which published nationwide total these electorate figures are compared with. The store may hold more than one
+    -- (two publishers, or a publisher's own second product), so the choice is made by a stated rule and never by
+    -- whichever row a surrogate key happened to sort first: the total published by THIS source if it published one,
+    -- otherwise the remaining totals in source order. The figure's own source is named in the note, and
+    -- other_version_id resolves to the exact version it came from, so a reader can see which figure was used.
+    select t.party_votes, t.evidence_version_id, sr.source_id into v_total
+      from evidence_private.election_result_totals t
+      join evidence_private.result_sets rs2 on rs2.id = t.result_set_id
+      join evidence_private.source_record_versions sv2 on sv2.id = rs2.source_version_id
+      join evidence_private.source_records sr on sr.id = sv2.record_id
+     where rs2.election_id = p_election and t.value_status = 'reported'
+     order by (sr.source_id = v_set.source_id) desc, sr.source_id, sr.external_record_id
+     limit 1;
     insert into evidence_private.result_route_checks (
       election_id, check_kind, source_record_id, evidence_version_id, other_version_id, this_route_votes, other_route_votes, outcome, counted_route, note)
     values (
@@ -196,11 +203,14 @@ begin
       (select sv.record_id from evidence_private.source_record_versions sv where sv.id = v_set.source_version_id), v_set.source_version_id, v_total.evidence_version_id, v_set.votes, v_total.party_votes,
       case when v_total.party_votes is null then 'other_route_not_loaded' when v_total.party_votes = v_set.votes then 'agrees' else 'disagrees' end,
       'nationwide table for the national figure; electorate pages for electorate figures',
-      'Party votes by electorate and the nationwide party-vote total are the same votes. They are compared, never added together.')
+      'Party votes by electorate and the nationwide party-vote total are the same votes. They are compared, never added together.'
+        || case when v_total.source_id is null then ' No nationwide total is loaded for this election.'
+                when v_total.source_id = v_set.source_id then ' The national figure is this source''s own published total.'
+                else ' The national figure was published by ' || v_total.source_id || '.' end)
     on conflict (check_kind, source_record_id) do update set
       evidence_version_id = excluded.evidence_version_id,
       other_version_id = excluded.other_version_id, this_route_votes = excluded.this_route_votes,
-      other_route_votes = excluded.other_route_votes, outcome = excluded.outcome;
+      other_route_votes = excluded.other_route_votes, outcome = excluded.outcome, note = excluded.note;
   end loop;
 end
 $$;

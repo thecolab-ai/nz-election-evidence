@@ -7,7 +7,7 @@ import { exportLocations } from "../../families/parliament/exporter.ts";
 import { FAMILY_EXPORT_ADAPTER, FAMILY_EXPORT_ADAPTER_VERSION, importFamilyExport, type ImportPlan, verifyInput } from "../../families/parliament/import.ts";
 import { assertPrivateInput } from "../access.ts";
 import { connectWorker } from "../connect.ts";
-import { check, type LoaderContext, type LoaderFamily, type LoaderUnit, newReceipt, settle, type TargetReceipt } from "../contract.ts";
+import { addWritten, check, type LoaderContext, type LoaderFamily, type LoaderUnit, newReceipt, settle, type TargetReceipt, writtenOf } from "../contract.ts";
 import { refreshLedgerUnit } from "../ledger.ts";
 import { addTypedTally } from "../typed.ts";
 import { resolve } from "node:path";
@@ -78,10 +78,8 @@ export function parliamentFamily(file: SourcesFile): LoaderFamily {
             if (attempt.run_id) receipt.provenance.run_ids.push(attempt.run_id);
             if (attempt.resumed_from_run_id) receipt.provenance.resumed_from_run_ids.push(attempt.resumed_from_run_id);
           }
-          receipt.counts.written.seen += generation.totals.seen;
-          receipt.counts.written.inserted += generation.totals.versions_inserted;
-          receipt.counts.written.unchanged += generation.totals.unchanged;
-          receipt.counts.written.rejected += generation.totals.rejected;
+          if (dryRun) receipt.counts.destination.planned_ledger_records = (receipt.counts.destination.planned_ledger_records ?? 0) + generation.totals.seen;
+          else addWritten(writtenOf(receipt, "ledger_records"), { seen: generation.totals.seen, inserted: generation.totals.versions_inserted, unchanged: generation.totals.unchanged, rejected: generation.totals.rejected, conflicts: 0, tombstoned: 0 });
         }
         for (const line of result.reconciliation) check(receipt, line.check, line.expected, line.actual);
         receipt.family_detail = result as unknown as Json;
@@ -100,9 +98,10 @@ export function parliamentFamily(file: SourcesFile): LoaderFamily {
     },
 
     refresh(unit, ctx, dryRun) {
-      // The whole-Parliament walk is never part of a plain refresh: it runs only when asked for with --backfill.
-      const sources = ctx.backfill && REFRESH_BACKFILL[unit.unit] ? REFRESH_BACKFILL[unit.unit] : unit.refresh_source_ids;
-      return refreshLedgerUnit(family, { ...unit, refresh_source_ids: sources }, file, ctx, dryRun);
+      // The sources to run were chosen by the CLI (selectUnits) and arrive in unit.refresh_source_ids: a plain refresh, the
+      // whole-Parliament walk (--backfill or its source id named), or exactly the source that was named. Nothing is
+      // re-decided here, so a named source can never be exchanged for another.
+      return refreshLedgerUnit(family, unit, file, ctx, dryRun);
     },
 
     async reconcile(unit, ctx) {
@@ -155,7 +154,7 @@ export function parliamentFamily(file: SourcesFile): LoaderFamily {
     receipt.provenance.input_digest = { sha256: pin.sha256, bytes: pin.bytes, rows: pin.rows };
     receipt.provenance.collected_from = plan.observed_min;
     receipt.provenance.collected_to = plan.observed_max;
-    receipt.counts.input = { rows: plan.rows, records: plan.distinct_records, versions: plan.distinct_versions };
+    receipt.counts.input = { rows: plan.rows, records: plan.distinct_records, versions: plan.distinct_versions, by_population: { ledger_records: plan.distinct_records } };
   }
 
   /** Typed rows by proven lineage; each record kind of the export must have produced exactly one typed row per record. */

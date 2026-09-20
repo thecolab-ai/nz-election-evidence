@@ -150,11 +150,51 @@ test("statistics: a stopped load resumes after its checkpoint, a replay writes n
     const [summary] = await sql`select observations::int, observations_without_a_number::int, series from evidence_private.stat_source_summary where source_id = ${SOURCE_ID}`;
     assert.deepEqual([summary.observations, summary.observations_without_a_number, summary.series], [ROWS, withheld, 5]);
 
-    // 6. The worker cannot do anything the tally did not need: no write to the lineage register, no new projector.
+    // 6. The SAME login that just loaded the source, with plain DML after the run has finished: the tables refuse it.
+    //    (The worker must hold table privileges because its functions run with the caller's rights, so the rules live in the tables.)
+    const [who] = await sql`select current_user as login, r.rolsuper or r.rolbypassrls or r.rolcreaterole or r.rolcreatedb as elevated,
+        (select array_agg(m.rolname::text order by 1) from pg_auth_members a join pg_roles m on m.oid = a.roleid where a.member = r.oid) as member_of
+      from pg_roles r where r.rolname = current_user`;
+    assert.deepEqual([who.elevated, who.member_of], [false, ["evidence_ingest"]], "the login is a member of evidence_ingest and nothing more");
+    const refused = async (query: Promise<unknown>, pattern: RegExp, what: string) => { await assert.rejects(query, pattern, what); };
+    await refused(sql`update evidence_private.stat_observations set value = 1`, /permission denied/, "update of stored observations");
+    await refused(sql`delete from evidence_private.stat_observations`, /permission denied/, "delete of stored observations");
+    await refused(sql`update evidence_private.stat_series set unit = 'defaced'`, /permission denied/, "update of a series definition");
+    await refused(sql`update evidence_private.stat_datasets set title = 'defaced' where source_id = ${SOURCE_ID}`, /only inside a running run/, "edit of a dataset of a finished source");
+    await refused(sql`insert into evidence_private.stat_datasets (source_id, dataset_key, title, publisher) values (${SOURCE_ID}, 'hostile', 'x', 'x')`, /only inside a running run/, "a dataset outside a run");
+    await refused(sql`
+      insert into evidence_private.stat_observations (series_id, release_id, period_label, value, raw_value, value_status, parse_status, content_hash, canonical_route, import_run_id)
+      select o.series_id, o.release_id, 'hostile period', 1, '1', 'reported', 'parsed', ${"sha256:" + "f".repeat(64)}, o.canonical_route, o.import_run_id
+      from evidence_private.stat_observations o join evidence_private.lineage_stat_series l on l.series_id = o.series_id where l.source_id = ${SOURCE_ID} limit 1`,
+      /only inside a running run/, "an observation that borrows the id of a finished run");
+    await refused(sql`update evidence_private.stat_source_summary set observations = observations + 1 where source_id = ${SOURCE_ID}`, /only inside a running run|does not equal/, "a false summary");
+    const [{ still }] = await sql`select (evidence_private.stat_source_counts(${SOURCE_ID}) ->> 'observations')::int as still`;
+    assert.equal(still, ROWS, "nothing hostile was stored");
+
+    // 7. The worker cannot do anything the tally did not need: no write to the lineage register, no new projector.
     await assert.rejects(sql`insert into evidence_private.public_lineage (object_schema, object_name, lineage_kind, note) values ('evidence_private', 'itest', 'not_source_data', 'should be refused for the worker login')`, /permission denied|row-level security/);
     await assert.rejects(sql`insert into evidence_private.run_projectors (projector_key, function_name) values ('itest_projector', 'text_violation')`, /permission denied|row-level security/);
   } finally {
     await sql.end({ timeout: 5 });
     await rm(root, { recursive: true, force: true });
   }
+});
+
+test("content digest: deterministic, holds no row content, and a login that cannot see every row says its digest is incomplete", { skip }, async () => {
+  const { digestStore } = await import("../src/loaders/content_digest.ts");
+  const sql = postgres(url!, { max: 1, prepare: false, onnotice: () => undefined });
+  const [{ storeDigestBefore }] = await sql`select (evidence_private.stat_source_counts(${SOURCE_ID}) ->> 'content_digest') as "storeDigestBefore"`;
+  const first = await digestStore(url!) as { complete: boolean; incomplete_because: string[]; tables: { [table: string]: { rows: number; content_digest: string; columns_not_compared: { [column: string]: string } } } };
+  const second = await digestStore(url!) as typeof first;
+  assert.deepEqual(first.tables, second.tables, "the same store gives the same digests");
+  // The worker login does not bypass row-level security, so its digest may never be used as evidence of a whole store.
+  assert.equal(first.complete, false);
+  assert.match(first.incomplete_because.join("; "), /row-level security/);
+  assert.match(first.tables.stat_observations.content_digest, /^[0-9a-f]{32}$/);
+  assert.ok("id" in first.tables.stat_observations.columns_not_compared && "import_run_id" in first.tables.stat_observations.columns_not_compared, "what is left out is named, with its reason");
+  assert.ok(!/fixture_dataset|Fixture Statistics/.test(JSON.stringify(first)), "table and column names, counts and digests only");
+  // It writes nothing but its own temporary tables: the store is exactly as it was before the two runs above.
+  const [after] = await sql`select (evidence_private.stat_source_counts(${SOURCE_ID}) ->> 'observations')::int as observations, (evidence_private.stat_source_counts(${SOURCE_ID}) ->> 'content_digest') as digest`;
+  assert.deepEqual([after.observations, after.digest], [ROWS, storeDigestBefore], "a digest run leaves the store exactly as it found it");
+  await sql.end({ timeout: 5 });
 });

@@ -21,6 +21,7 @@ Status: built and verified on an **isolated disposable database**. Nothing hoste
 | `publish_receipts.ts` | Copies load receipts into `docs/database/receipts/stats/` after the shared receipt safety check. |
 | `supabase/migrations/20260921030100_stats_import.sql` | Additive migration (prefix `2026092103`). |
 | `supabase/tests/110_stats_import.test.sql` | pgTAP: replay, conflict, withheld-never-a-number, route switch, release repointing, worker cannot edit history. |
+| `supabase/tests/115_stats_table_boundary.test.sql` | pgTAP: the tables enforce the rules against **plain DML by the worker role** (the functions are `SECURITY INVOKER`, so the worker holds table privileges): ownership by running leased run, text guard, append-only, one-way columns, catalogue currency, true summaries, guards out of the worker's reach. See `docs/database/unified-loaders.md` section 2. |
 | `ingest/test/stats_*.test.ts` | Offline tests; run alone with `node --test test/stats_contract.test.ts test/stats_loader.test.ts test/stats_live.test.ts`. |
 
 No shared file was edited: not `sources.config.json`, `registry.ts`, `runner.ts`, `types.ts`, `db.ts`, `http.ts`, `ingest/src/cli.ts`, nor any existing migration or test.

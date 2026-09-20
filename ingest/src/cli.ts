@@ -20,6 +20,7 @@
 // that is a member of evidence_ingest and nothing more (node src/operator.ts set-ingest-login). Neither is ever printed.
 // Exit codes: 0 ok, 1 usage or configuration, 2 a run failed, 3 an input was refused, 4 not reconciled, 5 route blocked.
 
+import { execFile } from "node:child_process";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -31,9 +32,9 @@ import { redactReceipt, REPOSITORY_ROOT, sanitize } from "./loaders/access.ts";
 import { connectWorker } from "./loaders/connect.ts";
 import {
   type ErrorCode, EXIT, exitCodeFor, LOADER_COMMANDS, type LoaderCommand, type LoaderContext, LoaderError, type LoaderFamily, type LoaderUnit,
-  newReceipt, type TargetReceipt,
+  newReceipt, type SourceRevision, type TargetReceipt,
 } from "./loaders/contract.ts";
-import { productCoverage, SOURCE_ROUTES, STATS_REFRESH, UNPUBLISHED_2026 } from "./loaders/coverage.ts";
+import { type ManifestEvidence, MANIFEST_PATH, productCoverage, SOURCE_ROUTES, STATS_REFRESH, UNPUBLISHED_2026 } from "./loaders/coverage.ts";
 import { coreFamily } from "./loaders/families/core.ts";
 import { electionFamily } from "./loaders/families/election.ts";
 import { parliamentFamily } from "./loaders/families/parliament.ts";
@@ -64,6 +65,63 @@ export function resolveTargets(families: LoaderFamily[], targets: string[]): { f
     for (const match of matches) picked.add(match.family.family + "\n" + match.unit.unit);
   }
   return all.filter(({ family, unit }) => picked.has(family.family + "\n" + unit.unit));
+}
+
+/**
+ * What a command will really act on. A target that is a SOURCE ID is an exact identity: it is never widened to the
+ * other sources of its unit and never exchanged for another source.
+ *
+ *   refresh UNIT                      the unit's plain refresh sources
+ *   refresh UNIT --backfill           the unit's whole-history walk (an error if a named unit has none)
+ *   refresh REFRESH_SOURCE_ID         exactly that source
+ *   refresh WALK_SOURCE_ID            exactly that walk; naming it is asking for it, with or without --backfill
+ *   refresh REFRESH_SOURCE_ID --backfill   refused: the flag contradicts the source that was named
+ *   import | reconcile | plan | validate | dry-run  with a refresh-only source id: refused, they act on backfill inputs
+ *   import UNIT --backfill            the older spelling of import UNIT: accepted, changes nothing
+ */
+export function selectUnits(families: LoaderFamily[], targets: string[], command: LoaderCommand, options: { backfill: boolean }): { family: LoaderFamily; unit: LoaderUnit }[] {
+  // `import` IS the backfill route, so the older spelling `import SOURCE --backfill` (docs/database/runbook.md) says nothing
+  // new and is accepted. Anywhere else the flag would be ambiguous, so it is refused rather than ignored.
+  if (options.backfill && command !== "refresh" && command !== "import" && command !== "dry-run") throw new LoaderError("usage", "--backfill belongs to refresh (the whole-history walk of a refresh route) or to import (where it is the default)");
+  const out: { family: LoaderFamily; unit: LoaderUnit }[] = [];
+  for (const { family, unit } of resolveTargets(families, targets)) {
+    const walk = unit.alias_source_ids ?? [];
+    const broad = targets.some((t) => t === "all" || t === family.family || t === unit.unit || unit.product_ids.includes(t) || unit.backfill_source_ids.includes(t));
+    const namedExactly = targets.some((t) => t === unit.unit || unit.backfill_source_ids.includes(t));
+    const namedRefresh = unit.refresh_source_ids.filter((id) => targets.includes(id) && id !== unit.unit && !unit.backfill_source_ids.includes(id));
+    const namedWalk = walk.filter((id) => targets.includes(id));
+    if (command !== "refresh") {
+      const refreshOnly = [...namedRefresh, ...namedWalk];
+      if (refreshOnly.length > 0 && !broad) {
+        throw new LoaderError("usage", `${refreshOnly[0]} is a refresh source: \`${command}\` acts on the backfill input of a unit. Use \`refresh ${refreshOnly[0]}\`, or name the unit ${unit.unit}`);
+      }
+      out.push({ family, unit });
+      continue;
+    }
+    if (options.backfill && namedRefresh.length > 0) {
+      throw new LoaderError("usage", `--backfill contradicts the source that was named (${namedRefresh[0]}): name ${walk[0] ?? "a unit with a whole-history walk"} or the unit ${unit.unit}`);
+    }
+    if (options.backfill && walk.length === 0 && namedWalk.length === 0) {
+      if (namedExactly) throw new LoaderError("usage", `${unit.unit} has no whole-history walk; --backfill cannot apply to it`);
+      continue;   // reached through all, a family or a product: the flag selects only the units that have a walk
+    }
+    const sources = new Set<string>([...(broad ? (options.backfill ? walk : unit.refresh_source_ids) : []), ...namedRefresh, ...namedWalk]);
+    const ordered = [...unit.refresh_source_ids, ...walk].filter((id) => sources.has(id));
+    out.push({ family, unit: { ...unit, refresh_source_ids: ordered } });
+  }
+  if (options.backfill && out.length === 0) throw new LoaderError("usage", `--backfill: no unit of ${targets.join(", ")} has a whole-history walk`);
+  return out;
+}
+
+/** The commit of the checkout the CLI runs from, read from git itself. Unknown stays unknown: it is never guessed. */
+export async function sourceRevision(): Promise<SourceRevision> {
+  const git = (args: string[]) => new Promise<string | null>((done) => {
+    execFile("git", ["-C", REPOSITORY_ROOT, ...args], { timeout: 10_000 }, (error, stdout) => done(error ? null : stdout));
+  });
+  const commit = (await git(["rev-parse", "--verify", "HEAD"]))?.trim() ?? null;
+  const status = await git(["status", "--porcelain", "--untracked-files=no"]);
+  const known = commit !== null && /^[0-9a-f]{40}$/.test(commit);
+  return { commit: known ? commit : null, dirty: !known || status === null ? null : status.trim().length > 0 };
 }
 
 const INPUT_CLASSES: { [errorClass: string]: ErrorCode } = {
@@ -157,7 +215,9 @@ async function main(argv: string[]): Promise<number> {
 
   if (command === "coverage") {
     const catalogue = JSON.parse(await readFile(resolve(REPOSITORY_ROOT, "catalogue/sources.json"), "utf-8")) as { product_id: string; title: string; record_count: number }[];
-    await emit({ contract: "route coverage of the 24 catalogue products", products: productCoverage(file, catalogue), statistics_refresh_routes: STATS_REFRESH, not_published_for_2026: UNPUBLISHED_2026 }, flag(args, "--receipt"));
+    // What was DONE is read from the committed manifest, if there is one; without it no load is claimed.
+    const evidence = await readFile(resolve(REPOSITORY_ROOT, MANIFEST_PATH), "utf-8").then((text) => JSON.parse(text) as ManifestEvidence, () => null);
+    await emit({ contract: "route coverage of the 24 catalogue products", load_evidence: evidence ? { manifest: MANIFEST_PATH, tested_source_commit: evidence.tested_source?.commit ?? null } : null, products: productCoverage(file, catalogue, evidence), statistics_refresh_routes: STATS_REFRESH, not_published_for_2026: UNPUBLISHED_2026 }, flag(args, "--receipt"));
     return EXIT.ok;
   }
 
@@ -198,12 +258,14 @@ async function main(argv: string[]): Promise<number> {
   if (receiptDir) await mkdir(resolve(process.cwd(), receiptDir), { recursive: true, mode: 0o700 });
   const receipts: TargetReceipt[] = [];
   let worst: number = EXIT.ok;
-  for (const { family, unit } of resolveTargets(families, targets)) {
+  const revision = await sourceRevision();
+  for (const { family, unit } of selectUnits(families, targets, command as LoaderCommand, { backfill: ctx.backfill === true })) {
     // For a refresh, a unit without any refresh source is only reported when it was asked for by name.
     if (command === "refresh" && unit.refresh_source_ids.length === 0 && !targets.includes(unit.unit)) continue;
     if (command !== "refresh" && command !== "reconcile" && unit.backfill_source_ids.length === 0 && !targets.includes(unit.unit)) continue;
     ctx.log(`${command} ${family.family}/${unit.unit} ...`);
     const receipt = await runCommand(command as LoaderCommand, family, unit, ctx, dryRun);
+    receipt.provenance.source_revision = revision;
     receipts.push(receipt);
     ctx.log(`${command} ${family.family}/${unit.unit}: ${receipt.status}${receipt.error_code ? " (" + receipt.error_code + ")" : ""}`);
     if (receiptDir) await writeFile(resolve(process.cwd(), receiptDir, `${command}-${family.family}-${unit.unit}.json`), JSON.stringify(redactReceipt(receipt).value, null, 2) + "\n", { mode: 0o600 });
@@ -214,11 +276,11 @@ async function main(argv: string[]): Promise<number> {
   }
   if (receipts.length === 0) throw new LoaderError("usage", `nothing to ${command} for ${targets.join(", ")}: no unit of that target has such a route (see \`coverage\`)`);
   const summary = receipts.map((r) => ({
-    family: r.family, unit: r.unit, status: r.status, error_code: r.error_code, input: r.counts.input, written: r.counts.written,
+    family: r.family, unit: r.unit, source_ids: r.source_ids, status: r.status, error_code: r.error_code, input: r.counts.input, written: r.counts.written,
     checks_passed: r.counts.checks.filter((c) => c.ok).length, checks_failed: r.counts.checks.filter((c) => !c.ok).length,
   }));
   // With a receipt directory the per-unit files hold the detail; the printed output stays a summary.
-  await emit(receiptDir ? { receipt_version: 2, command, summary } : { receipt_version: 2, command, summary, receipts }, flag(args, "--receipt"));
+  await emit(receiptDir ? { receipt_version: 3, command, source_revision: revision, summary } : { receipt_version: 3, command, source_revision: revision, summary, receipts }, flag(args, "--receipt"));
   return worst === EXIT.ok && receipts.length > 0 && receipts.every((r) => r.status === "blocked") ? EXIT.blocked : worst;
 }
 

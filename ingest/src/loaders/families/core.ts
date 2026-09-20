@@ -42,7 +42,7 @@ export function coreFamily(file: SourcesFile): LoaderFamily {
       // The whole file is validated before a run exists: a rejected input writes nothing and skips nothing.
       const inputFindings = await preflightExport(source, source.export_contract, loaded, ctx.env);
       receipt.provenance.input_digest = loaded.digest;
-      receipt.counts.input = { rows: loaded.digest.rows, records: loaded.digest.rows, versions: loaded.digest.rows };
+      receipt.counts.input = { rows: loaded.digest.rows, records: loaded.digest.rows, versions: loaded.digest.rows, by_population: { ledger_records: loaded.digest.rows } };
       const connection = dryRun ? null : await connectWorker(ctx.env);
       try {
         const report = await runSource({
@@ -76,7 +76,7 @@ export function coreFamily(file: SourcesFile): LoaderFamily {
           const loaded = await loadExport(source.export_contract, ctx.env);
           await preflightExport(source, source.export_contract, loaded, ctx.env);
           receipt.provenance.input_digest = loaded.digest;
-          receipt.counts.input = { rows: loaded.digest.rows, records: loaded.digest.rows, versions: null };
+          receipt.counts.input = { rows: loaded.digest.rows, records: loaded.digest.rows, versions: null, by_population: { ledger_records: loaded.digest.rows } };
           await reconcileExport(receipt, connection.sql, source, loaded.digest.rows);
         } else {
           // A live source has no fixed expectation: the publisher's list moves. What must always hold is checked.
@@ -114,7 +114,7 @@ export function coreFamily(file: SourcesFile): LoaderFamily {
       const loaded = await loadExport(source.export_contract, ctx.env);
       const inputFindings = await preflightExport(source, source.export_contract, loaded, ctx.env);
       receipt.provenance.input_digest = loaded.digest;
-      receipt.counts.input = { rows: loaded.digest.rows, records: loaded.digest.rows, versions: loaded.digest.rows };
+      receipt.counts.input = { rows: loaded.digest.rows, records: loaded.digest.rows, versions: loaded.digest.rows, by_population: { ledger_records: loaded.digest.rows } };
       receipt.family_detail = { private_input_findings: findings, input_findings: inputFindings } as unknown as Json;
     } else {
       const { manifest, manifestHash } = await buildManifest(file, source, receipt.provenance.adapter_version, ctx.backfill ? "backfill" : "incremental", ctx.maxRecords ?? 2000);

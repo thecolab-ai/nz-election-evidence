@@ -4,8 +4,11 @@
 --    publisher date, the publisher's own status flag and symbol beside every value, quality qualifiers.
 -- 2. stat_catalogue_entries: catalogue and listing metadata, versioned by content. A catalogue entry never
 --    asserts a fact; the table cannot hold one that does.
--- 3. Two ingestion functions for the scoped worker. SECURITY INVOKER like the rest of the ingestion API: the
---    worker's own grants bound them. They are set-based, idempotent, and they refuse instead of overwriting.
+-- 3. Two ingestion functions for the scoped worker. SECURITY INVOKER like the rest of the ingestion API (no function
+--    in these schemas runs as the table owner), so the worker must hold table privileges for them to work, and can
+--    therefore also reach the tables with plain DML. The rules are for that reason enforced BY THE TABLES (section
+--    3a: constraints, column grants and triggers), whoever writes and by whatever path; the functions add the
+--    set-based, idempotent, refuse-instead-of-overwrite behaviour on top.
 -- 4. Default-deny projection registers for the new table and columns.
 --
 -- Additive only: no existing column, constraint or row changes meaning.
@@ -113,24 +116,236 @@ comment on column evidence_private.stat_catalogue_entries.observed_last_at is 'L
 alter table evidence_private.stat_catalogue_entries enable row level security;
 revoke all on evidence_private.stat_catalogue_entries from public, anon, authenticated;
 
--- 3. Worker grants and ingestion functions ----------------------------------------------------------------
+-- 3. Worker grants ----------------------------------------------------------------------------------------
+-- Least privilege, by column. The worker never holds DELETE or TRUNCATE on a statistics table, UPDATE only on the few
+-- columns that an honest replay moves, and no UPDATE at all on series, geographies and observations.
 
 do $$
 declare
   v_name text;
 begin
-  foreach v_name in array array['stat_datasets', 'stat_releases', 'stat_series', 'geography_versions', 'stat_route_reconciliation', 'stat_catalogue_entries']
+  foreach v_name in array array['stat_datasets', 'stat_releases', 'stat_series', 'geography_versions', 'stat_route_reconciliation', 'stat_catalogue_entries', 'stat_observations']
   loop
-    execute format('grant select, insert, update on evidence_private.%I to evidence_ingest', v_name);
-    execute format('create policy %I on evidence_private.%I for all to evidence_ingest using (true) with check (true)', v_name || '_ingest_all', v_name);
+    execute format('revoke all on evidence_private.%I from evidence_ingest', v_name);
+    execute format('grant select, insert on evidence_private.%I to evidence_ingest', v_name);
+    execute format('create policy %I on evidence_private.%I for select to evidence_ingest using (true)', v_name || '_ingest_select', v_name);
+    -- Row rules are the triggers of section 3a: they bind every role, not only the one a policy names.
+    execute format('create policy %I on evidence_private.%I for insert to evidence_ingest with check (true)', v_name || '_ingest_insert', v_name);
+  end loop;
+  foreach v_name in array array['stat_datasets', 'stat_releases', 'stat_route_reconciliation', 'stat_catalogue_entries']
+  loop
+    execute format('create policy %I on evidence_private.%I for update to evidence_ingest using (true) with check (true)', v_name || '_ingest_update', v_name);
   end loop;
 end
 $$;
 
--- Observations are append-only for the worker: a published number is never edited in place.
-grant select, insert on evidence_private.stat_observations to evidence_ingest;
-create policy stat_observations_ingest_select on evidence_private.stat_observations for select to evidence_ingest using (true);
-create policy stat_observations_ingest_insert on evidence_private.stat_observations for insert to evidence_ingest with check (true);
+grant update (title, publisher, official_url, route, historical, coverage_note) on evidence_private.stat_datasets to evidence_ingest;
+grant update (retrieved_at, capture_count) on evidence_private.stat_releases to evidence_ingest;
+grant update (overlapping_routes, upstream_rows_by_route, decision_note) on evidence_private.stat_route_reconciliation to evidence_ingest;
+grant update (observed_first_at, observed_last_at, observation_count, is_current) on evidence_private.stat_catalogue_entries to evidence_ingest;
+
+-- 3a. The table boundary ----------------------------------------------------------------------------------
+-- What the tables themselves enforce, for every role and every path (function call or plain DML):
+--   ownership    a row may be written only while its source (a statistics source) has a run that is running under a
+--                live lease; a row that carries a run id must name such a run of its own source; an observation's
+--                series, release and geography must all belong to that source;
+--   text         every stored string passes the ledger guard (CHECK constraints);
+--   append-only  an observation is never updated; identities and definitions never change; the columns that may move
+--                move one way only (earliest collection, highest capture count, widest observation span);
+--   conflict     identities are unique: a second row of one identity is an error, never an overwrite;
+--   currency     the current catalogue version is the one observed last, and only that one.
+-- The triggers belong to the table owner: the worker can neither alter nor disable them (tested).
+
+alter table evidence_private.stat_datasets
+  add constraint stat_datasets_text_guard check (evidence_private.text_violation(dataset_key) is null and evidence_private.text_violation(title) is null
+    and evidence_private.text_violation(publisher) is null and evidence_private.text_violation(coverage_note) is null);
+alter table evidence_private.stat_releases
+  add constraint stat_releases_text_guard check (evidence_private.text_violation(release_key) is null and evidence_private.text_violation(vintage_label) is null
+    and evidence_private.text_violation(publisher_last_modified) is null and evidence_private.text_violation(boundary_edition) is null
+    and evidence_private.text_violation(source_snapshot_id) is null);
+alter table evidence_private.stat_series
+  add constraint stat_series_text_guard check (evidence_private.text_violation(series_key) is null and evidence_private.text_violation(title) is null
+    and evidence_private.text_violation(unit) is null and evidence_private.text_violation(magnitude) is null
+    and evidence_private.text_violation(seasonal_adjustment) is null and evidence_private.text_violation(frequency) is null
+    and evidence_private.text_violation(dimensions::text) is null);
+alter table evidence_private.geography_versions
+  add constraint geography_versions_text_guard check (evidence_private.text_violation(scheme) is null and evidence_private.text_violation(edition) is null
+    and evidence_private.text_violation(code) is null and evidence_private.text_violation(name) is null);
+alter table evidence_private.stat_observations
+  add constraint stat_observations_text_guard check (evidence_private.text_violation(period_label) is null and evidence_private.text_violation(raw_value) is null
+    and evidence_private.text_violation(row_locator) is null and evidence_private.text_violation(source_status) is null
+    and evidence_private.text_violation(source_symbol) is null and evidence_private.text_violation(upstream_status) is null
+    and evidence_private.text_violation(qualifiers::text) is null);
+alter table evidence_private.stat_route_reconciliation
+  add constraint stat_route_reconciliation_text_guard check (evidence_private.text_violation(observation_family) is null
+    and evidence_private.text_violation(decision_note) is null and evidence_private.text_violation(decided_by) is null
+    and evidence_private.text_violation(upstream_rows_by_route::text) is null and evidence_private.text_violation(overlapping_routes::text) is null);
+alter table evidence_private.stat_catalogue_entries
+  add constraint stat_catalogue_entries_text_guard check (evidence_private.text_violation(entry_key) is null and evidence_private.text_violation(title) is null
+    and evidence_private.text_violation(publisher_modified_text) is null and evidence_private.text_violation(attributes::text) is null);
+
+-- True while the source is a statistics source with a run that is running under a live lease (of that run id, if given).
+create or replace function evidence_private.stat_source_open(p_source_id text, p_run_id uuid default null)
+returns boolean
+language sql
+stable
+set search_path = ''
+as $$
+  select exists (
+    select 1
+    from evidence_private.import_runs r
+    join evidence_private.sources s on s.source_id = r.source_id and s.view_scope = 'statistics'
+    join evidence_private.source_leases l on l.source_id = r.source_id and l.holder = r.holder and l.expires_at > now()
+    where r.source_id = p_source_id and r.status = 'running' and (p_run_id is null or r.id = p_run_id));
+$$;
+
+-- One statement-level guard for every statistics table: set-based over the rows the statement wrote, so a batch of
+-- 5,000 observations costs one query, not 5,000.
+create or replace function evidence_private.guard_stat_write()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+declare
+  v_bad text;
+begin
+  case tg_table_name
+    when 'stat_datasets' then
+      select min(n.source_id) into v_bad from new_rows n where not evidence_private.stat_source_open(n.source_id);
+    when 'geography_versions' then
+      select min(coalesce(n.source_id, '(no source)')) into v_bad from new_rows n where n.source_id is null or not evidence_private.stat_source_open(n.source_id);
+    when 'stat_catalogue_entries' then
+      select min(n.source_id) into v_bad from new_rows n where not evidence_private.stat_source_open(n.source_id, n.import_run_id);
+    when 'stat_series' then
+      select min(coalesce(d.source_id, '(no dataset)')) into v_bad
+      from new_rows n left join evidence_private.stat_datasets d on d.id = n.dataset_id
+      where d.id is null or not evidence_private.stat_source_open(d.source_id);
+    when 'stat_releases' then
+      -- An update (a later capture of the same file) keeps the run that first recorded the release.
+      select min(coalesce(d.source_id, '(no dataset)')) into v_bad
+      from new_rows n left join evidence_private.stat_datasets d on d.id = n.dataset_id
+      where d.id is null or n.import_run_id is null
+         or not evidence_private.stat_source_open(d.source_id, case when tg_op = 'INSERT' then n.import_run_id end);
+    when 'stat_route_reconciliation' then
+      -- A family is a dataset key: its route may be recorded only by a run of the source that holds that dataset.
+      select min(n.observation_family) into v_bad from new_rows n
+      where not exists (select 1 from evidence_private.stat_datasets d
+                         where d.dataset_key = n.observation_family and evidence_private.stat_source_open(d.source_id));
+    when 'stat_observations' then
+      select min(coalesce(r.source_id, '(no running run)')) into v_bad
+      from new_rows n
+      left join evidence_private.import_runs r on r.id = n.import_run_id and r.status = 'running'
+      left join evidence_private.stat_series s on s.id = n.series_id
+      left join evidence_private.stat_datasets d on d.id = s.dataset_id
+      left join evidence_private.stat_releases rl on rl.id = n.release_id
+      left join evidence_private.geography_versions g on g.id = n.geography_version_id
+      where r.id is null or d.source_id is distinct from r.source_id or rl.dataset_id is distinct from s.dataset_id
+         or (n.geography_version_id is not null and g.source_id is distinct from r.source_id)
+         or n.canonical_route is distinct from d.route;
+      if v_bad is null then
+        select min(x.source_id) into v_bad
+        from (select distinct r.source_id, r.id from new_rows n join evidence_private.import_runs r on r.id = n.import_run_id) x
+        where not evidence_private.stat_source_open(x.source_id, x.id);
+      end if;
+    else
+      raise exception 'guard_stat_write is not defined for %', tg_table_name using errcode = 'P0001';
+  end case;
+  if v_bad is not null then
+    raise exception 'statistics rows (%: %) may be written only inside a running run that holds the lease of their own statistics source', tg_table_name, left(v_bad, 80)
+      using errcode = 'P0001';
+  end if;
+  return null;
+end
+$$;
+
+-- Row rules of an update: identities and definitions never change, and what may move moves one way.
+create or replace function evidence_private.guard_stat_update()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+begin
+  case tg_table_name
+    when 'stat_observations' then
+      raise exception 'a stored observation is never edited in place; a changed number is a new release vintage' using errcode = 'P0001';
+    when 'stat_series' then
+      raise exception 'a series definition is never edited in place; a changed definition is a new series key' using errcode = 'P0001';
+    when 'geography_versions' then
+      raise exception 'a geography code is never edited in place; a changed boundary is a new edition' using errcode = 'P0001';
+    when 'stat_datasets' then
+      if new.id <> old.id or new.source_id <> old.source_id or new.dataset_key <> old.dataset_key or (old.route is not null and new.route is distinct from old.route) then
+        raise exception 'the identity, source and route of a dataset never change' using errcode = 'P0001';
+      end if;
+    when 'stat_releases' then
+      if (to_jsonb(new) - 'retrieved_at' - 'capture_count') <> (to_jsonb(old) - 'retrieved_at' - 'capture_count')
+         or new.retrieved_at is distinct from least(old.retrieved_at, new.retrieved_at) or new.capture_count < old.capture_count then
+        raise exception 'a recorded release is fixed: only an earlier collection time or a higher capture count may be recorded' using errcode = 'P0001';
+      end if;
+    when 'stat_route_reconciliation' then
+      if new.observation_family <> old.observation_family or new.canonical_route <> old.canonical_route or new.decided_by <> old.decided_by or new.decided_at <> old.decided_at then
+        raise exception 'a route decision is made once; routes are never switched' using errcode = 'P0001';
+      end if;
+    when 'stat_catalogue_entries' then
+      if (to_jsonb(new) - 'observed_first_at' - 'observed_last_at' - 'observation_count' - 'is_current')
+           <> (to_jsonb(old) - 'observed_first_at' - 'observed_last_at' - 'observation_count' - 'is_current')
+         or new.observed_first_at > old.observed_first_at or new.observed_last_at < old.observed_last_at or new.observation_count < old.observation_count then
+        raise exception 'a catalogue entry version is fixed: only its observation span may widen' using errcode = 'P0001';
+      end if;
+    else
+      raise exception 'guard_stat_update is not defined for %', tg_table_name using errcode = 'P0001';
+  end case;
+  return new;
+end
+$$;
+
+-- The current version of a catalogue entry is the one observed last (ties by first sighting, then hash), and only it.
+-- Checked on the rows whose flag a statement set, so demote-then-promote works and neither half can be abused.
+create or replace function evidence_private.guard_stat_catalogue_currency()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+declare
+  v_bad text;
+begin
+  select min(n.entry_key) into v_bad
+  from new_rows n
+  left join old_rows o on o.id = n.id
+  where n.is_current is distinct from coalesce(o.is_current, false)
+    and n.is_current <> (n.id = (select e.id from evidence_private.stat_catalogue_entries e
+                                  where e.source_id = n.source_id and e.entry_key = n.entry_key
+                                  order by e.observed_last_at desc, e.observed_first_at desc, e.content_hash desc limit 1));
+  if v_bad is not null then
+    raise exception 'catalogue entry %: the current version is the one observed last, and only that one', left(v_bad, 80) using errcode = 'P0001';
+  end if;
+  return null;
+end
+$$;
+
+do $$
+declare
+  v_name text;
+begin
+  foreach v_name in array array['stat_datasets', 'stat_releases', 'stat_series', 'geography_versions', 'stat_route_reconciliation', 'stat_catalogue_entries', 'stat_observations']
+  loop
+    execute format('create trigger %I after insert on evidence_private.%I referencing new table as new_rows for each statement execute function evidence_private.guard_stat_write()', v_name || '_write_guard_insert', v_name);
+    execute format('create trigger %I before update on evidence_private.%I for each row execute function evidence_private.guard_stat_update()', v_name || '_update_guard', v_name);
+  end loop;
+  foreach v_name in array array['stat_datasets', 'stat_releases', 'stat_route_reconciliation', 'stat_catalogue_entries']
+  loop
+    execute format('create trigger %I after update on evidence_private.%I referencing new table as new_rows for each statement execute function evidence_private.guard_stat_write()', v_name || '_write_guard_update', v_name);
+  end loop;
+end
+$$;
+
+create trigger stat_catalogue_entries_currency_update after update on evidence_private.stat_catalogue_entries
+  referencing old table as old_rows new table as new_rows for each statement execute function evidence_private.guard_stat_catalogue_currency();
+
+revoke execute on function evidence_private.stat_source_open(text, uuid), evidence_private.guard_stat_write(),
+  evidence_private.guard_stat_update(), evidence_private.guard_stat_catalogue_currency() from public;
+grant execute on function evidence_private.stat_source_open(text, uuid) to evidence_ingest;
+
+-- 3b. Ingestion functions ---------------------------------------------------------------------------------
 
 grant select on evidence_private.stat_catalogue_entries to evidence_inspector_reader;
 create policy stat_catalogue_entries_reader_select on evidence_private.stat_catalogue_entries for select to evidence_inspector_reader using (true);
@@ -150,6 +365,7 @@ declare
   v_series integer := 0;
   v_geographies integer := 0;
   v_entries integer := 0;
+  v_entries_widened integer := 0;
   v_entries_seen integer := 0;
 begin
   v_run := evidence_private.assert_run_held(p_run_id, p_holder);
@@ -180,6 +396,16 @@ begin
     raise exception 'statistics meta batch refused: %', v_bad using errcode = 'P0001';
   end if;
 
+  -- Datasets first: a route is recorded for a family (a dataset key) of this source, and the table checks that.
+  insert into evidence_private.stat_datasets (source_id, dataset_key, title, publisher, official_url, route, historical, coverage_note)
+  select v_run.source_id, i.dataset_key, i.title, i.publisher, i.official_url, i.route, i.historical, i.coverage_note
+  from jsonb_to_recordset(coalesce(p_meta -> 'datasets', '[]'::jsonb))
+       as i(dataset_key text, title text, publisher text, official_url text, route text, historical boolean, coverage_note text)
+  on conflict (source_id, dataset_key) do update
+    set title = excluded.title, publisher = excluded.publisher, official_url = excluded.official_url, route = excluded.route,
+        historical = excluded.historical, coverage_note = excluded.coverage_note;
+  get diagnostics v_datasets = row_count;
+
   -- A route decision is made once. A later batch that names another route for the same family is refused.
   select min(r.observation_family) into v_bad
   from jsonb_to_recordset(coalesce(p_meta -> 'routes', '[]'::jsonb)) as i(observation_family text, canonical_route text)
@@ -198,15 +424,6 @@ begin
     set overlapping_routes = excluded.overlapping_routes, upstream_rows_by_route = excluded.upstream_rows_by_route,
         decision_note = excluded.decision_note;
   get diagnostics v_routes = row_count;
-
-  insert into evidence_private.stat_datasets (source_id, dataset_key, title, publisher, official_url, route, historical, coverage_note)
-  select v_run.source_id, i.dataset_key, i.title, i.publisher, i.official_url, i.route, i.historical, i.coverage_note
-  from jsonb_to_recordset(coalesce(p_meta -> 'datasets', '[]'::jsonb))
-       as i(dataset_key text, title text, publisher text, official_url text, route text, historical boolean, coverage_note text)
-  on conflict (source_id, dataset_key) do update
-    set title = excluded.title, publisher = excluded.publisher, official_url = excluded.official_url, route = excluded.route,
-        historical = excluded.historical, coverage_note = excluded.coverage_note;
-  get diagnostics v_datasets = row_count;
 
   -- A release key names one file. The same key arriving with another file hash is a different vintage and is refused.
   select min(i.release_key) into v_bad
@@ -266,6 +483,7 @@ begin
   -- Catalogue entries: a new content hash is a new version; an old one only widens its observation span.
   select count(*) into v_entries_seen from jsonb_array_elements(coalesce(p_meta -> 'catalogue_entries', '[]'::jsonb));
   if v_entries_seen > 0 then
+    with written as (
     insert into evidence_private.stat_catalogue_entries (source_id, entry_key, entry_kind, title, url, found_on_url, format, file_sha256,
       publisher_modified_text, attributes, observed_first_at, observed_last_at, observation_count, is_current, content_hash, import_run_id)
     select v_run.source_id, i.entry_key, i.entry_kind, i.title, i.url, i.found_on_url, i.format, i.file_sha256, i.publisher_modified_text,
@@ -279,8 +497,10 @@ begin
           observation_count = greatest(evidence_private.stat_catalogue_entries.observation_count, excluded.observation_count)
       where evidence_private.stat_catalogue_entries.observed_first_at > excluded.observed_first_at
          or evidence_private.stat_catalogue_entries.observed_last_at < excluded.observed_last_at
-         or evidence_private.stat_catalogue_entries.observation_count < excluded.observation_count;
-    get diagnostics v_entries = row_count;
+         or evidence_private.stat_catalogue_entries.observation_count < excluded.observation_count
+      -- xmax = 0: the row was inserted by this statement. Otherwise an existing version had its observation span widened.
+      returning (xmax = 0) as is_new)
+    select count(*) filter (where is_new), count(*) filter (where not is_new) into v_entries, v_entries_widened from written;
 
     -- Exactly one current version per entry: the one seen last (ties broken by hash, so a replay is stable).
     -- Two statements, demote then promote, because the one-current index is checked row by row.
@@ -302,14 +522,17 @@ begin
      where r.id = e.id and r.rn = 1 and not e.is_current;
   end if;
 
+  -- A version whose span only widened is an unchanged version: nothing new was stored about the publisher's catalogue.
   update evidence_private.import_runs
      set records_seen = records_seen + v_entries_seen, versions_inserted = versions_inserted + v_entries,
          unchanged = unchanged + (v_entries_seen - v_entries)
    where id = p_run_id;
 
+  -- Catalogue entry versions are their own population: seen = inserted + unchanged, and span_widened is a part of unchanged.
   return jsonb_build_object('routes', v_routes, 'datasets', v_datasets, 'releases', v_releases, 'series_inserted', v_series,
                             'geographies_inserted', v_geographies, 'catalogue_entries_seen', v_entries_seen,
-                            'catalogue_entries_written', v_entries);
+                            'catalogue_entries_inserted', v_entries, 'catalogue_entries_unchanged', v_entries_seen - v_entries,
+                            'catalogue_entries_span_widened', v_entries_widened);
 end
 $$;
 

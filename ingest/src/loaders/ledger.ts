@@ -8,7 +8,7 @@ import { resolveHost } from "../resolve_host.ts";
 import { refreshAccess, sanitize } from "./access.ts";
 import { connectWorker, type WorkerConnection } from "./connect.ts";
 import { typedDestinationCounts } from "./typed.ts";
-import { type LoaderContext, type LoaderFamily, type LoaderUnit, newReceipt, settle, type TargetReceipt } from "./contract.ts";
+import { addWritten, type LoaderContext, type LoaderFamily, type LoaderUnit, newReceipt, settle, type TargetReceipt, writtenOf } from "./contract.ts";
 
 /** Counts, hashes, statuses and publisher links of one ledger run. Payloads are never echoed. */
 export function reportDetail(report: RunReport): { [key: string]: Json } {
@@ -25,12 +25,14 @@ export function addReport(receipt: TargetReceipt, report: RunReport): void {
   receipt.provenance.manifest_hashes.push(report.manifest_hash);
   if (report.run_id) receipt.provenance.run_ids.push(report.run_id);
   if (report.resumed_from_run_id) receipt.provenance.resumed_from_run_ids.push(report.resumed_from_run_id);
-  const written = receipt.counts.written;
-  written.seen += report.totals.seen;
-  written.inserted += report.totals.versions_inserted;
-  written.unchanged += report.totals.unchanged;
-  written.rejected += report.totals.rejected;
-  written.tombstoned += report.tombstoned;
+  // A dry run offers nothing to the store, so it has no written block: what it read is a planned count.
+  if (report.dry_run) {
+    receipt.counts.destination.planned_ledger_records = (receipt.counts.destination.planned_ledger_records ?? 0) + report.totals.seen;
+    return;
+  }
+  addWritten(writtenOf(receipt, "ledger_records"), {
+    seen: report.totals.seen, inserted: report.totals.versions_inserted, unchanged: report.totals.unchanged, rejected: report.totals.rejected, conflicts: 0, tombstoned: report.tombstoned,
+  });
 }
 
 export async function refreshLedgerUnit(family: LoaderFamily, unit: LoaderUnit, file: SourcesFile, ctx: LoaderContext, dryRun: boolean): Promise<TargetReceipt> {
@@ -64,7 +66,8 @@ export async function refreshLedgerUnit(family: LoaderFamily, unit: LoaderUnit, 
     for (const source of runnable) {
       const adapter = LIVE_ADAPTERS[source.adapter_name];
       if (!adapter) throw new Error(`adapter ${source.adapter_name} not found`);
-      const backfill = Boolean(ctx.backfill);
+      // The mode follows the SOURCE that runs, not a flag: a whole-history walk is a backfill however it was asked for.
+      const backfill = (unit.alias_source_ids ?? []).includes(source.source_id);
       const report = await runSource({
         file, source, adapter, mode: backfill ? "backfill" : "incremental", triggerKind: "cli", maxRecords: ctx.maxRecords ?? (backfill ? 400000 : 2000),
         maxRuntimeSeconds: ctx.maxRuntimeSeconds ?? (backfill ? 3300 : 300), dryRun, db: connection?.db ?? null, resolveHost, failAfterBatches: ctx.failAfterBatches,
