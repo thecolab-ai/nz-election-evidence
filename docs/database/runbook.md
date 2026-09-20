@@ -10,13 +10,13 @@ Needs Docker, the Supabase CLI (2.113.0 tested) and Node 24. Ports are non-defau
 
 ```bash
 supabase start -x studio,imgproxy,storage-api,realtime,logflare,vector,supavisor,postgres-meta,mailpit,edge-runtime
-supabase test db                      # pgTAP (7 files)
+supabase test db                      # pgTAP (9 files)
 cd ingest && npm ci
 npm run typecheck && npm test         # ingestion + release tooling unit tests (TypeScript, no network)
 npm run check:deno                    # Edge Function type-check
-# Scoped worker login created by supabase/seed.sql on the LOCAL stack only (fixed local value, not a secret).
-export EVIDENCE_INGEST_DB_URL="postgresql://evidence_ingest_local:local-only-not-a-secret@127.0.0.1:55322/postgres"
-EVIDENCE_TEST_DB_URL="$EVIDENCE_INGEST_DB_URL" node --test test/integration.test.ts
+# CLI runs need a scoped worker connection in EVIDENCE_INGEST_DB_URL. On the LOCAL stack the login is
+# evidence_ingest_local, created by supabase/seed.sql; see ingest/test/local-stack.ts for how tests assemble it.
+EVIDENCE_TEST_LOCAL_STACK=1 EVIDENCE_REQUIRE_INTEGRATION=1 node --test test/integration.test.ts   # asserts the scoped login; a skip is a failure
 node src/cli.ts validate
 node src/cli.ts plan nz_parliament_current_bills           # deterministic manifest; no network, no writes
 node src/cli.ts run nz_parliament_current_bills --dry-run  # real fetch and parse; no writes
@@ -52,7 +52,7 @@ Pre-conditions: coordinator release review complete; `REVIEW-REGISTER.md` rows f
 4. **Worker login:** `scripts/db/create_ingest_login.sql` with a freshly generated password. Verify the readback row: no superuser, no bypass of row level security, member of `evidence_ingest` only.
 5. **Function secrets:** `supabase secrets set EVIDENCE_INGEST_DB_URL=... EVIDENCE_CRON_SECRET=...` (values from the operator's shell; 32+ characters for the cron secret). **Deploy:** `supabase functions deploy ingest-run` (JWT verification is off for this function by design; it authenticates the scheduler's shared secret).
 6. **Registry:** `node src/cli.ts registry-sync` with the worker connection. Schedules arrive **inactive**.
-7. **Live role checks** (repeat the boundary tests against the hosted project): with gates closed an anonymous `GET /rest/v1/records` returns `[]` and `dataset_catalogue` returns rows; anonymous `POST`/`PATCH`/`DELETE` are refused on both public schemas; `evidence_private`, `evidence_views`, `vault` and `auth` are unreachable; a withheld column such as `identity_decisions.decided_by` does not exist publicly; an ordinary signed-in user gets zero inspector rows and `my_access.is_inspector = false`.
+7. **Live role checks** (repeat the boundary tests against the hosted project): with gates closed an anonymous `GET /rest/v1/records` returns `[]` and `dataset_catalogue` returns rows; anonymous `POST`/`PATCH`/`DELETE` are refused on both public schemas; `evidence_private`, `evidence_views`, `vault` and `auth` are unreachable; a withheld column such as `identity_decisions.decided_by` or `import_runs.error_detail` does not exist publicly; with gates open a pending source returns `safe_payload = null` and null content columns; an ordinary signed-in user gets zero inspector rows and `my_access.is_inspector = false`.
 8. **Vault:** `scripts/db/set_cron_vault_secrets.sql`. Readback shows names only.
 9. **Function readback (deployment proof):** call the deployed function once per source with the secret and `"trigger_kind": "function_readback"`. Expect HTTP 200 and a `run_id`; without the secret expect 401; with a `url` field expect 400.
 10. **Activate one schedule at a time:** `scripts/db/activate_schedule.sql` with that `run_id`. The database refuses without a successful readback run from the last 24 hours. Check the readback table: desired state and the real `cron.job` row must agree. Watch the first scheduled run in the explorer (Operations) before activating the next.
@@ -68,6 +68,8 @@ Pre-conditions: coordinator release review complete; `REVIEW-REGISTER.md` rows f
 - **Stuck lease:** leases expire by themselves (run budget + 30 s). The next run takes over and marks the dead run `abandoned`.
 - **Rotation:** re-run `create_ingest_login.sql` and `set_cron_vault_secrets.sql` with new values, update the function secrets, then call the readback.
 - **Pause everything** (election-day freeze, incident): `activate_schedule.sql -v deactivate=1` for each schedule; confirm `cron.job` holds no `evidence_private` command.
+- **Record a publisher's approval:** update `catalogue/rights-register.json` (owner-reviewed) and sync it **as administrator** with the row's `approved_fields`; the worker role can only ever write pending rows. Content stays blank until then. To withdraw, set the row to `restricted` or `refused`: everything descended from that source disappears from every projection at once.
+- **After a schema change:** record lineage in `public_lineage` (or withhold the object), run `select evidence_private.classify_public_columns()`, review the classes, run `select evidence_private.rebuild_exposed_views()`, then `npm run types:generate`. pgTAP fails on any drift.
 - **Revoke an inspector:** `grant_inspector.sql -v revoke=1`.
 - **Correction:** log it in `CORRECTIONS.md` within the hour, then add a `corrections` row that points at the entry. Never edit history.
 - **Erasure / takedown:** withdraw any published copy first, then `select evidence_private.redact_version('<version id>', '<reason with reference>', '<requester>')` as administrator. The row and lineage remain; the projection is blanked and the action logged.

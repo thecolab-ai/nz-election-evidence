@@ -1,5 +1,15 @@
 # Source reconciliation
 
+> **Status: NOT complete, NOT released.** Independent review of commit `6b8218e` returned **NO-GO**; this revision addresses its security and CI findings only. Source completeness is unchanged and partial: of the **24** catalogue products, **3** have a live adapter (P01 feed window only, P03, P10), **1** has an export contract that has never been run on real data (P04), and **20 have no route into the store at all**. Nothing has been pushed, applied to a hosted project, scheduled, deployed or published.
+
+| Catalogue products | Count | Which |
+|---|---|---|
+| Live adapter, proven against the publisher | **3** | P01 (feed window only, not the 4,735-record history), P03, P10 |
+| Export contract defined, never run on real data | **1** | P04 (no reviewed export file supplied) |
+| No route into the store | **20** | P02, P05, P06, P07, P08, P09, P11, P12, P13, P14, P15, P16, P17, P18, P19, P20, P21, P22, P23, P24 |
+
+None of the upstream 351,710 operational records, 391,024 content versions, or the dedicated census and series observations has been imported. The 225 live records retrieved here (122 + 93 + 10) are fresh retrievals, not part of those totals.
+
 **This document makes no claim of complete coverage.** It enumerates, source by source, what this branch can ingest today, what it has actually retrieved (on a disposable local database), and what remains outside it. A count here is a dated observation, never a completeness certificate. Unknown is not zero; an unavailable endpoint is not an empty source.
 
 ## What the upstream audit counts mean

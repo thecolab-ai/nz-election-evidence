@@ -1,5 +1,7 @@
 # Implementation checklist
 
+> **Status: NOT complete, NOT released.** Independent review of commit `6b8218e` returned **NO-GO**; this revision addresses its security and CI findings only. Source completeness is unchanged and partial: of the **24** catalogue products, **3** have a live adapter (P01 feed window only, P03, P10), **1** has an export contract that has never been run on real data (P04), and **20 have no route into the store at all**. Nothing has been pushed, applied to a hosted project, scheduled, deployed or published.
+
 Branch `feat/supabase-evidence-explorer`. Legend: **[x]** done and verified here · **[~]** built, verification partial (reason given) · **[ ]** not done. "Verified" means the command was run in this work and passed; nothing below is claimed without that. All verification used a **disposable local stack**. No hosted project was touched, nothing was pushed, deployed, scheduled or published.
 
 ## 1. Repeatable ingestion
@@ -54,29 +56,31 @@ Branch `feat/supabase-evidence-explorer`. Legend: **[x]** done and verified here
 - [x] Freshness table and statuses: fresh, stale, partial, unavailable, reachable_not_parsed, never_run; last attempt, last success, last change, latest publisher date, consecutive failures
 - [x] Verified live for nine sources (three fresh, four unavailable, one reachable-not-parsed, one never run); freshness is part of the public projection
 
-## 5. Public read-only access and the private boundary
+## 5. Public read-only access, source rights and the private boundary
 
-- [x] Anonymous read-only projection of **every** domain table (`evidence_open`) and of every curated view (`evidence_public`); any withheld table, column or row carries a published reason; pgTAP drift test proves there is no silent omission and that no withheld column is exposed
-- [x] Release-gated inside the database: no evidence rows for the public until R8 and R10 are recorded as open (closed by default); the catalogue is always readable; closing a gate withholds everything at once; a `refused`/`restricted` rights row hides that source
-- [x] Public roles cannot write: `SELECT` on views only; every write verb refused through REST and through the app's own client (pgTAP + browser tests)
-- [x] Denied to anonymous and to signed-in accounts alike: `evidence_private`, `evidence_views`, `evidence_api`, `vault`, `auth`, every function; inspector rows need a current server-side membership; metadata role claims ignored; revoked membership denied
-- [x] Security review applied: the `SECURITY DEFINER` membership function was **removed**; no definer function and no RPC exist in any evidence schema (tested); views are `security_barrier`; public views are owned by a role with **column-level** grants on non-withheld columns only
-- [x] Pooler correctness: no session state anywhere in the worker path (no `SET ROLE`, advisory locks, prepared statements or temp tables); scoped login everywhere including tests and CI; the CLI refuses elevated logins
-- [x] Worker cannot rewrite history, approve identities, clear a rights row, read Vault, activate schedules, open gates or publish
-- [x] Rights rows stay pending; release refuses pending rights even with gates open; summaries are public only after a human review of the exact output hash
+Rewritten after the release review (findings 1–3). Public transparency does not waive source rights.
+
+- [x] **Default deny.** An object is projected only if `public_lineage` records how every row resolves, by foreign keys, to exactly one source (or states that it holds no source data); a column only if `public_columns` classifies it. Objects with no provable single-source lineage (canonical people and parties, electorate identities, boundary editions, statistical geographies, the cross-source coverage aggregate) are withheld with a published reason
+- [x] **Finding 1 (P0) fixed and regression-tested.** Rights are enforced through the full lineage for every exposed object, including versions, observations, lifecycle events, checkpoints, errors, fetch log, documents and typed descendants, results, lists, links and statistics. The reviewed code leaked a refused source through `source_record_versions` (reproduced before the fix); the pgTAP test now snapshots **every** source-lineage projection before and after seeding refused, restricted, withheld and rights-less sources and requires identical row counts in all of them
+- [x] **Finding 2 fixed.** Release tier per source from its rights row: `none` (absent, refused, restricted or default release withheld: nothing shown), `link_only` (pending, or approved for links: identifiers, kinds, official URLs, dates, hashes and statuses only), `fields` (approved **and** release mode approved-fields: a content column or payload key is shown only if named in `approved_fields`). There is no general `safe_payload` release at any tier; pending never releases content even when the register asks for approved-fields; the worker cannot write `approved_fields`. Test: a pending source adds not one non-null content value to any column of any projection
+- [x] **Finding 3 fixed.** Every string a record carries is validated at ingest, not only the payload: external identifiers, record kind, links (no userinfo, no secret-bearing query or fragment), publisher date text, omitted-field names and reasons, payload key names at every depth, plus contact, credential, token, connection-string, private-path and control-character patterns. Rejected records are referenced by a digest, never by their identifier. Run error text is redacted before storage and **never published**; nor are ingest error messages, record references, checkpoint JSON, watermarks, worker ids or lifecycle free text. The public sees error classes only. 40 adversarial pgTAP cases and a TypeScript adversarial export test
+- [x] Release-gated inside the database (R8 and R10, closed by default); catalogue always readable; model summaries public only after human review of the exact output **and** every input source at the fields tier
+- [x] Public roles cannot write; private, base, release, `vault` and `auth` schemas and every function are denied to anonymous and signed-in accounts alike (pgTAP + browser tests); no `SECURITY DEFINER`, no RPC; column-level grants for the public owner role; pooler-safe worker with a scoped login
 
 ## 6. Read-only explorer (public, no sign-in)
 
+- [x] Link-only presentation: blank content is explained on the page, each source shows its release tier, coverage is derived from the rights-filtered sources view, withheld operational text is gone from every page
 - [x] Anonymous client typed with **generated** Supabase types (`SupabaseClient<Database, 'evidence_public'>`, replacing `SupabaseClient<any>`); page-level row shapes checked against the generated rows at compile time (negative-tested); CI fails on type drift
 - [x] Routes: overview by scope (2026 primary, 2023 baseline and 2025 finance always separate), sources and freshness, records with provenance, versions, detail JSON and lifecycle, people and identities, Parliament, elections, documents, finance, statistics, rights, operations, bounded relationship graph (50 edges per expansion, 300 nodes), **datasets and schema** (every table and column, withheld reasons, generic row browser)
 - [x] States: not configured, release pending, loading, empty ("not evidence of absence"), error with retry; server pagination, sorting and filters with validated URL parameters
 - [x] Compliance: accountability footer and notice on every page; announced vs officially nominated; unknown never rendered as zero; no ordering by votes, no party colours, no scores
-- [x] `npm run typecheck`, 18 unit tests, production build, `check:bundle`, 20 browser tests, 4 Pages-routing tests — all passing on the clean local stack
+- [x] `npm run typecheck`, unit tests, production build, `check:bundle`, browser tests (including a walk of every public dataset for pending-rights content) and Pages-routing tests pass on the clean local stack; exact counts are in the final report for the revision
 - [x] Exact pinned versions installed with no deviation (see `web/README.md`)
 - [~] Accessibility was built in (landmarks, table semantics, focus, live regions, non-colour signals) and exercised by role-based selectors; no separate automated accessibility audit was run
 
 ## 7. CI and Pages
 
+- [x] Findings 4–6 fixed: no connection string in the workflow (the loopback connection for the seeded scoped login is assembled in `ingest/test/local-stack.ts`; tests assert they run as exactly that login, and `EVIDENCE_REQUIRE_INTEGRATION=1` turns a skipped integration test into a failure); the release gate accepts only the exact outcome `APPROVED` from a closed set and any unknown outcome closes every gate; `CODEOWNERS` covers the review register, rights register, migrations, functions, release tools, operator scripts and workflows; build and bundle check share one `VITE_BASE_PATH` and a mismatch fails
 - [x] All new tooling is TypeScript: ingestion CLI, release gate (`tools/release_gate.ts`), receipt publisher, workflow invariant tests, explorer scripts (types, bundle check, Pages preview). The Python release gate written earlier was replaced; the legacy validators (`scripts/validate.py`, `scripts/red_lines.py`) are unchanged in behaviour
 - [x] `.github/workflows/explorer.yml`: least-privilege (`contents: read` globally; `pages: write` + `id-token: write` only on the deploy job), no secrets used, actions pinned by commit, existing compliance checks run first and unchanged
 - [x] Deploy needs every CI job, the R10 release gate, the election-day freeze check and an owner switch; gate is currently **closed** (tested)

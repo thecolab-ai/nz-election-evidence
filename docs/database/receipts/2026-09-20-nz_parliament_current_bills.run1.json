@@ -22,7 +22,7 @@
     "source_config_hash": "sha256:1eb30495eb1ddb65a5eee4bab72232b408ced46e66aa1f057f4b43d6288fe79d",
     "max_records": 2000
   },
-  "run_id": "068d632b-13dd-43e5-ae8f-351e4a05a6ae",
+  "run_id": "ff2afdde-5aa8-4771-883d-923cdd318202",
   "resumed_from_run_id": null,
   "totals": {
     "seen": 93,
@@ -47,8 +47,8 @@
       "http_status": 200,
       "bytes": 41089,
       "body_sha256": "sha256:48bfd793ef3afe0782032299ee3cb92d1c79ec67c31ac556aed9a021a5c9565e",
-      "retrieved_at": "2026-09-20T04:13:03.710Z",
-      "duration_ms": 235
+      "retrieved_at": "2026-09-20T04:54:18.627Z",
+      "duration_ms": 503
     },
     {
       "method": "POST",
@@ -58,8 +58,8 @@
       "http_status": 200,
       "bytes": 35205,
       "body_sha256": "sha256:b940796b1bf86662fc3fefafe80ffe779d12b4e6e228b5d13a9cb7559ea677ea",
-      "retrieved_at": "2026-09-20T04:13:03.989Z",
-      "duration_ms": 114
+      "retrieved_at": "2026-09-20T04:54:19.186Z",
+      "duration_ms": 61
     }
   ],
   "receipt_note": "Real retrieval from the official publisher on 2026-09-20 (UTC), written to a disposable local database. Counts, hashes, statuses and publisher URLs only; no payloads or response bodies."

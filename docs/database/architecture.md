@@ -8,24 +8,37 @@ Status: implemented in this branch and exercised on a disposable local stack onl
 |---|---|---|---|---|
 | `evidence_private` | No | Every table: registry, rights mirror, run ledger, immutable record versions, civic model, documents, statistics, reviews, summaries, release gates, memberships | Scoped server roles only | Ingestion worker (through versioned SQL functions), administrator |
 | `evidence_views` | No | The single definition of each curated, joined view | Owner roles only | Nobody |
-| `evidence_public` | Yes | Curated views for **anonymous** readers, withheld columns removed; plus the always-readable catalogue (`dataset_catalogue`, `dataset_columns`, `surface_status`) | Anyone, read-only. Evidence rows only while the release gates are open | Nobody |
-| `evidence_open` | Yes | One projection per domain table for **anonymous** readers, withheld columns removed | Anyone, read-only, same gate | Nobody |
+| `evidence_public` | Yes | Curated views for **anonymous** readers: rights-tiered rows, link metadata, approved fields only; plus the always-readable catalogue (`dataset_catalogue`, `dataset_columns`, `surface_status`) | Anyone, read-only. Evidence rows only while the release gates are open | Nobody |
+| `evidence_open` | Yes | One projection per domain table with provable source lineage, for **anonymous** readers, same tiers | Anyone, read-only, same gate | Nobody |
 | `evidence_inspector` | Yes | The curated views with every column | Signed-in users **with a current inspector membership**; everyone else gets zero rows | Nobody |
 | `evidence_api` | No (closed) | Reviewed release batches (for future reviewed summaries) | Nobody yet | Gated release function only |
 
 The explorer is a static shell with no sign-in. It ships no evidence; it reads `evidence_public` and `evidence_open` with the public anon key.
 
-### No silent omissions
+### Default deny, source lineage and release tiers
 
-Every column of every domain table is public unless `evidence_private.public_withheld` lists it (or its whole table) **with a reason**; row conditions live in `public_row_rules`, also with a reason. `rebuild_exposed_views()` generates all three exposed schemas from the base views, the tables and those two registers, so an omission cannot happen by forgetting a column. A pgTAP drift test fails if any non-withheld column is missing from its projection, or any withheld column appears in one. The registers themselves are published, so a reader can see what is withheld and why.
+Public transparency does not waive source rights. Three registers, all published through `evidence_public.dataset_catalogue` and `dataset_columns`, decide what an anonymous reader can see; `rebuild_exposed_views()` generates the projections from them and from nothing else.
 
-Withheld today: the membership table (account holders); names of individual reviewers, deciders, operators and redaction requesters; two free-text working-note columns. Row rules: model summaries and their inputs are public only once a human review of that exact output is recorded (R9). Rows of a source whose rights row is `refused` or `restricted` are hidden from every projection that carries a `source_id`.
+1. **`public_lineage` — where do this object's rows come from?** Either a foreign-key path from every row to exactly **one** source (through records, versions, runs, documents, result sets, party lists, identities, datasets or series), or an explicit statement that the object holds no source data (governance and registers). **An object with no entry is not exposed.** Objects whose rows cannot be tied to a single source are withheld with a reason: canonical people and parties, electorate identities, boundary editions, statistical geographies, and the cross-source coverage aggregate (the explorer derives coverage from the rights-filtered sources view instead). A row whose lineage resolves to nothing is not shown.
+2. **Release tier of the source** (`evidence_private.source_release`, from the rights row):
 
-Never projected because it is not domain data and is not in these schemas at all: auth accounts, Vault secrets, scheduler and network internals, storage, role passwords. Not stored anywhere, so nothing to project: donor contacts, document bodies, file or archive locations (adapter allowlists plus the database payload guard).
+| Tier | When | What an anonymous reader gets |
+|---|---|---|
+| `none` | No rights row; review `refused` or `restricted`; or default release `withheld` | Nothing: no row of that source or of anything descended from it, in any projection |
+| `link_only` | Review `pending` (whatever the register's default release says), or approved for links only | Rows with **link metadata** only: identifiers, kinds, official URLs, retrieval and publisher dates, hashes, statuses, counts. Every content column, the payload and publisher identifiers are null |
+| `fields` | Review `approved` **and** default release `approved-fields` | As above, plus a content column or payload key **only if its name is in that rights row's `approved_fields`** |
 
-### Release gate inside the database
+There is no general payload release at any tier. `approved_fields` can be non-empty only on an approved, approved-fields row (check constraint), and the worker role cannot write it. All 19 real rights rows are pending, so today every real source is `link_only`.
 
-Anonymous readers receive evidence rows only while **both** `r10_public_surface_review` and `r8_accountable_legal_entity` are recorded as open (`scripts/db/set_release_gate.sql`, which demands an evidence reference and a named person). Both are closed by default, so applying the migrations publishes the catalogue and nothing else. Closing either gate withholds every row at once. All 19 rights rows stay pending: what the store holds is, by construction, the link-and-metadata tier the rights register already allows while pending.
+3. **`public_columns` — what is each column?** `link` or `content` (with its field token). Operational and project-authored objects are link metadata throughout; elsewhere a column is link metadata only if its name is on a short list in `classify_public_columns()`, and **unknown means content**. An unclassified column is not exposed. `public_withheld` lists columns never shown at any tier, with reasons: account holders; names of individual reviewers, deciders, operators and redaction requesters; working notes; and all operational free text (run error detail, ingest error messages and record references, checkpoint JSON, watermarks, worker ids, lifecycle reasons). The public sees error **classes** only.
+
+pgTAP proves the structure (every object withheld or with lineage; every exposed column classified; nothing withheld projected; every source projection joins the tier and excludes `none`; every projection checks the gates) and the behaviour (row counts in **every** projection unchanged by refused, restricted, withheld and rights-less sources; a pending source adds no non-null content value anywhere; approved fields release exactly the named keys).
+
+Rows also need **both** the `r10_public_surface_review` and `r8_accountable_legal_entity` gates recorded as open (`scripts/db/set_release_gate.sql`); both are closed by default. Model summaries additionally need a human review of the exact output and every input source at the `fields` tier.
+
+### Validation of everything that could be published
+
+Adapters allowlist fields, and the database checks again at `ingest_batch` (`record_violation`): identifier shape, record kind, links without userinfo or secret-bearing parameters, publisher date text, omitted-field names and reasons, payload key names at every depth, and contact, credential, token, connection-string, private-path and control-character patterns in every string. A rejected record is referenced by a digest. Checkpoints and fetch-log URLs are checked the same way; run error text is redacted before storage and is never part of a public projection.
 
 ## Access control
 
@@ -87,7 +100,9 @@ Migrations schedule nothing. `activate_schedule()` refuses unless it is given a 
 
 ## Known limits
 
-- A `refused`/`restricted` rights row hides projections that carry a `source_id`. Derived civic tables reach their source through an evidence version, so a refusal there also needs the redaction or takedown path in the runbook.
+- Link-only means the publisher's link is shown, and a publisher's own URL can be descriptive (a member's profile address contains their name). That is what linking is; nothing beyond the publisher's URL is derived from it.
+- Field tokens are column and payload-key names, approved per rights row. Approving `title` for a publisher releases that publisher's `title` everywhere it appears; a derived column such as `label` needs its own approval.
+- Text validation is pattern-based. It is a second line behind the adapter allowlists, not a guarantee against every possible personal or secret string.
 - Table row estimates in the catalogue come from planner statistics and can lag.
 - Hostname allowlisting does not defend against DNS rebinding of an official domain; the allowlist holds government and parliamentary hosts only.
 - Typed projections exist for the MP directory, bills, releases and 2023 baseline candidacies. Tables for finance returns, policies, polls, questions, reports and statistics exist with constraints and public projections, but have no loader yet (see the checklist).
