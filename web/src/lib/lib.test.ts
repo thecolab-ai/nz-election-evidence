@@ -1,0 +1,109 @@
+import { describe, expect, it } from 'vitest'
+import { bundleProblems } from '../../scripts/check-bundle.ts'
+import { looksLikeServiceRoleKey, resolveConfig, routerBasePath } from './env'
+import { formatMoney, formatStatValue, formatVotes } from './format'
+import { EDGES_PER_EXPANSION, initialGraph, MAX_NODES, mergeExpansion, nodeCount, edgeFilterFor, type EdgeRow } from './graph'
+import { describeRange, hasNextPage, pageCount, pageRange, SERVER_MAX_ROWS } from './pagination'
+import { effectiveSort, ilikeContains, parseGraphSearch, parseListSearch } from './search'
+import { candidaciesSpec, recordsSpec } from './specs'
+
+const jwt = (role: string) => `eyJhbGciOiJIUzI1NiJ9.${Buffer.from(JSON.stringify({ role, iss: 'fixture' })).toString('base64url')}.c2lnbmF0dXJlLWZpeHR1cmU`
+
+describe('unknown is not zero', () => {
+  it('shows a vote count only when the source reported one', () => {
+    expect(formatVotes(1200, 'reported')).toBe('1,200')
+    expect(formatVotes(0, 'reported')).toBe('0')
+    expect(formatVotes(0, 'not_reported')).toBe('not reported')
+    expect(formatVotes(null, 'suppressed')).toBe('suppressed')
+    expect(formatVotes(null, null, 'list')).toBe('not applicable (list candidacy)')
+    expect(formatVotes(null, null)).toBe('no result loaded')
+  })
+  it('never renders a suppressed, confidential or missing statistic as a number', () => {
+    expect(formatStatValue(0, null, 'suppressed')).toBe('suppressed')
+    expect(formatStatValue(0, 0, 'confidential')).toBe('confidential')
+    expect(formatStatValue(null, null, 'missing')).toBe('missing')
+    expect(formatStatValue(null, null, 'reported')).toBe('value unavailable')
+    expect(formatStatValue('12.5', null, 'provisional')).toBe('12.5 (provisional)')
+  })
+  it('shows a finance total only when it was reported', () => {
+    expect(formatMoney(0, 'unknown')).not.toMatch(/\$|0/)
+    expect(formatMoney(null, 'not_extracted')).toBe('not extracted')
+    expect(formatMoney(1500, 'reported')).toContain('1,500')
+  })
+})
+
+describe('pagination', () => {
+  it('computes inclusive server ranges and never exceeds the server row cap', () => {
+    expect(pageRange(1, 25)).toEqual({ from: 0, to: 24 })
+    expect(pageRange(3, 50)).toEqual({ from: 100, to: 149 })
+    expect(pageRange(-4, 25)).toEqual({ from: 0, to: 24 })
+    const huge = pageRange(1, 10_000)
+    expect(huge.to - huge.from + 1).toBe(SERVER_MAX_ROWS)
+  })
+  it('treats a missing total as unknown, not as zero', () => {
+    expect(pageCount(null, 25)).toBeNull()
+    expect(pageCount(65, 25)).toBe(3)
+    expect(hasNextPage(1, 25, null, 25)).toBe(true)
+    expect(hasNextPage(3, 25, 65, 15)).toBe(false)
+    expect(describeRange(2, 25, 65, 25)).toBe('Rows 26–50 of 65')
+    expect(describeRange(1, 25, null, 25)).toContain('an unknown total')
+  })
+})
+
+describe('URL search validation', () => {
+  it('drops unknown sort columns, bad enums, oversize pages and unexpected keys', () => {
+    const parsed = parseListSearch(recordsSpec, { page: '-3', size: '5000', sort: 'safe_payload; drop table', dir: 'sideways', scope: 'everything', tombstoned: 'only', evil: 'x', q: 'Bill' })
+    expect(parsed).toEqual({ page: 1, size: 25, tombstoned: 'only', q: 'Bill' })
+  })
+  it('never lets vote counts order a candidate list (R1)', () => {
+    expect(candidaciesSpec.sortable).not.toContain('votes')
+    const parsed = parseListSearch(candidaciesSpec, { sort: 'votes', dir: 'desc' })
+    expect(parsed.sort).toBeUndefined()
+    expect(effectiveSort(candidaciesSpec, parsed).map((r) => r.column)).toEqual(['electorate_name', 'candidate_name', 'id'])
+  })
+  it('escapes pattern characters and validates graph start nodes', () => {
+    expect(ilikeContains('50%_a*')).not.toMatch(/^%.*[^\\]%.*%$/)
+    expect(parseGraphSearch({ kind: 'table; drop', id: 'x' })).toEqual({})
+    expect(edgeFilterFor('ab"c\\d')).toBe('from_id.eq."abcd",to_id.eq."abcd"')
+  })
+})
+
+describe('bounded graph', () => {
+  const edge = (n: number, from = 'start'): EdgeRow => ({ edge_id: `e${n}`, from_kind: 'person_identity', from_id: from, from_label: 'Fixture start', to_kind: 'party_identity', to_id: `p${n}`, to_label: `Fixture party ${n}`, relationship: 'fixture', evidence_version_id: null })
+  it('accepts at most 50 edges per expansion and de-duplicates', () => {
+    const rows = Array.from({ length: 80 }, (_, i) => edge(i))
+    const once = mergeExpansion(initialGraph('person_identity', 'start'), 'person_identity:start', rows)
+    expect(Object.keys(once.edges)).toHaveLength(EDGES_PER_EXPANSION)
+    expect(once.nodes['person_identity:start']?.mayHaveMore).toBe(true)
+    const twice = mergeExpansion(once, 'person_identity:start', rows)
+    expect(Object.keys(twice.edges)).toHaveLength(EDGES_PER_EXPANSION)
+    expect(nodeCount(twice)).toBe(EDGES_PER_EXPANSION + 1)
+  })
+  it('never exceeds 300 nodes and says when the limit is reached', () => {
+    let state = initialGraph('person_identity', 'start')
+    for (let batch = 0; batch < 10; batch++) {
+      state = mergeExpansion(state, 'person_identity:start', Array.from({ length: 50 }, (_, i) => edge(batch * 50 + i)))
+    }
+    expect(nodeCount(state)).toBe(MAX_NODES)
+    expect(state.limitReached).toBe(true)
+    expect(state.skippedEdges).toBeGreaterThan(0)
+  })
+})
+
+describe('configuration and bundle safety', () => {
+  it('is not configured without both public values, with placeholders, or with a privileged key', () => {
+    expect(resolveConfig({})).toBeNull()
+    expect(resolveConfig({ VITE_SUPABASE_URL: 'https://your-project-ref.supabase.co', VITE_SUPABASE_ANON_KEY: jwt('anon') })).toBeNull()
+    expect(resolveConfig({ VITE_SUPABASE_URL: 'https://fixture.example', VITE_SUPABASE_ANON_KEY: jwt('service_role') })).toBeNull()
+    expect(resolveConfig({ VITE_SUPABASE_URL: 'https://fixture.example/', VITE_SUPABASE_ANON_KEY: jwt('anon') })).toEqual({ supabaseUrl: 'https://fixture.example', supabaseAnonKey: jwt('anon') })
+    expect(looksLikeServiceRoleKey('sb_secret_fixture')).toBe(true)
+    expect(routerBasePath('/nz-election-evidence/')).toBe('/nz-election-evidence')
+    expect(routerBasePath('/')).toBe('/')
+  })
+  it('flags key material, private names and fixture evidence in a bundle, but not the guard words', () => {
+    expect(bundleProblems([{ name: 'ok.js', text: `if(k.startsWith("sb_secret_"))return; role==="service_role"; const key="${jwt('anon')}"` }])).toEqual([])
+    expect(bundleProblems([{ name: 'a.js', text: `const k="${jwt('service_role')}"` }])[0]).toContain('service_role')
+    expect(bundleProblems([{ name: 'b.js', text: 'sb_secret_abcdefghijkl' }])[0]).toContain('secret-style')
+    expect(bundleProblems([{ name: 'c.js', text: 'from("evidence_private.source_records")' }])[0]).toContain('private schema')
+  })
+})

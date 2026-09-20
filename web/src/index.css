@@ -1,0 +1,179 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+/*
+ * Archival, document-like theme. Deliberately neutral: a warm stone base with one muted
+ * indigo-violet accent. No hue is used that reads as a New Zealand party colour, and colour
+ * is never the only carrier of meaning (every status also has a text label and a glyph).
+ */
+
+@theme inline {
+  --font-serif: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", "URW Palladio L", P052, Georgia, serif;
+  --font-sans: "Avenir Next", "Segoe UI Variable Text", "Segoe UI", "Helvetica Neue", "Noto Sans", "Liberation Sans", Arial, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "Cascadia Mono", "DejaVu Sans Mono", Menlo, Consolas, monospace;
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--card);
+  --color-popover-foreground: var(--card-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-rule: var(--rule);
+  --color-paper: var(--paper);
+  --color-caution: var(--caution);
+  --color-caution-foreground: var(--caution-foreground);
+
+  --radius-sm: 2px;
+  --radius-md: 3px;
+  --radius-lg: 4px;
+  --radius-xl: 6px;
+}
+
+:root {
+  --background: oklch(0.972 0.006 85);
+  --paper: oklch(0.992 0.004 85);
+  --foreground: oklch(0.24 0.012 60);
+  --card: oklch(0.992 0.004 85);
+  --card-foreground: oklch(0.24 0.012 60);
+  --primary: oklch(0.4 0.075 295);
+  --primary-foreground: oklch(0.985 0.004 85);
+  --secondary: oklch(0.935 0.008 80);
+  --secondary-foreground: oklch(0.3 0.012 60);
+  --muted: oklch(0.945 0.007 80);
+  --muted-foreground: oklch(0.46 0.012 60);
+  --accent: oklch(0.93 0.022 295);
+  --accent-foreground: oklch(0.32 0.075 295);
+  --destructive: oklch(0.45 0.1 45);
+  --caution: oklch(0.94 0.035 75);
+  --caution-foreground: oklch(0.36 0.06 60);
+  --border: oklch(0.87 0.01 80);
+  --rule: oklch(0.78 0.012 80);
+  --input: oklch(0.8 0.012 80);
+  --ring: oklch(0.5 0.1 295);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: oklch(0.2 0.008 60);
+    --paper: oklch(0.235 0.008 60);
+    --foreground: oklch(0.92 0.008 85);
+    --card: oklch(0.235 0.008 60);
+    --card-foreground: oklch(0.92 0.008 85);
+    --primary: oklch(0.78 0.075 295);
+    --primary-foreground: oklch(0.2 0.02 295);
+    --secondary: oklch(0.29 0.008 60);
+    --secondary-foreground: oklch(0.9 0.008 85);
+    --muted: oklch(0.275 0.008 60);
+    --muted-foreground: oklch(0.72 0.01 80);
+    --accent: oklch(0.32 0.04 295);
+    --accent-foreground: oklch(0.9 0.04 295);
+    --destructive: oklch(0.76 0.09 50);
+    --caution: oklch(0.31 0.03 70);
+    --caution-foreground: oklch(0.9 0.04 80);
+    --border: oklch(0.36 0.008 60);
+    --rule: oklch(0.46 0.01 60);
+    --input: oklch(0.42 0.01 60);
+    --ring: oklch(0.72 0.09 295);
+  }
+}
+
+@layer base {
+  * {
+    border-color: var(--border);
+  }
+  html {
+    color-scheme: light dark;
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    background: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-sans);
+    font-size: 15px;
+    line-height: 1.55;
+    font-feature-settings: "tnum" 1, "lnum" 1;
+    text-rendering: optimizeLegibility;
+  }
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-serif);
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    text-wrap: balance;
+  }
+  /* Visible focus everywhere, including elements shadcn styles with ring utilities. */
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+  a {
+    text-underline-offset: 3px;
+  }
+  table {
+    font-variant-numeric: tabular-nums lining-nums;
+  }
+  ::selection {
+    background: var(--accent);
+    color: var(--accent-foreground);
+  }
+}
+
+@utility num {
+  font-variant-numeric: tabular-nums lining-nums;
+  font-feature-settings: "tnum" 1, "lnum" 1;
+}
+
+@utility eyebrow {
+  font-family: var(--font-sans);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+}
+
+@utility doc-link {
+  color: var(--primary);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  &:hover {
+    text-decoration-thickness: 2px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* React Flow, restyled to match the document palette. */
+.react-flow {
+  --xy-background-color: var(--paper);
+  --xy-edge-stroke: var(--rule);
+  --xy-edge-stroke-selected: var(--primary);
+  --xy-edge-label-background-color: var(--paper);
+  --xy-edge-label-color: var(--muted-foreground);
+  --xy-controls-button-background-color: var(--paper);
+  --xy-controls-button-color: var(--foreground);
+  --xy-controls-button-border-color: var(--border);
+  --xy-controls-button-background-color-hover: var(--muted);
+  --xy-attribution-background-color: transparent;
+}
