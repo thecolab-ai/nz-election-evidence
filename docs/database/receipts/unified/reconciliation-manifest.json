@@ -1,0 +1,4314 @@
+{
+  "manifest_version": 2,
+  "date": "2026-09-20",
+  "what_this_is": "Source-to-destination reconciliation of every import unit, from a combined load of the real private artifacts into an isolated, disposable local database built from the full migration union. Counts, digests and statuses only. Not a hosted load: nothing here was written to a hosted project.",
+  "rights_note": "Loading changes nothing about rights: every rights row is pending and link-only. A loaded row is not a published row.",
+  "tested_source": {
+    "commit": "2ecd1781a46d523cdd07c098b069a6c9f704d1ff",
+    "every_receipt_from_a_clean_checkout_of_it": true,
+    "note": "The receipts pin the commit of the checkout that produced them. This manifest is evidence about that commit only; a later commit that changes source code is not covered by it."
+  },
+  "totals": {
+    "units": 31,
+    "units_succeeded": 31,
+    "units_not_succeeded": [],
+    "populations_note": "Counters are per population (ledger records, statistical observations, catalogue entry versions). They are never added across populations.",
+    "input_by_population": {
+      "ledger_records": 203311,
+      "stat_observations": 1273423,
+      "stat_catalogue_entries": 983
+    },
+    "first_pass": {
+      "ledger_records": {
+        "seen": 182623,
+        "inserted": 182623,
+        "unchanged": 0,
+        "rejected": 0,
+        "conflicts": 0,
+        "tombstoned": 0
+      },
+      "stat_observations": {
+        "seen": 1273423,
+        "inserted": 1273423,
+        "unchanged": 0,
+        "rejected": 0,
+        "conflicts": 0,
+        "tombstoned": 0
+      },
+      "stat_catalogue_entries": {
+        "seen": 983,
+        "inserted": 983,
+        "unchanged": 0,
+        "rejected": 0,
+        "conflicts": 0,
+        "tombstoned": 0
+      }
+    },
+    "replay": {
+      "units": 31,
+      "units_that_inserted_anything": [],
+      "ledger_records": {
+        "seen": 203340,
+        "inserted": 0,
+        "unchanged": 203340,
+        "rejected": 0,
+        "conflicts": 0,
+        "tombstoned": 0
+      },
+      "stat_observations": {
+        "seen": 1273423,
+        "inserted": 0,
+        "unchanged": 1273423,
+        "rejected": 0,
+        "conflicts": 0,
+        "tombstoned": 0
+      },
+      "stat_catalogue_entries": {
+        "seen": 983,
+        "inserted": 0,
+        "unchanged": 983,
+        "rejected": 0,
+        "conflicts": 0,
+        "tombstoned": 0
+      }
+    },
+    "count_invariants": {
+      "rule": "per unit and population: inserted <= seen, and inserted + unchanged + rejected + conflicts = seen",
+      "violations": []
+    },
+    "reconcile": {
+      "units": 39,
+      "reconciled": 39,
+      "checks": 282,
+      "checks_failed": 0
+    },
+    "resumed_after_a_hard_stop": [
+      "parliament/parliament_export_written_questions"
+    ]
+  },
+  "data_tables": {
+    "bill_publication_sets": {
+      "rows": 86,
+      "content_digest": "b50db95eb75f2554032b2e2f4af7ed48"
+    },
+    "bill_publications": {
+      "rows": 115,
+      "content_digest": "de53144ac44096eaa3ed6a18e704a973"
+    },
+    "bill_stages": {
+      "rows": 15928,
+      "content_digest": "56f5956ff9068ffee9dd9c59fa3b3d70"
+    },
+    "bills": {
+      "rows": 3634,
+      "content_digest": "d9c21f0f84e949c537fdd4431df81f67"
+    },
+    "boundary_editions": {
+      "rows": 2,
+      "content_digest": "03deee94ed806b9828b47dcbc76cf143"
+    },
+    "boundary_map_links": {
+      "rows": 3,
+      "content_digest": "3082cee11ffd14b3b56714cfb1e88d8b"
+    },
+    "candidacies": {
+      "rows": 963,
+      "content_digest": "2e96dc50e8015be951f7a7982ecc0204"
+    },
+    "candidacy_status_events": {
+      "rows": 963,
+      "content_digest": "e97aa895d57280810855bcc018a819fc"
+    },
+    "candidate_results": {
+      "rows": 495,
+      "content_digest": "1eff892af05ef1674de66f0aae7d8df3"
+    },
+    "catalogue_product_map": {
+      "rows": 45,
+      "content_digest": "da9eda7c3a56d42de9d1e7faa2ba1975"
+    },
+    "committee_business_items": {
+      "rows": 123,
+      "content_digest": "fe5b1651b295e231cce34a692b86a61b"
+    },
+    "committee_report_files": {
+      "rows": 1285,
+      "content_digest": "ba1bfcd878e7b180c5815f5f6d9b609c"
+    },
+    "committee_reports": {
+      "rows": 1286,
+      "content_digest": "1b887f8882bac5b4b33d109647349b9b"
+    },
+    "contests": {
+      "rows": 73,
+      "content_digest": "cb008ec7e5a4486e5af7725f13adabc9"
+    },
+    "documents": {
+      "rows": 198275,
+      "content_digest": "d58d9398107e8ecc8e79ec50d8b7f50d"
+    },
+    "election_official_page_status": {
+      "rows": 1,
+      "content_digest": "b0b442b30adb10f4465b7807ef2eddfc"
+    },
+    "election_party_totals": {
+      "rows": 17,
+      "content_digest": "fbca9ed331b6b7abbe2f16992fd1839e"
+    },
+    "election_result_totals": {
+      "rows": 1,
+      "content_digest": "cbe2dffb22b8948be82f073f2b8e0573"
+    },
+    "elections": {
+      "rows": 2,
+      "content_digest": "7a1da7391803de2daabbeda842803172"
+    },
+    "electorate_result_summaries": {
+      "rows": 72,
+      "content_digest": "642a1b87a9d899178464a00d13851729"
+    },
+    "electorate_versions": {
+      "rows": 72,
+      "content_digest": "04acd95cfa28e6bc4bc5abe9d53f74f6"
+    },
+    "electorates": {
+      "rows": 72,
+      "content_digest": "6cc8c79050ed363aae88759dbd0bdc91"
+    },
+    "finance_published_aggregates": {
+      "rows": 1504,
+      "content_digest": "0fe39aee4a1ebec877b868518128caab"
+    },
+    "finance_return_references": {
+      "rows": 509,
+      "content_digest": "19b79ad1bf11b5f874449ed8f93c1c62"
+    },
+    "geography_versions": {
+      "rows": 49239,
+      "content_digest": "c11c55f57201e360aa8c6c7b687bb030"
+    },
+    "identity_decisions": {
+      "rows": 346,
+      "content_digest": "4c4d4c1ab6785fc6d111b81eb5c86718"
+    },
+    "ingest_schedules": {
+      "rows": 8,
+      "content_digest": "08aad59be0ec56e3e56bb00e410100ec"
+    },
+    "parliamentary_service_terms": {
+      "rows": 122,
+      "content_digest": "299be9b564309244b967c3563cd47624"
+    },
+    "party_list_entries": {
+      "rows": 468,
+      "content_digest": "67f0d255cdbaa575f38e010f2355c739"
+    },
+    "party_lists": {
+      "rows": 17,
+      "content_digest": "d7da5076b96bf7db81f4797218bd4e54"
+    },
+    "party_results": {
+      "rows": 1224,
+      "content_digest": "831afa8d78e1ddbfcdc6f831702da27e"
+    },
+    "party_source_identities": {
+      "rows": 133,
+      "content_digest": "ace5658d0132088b56d28a8ea24a9299"
+    },
+    "person_source_identities": {
+      "rows": 1114,
+      "content_digest": "3716af242fec4e4ce26e6eec05284db6"
+    },
+    "policy_sources": {
+      "rows": 17,
+      "content_digest": "2efd41d317a98e9bf6bc6282f7328dfd"
+    },
+    "poll_results": {
+      "rows": 144,
+      "content_digest": "03838f4ceb3ae89f5ce6dcef75b23e6d"
+    },
+    "polls": {
+      "rows": 12,
+      "content_digest": "3e479c1d0ed29b4485ae1ee3e86da22c"
+    },
+    "public_columns": {
+      "rows": 1130,
+      "content_digest": "dd74ba6d9e89f811ef1bf4539fb27ae3"
+    },
+    "public_lineage": {
+      "rows": 118,
+      "content_digest": "0101f51390514258b6795334e7491ba0"
+    },
+    "public_row_rules": {
+      "rows": 4,
+      "content_digest": "88536e84c5ad62cf252cfabfe81207e3"
+    },
+    "public_withheld": {
+      "rows": 57,
+      "content_digest": "d49a2bb8492feaf4a78bd0d8417b36c6"
+    },
+    "record_route_keys": {
+      "rows": 197734,
+      "content_digest": "83818d4db58c5ba38654cda04d5f0673"
+    },
+    "registry_products": {
+      "rows": 16,
+      "content_digest": "4576d0bfa14f0b0f95c195fc73fcc78c"
+    },
+    "release_attributions": {
+      "rows": 530,
+      "content_digest": "09ee577f98c64ad60e3635d408381f67"
+    },
+    "release_gates": {
+      "rows": 3,
+      "content_digest": "6192003fb390825bdec04cd3fa31971d"
+    },
+    "releases": {
+      "rows": 4735,
+      "content_digest": "8560c2c48ccf4ae3627e34c0e8fa7b0b"
+    },
+    "result_route_checks": {
+      "rows": 496,
+      "content_digest": "c75195ae9d45c09a7cb57aeaca09ea00"
+    },
+    "result_sets": {
+      "rows": 3,
+      "content_digest": "e4b259ec97a2f4fa9debb53764e6fd63"
+    },
+    "role_terms": {
+      "rows": 111,
+      "content_digest": "0ea19eabbf128e9bcd96cede2e725bcc"
+    },
+    "run_projectors": {
+      "rows": 2,
+      "content_digest": "7f8ba6c5d1b2d5110e5299123a53857f"
+    },
+    "source_record_versions": {
+      "rows": 203423,
+      "content_digest": "9e49e58c4e9c3d84ed54afa992b79208"
+    },
+    "source_records": {
+      "rows": 203311,
+      "content_digest": "f545c9b13b20bc70992eab86ae2975de"
+    },
+    "source_rights": {
+      "rows": 22,
+      "content_digest": "0c4a1e57e1198275ec7566c54be0562d"
+    },
+    "sources": {
+      "rows": 49,
+      "content_digest": "7b5dc8ee50befbec51147d6bb7148b48"
+    },
+    "stat_catalogue_entries": {
+      "rows": 983,
+      "content_digest": "e4c2865c4a832b4bbe02cd128ea3ff1e"
+    },
+    "stat_datasets": {
+      "rows": 18,
+      "content_digest": "0a1b7d819f0f5109d28432a7a4a01e83"
+    },
+    "stat_observations": {
+      "rows": 1273423,
+      "content_digest": "21acabdcd881a3092a339e61af224d6d"
+    },
+    "stat_releases": {
+      "rows": 18,
+      "content_digest": "1cc9d69347740fd093f79c6d2d9ec279"
+    },
+    "stat_route_reconciliation": {
+      "rows": 18,
+      "content_digest": "837f6c5db12736a96cc169ebc1f74af3"
+    },
+    "stat_series": {
+      "rows": 9463,
+      "content_digest": "948ff2482e7bcd3878e30c75b60e95b4"
+    },
+    "stat_source_summary": {
+      "rows": 10,
+      "content_digest": "61b10015fdfb600f3449d75f585ae50b"
+    },
+    "written_questions": {
+      "rows": 187956,
+      "content_digest": "e0c17e10f0ccfcf23e5f63a2f969dd9f"
+    }
+  },
+  "order_independence": {
+    "compared": "the same artifacts loaded into a second fresh database in the opposite family order",
+    "how": "per data table: the row count, and a digest of every row's content after the stated normalisation (content_digest.ts). Equal digests mean equal content, not only equal counts.",
+    "content_was_compared": true,
+    "both_digests_complete": true,
+    "normalisation": {
+      "method": "row digests refined in rounds: each round replaces every reference with the digest the referred row had in the round before, so cycles converge and no surrogate id is ever compared",
+      "rounds_used": 2,
+      "refinement_complete": true,
+      "refinement_note": "complete means the last round told no more rows apart than the one before, so no further round could change what is compared",
+      "surrogate_keys": "left out",
+      "references": "replaced by the content of the row referred to; a declared foreign key names its table, an undeclared uuid column is resolved only by verifying that every one of its values is an id of that table",
+      "references_discovered_by_measurement": [
+        "source_records.current_version_id -> source_record_versions"
+      ],
+      "uuid_columns_left_unresolved": [],
+      "database_clock_columns": "left out (a default of now()): they record when a load ran, not what was loaded",
+      "run_ledger": "references to run-ledger tables are left out, and those tables are counted but never compared",
+      "everything_else": "every other column of every row is inside the digest (its JSON text), so equal digests mean equal content"
+    },
+    "units_compared": 39,
+    "units_with_a_different_reconciliation": [
+      "core/baseline_2023_candidacies_export",
+      "election/P09"
+    ],
+    "data_tables_compared": 84,
+    "data_tables_with_rows": 61,
+    "data_tables_with_a_different_row_count": [],
+    "data_tables_with_different_content": [
+      {
+        "table": "contests",
+        "this_order": "cb008ec7e5a4486e5af7725f13adabc9",
+        "other_order": "9a8f7cd16647eafdcb75c0336d392e55"
+      },
+      {
+        "table": "electorate_result_summaries",
+        "this_order": "642a1b87a9d899178464a00d13851729",
+        "other_order": "caadf75fa0eb4c54eab6236910e21839"
+      },
+      {
+        "table": "electorate_versions",
+        "this_order": "04acd95cfa28e6bc4bc5abe9d53f74f6",
+        "other_order": "4b78075ac37032fb1382bb31813f0933"
+      },
+      {
+        "table": "party_results",
+        "this_order": "831afa8d78e1ddbfcdc6f831702da27e",
+        "other_order": "e9765531ac8af34166d1775ca2688a75"
+      }
+    ],
+    "columns_not_compared": {
+      "app_memberships": {
+        "id": "surrogate key (a random uuid or a sequence)",
+        "user_id": "every value is null: it refers to nothing",
+        "granted_at": "filled by the database clock at write time"
+      },
+      "bill_publication_sets": {
+        "id": "surrogate key (a random uuid or a sequence)"
+      },
+      "bill_publications": {
+        "id": "surrogate key (a random uuid or a sequence)"
+      },
+      "bills": {
+        "document_id": "surrogate key (a random uuid or a sequence)"
+      },
+      "boundary_editions": {
+        "id": "surrogate key (a random uuid or a sequence)"
+      },
+      "boundary_map_links": {
+        "document_id": "surrogate key (a random uuid or a sequence)"
+      },
+      "candidacies": {
+        "id": "surrogate key (a random uuid or a sequence)"
+      },
+      "candidacy_status_events": {
+        "id": "surrogate key (a random uuid or a sequence)",
+        "recorded_at": "filled by the database clock at write time"
+      },
+      "committee_business_items": {
+        "document_id": "surrogate key (a random uuid or a sequence)"
+      },
+      "committee_report_files": {
+        "id": "surrogate key (a random uuid or a sequence)"
+      },
+      "committee_reports": {
+        "document_id": "surrogate key (a random uuid or a sequence)"
+      },
+      "contests": {
+        "id": "surrogate key (a random uuid or a sequence)"
+      },
+      "corrections": {
+        "id": "surrogate key (a random uuid or a sequence)",
+        "subject_id": "every value is null: it refers to nothing",
+        "recorded_at": "filled by the database clock at write time"
+      },
+      "documents": {
+        "id": "surrogate key (a random uuid or a sequence)"
+      },
+      "election_official_page_status": {
+        "id": "surrogate key (a random uuid or a sequence)"
+      },
+      "election_result_totals": {
+        "result_set_id": "surrogate key (a random uuid or a sequence)"
+      },
+      "elections": {
+        "id": "surrogate key (a random uuid or a sequence)"
+      },
+      "electorate_versions": {
+        "id": "surrogate key (a random uuid or a sequence)"
+      },
+      "electorates": {
+        "id": "surrogate key (a random uuid or a sequence)"
+      },
+      "finance_published_aggregates": {
+        "id": "surrogate key (a random uuid or a sequence)"
+      },
+      "finance_return_references": {
+        "id": "surrogate key (a random uuid or a sequence)"
+      },
+      "geography_versions": {
+        "id": "surrogate key (a random uuid or a sequence)"
+      },
+      "identity_decisions": {
+        "id": "surrogate key (a random uuid or a sequence)",
+        "evidence": "carries the surrogate id of a row of person_source_identities inside its value",
+        "decided_at": "filled by the database clock at write time"
+      },
+      "model_runs": {
+        "id": "surrogate key (a random uuid or a sequence)"
+      },
+      "owner_authorizations": {
+        "recorded_at": "filled by the database clock at write time"
+      },
+      "parliamentary_service_terms": {
+        "id": "surrogate key (a random uuid or a sequence)"
+      },
+      "parties": {
+        "id": "surrogate key (a random uuid or a sequence)",
+        "created_at": "filled by the database clock at write time"
+      },
+      "party_affiliations": {
+        "id": "surrogate key (a random uuid or a sequence)"
+      },
+      "party_aliases": {
+        "id": "surrogate key (a random uuid or a sequence)"
+      },
+      "party_lists": {
+        "id": "surrogate key (a random uuid or a sequence)"
+      },
+      "party_registrations": {
+        "id": "surrogate key (a random uuid or a sequence)"
+      },
+      "party_source_identities": {
+        "id": "surrogate key (a random uuid or a sequence)",
+        "created_at": "filled by the database clock at write time"
+      },
+      "people": {
+        "id": "surrogate key (a random uuid or a sequence)",
+        "created_at": "filled by the database clock at write time"
+      },
+      "person_source_identities": {
+        "id": "surrogate key (a random uuid or a sequence)",
+        "created_at": "filled by the database clock at write time"
+      },
+      "policy_sources": {
+        "document_id": "surrogate key (a random uuid or a sequence)"
+      },
+      "polls": {
+        "document_id": "surrogate key (a random uuid or a sequence)"
+      },
+      "publisher_terms_reviews": {
+        "id": "surrogate key (a random uuid or a sequence)",
+        "terms_check_id": "names a row of the run ledger (publisher_access_checks); how many runs there were depends on how the load was driven",
+        "robots_check_id": "names a row of the run ledger (publisher_access_checks); how many runs there were depends on how the load was driven",
+        "reviewed_at": "filled by the database clock at write time"
+      },
+      "record_route_keys": {
+        "record_id": "surrogate key (a random uuid or a sequence)"
+      },
+      "release_attributions": {
+        "id": "surrogate key (a random uuid or a sequence)"
+      },
+      "release_batches": {
+        "id": "surrogate key (a random uuid or a sequence)",
+        "created_at": "filled by the database clock at write time"
+      },
+      "releases": {
+        "document_id": "surrogate key (a random uuid or a sequence)"
+      },
+      "result_route_checks": {
+        "id": "surrogate key (a random uuid or a sequence)"
+      },
+      "result_sets": {
+        "id": "surrogate key (a random uuid or a sequence)"
+      },
+      "review_decisions": {
+        "id": "surrogate key (a random uuid or a sequence)",
+        "subject_id": "every value is null: it refers to nothing",
+        "decided_at": "filled by the database clock at write time"
+      },
+      "rights_decisions": {
+        "id": "surrogate key (a random uuid or a sequence)",
+        "decided_at": "filled by the database clock at write time"
+      },
+      "role_terms": {
+        "id": "surrogate key (a random uuid or a sequence)"
+      },
+      "run_projectors": {
+        "registered_at": "filled by the database clock at write time"
+      },
+      "schema_agreement_validations": {
+        "id": "surrogate key (a random uuid or a sequence)",
+        "validated_at": "filled by the database clock at write time"
+      },
+      "source_record_versions": {
+        "id": "surrogate key (a random uuid or a sequence)",
+        "loaded_at": "filled by the database clock at write time",
+        "import_run_id": "names a row of the run ledger (import_runs); how many runs there were depends on how the load was driven"
+      },
+      "source_records": {
+        "id": "surrogate key (a random uuid or a sequence)"
+      },
+      "source_rights": {
+        "synced_at": "filled by the database clock at write time"
+      },
+      "sources": {
+        "synced_at": "filled by the database clock at write time"
+      },
+      "staged_unmatched_results": {
+        "id": "surrogate key (a random uuid or a sequence)",
+        "staged_at": "filled by the database clock at write time"
+      },
+      "stat_catalogue_entries": {
+        "id": "surrogate key (a random uuid or a sequence)",
+        "import_run_id": "names a row of the run ledger (import_runs); how many runs there were depends on how the load was driven"
+      },
+      "stat_datasets": {
+        "id": "surrogate key (a random uuid or a sequence)"
+      },
+      "stat_observations": {
+        "id": "surrogate key (a random uuid or a sequence)",
+        "import_run_id": "names a row of the run ledger (import_runs); how many runs there were depends on how the load was driven"
+      },
+      "stat_releases": {
+        "id": "surrogate key (a random uuid or a sequence)",
+        "import_run_id": "names a row of the run ledger (import_runs); how many runs there were depends on how the load was driven"
+      },
+      "stat_route_reconciliation": {
+        "decided_at": "filled by the database clock at write time"
+      },
+      "stat_series": {
+        "id": "surrogate key (a random uuid or a sequence)"
+      },
+      "stat_source_summary": {
+        "import_run_id": "names a row of the run ledger (import_runs); how many runs there were depends on how the load was driven",
+        "counted_at": "filled by the database clock at write time"
+      },
+      "summary_versions": {
+        "id": "surrogate key (a random uuid or a sequence)",
+        "created_at": "filled by the database clock at write time"
+      },
+      "version_bill_links": {
+        "id": "surrogate key (a random uuid or a sequence)"
+      },
+      "version_electorate_links": {
+        "id": "surrogate key (a random uuid or a sequence)"
+      },
+      "version_party_links": {
+        "id": "surrogate key (a random uuid or a sequence)"
+      },
+      "version_person_links": {
+        "id": "surrogate key (a random uuid or a sequence)"
+      },
+      "written_questions": {
+        "document_id": "surrogate key (a random uuid or a sequence)"
+      }
+    },
+    "run_ledger_tables_not_compared": [
+      "fetch_log",
+      "import_runs",
+      "ingest_errors",
+      "publisher_access_checks",
+      "record_lifecycle_events",
+      "run_checkpoints",
+      "schedule_dispatch_log",
+      "source_freshness",
+      "source_leases",
+      "source_observations"
+    ],
+    "identical": false
+  },
+  "units": [
+    {
+      "family": "core",
+      "unit": "baseline_2023_candidacies_export",
+      "writer": "ledger_records_with_projection",
+      "source_ids": [
+        "baseline_2023_candidacies_export"
+      ],
+      "product_ids": [
+        "P04"
+      ],
+      "input": {
+        "rows": 963,
+        "records": 963,
+        "versions": 963,
+        "by_population": {
+          "ledger_records": 963
+        },
+        "digest": "sha256:acb3154d63abdb76d62fec09ce62996b379081ecf3586e7f00b76e7b0955d82c",
+        "bytes": 955395,
+        "collected_from": null,
+        "collected_to": null
+      },
+      "import": {
+        "status": "succeeded",
+        "error_code": null,
+        "attempts": 1,
+        "runs": 1,
+        "resumed_runs": 0,
+        "written": {
+          "ledger_records": {
+            "seen": 963,
+            "inserted": 963,
+            "unchanged": 0,
+            "rejected": 0,
+            "conflicts": 0,
+            "tombstoned": 0
+          }
+        },
+        "checks_passed": 6,
+        "checks_failed": []
+      },
+      "replay": {
+        "status": "succeeded",
+        "written": {
+          "ledger_records": {
+            "seen": 963,
+            "inserted": 0,
+            "unchanged": 963,
+            "rejected": 0,
+            "conflicts": 0,
+            "tombstoned": 0
+          }
+        },
+        "checks_failed": []
+      },
+      "reconcile": {
+        "status": "reconciled",
+        "checks": [
+          {
+            "name": "destination records = rows in the pinned export",
+            "expected": 963,
+            "actual": 963,
+            "ok": true
+          },
+          {
+            "name": "destination records without a current version",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "destination tombstones",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "typed tables the tally could not read",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "typed rows in candidacies = rows in the pinned export",
+            "expected": 963,
+            "actual": 963,
+            "ok": true
+          },
+          {
+            "name": "count invariants: per population, inserted + unchanged + rejected + conflicts = seen",
+            "expected": "hold",
+            "actual": "hold",
+            "ok": true
+          }
+        ],
+        "typed_destination_rows": {
+          "candidacies": 963,
+          "party_lists": 17,
+          "result_sets": 1,
+          "candidate_results": 495,
+          "identity_decisions": 346,
+          "party_list_entries": 468,
+          "candidacy_status_events": 963,
+          "party_source_identities": 17,
+          "person_source_identities": 963
+        }
+      }
+    },
+    {
+      "family": "election",
+      "unit": "C26A",
+      "writer": "ledger_records_with_projection",
+      "source_ids": [
+        "election_2026_official_page_status_export"
+      ],
+      "product_ids": [],
+      "input": {
+        "rows": 2,
+        "records": 1,
+        "versions": 2,
+        "by_population": {
+          "ledger_records": 1
+        },
+        "digest": "sha256:6e505871f3516204924bfe329af4bed0e4fcbbbde8b0eb02552e1a3142adbe0b",
+        "bytes": 1618,
+        "collected_from": "2026-09-12T03:49:41.235Z",
+        "collected_to": "2026-09-12T04:21:04.475Z"
+      },
+      "import": {
+        "status": "succeeded",
+        "error_code": null,
+        "attempts": 1,
+        "runs": 2,
+        "resumed_runs": 0,
+        "written": {
+          "ledger_records": {
+            "seen": 2,
+            "inserted": 2,
+            "unchanged": 0,
+            "rejected": 0,
+            "conflicts": 0,
+            "tombstoned": 0
+          }
+        },
+        "checks_passed": 9,
+        "checks_failed": []
+      },
+      "replay": {
+        "status": "succeeded",
+        "written": {
+          "ledger_records": {
+            "seen": 1,
+            "inserted": 0,
+            "unchanged": 1,
+            "rejected": 0,
+            "conflicts": 0,
+            "tombstoned": 0
+          }
+        },
+        "checks_failed": []
+      },
+      "reconcile": {
+        "status": "reconciled",
+        "checks": [
+          {
+            "name": "source_records",
+            "expected": 1,
+            "actual": 1,
+            "ok": true
+          },
+          {
+            "name": "record_versions",
+            "expected": 2,
+            "actual": 2,
+            "ok": true
+          },
+          {
+            "name": "tombstoned_records",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "rejected_records",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "election_official_page_status",
+            "expected": 1,
+            "actual": 1,
+            "ok": true
+          },
+          {
+            "name": "official_page_unavailable",
+            "expected": 1,
+            "actual": 1,
+            "ok": true
+          },
+          {
+            "name": "records_not_at_their_latest_version",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "typed tables the tally could not read",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "count invariants: per population, inserted + unchanged + rejected + conflicts = seen",
+            "expected": "hold",
+            "actual": "hold",
+            "ok": true
+          }
+        ],
+        "typed_destination_rows": {
+          "election_official_page_status": 1
+        }
+      }
+    },
+    {
+      "family": "election",
+      "unit": "C26B",
+      "writer": "ledger_records_with_projection",
+      "source_ids": [
+        "election_2026_boundary_map_links_export"
+      ],
+      "product_ids": [],
+      "input": {
+        "rows": 3,
+        "records": 3,
+        "versions": 3,
+        "by_population": {
+          "ledger_records": 3
+        },
+        "digest": "sha256:7645d31bc90a38baa602151c6ba1a9b1a534a672eacec889f33eaebe85a254a5",
+        "bytes": 3145,
+        "collected_from": "2026-09-12T03:49:41.235Z",
+        "collected_to": "2026-09-12T03:49:41.235Z"
+      },
+      "import": {
+        "status": "succeeded",
+        "error_code": null,
+        "attempts": 1,
+        "runs": 1,
+        "resumed_runs": 0,
+        "written": {
+          "ledger_records": {
+            "seen": 3,
+            "inserted": 3,
+            "unchanged": 0,
+            "rejected": 0,
+            "conflicts": 0,
+            "tombstoned": 0
+          }
+        },
+        "checks_passed": 9,
+        "checks_failed": []
+      },
+      "replay": {
+        "status": "succeeded",
+        "written": {
+          "ledger_records": {
+            "seen": 3,
+            "inserted": 0,
+            "unchanged": 3,
+            "rejected": 0,
+            "conflicts": 0,
+            "tombstoned": 0
+          }
+        },
+        "checks_failed": []
+      },
+      "reconcile": {
+        "status": "reconciled",
+        "checks": [
+          {
+            "name": "source_records",
+            "expected": 3,
+            "actual": 3,
+            "ok": true
+          },
+          {
+            "name": "record_versions",
+            "expected": 3,
+            "actual": 3,
+            "ok": true
+          },
+          {
+            "name": "tombstoned_records",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "rejected_records",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "documents",
+            "expected": 3,
+            "actual": 3,
+            "ok": true
+          },
+          {
+            "name": "boundary_map_links",
+            "expected": 3,
+            "actual": 3,
+            "ok": true
+          },
+          {
+            "name": "records_not_at_their_latest_version",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "typed tables the tally could not read",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "count invariants: per population, inserted + unchanged + rejected + conflicts = seen",
+            "expected": "hold",
+            "actual": "hold",
+            "ok": true
+          }
+        ],
+        "typed_destination_rows": {
+          "documents": 3,
+          "boundary_map_links": 3
+        }
+      }
+    },
+    {
+      "family": "election",
+      "unit": "P08",
+      "writer": "ledger_records_with_projection",
+      "source_ids": [
+        "election_2023_nationwide_results_export"
+      ],
+      "product_ids": [
+        "P08"
+      ],
+      "input": {
+        "rows": 18,
+        "records": 18,
+        "versions": 18,
+        "by_population": {
+          "ledger_records": 18
+        },
+        "digest": "sha256:ff23c5d34f59b40c1a7fbaadef49c250e243401e817663fb224e355667c7f398",
+        "bytes": 21560,
+        "collected_from": "2026-09-19T09:22:27.000Z",
+        "collected_to": "2026-09-19T09:22:27.000Z"
+      },
+      "import": {
+        "status": "succeeded",
+        "error_code": null,
+        "attempts": 1,
+        "runs": 1,
+        "resumed_runs": 0,
+        "written": {
+          "ledger_records": {
+            "seen": 18,
+            "inserted": 18,
+            "unchanged": 0,
+            "rejected": 0,
+            "conflicts": 0,
+            "tombstoned": 0
+          }
+        },
+        "checks_passed": 12,
+        "checks_failed": []
+      },
+      "replay": {
+        "status": "succeeded",
+        "written": {
+          "ledger_records": {
+            "seen": 18,
+            "inserted": 0,
+            "unchanged": 18,
+            "rejected": 0,
+            "conflicts": 0,
+            "tombstoned": 0
+          }
+        },
+        "checks_failed": []
+      },
+      "reconcile": {
+        "status": "reconciled",
+        "checks": [
+          {
+            "name": "source_records",
+            "expected": 18,
+            "actual": 18,
+            "ok": true
+          },
+          {
+            "name": "record_versions",
+            "expected": 18,
+            "actual": 18,
+            "ok": true
+          },
+          {
+            "name": "tombstoned_records",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "rejected_records",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "election_party_totals",
+            "expected": 17,
+            "actual": 17,
+            "ok": true
+          },
+          {
+            "name": "election_party_totals_votes_sum",
+            "expected": 2851211,
+            "actual": 2851211,
+            "ok": true
+          },
+          {
+            "name": "election_party_totals_with_seats",
+            "expected": 6,
+            "actual": 6,
+            "ok": true
+          },
+          {
+            "name": "election_result_totals",
+            "expected": 1,
+            "actual": 1,
+            "ok": true
+          },
+          {
+            "name": "election_result_totals_votes",
+            "expected": 2851211,
+            "actual": 2851211,
+            "ok": true
+          },
+          {
+            "name": "records_not_at_their_latest_version",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "typed tables the tally could not read",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "count invariants: per population, inserted + unchanged + rejected + conflicts = seen",
+            "expected": "hold",
+            "actual": "hold",
+            "ok": true
+          }
+        ],
+        "typed_destination_rows": {
+          "result_sets": 1,
+          "election_party_totals": 17,
+          "election_result_totals": 1,
+          "party_source_identities": 17
+        }
+      }
+    },
+    {
+      "family": "election",
+      "unit": "P09",
+      "writer": "ledger_records_with_projection",
+      "source_ids": [
+        "election_2023_electorate_results_export"
+      ],
+      "product_ids": [
+        "P09"
+      ],
+      "input": {
+        "rows": 1791,
+        "records": 1791,
+        "versions": 1791,
+        "by_population": {
+          "ledger_records": 1791
+        },
+        "digest": "sha256:d6019eb56f4178f106ed5343c277657cbde200df09aa234914bb060028ff0b3d",
+        "bytes": 2438221,
+        "collected_from": "2026-09-19T09:44:19.000Z",
+        "collected_to": "2026-09-19T09:46:49.000Z"
+      },
+      "import": {
+        "status": "succeeded",
+        "error_code": null,
+        "attempts": 1,
+        "runs": 1,
+        "resumed_runs": 0,
+        "written": {
+          "ledger_records": {
+            "seen": 1791,
+            "inserted": 1791,
+            "unchanged": 0,
+            "rejected": 0,
+            "conflicts": 0,
+            "tombstoned": 0
+          }
+        },
+        "checks_passed": 13,
+        "checks_failed": []
+      },
+      "replay": {
+        "status": "succeeded",
+        "written": {
+          "ledger_records": {
+            "seen": 1791,
+            "inserted": 0,
+            "unchanged": 1791,
+            "rejected": 0,
+            "conflicts": 0,
+            "tombstoned": 0
+          }
+        },
+        "checks_failed": []
+      },
+      "reconcile": {
+        "status": "reconciled",
+        "checks": [
+          {
+            "name": "source_records",
+            "expected": 1791,
+            "actual": 1791,
+            "ok": true
+          },
+          {
+            "name": "record_versions",
+            "expected": 1791,
+            "actual": 1791,
+            "ok": true
+          },
+          {
+            "name": "tombstoned_records",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "rejected_records",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "party_results",
+            "expected": 1224,
+            "actual": 1224,
+            "ok": true
+          },
+          {
+            "name": "party_results_votes_sum",
+            "expected": 2851211,
+            "actual": 2851211,
+            "ok": true
+          },
+          {
+            "name": "electorate_result_summaries",
+            "expected": 72,
+            "actual": 72,
+            "ok": true
+          },
+          {
+            "name": "candidate_route_checks",
+            "expected": 495,
+            "actual": 495,
+            "ok": true
+          },
+          {
+            "name": "candidate_route_checks_votes_sum",
+            "expected": 2742677,
+            "actual": 2742677,
+            "ok": true
+          },
+          {
+            "name": "candidate_results_written_by_this_source",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "records_not_at_their_latest_version",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "typed tables the tally could not read",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "count invariants: per population, inserted + unchanged + rejected + conflicts = seen",
+            "expected": "hold",
+            "actual": "hold",
+            "ok": true
+          }
+        ],
+        "typed_destination_rows": {
+          "result_sets": 1,
+          "party_results": 1224,
+          "electorate_versions": 72,
+          "result_route_checks": 496,
+          "party_source_identities": 17,
+          "electorate_result_summaries": 72
+        }
+      }
+    },
+    {
+      "family": "election",
+      "unit": "P13",
+      "writer": "ledger_records_with_projection",
+      "source_ids": [
+        "party_policy_pages_2026_export"
+      ],
+      "product_ids": [
+        "P13"
+      ],
+      "input": {
+        "rows": 75,
+        "records": 17,
+        "versions": 75,
+        "by_population": {
+          "ledger_records": 17
+        },
+        "digest": "sha256:0311a18df4849c5e9d57c732b6268500f57ba29ca31223287470bace02a6aac1",
+        "bytes": 152973,
+        "collected_from": "2026-09-19T01:51:21.275Z",
+        "collected_to": "2026-09-19T23:39:44.303Z"
+      },
+      "import": {
+        "status": "succeeded",
+        "error_code": null,
+        "attempts": 1,
+        "runs": 7,
+        "resumed_runs": 0,
+        "written": {
+          "ledger_records": {
+            "seen": 75,
+            "inserted": 75,
+            "unchanged": 0,
+            "rejected": 0,
+            "conflicts": 0,
+            "tombstoned": 0
+          }
+        },
+        "checks_passed": 11,
+        "checks_failed": []
+      },
+      "replay": {
+        "status": "succeeded",
+        "written": {
+          "ledger_records": {
+            "seen": 17,
+            "inserted": 0,
+            "unchanged": 17,
+            "rejected": 0,
+            "conflicts": 0,
+            "tombstoned": 0
+          }
+        },
+        "checks_failed": []
+      },
+      "reconcile": {
+        "status": "reconciled",
+        "checks": [
+          {
+            "name": "source_records",
+            "expected": 17,
+            "actual": 17,
+            "ok": true
+          },
+          {
+            "name": "record_versions",
+            "expected": 75,
+            "actual": 75,
+            "ok": true
+          },
+          {
+            "name": "tombstoned_records",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "rejected_records",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "documents",
+            "expected": 17,
+            "actual": 17,
+            "ok": true
+          },
+          {
+            "name": "policy_sources",
+            "expected": 17,
+            "actual": 17,
+            "ok": true
+          },
+          {
+            "name": "policy_sources_unknown_class_no_basis",
+            "expected": 17,
+            "actual": 17,
+            "ok": true
+          },
+          {
+            "name": "policy_sources_with_a_class",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "records_not_at_their_latest_version",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "typed tables the tally could not read",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "count invariants: per population, inserted + unchanged + rejected + conflicts = seen",
+            "expected": "hold",
+            "actual": "hold",
+            "ok": true
+          }
+        ],
+        "typed_destination_rows": {
+          "documents": 17,
+          "policy_sources": 17,
+          "party_source_identities": 17
+        }
+      }
+    },
+    {
+      "family": "election",
+      "unit": "P14",
+      "writer": "ledger_records_with_projection",
+      "source_ids": [
+        "party_vote_polls_2026_export"
+      ],
+      "product_ids": [
+        "P14"
+      ],
+      "input": {
+        "rows": 30,
+        "records": 12,
+        "versions": 30,
+        "by_population": {
+          "ledger_records": 12
+        },
+        "digest": "sha256:cf8ceeab7c429e7a9c26546b5175dc9cf0c9df5184c6b05be2b3b8cdd4a4467c",
+        "bytes": 77522,
+        "collected_from": "2026-09-19T01:52:05.169Z",
+        "collected_to": "2026-09-19T18:38:55.645Z"
+      },
+      "import": {
+        "status": "succeeded",
+        "error_code": null,
+        "attempts": 1,
+        "runs": 4,
+        "resumed_runs": 0,
+        "written": {
+          "ledger_records": {
+            "seen": 30,
+            "inserted": 30,
+            "unchanged": 0,
+            "rejected": 0,
+            "conflicts": 0,
+            "tombstoned": 0
+          }
+        },
+        "checks_passed": 14,
+        "checks_failed": []
+      },
+      "replay": {
+        "status": "succeeded",
+        "written": {
+          "ledger_records": {
+            "seen": 12,
+            "inserted": 0,
+            "unchanged": 12,
+            "rejected": 0,
+            "conflicts": 0,
+            "tombstoned": 0
+          }
+        },
+        "checks_failed": []
+      },
+      "reconcile": {
+        "status": "reconciled",
+        "checks": [
+          {
+            "name": "source_records",
+            "expected": 12,
+            "actual": 12,
+            "ok": true
+          },
+          {
+            "name": "record_versions",
+            "expected": 30,
+            "actual": 30,
+            "ok": true
+          },
+          {
+            "name": "tombstoned_records",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "rejected_records",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "documents",
+            "expected": 12,
+            "actual": 12,
+            "ok": true
+          },
+          {
+            "name": "polls",
+            "expected": 12,
+            "actual": 12,
+            "ok": true
+          },
+          {
+            "name": "polls_methodology_verified",
+            "expected": 9,
+            "actual": 9,
+            "ok": true
+          },
+          {
+            "name": "polls_methodology_unresolved",
+            "expected": 3,
+            "actual": 3,
+            "ok": true
+          },
+          {
+            "name": "poll_results",
+            "expected": 144,
+            "actual": 144,
+            "ok": true
+          },
+          {
+            "name": "poll_results_reported",
+            "expected": 100,
+            "actual": 100,
+            "ok": true
+          },
+          {
+            "name": "poll_results_not_reported",
+            "expected": 44,
+            "actual": 44,
+            "ok": true
+          },
+          {
+            "name": "records_not_at_their_latest_version",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "typed tables the tally could not read",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "count invariants: per population, inserted + unchanged + rejected + conflicts = seen",
+            "expected": "hold",
+            "actual": "hold",
+            "ok": true
+          }
+        ],
+        "typed_destination_rows": {
+          "polls": 12,
+          "documents": 12,
+          "poll_results": 144
+        }
+      }
+    },
+    {
+      "family": "election",
+      "unit": "P15",
+      "writer": "ledger_records_with_projection",
+      "source_ids": [
+        "finance_2023_candidate_returns_export"
+      ],
+      "product_ids": [
+        "P15"
+      ],
+      "input": {
+        "rows": 492,
+        "records": 492,
+        "versions": 492,
+        "by_population": {
+          "ledger_records": 492
+        },
+        "digest": "sha256:e65bf3088d51a7efba09d1f3586a225c2bb6f4a0f9a8ab01aa64d765cf762734",
+        "bytes": 1536783,
+        "collected_from": "2026-09-19T17:51:54.739Z",
+        "collected_to": "2026-09-19T18:11:42.663Z"
+      },
+      "import": {
+        "status": "succeeded",
+        "error_code": null,
+        "attempts": 1,
+        "runs": 1,
+        "resumed_runs": 0,
+        "written": {
+          "ledger_records": {
+            "seen": 492,
+            "inserted": 492,
+            "unchanged": 0,
+            "rejected": 0,
+            "conflicts": 0,
+            "tombstoned": 0
+          }
+        },
+        "checks_passed": 15,
+        "checks_failed": []
+      },
+      "replay": {
+        "status": "succeeded",
+        "written": {
+          "ledger_records": {
+            "seen": 492,
+            "inserted": 0,
+            "unchanged": 492,
+            "rejected": 0,
+            "conflicts": 0,
+            "tombstoned": 0
+          }
+        },
+        "checks_failed": []
+      },
+      "reconcile": {
+        "status": "reconciled",
+        "checks": [
+          {
+            "name": "source_records",
+            "expected": 492,
+            "actual": 492,
+            "ok": true
+          },
+          {
+            "name": "record_versions",
+            "expected": 492,
+            "actual": 492,
+            "ok": true
+          },
+          {
+            "name": "tombstoned_records",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "rejected_records",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "documents",
+            "expected": 492,
+            "actual": 492,
+            "ok": true
+          },
+          {
+            "name": "finance_return_references",
+            "expected": 492,
+            "actual": 492,
+            "ok": true
+          },
+          {
+            "name": "finance_return_references_image_only",
+            "expected": 224,
+            "actual": 224,
+            "ok": true
+          },
+          {
+            "name": "finance_return_references_linked_to_a_candidacy",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "published_aggregates",
+            "expected": 1476,
+            "actual": 1476,
+            "ok": true
+          },
+          {
+            "name": "published_aggregates_reported",
+            "expected": 533,
+            "actual": 533,
+            "ok": true
+          },
+          {
+            "name": "published_aggregates_reported_nil",
+            "expected": 937,
+            "actual": 937,
+            "ok": true
+          },
+          {
+            "name": "published_aggregates_not_reported",
+            "expected": 6,
+            "actual": 6,
+            "ok": true
+          },
+          {
+            "name": "records_not_at_their_latest_version",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "typed tables the tally could not read",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "count invariants: per population, inserted + unchanged + rejected + conflicts = seen",
+            "expected": "hold",
+            "actual": "hold",
+            "ok": true
+          }
+        ],
+        "typed_destination_rows": {
+          "documents": 492,
+          "party_source_identities": 31,
+          "finance_return_references": 492,
+          "finance_published_aggregates": 1476
+        }
+      }
+    },
+    {
+      "family": "election",
+      "unit": "P16",
+      "writer": "ledger_records_with_projection",
+      "source_ids": [
+        "finance_2025_party_aggregates_export"
+      ],
+      "product_ids": [
+        "P16"
+      ],
+      "input": {
+        "rows": 14,
+        "records": 14,
+        "versions": 14,
+        "by_population": {
+          "ledger_records": 14
+        },
+        "digest": "sha256:48b0ff941fa495ef46e5cb754149cd49b30fca5831d6e8a4097b64a0502295e9",
+        "bytes": 21660,
+        "collected_from": "2026-09-19T16:28:18.983Z",
+        "collected_to": "2026-09-19T16:28:18.983Z"
+      },
+      "import": {
+        "status": "succeeded",
+        "error_code": null,
+        "attempts": 1,
+        "runs": 1,
+        "resumed_runs": 0,
+        "written": {
+          "ledger_records": {
+            "seen": 14,
+            "inserted": 14,
+            "unchanged": 0,
+            "rejected": 0,
+            "conflicts": 0,
+            "tombstoned": 0
+          }
+        },
+        "checks_passed": 12,
+        "checks_failed": []
+      },
+      "replay": {
+        "status": "succeeded",
+        "written": {
+          "ledger_records": {
+            "seen": 14,
+            "inserted": 0,
+            "unchanged": 14,
+            "rejected": 0,
+            "conflicts": 0,
+            "tombstoned": 0
+          }
+        },
+        "checks_failed": []
+      },
+      "reconcile": {
+        "status": "reconciled",
+        "checks": [
+          {
+            "name": "source_records",
+            "expected": 14,
+            "actual": 14,
+            "ok": true
+          },
+          {
+            "name": "record_versions",
+            "expected": 14,
+            "actual": 14,
+            "ok": true
+          },
+          {
+            "name": "tombstoned_records",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "rejected_records",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "published_aggregates",
+            "expected": 28,
+            "actual": 28,
+            "ok": true
+          },
+          {
+            "name": "published_aggregates_reported",
+            "expected": 14,
+            "actual": 14,
+            "ok": true
+          },
+          {
+            "name": "published_aggregates_reported_nil",
+            "expected": 14,
+            "actual": 14,
+            "ok": true
+          },
+          {
+            "name": "published_aggregates_not_reported",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "documents",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "records_not_at_their_latest_version",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "typed tables the tally could not read",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "count invariants: per population, inserted + unchanged + rejected + conflicts = seen",
+            "expected": "hold",
+            "actual": "hold",
+            "ok": true
+          }
+        ],
+        "typed_destination_rows": {
+          "party_source_identities": 14,
+          "finance_published_aggregates": 28
+        }
+      }
+    },
+    {
+      "family": "election",
+      "unit": "P17",
+      "writer": "ledger_records_with_projection",
+      "source_ids": [
+        "finance_2025_party_returns_export"
+      ],
+      "product_ids": [
+        "P17"
+      ],
+      "input": {
+        "rows": 23,
+        "records": 17,
+        "versions": 23,
+        "by_population": {
+          "ledger_records": 17
+        },
+        "digest": "sha256:40905746969aeefa2c22b9c88c9d5fa7f0fe6060f8a3a5aca3f5fef8d7a3d9db",
+        "bytes": 71043,
+        "collected_from": "2026-09-19T16:58:58.118Z",
+        "collected_to": "2026-09-19T17:15:27.000Z"
+      },
+      "import": {
+        "status": "succeeded",
+        "error_code": null,
+        "attempts": 1,
+        "runs": 2,
+        "resumed_runs": 0,
+        "written": {
+          "ledger_records": {
+            "seen": 23,
+            "inserted": 23,
+            "unchanged": 0,
+            "rejected": 0,
+            "conflicts": 0,
+            "tombstoned": 0
+          }
+        },
+        "checks_passed": 10,
+        "checks_failed": []
+      },
+      "replay": {
+        "status": "succeeded",
+        "written": {
+          "ledger_records": {
+            "seen": 17,
+            "inserted": 0,
+            "unchanged": 17,
+            "rejected": 0,
+            "conflicts": 0,
+            "tombstoned": 0
+          }
+        },
+        "checks_failed": []
+      },
+      "reconcile": {
+        "status": "reconciled",
+        "checks": [
+          {
+            "name": "source_records",
+            "expected": 17,
+            "actual": 17,
+            "ok": true
+          },
+          {
+            "name": "record_versions",
+            "expected": 23,
+            "actual": 23,
+            "ok": true
+          },
+          {
+            "name": "tombstoned_records",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "rejected_records",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "documents",
+            "expected": 17,
+            "actual": 17,
+            "ok": true
+          },
+          {
+            "name": "finance_return_references",
+            "expected": 17,
+            "actual": 17,
+            "ok": true
+          },
+          {
+            "name": "finance_return_references_image_only",
+            "expected": 6,
+            "actual": 6,
+            "ok": true
+          },
+          {
+            "name": "records_not_at_their_latest_version",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "typed tables the tally could not read",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "count invariants: per population, inserted + unchanged + rejected + conflicts = seen",
+            "expected": "hold",
+            "actual": "hold",
+            "ok": true
+          }
+        ],
+        "typed_destination_rows": {
+          "documents": 17,
+          "party_source_identities": 14,
+          "finance_return_references": 17
+        }
+      }
+    },
+    {
+      "family": "parliament",
+      "unit": "parliament_export_bill_publications",
+      "writer": "ledger_records_with_projection",
+      "source_ids": [
+        "parliament_export_bill_publications"
+      ],
+      "product_ids": [
+        "P02"
+      ],
+      "input": {
+        "rows": 201,
+        "records": 201,
+        "versions": 201,
+        "by_population": {
+          "ledger_records": 201
+        },
+        "digest": "sha256:f66f967769819eaa0295fd9005f5e25d9115f6c92263cc8fa5c2efe3b70e7019",
+        "bytes": 170506,
+        "collected_from": "2026-09-19T18:31:20.033Z",
+        "collected_to": "2026-09-19T18:31:20.033Z"
+      },
+      "import": {
+        "status": "succeeded",
+        "error_code": null,
+        "attempts": 1,
+        "runs": 1,
+        "resumed_runs": 0,
+        "written": {
+          "ledger_records": {
+            "seen": 201,
+            "inserted": 201,
+            "unchanged": 0,
+            "rejected": 0,
+            "conflicts": 0,
+            "tombstoned": 0
+          }
+        },
+        "checks_passed": 9,
+        "checks_failed": []
+      },
+      "replay": {
+        "status": "succeeded",
+        "written": {
+          "ledger_records": {
+            "seen": 201,
+            "inserted": 0,
+            "unchanged": 201,
+            "rejected": 0,
+            "conflicts": 0,
+            "tombstoned": 0
+          }
+        },
+        "checks_failed": []
+      },
+      "reconcile": {
+        "status": "reconciled",
+        "checks": [
+          {
+            "name": "destination records = distinct publisher items in the export",
+            "expected": 201,
+            "actual": 201,
+            "ok": true
+          },
+          {
+            "name": "destination versions = distinct contents in the export",
+            "expected": 201,
+            "actual": 201,
+            "ok": true
+          },
+          {
+            "name": "destination records without a current version",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "destination tombstones written by an import",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "records rejected by the ledger guard",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "typed tables the tally could not read",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "typed rows in bill_publication_sets = distinct records of that kind",
+            "expected": 86,
+            "actual": 86,
+            "ok": true
+          },
+          {
+            "name": "typed rows in bill_publications = distinct records of that kind",
+            "expected": 115,
+            "actual": 115,
+            "ok": true
+          },
+          {
+            "name": "count invariants: per population, inserted + unchanged + rejected + conflicts = seen",
+            "expected": "hold",
+            "actual": "hold",
+            "ok": true
+          }
+        ],
+        "typed_destination_rows": {
+          "bill_publications": 115,
+          "bill_publication_sets": 86
+        }
+      }
+    },
+    {
+      "family": "parliament",
+      "unit": "parliament_export_bill_register",
+      "writer": "ledger_records_with_projection",
+      "source_ids": [
+        "parliament_export_bill_register"
+      ],
+      "product_ids": [
+        "P03"
+      ],
+      "input": {
+        "rows": 3533,
+        "records": 3533,
+        "versions": 3533,
+        "by_population": {
+          "ledger_records": 3533
+        },
+        "digest": "sha256:fe42a774222bb9ce5d5e3782891b3482dd44d75df75086ba2e79f9070917659b",
+        "bytes": 3134282,
+        "collected_from": "2026-09-12T01:51:48.732Z",
+        "collected_to": "2026-09-12T01:51:48.732Z"
+      },
+      "import": {
+        "status": "succeeded",
+        "error_code": null,
+        "attempts": 1,
+        "runs": 1,
+        "resumed_runs": 0,
+        "written": {
+          "ledger_records": {
+            "seen": 3533,
+            "inserted": 3533,
+            "unchanged": 0,
+            "rejected": 0,
+            "conflicts": 0,
+            "tombstoned": 0
+          }
+        },
+        "checks_passed": 8,
+        "checks_failed": []
+      },
+      "replay": {
+        "status": "succeeded",
+        "written": {
+          "ledger_records": {
+            "seen": 3533,
+            "inserted": 0,
+            "unchanged": 3533,
+            "rejected": 0,
+            "conflicts": 0,
+            "tombstoned": 0
+          }
+        },
+        "checks_failed": []
+      },
+      "reconcile": {
+        "status": "reconciled",
+        "checks": [
+          {
+            "name": "destination records = distinct publisher items in the export",
+            "expected": 3533,
+            "actual": 3533,
+            "ok": true
+          },
+          {
+            "name": "destination versions = distinct contents in the export",
+            "expected": 3533,
+            "actual": 3533,
+            "ok": true
+          },
+          {
+            "name": "destination records without a current version",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "destination tombstones written by an import",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "records rejected by the ledger guard",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "typed tables the tally could not read",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "typed rows in bills = distinct records of that kind",
+            "expected": 3533,
+            "actual": 3533,
+            "ok": true
+          },
+          {
+            "name": "count invariants: per population, inserted + unchanged + rejected + conflicts = seen",
+            "expected": "hold",
+            "actual": "hold",
+            "ok": true
+          }
+        ],
+        "typed_destination_rows": {
+          "bills": 3533,
+          "documents": 3533,
+          "bill_stages": 15928,
+          "record_route_keys": 3533
+        }
+      }
+    },
+    {
+      "family": "parliament",
+      "unit": "parliament_export_committee_business",
+      "writer": "ledger_records_with_projection",
+      "source_ids": [
+        "parliament_export_committee_business"
+      ],
+      "product_ids": [
+        "P05"
+      ],
+      "input": {
+        "rows": 124,
+        "records": 123,
+        "versions": 124,
+        "by_population": {
+          "ledger_records": 123
+        },
+        "digest": "sha256:111e2131ec104bf7f4bc8c38a9fa51058e0fe2a0d3f65cb037cc89cab945f1a3",
+        "bytes": 74534,
+        "collected_from": "2026-09-19T01:09:20.010Z",
+        "collected_to": "2026-09-19T23:40:34.302Z"
+      },
+      "import": {
+        "status": "succeeded",
+        "error_code": null,
+        "attempts": 1,
+        "runs": 2,
+        "resumed_runs": 0,
+        "written": {
+          "ledger_records": {
+            "seen": 124,
+            "inserted": 124,
+            "unchanged": 0,
+            "rejected": 0,
+            "conflicts": 0,
+            "tombstoned": 0
+          }
+        },
+        "checks_passed": 8,
+        "checks_failed": []
+      },
+      "replay": {
+        "status": "succeeded",
+        "written": {
+          "ledger_records": {
+            "seen": 124,
+            "inserted": 0,
+            "unchanged": 124,
+            "rejected": 0,
+            "conflicts": 0,
+            "tombstoned": 0
+          }
+        },
+        "checks_failed": []
+      },
+      "reconcile": {
+        "status": "reconciled",
+        "checks": [
+          {
+            "name": "destination records = distinct publisher items in the export",
+            "expected": 123,
+            "actual": 123,
+            "ok": true
+          },
+          {
+            "name": "destination versions = distinct contents in the export",
+            "expected": 124,
+            "actual": 124,
+            "ok": true
+          },
+          {
+            "name": "destination records without a current version",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "destination tombstones written by an import",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "records rejected by the ledger guard",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "typed tables the tally could not read",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "typed rows in committee_business_items = distinct records of that kind",
+            "expected": 123,
+            "actual": 123,
+            "ok": true
+          },
+          {
+            "name": "count invariants: per population, inserted + unchanged + rejected + conflicts = seen",
+            "expected": "hold",
+            "actual": "hold",
+            "ok": true
+          }
+        ],
+        "typed_destination_rows": {
+          "documents": 123,
+          "record_route_keys": 123,
+          "committee_business_items": 123
+        }
+      }
+    },
+    {
+      "family": "parliament",
+      "unit": "parliament_export_committee_report_files",
+      "writer": "ledger_records_with_projection",
+      "source_ids": [
+        "parliament_export_committee_report_files"
+      ],
+      "product_ids": [
+        "P06"
+      ],
+      "input": {
+        "rows": 1285,
+        "records": 1285,
+        "versions": 1285,
+        "by_population": {
+          "ledger_records": 1285
+        },
+        "digest": "sha256:b2067a1e7084e5dfef1eb0580598d01e13cdb434b26aae923c1dabbca2502105",
+        "bytes": 1083610,
+        "collected_from": "2026-09-19T09:08:40.507Z",
+        "collected_to": "2026-09-19T11:50:31.743Z"
+      },
+      "import": {
+        "status": "succeeded",
+        "error_code": null,
+        "attempts": 1,
+        "runs": 1,
+        "resumed_runs": 0,
+        "written": {
+          "ledger_records": {
+            "seen": 1285,
+            "inserted": 1285,
+            "unchanged": 0,
+            "rejected": 0,
+            "conflicts": 0,
+            "tombstoned": 0
+          }
+        },
+        "checks_passed": 8,
+        "checks_failed": []
+      },
+      "replay": {
+        "status": "succeeded",
+        "written": {
+          "ledger_records": {
+            "seen": 1285,
+            "inserted": 0,
+            "unchanged": 1285,
+            "rejected": 0,
+            "conflicts": 0,
+            "tombstoned": 0
+          }
+        },
+        "checks_failed": []
+      },
+      "reconcile": {
+        "status": "reconciled",
+        "checks": [
+          {
+            "name": "destination records = distinct publisher items in the export",
+            "expected": 1285,
+            "actual": 1285,
+            "ok": true
+          },
+          {
+            "name": "destination versions = distinct contents in the export",
+            "expected": 1285,
+            "actual": 1285,
+            "ok": true
+          },
+          {
+            "name": "destination records without a current version",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "destination tombstones written by an import",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "records rejected by the ledger guard",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "typed tables the tally could not read",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "typed rows in committee_report_files = distinct records of that kind",
+            "expected": 1285,
+            "actual": 1285,
+            "ok": true
+          },
+          {
+            "name": "count invariants: per population, inserted + unchanged + rejected + conflicts = seen",
+            "expected": "hold",
+            "actual": "hold",
+            "ok": true
+          }
+        ],
+        "typed_destination_rows": {
+          "committee_report_files": 1285
+        }
+      }
+    },
+    {
+      "family": "parliament",
+      "unit": "parliament_export_committee_reports",
+      "writer": "ledger_records_with_projection",
+      "source_ids": [
+        "parliament_export_committee_reports"
+      ],
+      "product_ids": [
+        "P07"
+      ],
+      "input": {
+        "rows": 1536,
+        "records": 1286,
+        "versions": 1286,
+        "by_population": {
+          "ledger_records": 1286
+        },
+        "digest": "sha256:d7364cfeacb95b78b482e11c1a414995d245a198d07686107bf7f84fd5f360d4",
+        "bytes": 902694,
+        "collected_from": "2026-09-19T01:52:39.009Z",
+        "collected_to": "2026-09-19T23:40:56.186Z"
+      },
+      "import": {
+        "status": "succeeded",
+        "error_code": null,
+        "attempts": 1,
+        "runs": 1,
+        "resumed_runs": 0,
+        "written": {
+          "ledger_records": {
+            "seen": 1286,
+            "inserted": 1286,
+            "unchanged": 0,
+            "rejected": 0,
+            "conflicts": 0,
+            "tombstoned": 0
+          }
+        },
+        "checks_passed": 8,
+        "checks_failed": []
+      },
+      "replay": {
+        "status": "succeeded",
+        "written": {
+          "ledger_records": {
+            "seen": 1286,
+            "inserted": 0,
+            "unchanged": 1286,
+            "rejected": 0,
+            "conflicts": 0,
+            "tombstoned": 0
+          }
+        },
+        "checks_failed": []
+      },
+      "reconcile": {
+        "status": "reconciled",
+        "checks": [
+          {
+            "name": "destination records = distinct publisher items in the export",
+            "expected": 1286,
+            "actual": 1286,
+            "ok": true
+          },
+          {
+            "name": "destination versions = distinct contents in the export",
+            "expected": 1286,
+            "actual": 1286,
+            "ok": true
+          },
+          {
+            "name": "destination records without a current version",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "destination tombstones written by an import",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "records rejected by the ledger guard",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "typed tables the tally could not read",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "typed rows in committee_reports = distinct records of that kind",
+            "expected": 1286,
+            "actual": 1286,
+            "ok": true
+          },
+          {
+            "name": "count invariants: per population, inserted + unchanged + rejected + conflicts = seen",
+            "expected": "hold",
+            "actual": "hold",
+            "ok": true
+          }
+        ],
+        "typed_destination_rows": {
+          "documents": 1286,
+          "committee_reports": 1286,
+          "record_route_keys": 1286
+        }
+      }
+    },
+    {
+      "family": "parliament",
+      "unit": "parliament_export_current_bills_history",
+      "writer": "ledger_records_with_projection",
+      "source_ids": [
+        "parliament_export_current_bills_history"
+      ],
+      "product_ids": [
+        "P03"
+      ],
+      "input": {
+        "rows": 582,
+        "records": 101,
+        "versions": 113,
+        "by_population": {
+          "ledger_records": 101
+        },
+        "digest": "sha256:0c60ca170d07bf3854912c7bcacde12ad9b2251c23fe8e0775fa83bfadbf9689",
+        "bytes": 247223,
+        "collected_from": "2026-09-15T19:03:37.424Z",
+        "collected_to": "2026-09-19T23:39:34.378Z"
+      },
+      "import": {
+        "status": "succeeded",
+        "error_code": null,
+        "attempts": 1,
+        "runs": 3,
+        "resumed_runs": 0,
+        "written": {
+          "ledger_records": {
+            "seen": 113,
+            "inserted": 113,
+            "unchanged": 0,
+            "rejected": 0,
+            "conflicts": 0,
+            "tombstoned": 0
+          }
+        },
+        "checks_passed": 8,
+        "checks_failed": []
+      },
+      "replay": {
+        "status": "succeeded",
+        "written": {
+          "ledger_records": {
+            "seen": 113,
+            "inserted": 0,
+            "unchanged": 113,
+            "rejected": 0,
+            "conflicts": 0,
+            "tombstoned": 0
+          }
+        },
+        "checks_failed": []
+      },
+      "reconcile": {
+        "status": "reconciled",
+        "checks": [
+          {
+            "name": "destination records = distinct publisher items in the export",
+            "expected": 101,
+            "actual": 101,
+            "ok": true
+          },
+          {
+            "name": "destination versions = distinct contents in the export",
+            "expected": 113,
+            "actual": 113,
+            "ok": true
+          },
+          {
+            "name": "destination records without a current version",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "destination tombstones written by an import",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "records rejected by the ledger guard",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "typed tables the tally could not read",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "typed rows in bills = distinct records of that kind",
+            "expected": 101,
+            "actual": 101,
+            "ok": true
+          },
+          {
+            "name": "count invariants: per population, inserted + unchanged + rejected + conflicts = seen",
+            "expected": "hold",
+            "actual": "hold",
+            "ok": true
+          }
+        ],
+        "typed_destination_rows": {
+          "bills": 101,
+          "documents": 101,
+          "record_route_keys": 101
+        }
+      }
+    },
+    {
+      "family": "parliament",
+      "unit": "parliament_export_member_terms",
+      "writer": "ledger_records_with_projection",
+      "source_ids": [
+        "parliament_export_member_terms"
+      ],
+      "product_ids": [
+        "P10"
+      ],
+      "input": {
+        "rows": 122,
+        "records": 122,
+        "versions": 122,
+        "by_population": {
+          "ledger_records": 122
+        },
+        "digest": "sha256:e90382148a92e69e5f432f7919b44d1a3f2fec1ee84777b5fd5b81662c3087b9",
+        "bytes": 64522,
+        "collected_from": "2026-09-12T02:21:43.863Z",
+        "collected_to": "2026-09-12T02:21:43.863Z"
+      },
+      "import": {
+        "status": "succeeded",
+        "error_code": null,
+        "attempts": 1,
+        "runs": 1,
+        "resumed_runs": 0,
+        "written": {
+          "ledger_records": {
+            "seen": 122,
+            "inserted": 122,
+            "unchanged": 0,
+            "rejected": 0,
+            "conflicts": 0,
+            "tombstoned": 0
+          }
+        },
+        "checks_passed": 8,
+        "checks_failed": []
+      },
+      "replay": {
+        "status": "succeeded",
+        "written": {
+          "ledger_records": {
+            "seen": 122,
+            "inserted": 0,
+            "unchanged": 122,
+            "rejected": 0,
+            "conflicts": 0,
+            "tombstoned": 0
+          }
+        },
+        "checks_failed": []
+      },
+      "reconcile": {
+        "status": "reconciled",
+        "checks": [
+          {
+            "name": "destination records = distinct publisher items in the export",
+            "expected": 122,
+            "actual": 122,
+            "ok": true
+          },
+          {
+            "name": "destination versions = distinct contents in the export",
+            "expected": 122,
+            "actual": 122,
+            "ok": true
+          },
+          {
+            "name": "destination records without a current version",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "destination tombstones written by an import",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "records rejected by the ledger guard",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "typed tables the tally could not read",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "typed rows in parliamentary_service_terms = distinct records of that kind",
+            "expected": 122,
+            "actual": 122,
+            "ok": true
+          },
+          {
+            "name": "count invariants: per population, inserted + unchanged + rejected + conflicts = seen",
+            "expected": "hold",
+            "actual": "hold",
+            "ok": true
+          }
+        ],
+        "typed_destination_rows": {
+          "party_source_identities": 6,
+          "person_source_identities": 122,
+          "parliamentary_service_terms": 122
+        }
+      }
+    },
+    {
+      "family": "parliament",
+      "unit": "parliament_export_minister_roles",
+      "writer": "ledger_records_with_projection",
+      "source_ids": [
+        "parliament_export_minister_roles"
+      ],
+      "product_ids": [
+        "P10"
+      ],
+      "input": {
+        "rows": 111,
+        "records": 111,
+        "versions": 111,
+        "by_population": {
+          "ledger_records": 111
+        },
+        "digest": "sha256:424862f00119794f125b351577cd4d88effb91d25b1a1da4718a1f041a3720ae",
+        "bytes": 53224,
+        "collected_from": "2026-09-12T02:21:43.863Z",
+        "collected_to": "2026-09-12T02:21:43.863Z"
+      },
+      "import": {
+        "status": "succeeded",
+        "error_code": null,
+        "attempts": 1,
+        "runs": 1,
+        "resumed_runs": 0,
+        "written": {
+          "ledger_records": {
+            "seen": 111,
+            "inserted": 111,
+            "unchanged": 0,
+            "rejected": 0,
+            "conflicts": 0,
+            "tombstoned": 0
+          }
+        },
+        "checks_passed": 8,
+        "checks_failed": []
+      },
+      "replay": {
+        "status": "succeeded",
+        "written": {
+          "ledger_records": {
+            "seen": 111,
+            "inserted": 0,
+            "unchanged": 111,
+            "rejected": 0,
+            "conflicts": 0,
+            "tombstoned": 0
+          }
+        },
+        "checks_failed": []
+      },
+      "reconcile": {
+        "status": "reconciled",
+        "checks": [
+          {
+            "name": "destination records = distinct publisher items in the export",
+            "expected": 111,
+            "actual": 111,
+            "ok": true
+          },
+          {
+            "name": "destination versions = distinct contents in the export",
+            "expected": 111,
+            "actual": 111,
+            "ok": true
+          },
+          {
+            "name": "destination records without a current version",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "destination tombstones written by an import",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "records rejected by the ledger guard",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "typed tables the tally could not read",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "typed rows in role_terms = distinct records of that kind",
+            "expected": 111,
+            "actual": 111,
+            "ok": true
+          },
+          {
+            "name": "count invariants: per population, inserted + unchanged + rejected + conflicts = seen",
+            "expected": "hold",
+            "actual": "hold",
+            "ok": true
+          }
+        ],
+        "typed_destination_rows": {
+          "role_terms": 111,
+          "person_source_identities": 29
+        }
+      }
+    },
+    {
+      "family": "parliament",
+      "unit": "parliament_export_release_attributions",
+      "writer": "ledger_records_with_projection",
+      "source_ids": [
+        "parliament_export_release_attributions"
+      ],
+      "product_ids": [
+        "P01"
+      ],
+      "input": {
+        "rows": 536,
+        "records": 530,
+        "versions": 536,
+        "by_population": {
+          "ledger_records": 530
+        },
+        "digest": "sha256:9c7e89182e2391a64df18c07526ab07ac22c5436f4fd007197b8d65495d3fc2b",
+        "bytes": 405159,
+        "collected_from": "2026-09-12T02:49:42.235Z",
+        "collected_to": "2026-09-12T04:50:18.790Z"
+      },
+      "import": {
+        "status": "succeeded",
+        "error_code": null,
+        "attempts": 1,
+        "runs": 2,
+        "resumed_runs": 0,
+        "written": {
+          "ledger_records": {
+            "seen": 536,
+            "inserted": 536,
+            "unchanged": 0,
+            "rejected": 0,
+            "conflicts": 0,
+            "tombstoned": 0
+          }
+        },
+        "checks_passed": 8,
+        "checks_failed": []
+      },
+      "replay": {
+        "status": "succeeded",
+        "written": {
+          "ledger_records": {
+            "seen": 536,
+            "inserted": 0,
+            "unchanged": 536,
+            "rejected": 0,
+            "conflicts": 0,
+            "tombstoned": 0
+          }
+        },
+        "checks_failed": []
+      },
+      "reconcile": {
+        "status": "reconciled",
+        "checks": [
+          {
+            "name": "destination records = distinct publisher items in the export",
+            "expected": 530,
+            "actual": 530,
+            "ok": true
+          },
+          {
+            "name": "destination versions = distinct contents in the export",
+            "expected": 536,
+            "actual": 536,
+            "ok": true
+          },
+          {
+            "name": "destination records without a current version",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "destination tombstones written by an import",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "records rejected by the ledger guard",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "typed tables the tally could not read",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "typed rows in release_attributions = distinct records of that kind",
+            "expected": 530,
+            "actual": 530,
+            "ok": true
+          },
+          {
+            "name": "count invariants: per population, inserted + unchanged + rejected + conflicts = seen",
+            "expected": "hold",
+            "actual": "hold",
+            "ok": true
+          }
+        ],
+        "typed_destination_rows": {
+          "release_attributions": 530
+        }
+      }
+    },
+    {
+      "family": "parliament",
+      "unit": "parliament_export_releases_history",
+      "writer": "ledger_records_with_projection",
+      "source_ids": [
+        "parliament_export_releases_history"
+      ],
+      "product_ids": [
+        "P01"
+      ],
+      "input": {
+        "rows": 4745,
+        "records": 4735,
+        "versions": 4745,
+        "by_population": {
+          "ledger_records": 4735
+        },
+        "digest": "sha256:1b338436e8c5d804f44e349158c68b1f1eb01cfdb7bda02fdf5e5cedf94862d1",
+        "bytes": 2305396,
+        "collected_from": "2026-09-19T09:26:38.000Z",
+        "collected_to": "2026-09-19T16:17:15.000Z"
+      },
+      "import": {
+        "status": "succeeded",
+        "error_code": null,
+        "attempts": 1,
+        "runs": 2,
+        "resumed_runs": 0,
+        "written": {
+          "ledger_records": {
+            "seen": 4745,
+            "inserted": 4745,
+            "unchanged": 0,
+            "rejected": 0,
+            "conflicts": 0,
+            "tombstoned": 0
+          }
+        },
+        "checks_passed": 8,
+        "checks_failed": []
+      },
+      "replay": {
+        "status": "succeeded",
+        "written": {
+          "ledger_records": {
+            "seen": 4745,
+            "inserted": 0,
+            "unchanged": 4745,
+            "rejected": 0,
+            "conflicts": 0,
+            "tombstoned": 0
+          }
+        },
+        "checks_failed": []
+      },
+      "reconcile": {
+        "status": "reconciled",
+        "checks": [
+          {
+            "name": "destination records = distinct publisher items in the export",
+            "expected": 4735,
+            "actual": 4735,
+            "ok": true
+          },
+          {
+            "name": "destination versions = distinct contents in the export",
+            "expected": 4745,
+            "actual": 4745,
+            "ok": true
+          },
+          {
+            "name": "destination records without a current version",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "destination tombstones written by an import",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "records rejected by the ledger guard",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "typed tables the tally could not read",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "typed rows in releases = distinct records of that kind",
+            "expected": 4735,
+            "actual": 4735,
+            "ok": true
+          },
+          {
+            "name": "count invariants: per population, inserted + unchanged + rejected + conflicts = seen",
+            "expected": "hold",
+            "actual": "hold",
+            "ok": true
+          }
+        ],
+        "typed_destination_rows": {
+          "releases": 4735,
+          "documents": 4735,
+          "record_route_keys": 4735
+        }
+      }
+    },
+    {
+      "family": "parliament",
+      "unit": "parliament_export_written_questions",
+      "writer": "ledger_records_with_projection",
+      "source_ids": [
+        "parliament_export_written_questions"
+      ],
+      "product_ids": [
+        "P24"
+      ],
+      "input": {
+        "rows": 225322,
+        "records": 187956,
+        "versions": 187956,
+        "by_population": {
+          "ledger_records": 187956
+        },
+        "digest": "sha256:de133b68ee7e3ff89a7a3dd49d112da0d33b491afe0407733ec9b26726233c19",
+        "bytes": 212185161,
+        "collected_from": "2026-09-19T01:54:46.231Z",
+        "collected_to": "2026-09-19T14:29:45.223Z"
+      },
+      "import": {
+        "status": "succeeded",
+        "error_code": null,
+        "attempts": 1,
+        "runs": 1,
+        "resumed_runs": 1,
+        "written": {
+          "ledger_records": {
+            "seen": 167156,
+            "inserted": 167156,
+            "unchanged": 0,
+            "rejected": 0,
+            "conflicts": 0,
+            "tombstoned": 0
+          }
+        },
+        "checks_passed": 8,
+        "checks_failed": []
+      },
+      "replay": {
+        "status": "succeeded",
+        "written": {
+          "ledger_records": {
+            "seen": 187956,
+            "inserted": 0,
+            "unchanged": 187956,
+            "rejected": 0,
+            "conflicts": 0,
+            "tombstoned": 0
+          }
+        },
+        "checks_failed": []
+      },
+      "reconcile": {
+        "status": "reconciled",
+        "checks": [
+          {
+            "name": "destination records = distinct publisher items in the export",
+            "expected": 187956,
+            "actual": 187956,
+            "ok": true
+          },
+          {
+            "name": "destination versions = distinct contents in the export",
+            "expected": 187956,
+            "actual": 187956,
+            "ok": true
+          },
+          {
+            "name": "destination records without a current version",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "destination tombstones written by an import",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "records rejected by the ledger guard",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "typed tables the tally could not read",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "typed rows in written_questions = distinct records of that kind",
+            "expected": 187956,
+            "actual": 187956,
+            "ok": true
+          },
+          {
+            "name": "count invariants: per population, inserted + unchanged + rejected + conflicts = seen",
+            "expected": "hold",
+            "actual": "hold",
+            "ok": true
+          }
+        ],
+        "typed_destination_rows": {
+          "documents": 187956,
+          "record_route_keys": 187956,
+          "written_questions": 187956
+        }
+      }
+    },
+    {
+      "family": "statistics",
+      "unit": "stats_healthnz_data",
+      "writer": "typed_statistics_bulk_writer",
+      "source_ids": [
+        "stats_healthnz_data"
+      ],
+      "product_ids": [
+        "P11"
+      ],
+      "input": {
+        "rows": 93,
+        "records": null,
+        "versions": null,
+        "by_population": {
+          "stat_observations": 44,
+          "stat_catalogue_entries": 49
+        },
+        "digest": "sha256:3c5f32d306e5429b02cd4352cb4e74d7148fe564f9cfb8a6c8cfc45835bebab6",
+        "bytes": 117956,
+        "collected_from": "2026-09-15T19:03:59.219Z",
+        "collected_to": "2026-09-16T03:36:15.650Z"
+      },
+      "import": {
+        "status": "succeeded",
+        "error_code": null,
+        "attempts": 1,
+        "runs": 1,
+        "resumed_runs": 0,
+        "written": {
+          "stat_observations": {
+            "seen": 44,
+            "inserted": 44,
+            "unchanged": 0,
+            "rejected": 0,
+            "conflicts": 0,
+            "tombstoned": 0
+          },
+          "stat_catalogue_entries": {
+            "seen": 49,
+            "inserted": 49,
+            "unchanged": 0,
+            "rejected": 0,
+            "conflicts": 0,
+            "tombstoned": 0
+          }
+        },
+        "checks_passed": 6,
+        "checks_failed": []
+      },
+      "replay": {
+        "status": "succeeded",
+        "written": {
+          "stat_observations": {
+            "seen": 44,
+            "inserted": 0,
+            "unchanged": 44,
+            "rejected": 0,
+            "conflicts": 0,
+            "tombstoned": 0
+          },
+          "stat_catalogue_entries": {
+            "seen": 49,
+            "inserted": 0,
+            "unchanged": 49,
+            "rejected": 0,
+            "conflicts": 0,
+            "tombstoned": 0
+          }
+        },
+        "checks_failed": []
+      },
+      "reconcile": {
+        "status": "reconciled",
+        "checks": [
+          {
+            "name": "typed tables the tally could not read",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "observations of healthnz.primary_care.pho_enrolment_availability @ file-520cca019dde6d71",
+            "expected": 44,
+            "actual": 44,
+            "ok": true
+          },
+          {
+            "name": "catalogue entry versions in the store >= versions in the artifact",
+            "expected": "true",
+            "actual": "true",
+            "ok": true
+          },
+          {
+            "name": "rows under a withheld status that carry a number",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "count invariants: per population, inserted + unchanged + rejected + conflicts = seen",
+            "expected": "hold",
+            "actual": "hold",
+            "ok": true
+          }
+        ],
+        "typed_destination_rows": {
+          "stat_series": 44,
+          "stat_datasets": 1,
+          "stat_releases": 1,
+          "stat_observations": 44,
+          "geography_versions": 20,
+          "stat_source_summary": 1,
+          "stat_catalogue_entries": 49
+        }
+      }
+    },
+    {
+      "family": "statistics",
+      "unit": "stats_msd_benefits",
+      "writer": "typed_statistics_bulk_writer",
+      "source_ids": [
+        "stats_msd_benefits"
+      ],
+      "product_ids": [
+        "P12"
+      ],
+      "input": {
+        "rows": 930,
+        "records": null,
+        "versions": null,
+        "by_population": {
+          "stat_observations": 903,
+          "stat_catalogue_entries": 27
+        },
+        "digest": "sha256:2331ecff8f70a4f0e18a788465fe44289d8faf1ee067645503c04bc595cc76cd",
+        "bytes": 684465,
+        "collected_from": "2026-09-15T19:03:55.040Z",
+        "collected_to": "2026-09-16T03:16:38.542Z"
+      },
+      "import": {
+        "status": "succeeded",
+        "error_code": null,
+        "attempts": 1,
+        "runs": 1,
+        "resumed_runs": 0,
+        "written": {
+          "stat_observations": {
+            "seen": 903,
+            "inserted": 903,
+            "unchanged": 0,
+            "rejected": 0,
+            "conflicts": 0,
+            "tombstoned": 0
+          },
+          "stat_catalogue_entries": {
+            "seen": 27,
+            "inserted": 27,
+            "unchanged": 0,
+            "rejected": 0,
+            "conflicts": 0,
+            "tombstoned": 0
+          }
+        },
+        "checks_passed": 6,
+        "checks_failed": []
+      },
+      "replay": {
+        "status": "succeeded",
+        "written": {
+          "stat_observations": {
+            "seen": 903,
+            "inserted": 0,
+            "unchanged": 903,
+            "rejected": 0,
+            "conflicts": 0,
+            "tombstoned": 0
+          },
+          "stat_catalogue_entries": {
+            "seen": 27,
+            "inserted": 0,
+            "unchanged": 27,
+            "rejected": 0,
+            "conflicts": 0,
+            "tombstoned": 0
+          }
+        },
+        "checks_failed": []
+      },
+      "reconcile": {
+        "status": "reconciled",
+        "checks": [
+          {
+            "name": "typed tables the tally could not read",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "observations of msd-quarterly-national-benefit-tables @ June 2026",
+            "expected": 903,
+            "actual": 903,
+            "ok": true
+          },
+          {
+            "name": "catalogue entry versions in the store >= versions in the artifact",
+            "expected": "true",
+            "actual": "true",
+            "ok": true
+          },
+          {
+            "name": "rows under a withheld status that carry a number",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "count invariants: per population, inserted + unchanged + rejected + conflicts = seen",
+            "expected": "hold",
+            "actual": "hold",
+            "ok": true
+          }
+        ],
+        "typed_destination_rows": {
+          "stat_series": 43,
+          "stat_datasets": 1,
+          "stat_releases": 1,
+          "stat_observations": 903,
+          "geography_versions": 1,
+          "stat_source_summary": 1,
+          "stat_catalogue_entries": 27
+        }
+      }
+    },
+    {
+      "family": "statistics",
+      "unit": "stats_nz_census_2013_meshblock",
+      "writer": "typed_statistics_bulk_writer",
+      "source_ids": [
+        "stats_nz_census_2013_meshblock"
+      ],
+      "product_ids": [],
+      "input": {
+        "rows": 882180,
+        "records": null,
+        "versions": null,
+        "by_population": {
+          "stat_observations": 882180
+        },
+        "digest": "sha256:9c83d59e177dc0db9b4db04fdb0b21bec1c72a1206b91cad28cfe657bcaf647b",
+        "bytes": 763213751,
+        "collected_from": "2026-09-12T03:53:40.000Z",
+        "collected_to": "2026-09-12T03:53:40.000Z"
+      },
+      "import": {
+        "status": "succeeded",
+        "error_code": null,
+        "attempts": 1,
+        "runs": 1,
+        "resumed_runs": 0,
+        "written": {
+          "stat_observations": {
+            "seen": 882180,
+            "inserted": 882180,
+            "unchanged": 0,
+            "rejected": 0,
+            "conflicts": 0,
+            "tombstoned": 0
+          }
+        },
+        "checks_passed": 5,
+        "checks_failed": []
+      },
+      "replay": {
+        "status": "succeeded",
+        "written": {
+          "stat_observations": {
+            "seen": 882180,
+            "inserted": 0,
+            "unchanged": 882180,
+            "rejected": 0,
+            "conflicts": 0,
+            "tombstoned": 0
+          }
+        },
+        "checks_failed": []
+      },
+      "reconcile": {
+        "status": "reconciled",
+        "checks": [
+          {
+            "name": "typed tables the tally could not read",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "observations of statsnz.census.2013.meshblock.selected_totals @ 2014-03-25 source page; 2001/2006/2013 observations",
+            "expected": 882180,
+            "actual": 882180,
+            "ok": true
+          },
+          {
+            "name": "catalogue entry versions in the store >= versions in the artifact",
+            "expected": "true",
+            "actual": "true",
+            "ok": true
+          },
+          {
+            "name": "rows under a withheld status that carry a number",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "count invariants: per population, inserted + unchanged + rejected + conflicts = seen",
+            "expected": "hold",
+            "actual": "hold",
+            "ok": true
+          }
+        ],
+        "typed_destination_rows": {
+          "stat_series": 6,
+          "stat_datasets": 1,
+          "stat_releases": 1,
+          "stat_observations": 882180,
+          "geography_versions": 49010,
+          "stat_source_summary": 1
+        }
+      }
+    },
+    {
+      "family": "statistics",
+      "unit": "stats_nz_census_2018_highlights",
+      "writer": "typed_statistics_bulk_writer",
+      "source_ids": [
+        "stats_nz_census_2018_highlights"
+      ],
+      "product_ids": [
+        "P19"
+      ],
+      "input": {
+        "rows": 4966,
+        "records": null,
+        "versions": null,
+        "by_population": {
+          "stat_observations": 4966
+        },
+        "digest": "sha256:344cf1ac62e198aec0d36e307f55b85b35cff0dbd786d7034f3963e983bf9e10",
+        "bytes": 7554123,
+        "collected_from": "2026-09-12T03:53:40.000Z",
+        "collected_to": "2026-09-12T03:53:40.000Z"
+      },
+      "import": {
+        "status": "succeeded",
+        "error_code": null,
+        "attempts": 1,
+        "runs": 1,
+        "resumed_runs": 0,
+        "written": {
+          "stat_observations": {
+            "seen": 4966,
+            "inserted": 4966,
+            "unchanged": 0,
+            "rejected": 0,
+            "conflicts": 0,
+            "tombstoned": 0
+          }
+        },
+        "checks_passed": 5,
+        "checks_failed": []
+      },
+      "replay": {
+        "status": "succeeded",
+        "written": {
+          "stat_observations": {
+            "seen": 4966,
+            "inserted": 0,
+            "unchanged": 4966,
+            "rejected": 0,
+            "conflicts": 0,
+            "tombstoned": 0
+          }
+        },
+        "checks_failed": []
+      },
+      "reconcile": {
+        "status": "reconciled",
+        "checks": [
+          {
+            "name": "typed tables the tally could not read",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "observations of statsnz.census.2018.national_highlights @ 2018 Census release",
+            "expected": 4966,
+            "actual": 4966,
+            "ok": true
+          },
+          {
+            "name": "catalogue entry versions in the store >= versions in the artifact",
+            "expected": "true",
+            "actual": "true",
+            "ok": true
+          },
+          {
+            "name": "rows under a withheld status that carry a number",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "count invariants: per population, inserted + unchanged + rejected + conflicts = seen",
+            "expected": "hold",
+            "actual": "hold",
+            "ok": true
+          }
+        ],
+        "typed_destination_rows": {
+          "stat_series": 4966,
+          "stat_datasets": 1,
+          "stat_releases": 1,
+          "stat_observations": 4966,
+          "geography_versions": 1,
+          "stat_source_summary": 1
+        }
+      }
+    },
+    {
+      "family": "statistics",
+      "unit": "stats_nz_census_2023",
+      "writer": "typed_statistics_bulk_writer",
+      "source_ids": [
+        "stats_nz_census_2023"
+      ],
+      "product_ids": [
+        "P21"
+      ],
+      "input": {
+        "rows": 38446,
+        "records": null,
+        "versions": null,
+        "by_population": {
+          "stat_observations": 37689,
+          "stat_catalogue_entries": 757
+        },
+        "digest": "sha256:73d0698295f05ad5534da065f152cf52e28a20fe525a0a3ce94d653ca8706ffc",
+        "bytes": 30792408,
+        "collected_from": "2026-09-12T03:53:40.000Z",
+        "collected_to": "2026-09-16T03:16:27.491Z"
+      },
+      "import": {
+        "status": "succeeded",
+        "error_code": null,
+        "attempts": 1,
+        "runs": 1,
+        "resumed_runs": 0,
+        "written": {
+          "stat_observations": {
+            "seen": 37689,
+            "inserted": 37689,
+            "unchanged": 0,
+            "rejected": 0,
+            "conflicts": 0,
+            "tombstoned": 0
+          },
+          "stat_catalogue_entries": {
+            "seen": 757,
+            "inserted": 757,
+            "unchanged": 0,
+            "rejected": 0,
+            "conflicts": 0,
+            "tombstoned": 0
+          }
+        },
+        "checks_passed": 7,
+        "checks_failed": []
+      },
+      "replay": {
+        "status": "succeeded",
+        "written": {
+          "stat_observations": {
+            "seen": 37689,
+            "inserted": 0,
+            "unchanged": 37689,
+            "rejected": 0,
+            "conflicts": 0,
+            "tombstoned": 0
+          },
+          "stat_catalogue_entries": {
+            "seen": 757,
+            "inserted": 0,
+            "unchanged": 757,
+            "rejected": 0,
+            "conflicts": 0,
+            "tombstoned": 0
+          }
+        },
+        "checks_failed": []
+      },
+      "reconcile": {
+        "status": "reconciled",
+        "checks": [
+          {
+            "name": "typed tables the tally could not read",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "observations of statsnz.census.2023.electoral_populations @ 2024-10-23",
+            "expected": 658,
+            "actual": 658,
+            "ok": true
+          },
+          {
+            "name": "observations of statsnz.census.2023.population_ethnicity_age_maori_descent_dwellings @ 2024-05-29",
+            "expected": 37031,
+            "actual": 37031,
+            "ok": true
+          },
+          {
+            "name": "catalogue entry versions in the store >= versions in the artifact",
+            "expected": "true",
+            "actual": "true",
+            "ok": true
+          },
+          {
+            "name": "rows under a withheld status that carry a number",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "count invariants: per population, inserted + unchanged + rejected + conflicts = seen",
+            "expected": "hold",
+            "actual": "hold",
+            "ok": true
+          }
+        ],
+        "typed_destination_rows": {
+          "stat_series": 815,
+          "stat_datasets": 2,
+          "stat_releases": 2,
+          "stat_observations": 37689,
+          "geography_versions": 188,
+          "stat_source_summary": 1,
+          "stat_catalogue_entries": 757
+        }
+      }
+    },
+    {
+      "family": "statistics",
+      "unit": "stats_nz_csv_catalogue",
+      "writer": "typed_statistics_bulk_writer",
+      "source_ids": [
+        "stats_nz_csv_catalogue"
+      ],
+      "product_ids": [
+        "P20"
+      ],
+      "input": {
+        "rows": 128,
+        "records": null,
+        "versions": null,
+        "by_population": {
+          "stat_catalogue_entries": 128
+        },
+        "digest": "sha256:1b99528e906d20ffc776eda2d040d92e3a8a02ee6b2704502a3d25639452aea3",
+        "bytes": 114139,
+        "collected_from": "2026-09-15T19:03:49.000Z",
+        "collected_to": "2026-09-18T01:08:53.000Z"
+      },
+      "import": {
+        "status": "succeeded",
+        "error_code": null,
+        "attempts": 1,
+        "runs": 1,
+        "resumed_runs": 0,
+        "written": {
+          "stat_catalogue_entries": {
+            "seen": 128,
+            "inserted": 128,
+            "unchanged": 0,
+            "rejected": 0,
+            "conflicts": 0,
+            "tombstoned": 0
+          }
+        },
+        "checks_passed": 5,
+        "checks_failed": []
+      },
+      "replay": {
+        "status": "succeeded",
+        "written": {
+          "stat_catalogue_entries": {
+            "seen": 128,
+            "inserted": 0,
+            "unchanged": 128,
+            "rejected": 0,
+            "conflicts": 0,
+            "tombstoned": 0
+          }
+        },
+        "checks_failed": []
+      },
+      "reconcile": {
+        "status": "reconciled",
+        "checks": [
+          {
+            "name": "typed tables the tally could not read",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "catalogue entry versions in the store >= versions in the artifact",
+            "expected": "true",
+            "actual": "true",
+            "ok": true
+          },
+          {
+            "name": "rows under a withheld status that carry a number",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "count invariants: per population, inserted + unchanged + rejected + conflicts = seen",
+            "expected": "hold",
+            "actual": "hold",
+            "ok": true
+          }
+        ],
+        "typed_destination_rows": {
+          "stat_source_summary": 1,
+          "stat_catalogue_entries": 128
+        }
+      }
+    },
+    {
+      "family": "statistics",
+      "unit": "stats_nz_release_series",
+      "writer": "typed_statistics_bulk_writer",
+      "source_ids": [
+        "stats_nz_release_series"
+      ],
+      "product_ids": [
+        "P22"
+      ],
+      "input": {
+        "rows": 234325,
+        "records": null,
+        "versions": null,
+        "by_population": {
+          "stat_observations": 234325
+        },
+        "digest": "sha256:98620b7700e706fcf7f16b656c2eabfff2f5f0029056690d43fae84b360280fd",
+        "bytes": 145782062,
+        "collected_from": "2026-09-12T03:37:47.106Z",
+        "collected_to": "2026-09-12T03:45:01.377Z"
+      },
+      "import": {
+        "status": "succeeded",
+        "error_code": null,
+        "attempts": 1,
+        "runs": 1,
+        "resumed_runs": 0,
+        "written": {
+          "stat_observations": {
+            "seen": 234325,
+            "inserted": 234325,
+            "unchanged": 0,
+            "rejected": 0,
+            "conflicts": 0,
+            "tombstoned": 0
+          }
+        },
+        "checks_passed": 13,
+        "checks_failed": []
+      },
+      "replay": {
+        "status": "succeeded",
+        "written": {
+          "stat_observations": {
+            "seen": 234325,
+            "inserted": 0,
+            "unchanged": 234325,
+            "rejected": 0,
+            "conflicts": 0,
+            "tombstoned": 0
+          }
+        },
+        "checks_failed": []
+      },
+      "reconcile": {
+        "status": "reconciled",
+        "checks": [
+          {
+            "name": "typed tables the tally could not read",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "observations of statsnz.file.008b71864fd7ac8d @ file-ada0bd1b885c5676",
+            "expected": 2847,
+            "actual": 2847,
+            "ok": true
+          },
+          {
+            "name": "observations of statsnz.file.04ab16f5bf250403 @ file-1576eb1443c1fad2",
+            "expected": 97959,
+            "actual": 97959,
+            "ok": true
+          },
+          {
+            "name": "observations of statsnz.file.1543d0c3f49a900b @ file-807901509ce73e89",
+            "expected": 1420,
+            "actual": 1420,
+            "ok": true
+          },
+          {
+            "name": "observations of statsnz.file.1bfc343a9a0f6af5 @ file-ad702314285caaa7",
+            "expected": 4364,
+            "actual": 4364,
+            "ok": true
+          },
+          {
+            "name": "observations of statsnz.file.24758867be824832 @ file-c3d76acb8c387886",
+            "expected": 34582,
+            "actual": 34582,
+            "ok": true
+          },
+          {
+            "name": "observations of statsnz.file.2c0d4efcf5f8ad18 @ file-a3458c9b8f61a053",
+            "expected": 3075,
+            "actual": 3075,
+            "ok": true
+          },
+          {
+            "name": "observations of statsnz.file.6be064e204ce1136 @ file-61080efbba79e5b0",
+            "expected": 54509,
+            "actual": 54509,
+            "ok": true
+          },
+          {
+            "name": "observations of statsnz.file.c810397042ece109 @ file-39e5df1ed129d1ef",
+            "expected": 12868,
+            "actual": 12868,
+            "ok": true
+          },
+          {
+            "name": "observations of statsnz.file.fc93b5e26b92080b @ file-f474a6a3bfbe9b63",
+            "expected": 22701,
+            "actual": 22701,
+            "ok": true
+          },
+          {
+            "name": "catalogue entry versions in the store >= versions in the artifact",
+            "expected": "true",
+            "actual": "true",
+            "ok": true
+          },
+          {
+            "name": "rows under a withheld status that carry a number",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "count invariants: per population, inserted + unchanged + rejected + conflicts = seen",
+            "expected": "hold",
+            "actual": "hold",
+            "ok": true
+          }
+        ],
+        "typed_destination_rows": {
+          "stat_series": 3363,
+          "stat_datasets": 9,
+          "stat_releases": 9,
+          "stat_observations": 234325,
+          "stat_source_summary": 1
+        }
+      }
+    },
+    {
+      "family": "statistics",
+      "unit": "stats_nz_selected_series",
+      "writer": "typed_statistics_bulk_writer",
+      "source_ids": [
+        "stats_nz_selected_series"
+      ],
+      "product_ids": [
+        "P22"
+      ],
+      "input": {
+        "rows": 55428,
+        "records": null,
+        "versions": null,
+        "by_population": {
+          "stat_observations": 55428
+        },
+        "digest": "sha256:2b6e0acbd4f81e9413659a33bcffebecfddff7441fc1fbea060a3a20e053be2a",
+        "bytes": 35222892,
+        "collected_from": "2026-09-16T03:44:43.138Z",
+        "collected_to": "2026-09-16T03:44:43.138Z"
+      },
+      "import": {
+        "status": "succeeded",
+        "error_code": null,
+        "attempts": 1,
+        "runs": 1,
+        "resumed_runs": 0,
+        "written": {
+          "stat_observations": {
+            "seen": 55428,
+            "inserted": 55428,
+            "unchanged": 0,
+            "rejected": 0,
+            "conflicts": 0,
+            "tombstoned": 0
+          }
+        },
+        "checks_passed": 6,
+        "checks_failed": []
+      },
+      "replay": {
+        "status": "succeeded",
+        "written": {
+          "stat_observations": {
+            "seen": 55428,
+            "inserted": 0,
+            "unchanged": 55428,
+            "rejected": 0,
+            "conflicts": 0,
+            "tombstoned": 0
+          }
+        },
+        "checks_failed": []
+      },
+      "reconcile": {
+        "status": "reconciled",
+        "checks": [
+          {
+            "name": "typed tables the tally could not read",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "observations of food_price_index_selected_price_indexes_csv @ 2026-06",
+            "expected": 55284,
+            "actual": 55284,
+            "ok": true
+          },
+          {
+            "name": "observations of national_population_estimates_release_broad_age_graph_csv @ 2026-06-30",
+            "expected": 144,
+            "actual": 144,
+            "ok": true
+          },
+          {
+            "name": "catalogue entry versions in the store >= versions in the artifact",
+            "expected": "true",
+            "actual": "true",
+            "ok": true
+          },
+          {
+            "name": "rows under a withheld status that carry a number",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "count invariants: per population, inserted + unchanged + rejected + conflicts = seen",
+            "expected": "hold",
+            "actual": "hold",
+            "ok": true
+          }
+        ],
+        "typed_destination_rows": {
+          "stat_series": 218,
+          "stat_datasets": 2,
+          "stat_releases": 2,
+          "stat_observations": 55428,
+          "geography_versions": 1,
+          "stat_source_summary": 1
+        }
+      }
+    },
+    {
+      "family": "statistics",
+      "unit": "stats_rbnz_catalogue",
+      "writer": "typed_statistics_bulk_writer",
+      "source_ids": [
+        "stats_rbnz_catalogue"
+      ],
+      "product_ids": [
+        "P18"
+      ],
+      "input": {
+        "rows": 18,
+        "records": null,
+        "versions": null,
+        "by_population": {
+          "stat_catalogue_entries": 18
+        },
+        "digest": "sha256:a080e5f9738950f0d672b2a4b8fc93922847b1376a117528f7edef57b7d8f52a",
+        "bytes": 15465,
+        "collected_from": "2026-09-19T01:19:41.413Z",
+        "collected_to": "2026-09-19T01:19:41.413Z"
+      },
+      "import": {
+        "status": "succeeded",
+        "error_code": null,
+        "attempts": 1,
+        "runs": 1,
+        "resumed_runs": 0,
+        "written": {
+          "stat_catalogue_entries": {
+            "seen": 18,
+            "inserted": 18,
+            "unchanged": 0,
+            "rejected": 0,
+            "conflicts": 0,
+            "tombstoned": 0
+          }
+        },
+        "checks_passed": 5,
+        "checks_failed": []
+      },
+      "replay": {
+        "status": "succeeded",
+        "written": {
+          "stat_catalogue_entries": {
+            "seen": 18,
+            "inserted": 0,
+            "unchanged": 18,
+            "rejected": 0,
+            "conflicts": 0,
+            "tombstoned": 0
+          }
+        },
+        "checks_failed": []
+      },
+      "reconcile": {
+        "status": "reconciled",
+        "checks": [
+          {
+            "name": "typed tables the tally could not read",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "catalogue entry versions in the store >= versions in the artifact",
+            "expected": "true",
+            "actual": "true",
+            "ok": true
+          },
+          {
+            "name": "rows under a withheld status that carry a number",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "count invariants: per population, inserted + unchanged + rejected + conflicts = seen",
+            "expected": "hold",
+            "actual": "hold",
+            "ok": true
+          }
+        ],
+        "typed_destination_rows": {
+          "stat_source_summary": 1,
+          "stat_catalogue_entries": 18
+        }
+      }
+    },
+    {
+      "family": "statistics",
+      "unit": "stats_tenancy_rental_bonds",
+      "writer": "typed_statistics_bulk_writer",
+      "source_ids": [
+        "stats_tenancy_rental_bonds"
+      ],
+      "product_ids": [
+        "P23"
+      ],
+      "input": {
+        "rows": 57892,
+        "records": null,
+        "versions": null,
+        "by_population": {
+          "stat_observations": 57888,
+          "stat_catalogue_entries": 4
+        },
+        "digest": "sha256:a69665803312b1e7024a336ea9fcfae128d1c6b0b156806f37e524825ea2ad0f",
+        "bytes": 40321113,
+        "collected_from": "2026-09-15T19:04:02.093Z",
+        "collected_to": "2026-09-16T03:16:40.612Z"
+      },
+      "import": {
+        "status": "succeeded",
+        "error_code": null,
+        "attempts": 1,
+        "runs": 1,
+        "resumed_runs": 0,
+        "written": {
+          "stat_observations": {
+            "seen": 57888,
+            "inserted": 57888,
+            "unchanged": 0,
+            "rejected": 0,
+            "conflicts": 0,
+            "tombstoned": 0
+          },
+          "stat_catalogue_entries": {
+            "seen": 4,
+            "inserted": 4,
+            "unchanged": 0,
+            "rejected": 0,
+            "conflicts": 0,
+            "tombstoned": 0
+          }
+        },
+        "checks_passed": 6,
+        "checks_failed": []
+      },
+      "replay": {
+        "status": "succeeded",
+        "written": {
+          "stat_observations": {
+            "seen": 57888,
+            "inserted": 0,
+            "unchanged": 57888,
+            "rejected": 0,
+            "conflicts": 0,
+            "tombstoned": 0
+          },
+          "stat_catalogue_entries": {
+            "seen": 4,
+            "inserted": 0,
+            "unchanged": 4,
+            "rejected": 0,
+            "conflicts": 0,
+            "tombstoned": 0
+          }
+        },
+        "checks_failed": []
+      },
+      "reconcile": {
+        "status": "reconciled",
+        "checks": [
+          {
+            "name": "typed tables the tally could not read",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "observations of tenancy.rental_bonds.detailed_monthly_region @ file-444341b2963bb280",
+            "expected": 57888,
+            "actual": 57888,
+            "ok": true
+          },
+          {
+            "name": "catalogue entry versions in the store >= versions in the artifact",
+            "expected": "true",
+            "actual": "true",
+            "ok": true
+          },
+          {
+            "name": "rows under a withheld status that carry a number",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "count invariants: per population, inserted + unchanged + rejected + conflicts = seen",
+            "expected": "hold",
+            "actual": "hold",
+            "ok": true
+          }
+        ],
+        "typed_destination_rows": {
+          "stat_series": 8,
+          "stat_datasets": 1,
+          "stat_releases": 1,
+          "stat_observations": 57888,
+          "geography_versions": 18,
+          "stat_source_summary": 1,
+          "stat_catalogue_entries": 4
+        }
+      }
+    }
+  ],
+  "refresh_runs": [],
+  "refresh_routes_not_contacted": [],
+  "reconcile_after_refresh": null
+}
