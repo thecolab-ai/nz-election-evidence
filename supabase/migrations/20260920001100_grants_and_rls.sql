@@ -116,8 +116,14 @@ create policy party_source_identities_ingest_insert on evidence_private.party_so
 create policy party_source_identities_ingest_update on evidence_private.party_source_identities for update to evidence_ingest
   using (true) with check (party_id is null and link_status in ('unresolved', 'proposed'));
 
--- Rights rows arrive only as the register states them; the worker cannot mark one reviewed by itself
--- unless the synced register row carries the review date (enforced by the table check).
+-- The worker mirrors the rights register but can only ever write pending rows. When the register
+-- one day records an approval, an administrator runs the sync; a worker alone can never clear a right.
+drop policy source_rights_ingest_all on evidence_private.source_rights;
+create policy source_rights_ingest_select on evidence_private.source_rights for select to evidence_ingest using (true);
+create policy source_rights_ingest_insert on evidence_private.source_rights for insert to evidence_ingest
+  with check (review_status = 'pending' and reviewed_on is null);
+create policy source_rights_ingest_update on evidence_private.source_rights for update to evidence_ingest
+  using (true) with check (review_status = 'pending' and reviewed_on is null);
 
 do $$
 declare

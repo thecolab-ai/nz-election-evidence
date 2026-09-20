@@ -15,12 +15,12 @@ insert into evidence_private.app_memberships (user_id, app_role, granted_by, gra
 values ('aaaaaaaa-0000-0000-0000-000000000003', 'inspector', 'test', 'fixture revoked inspector', now(), 'test');
 
 select evidence_private.sync_registry(jsonb_build_object('sources', jsonb_build_array(
-  jsonb_build_object('source_id', 'fixture_access', 'title', 'Fixture access source', 'publisher', 'Fixture Publisher',
+  jsonb_build_object('source_id', 'pgtap_access', 'title', 'Fixture access source', 'publisher', 'Fixture Publisher',
     'official_url', 'https://fixture.example/list', 'adapter_kind', 'live_fetch', 'adapter_name', 'fixture',
     'allowed_hosts', jsonb_build_array('fixture.example'), 'view_scope', 'general',
     'snapshot_semantics', 'complete_snapshot', 'enabled', false, 'config_hash', 'c1'))));
-select evidence_private.acquire_lease('fixture_access', '11111111-1111-1111-1111-111111111111', 60);
-create temp table t as select evidence_private.start_run('fixture_access', '11111111-1111-1111-1111-111111111111', 'v1', 'incremental', 'test', 'm') as v;
+select evidence_private.acquire_lease('pgtap_access', '11111111-1111-1111-1111-111111111111', 60);
+create temp table t as select evidence_private.start_run('pgtap_access', '11111111-1111-1111-1111-111111111111', 'v1', 'incremental', 'test', 'm') as v;
 select evidence_private.ingest_batch((select (v ->> 'run_id')::uuid from t), '11111111-1111-1111-1111-111111111111',
   jsonb_build_array(jsonb_build_object('external_record_id', 'a-1', 'record_kind', 'fixture_item',
     'content_hash', 'sha256:' || repeat('a', 64), 'source_url', 'https://fixture.example/a-1',
@@ -72,10 +72,10 @@ reset role;
 set local request.jwt.claims = '{"sub":"aaaaaaaa-0000-0000-0000-000000000001","role":"authenticated"}';
 set local role authenticated;
 select is(evidence_inspector.is_inspector(), true, 'inspector: membership recognised');
-select is((select count(*)::int from evidence_inspector.records where source_id = 'fixture_access'), 1, 'inspector: reads records through the view');
-select is((select safe_payload ->> 'title' from evidence_inspector.record_versions where source_id = 'fixture_access'),
+select is((select count(*)::int from evidence_inspector.records where source_id = 'pgtap_access'), 1, 'inspector: reads records through the view');
+select is((select safe_payload ->> 'title' from evidence_inspector.record_versions where source_id = 'pgtap_access'),
   'Private fixture item', 'inspector: reads the allowlisted detail JSON');
-select is((select count(*)::int from evidence_inspector.import_runs where source_id = 'fixture_access'), 1, 'inspector: reads the run ledger');
+select is((select count(*)::int from evidence_inspector.import_runs where source_id = 'pgtap_access'), 1, 'inspector: reads the run ledger');
 select throws_ok('select count(*) from evidence_private.source_records', '42501', null, 'inspector: still no direct private schema access');
 select throws_ok('select count(*) from evidence_private.app_memberships', '42501', null, 'inspector: cannot read the membership table');
 select throws_ok($$insert into evidence_inspector.records (id) values (gen_random_uuid())$$, null, null, 'inspector: insert denied (grant or non-updatable view)');

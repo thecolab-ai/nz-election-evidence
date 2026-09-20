@@ -2,7 +2,7 @@
 -- cannot rewrite history, approve identities, clear rights, activate schedules or publish.
 -- TEST FIXTURES ONLY: synthetic records, rolled back.
 begin;
-select plan(16);
+select plan(17);
 
 grant evidence_ingest, evidence_publisher to current_user;
 create temp table outcome (name text primary key, state text);
@@ -17,19 +17,19 @@ declare
   v_case record;
 begin
   perform evidence_private.sync_registry(jsonb_build_object('sources', jsonb_build_array(
-    jsonb_build_object('source_id', 'fixture_role', 'title', 'Fixture role source', 'publisher', 'Fixture Publisher',
+    jsonb_build_object('source_id', 'pgtap_role', 'title', 'Fixture role source', 'publisher', 'Fixture Publisher',
       'official_url', 'https://fixture.example/mps', 'adapter_kind', 'live_fetch', 'adapter_name', 'fixture',
       'allowed_hosts', jsonb_build_array('fixture.example'), 'view_scope', 'current_parliament',
       'snapshot_semantics', 'complete_snapshot', 'enabled', true, 'config_hash', 'c1'))));
-  perform evidence_private.acquire_lease('fixture_role', v_holder, 60);
-  v_run := (evidence_private.start_run('fixture_role', v_holder, 'v1', 'incremental', 'test', 'm') ->> 'run_id')::uuid;
+  perform evidence_private.acquire_lease('pgtap_role', v_holder, 60);
+  v_run := (evidence_private.start_run('pgtap_role', v_holder, 'v1', 'incremental', 'test', 'm') ->> 'run_id')::uuid;
   v_result := evidence_private.ingest_batch(v_run, v_holder, jsonb_build_array(
     jsonb_build_object('external_record_id', 'fixture-member', 'record_kind', 'mp_directory_entry',
       'content_hash', 'sha256:' || repeat('f', 64), 'source_url', 'https://fixture.example/mps/fixture-member',
       'retrieved_at', now(), 'safe_payload', jsonb_build_object('name_display', 'Fixture Member',
         'party_label', 'Fixture Party', 'representation', 'list'))));
   insert into outcome values ('cycle_versions', v_result ->> 'versions_inserted');
-  perform evidence_private.log_fetch(v_run, 'fixture_role', jsonb_build_array(jsonb_build_object(
+  perform evidence_private.log_fetch(v_run, 'pgtap_role', jsonb_build_array(jsonb_build_object(
     'method', 'GET', 'url', 'https://fixture.example/mps', 'host', 'fixture.example', 'attempt', 1,
     'outcome', 'ok', 'http_status', 200, 'bytes', 10, 'retrieved_at', now(), 'duration_ms', 5)));
   perform evidence_private.project_run(v_run, v_holder);
@@ -49,6 +49,9 @@ begin
     ('read_vault', $q$select evidence_private.vault_secret('evidence_cron_secret')$q$),
     ('open_gate', $q$update evidence_private.release_gates set state = 'open', evidence_reference = 'x', decided_by = 'w', decided_at = now()$q$),
     ('publish', $q$select evidence_private.publish_batch(gen_random_uuid())$q$),
+    ('approve_rights', $q$select evidence_private.sync_registry(jsonb_build_object('rights', jsonb_build_array(jsonb_build_object(
+        'rights_id', 'RIGHTS-92', 'publisher', 'Fixture Publisher', 'source_url', 'https://fixture.example/',
+        'review_status', 'approved', 'default_release', 'approved-fields', 'reviewed_on', '2026-09-20', 'register_hash', 'h'))))$q$),
     ('write_api', $q$insert into evidence_api.sources values ('x', 'x', 'x', 'https://x', 'general', null, gen_random_uuid())$q$)
   ) as c(name, stmt) loop
     begin
@@ -66,9 +69,11 @@ select is((select state from outcome where name = 'cycle_versions'), '1', 'worke
 select is((select state from outcome where name = 'cycle_status'), 'succeeded', 'worker role can finish a run');
 select is((select count(*)::int from evidence_private.parliamentary_service_terms t
             join evidence_private.person_source_identities i on i.id = t.person_identity_id
-            where i.source_id = 'fixture_role' and t.representation = 'list' and t.electorate_name_at_source is null), 1,
+            where i.source_id = 'pgtap_role' and t.representation = 'list' and t.electorate_name_at_source is null), 1,
   'worker projection creates the service term');
-select is((select count(*)::int from evidence_private.candidacies), 0, 'a sitting member creates no candidacy');
+select is((select count(*)::int from evidence_private.candidacies c
+            join evidence_private.person_source_identities i on i.id = c.person_identity_id
+            where i.source_id = 'pgtap_role'), 0, 'a sitting member creates no candidacy');
 
 select is((select state from outcome where name = 'update_version'), '42501', 'worker cannot update versions');
 select is((select state from outcome where name = 'delete_version'), '42501', 'worker cannot delete versions');
@@ -80,6 +85,7 @@ select is((select state from outcome where name = 'read_memberships'), '42501', 
 select is((select state from outcome where name = 'activate_schedule'), '42501', 'worker cannot activate a schedule');
 select is((select state from outcome where name = 'read_vault'), '42501', 'worker cannot read vault secrets');
 select is((select state from outcome where name = 'open_gate'), '42501', 'worker cannot open a release gate');
+select is((select state from outcome where name = 'approve_rights'), '42501', 'worker cannot clear a rights row, even through the registry sync');
 select is((select state from outcome where name = 'publish'), '42501', 'worker cannot publish');
 select is((select state from outcome where name = 'write_api'), '42501', 'worker cannot write published tables');
 

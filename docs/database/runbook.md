@@ -10,7 +10,7 @@ Needs Docker, the Supabase CLI (2.113.0 tested) and Node 24. Ports are non-defau
 
 ```bash
 supabase start -x studio,imgproxy,storage-api,realtime,logflare,vector,supavisor,postgres-meta,mailpit,edge-runtime
-supabase test db                      # pgTAP: 144 assertions
+supabase test db                      # pgTAP: 145 assertions
 cd ingest && npm ci
 npm run typecheck && npm test         # unit tests, scripted publisher, no network
 npm run check:deno                    # Edge Function type-check
