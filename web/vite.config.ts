@@ -10,11 +10,13 @@ export function normaliseBasePath(value: string | undefined): string {
 }
 
 /** Origin (scheme://host[:port]) of the configured Supabase project, or null when unset/invalid. */
-export function supabaseOrigin(url: string | undefined): string | null {
+export function supabaseOrigin(url: string | undefined, localTestStack = false): string | null {
   if (!url) return null
   try {
     const parsed = new URL(url)
-    if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') return null
+    // Same rule as src/lib/env.ts: https, or http to loopback in an explicitly marked local test stack build.
+    const loopback = parsed.hostname === '127.0.0.1' || parsed.hostname === 'localhost' || parsed.hostname === '[::1]'
+    if (parsed.protocol !== 'https:' && !(parsed.protocol === 'http:' && localTestStack && loopback)) return null
     return parsed.origin
   } catch {
     return null
@@ -62,7 +64,8 @@ function cspPlugin(origin: string | null): Plugin {
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, fileURLToPath(new URL('.', import.meta.url)), 'VITE_')
   const base = normaliseBasePath(process.env.VITE_BASE_PATH ?? env.VITE_BASE_PATH)
-  const origin = supabaseOrigin(process.env.VITE_SUPABASE_URL ?? env.VITE_SUPABASE_URL)
+  const localTestStack = (process.env.VITE_LOCAL_TEST_STACK ?? env.VITE_LOCAL_TEST_STACK) === '1'
+  const origin = supabaseOrigin(process.env.VITE_SUPABASE_URL ?? env.VITE_SUPABASE_URL, localTestStack)
   return {
     base,
     plugins: [react(), tailwindcss(), cspPlugin(origin)],

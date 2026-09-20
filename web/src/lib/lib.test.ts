@@ -1,12 +1,15 @@
 import { describe, expect, it } from 'vitest'
-import { bundleProblems } from '../../scripts/check-bundle.ts'
+import { bundleProblems, cspTransportProblems } from '../../scripts/check-bundle.ts'
+import { buildCsp, supabaseOrigin } from '../../vite.config.ts'
 import { coverageFromSources } from './coverage'
 import { looksLikeServiceRoleKey, resolveConfig, routerBasePath } from './env'
-import { formatMoney, formatStatValue, formatVotes } from './format'
+import { genericSortableColumns, isAcceptableGenericSortKey, isResultLikeName } from './generic-sort'
+import { CONFIDENCE_NOT_APPLICABLE, CONFIDENCE_NOT_REPORTED, formatAgreement, formatConfidence, formatMoney, formatStatValue, formatVotes, modelProvenance, NOT_HUMAN_REVIEWED } from './format'
 import { EDGES_PER_EXPANSION, edgeFilterFor, entityRoute, initialGraph, MAX_NODES, mergeExpansion, nodeCount, type EdgeRow } from './graph'
 import { describeRange, hasNextPage, pageCount, pageRange, SERVER_MAX_ROWS } from './pagination'
-import { effectiveSort, GRAPH_ROOT_KINDS, ilikeContains, parseGraphSearch, parseListSearch } from './search'
-import { candidaciesSpec, recordsSpec } from './specs'
+import { effectiveSort, GRAPH_ROOT_KINDS, ilikeContains, type ListSpec, parseGraphSearch, parseListSearch } from './search'
+import * as specs from './specs'
+import { candidaciesSpec, datasetRowsSpec, identitiesSpec, recordsSpec } from './specs'
 
 const jwt = (role: string) => `eyJhbGciOiJIUzI1NiJ9.${Buffer.from(JSON.stringify({ role, iss: 'fixture' })).toString('base64url')}.c2lnbmF0dXJlLWZpeHR1cmU`
 
@@ -157,5 +160,94 @@ describe('graph nodes are (kind, id): the same id under two kinds is two nodes',
     expect(entityRoute('electorate_version', SHARED)).toEqual({ to: '/electorates/$versionId', params: { versionId: SHARED } })
     expect(entityRoute('electorate_label', 'electorate:Fixture North')).toBeNull()
     expect(entityRoute('party_identity', 'not-a-uuid')).toBeNull()
+  })
+})
+
+describe('PR 8 review: R1 in the generic dataset browser', () => {
+  const partyTotals = [
+    { column_name: 'id', data_type: 'uuid' }, { column_name: 'result_set_id', data_type: 'uuid' }, { column_name: 'party_label', data_type: 'text' },
+    { column_name: 'party_votes', data_type: 'bigint' }, { column_name: 'party_vote_share', data_type: 'numeric' },
+    { column_name: 'electorate_seats', data_type: 'integer' }, { column_name: 'list_seats', data_type: 'integer' }, { column_name: 'votes_status', data_type: 'text' },
+  ]
+  it('never offers a tally, share, seat count, rank or total as a sort key - by type and by name', () => {
+    expect(genericSortableColumns(partyTotals)).toEqual(['id', 'result_set_id', 'party_label'])
+    for (const name of ['votes', 'party_votes', 'party_vote_share', 'electorate_seats', 'list_seats', 'list_rank', 'value', 'value_pct', 'sample_size', 'approved_total', 'confidence', 'schema_agreement_rate']) {
+      expect(isResultLikeName(name), name).toBe(true)
+      expect(genericSortableColumns([{ column_name: name, data_type: 'text' }]), `${name} stored as text is still a figure`).toEqual([])
+    }
+    expect(genericSortableColumns([{ column_name: 'http_status', data_type: 'integer' }, { column_name: 'mystery', data_type: null }])).toEqual([])
+    expect(genericSortableColumns([{ column_name: 'retrieved_at', data_type: 'timestamp with time zone' }, { column_name: 'source_id', data_type: 'text' }, { column_name: 'code', data_type: 'character varying(12)' }, { column_name: 'is_current', data_type: 'boolean' }])).toEqual(['retrieved_at', 'source_id', 'code', 'is_current'])
+  })
+  it('drops a result sort key from the URL before any request is built', () => {
+    for (const sort of ['party_votes', 'votes', 'list_rank', 'party_vote_share', 'electorate_seats', 'Party_Votes', 'party_votes;drop', 'votes.desc', '']) {
+      expect(parseListSearch(datasetRowsSpec, { sort, dir: 'desc' }), sort).toEqual({ page: 1, size: 25 })
+    }
+    expect(parseListSearch(datasetRowsSpec, { sort: 'party_label', dir: 'desc' })).toMatchObject({ sort: 'party_label', dir: 'desc' })
+    expect(isAcceptableGenericSortKey('party_label')).toBe(true)
+    // even a shape-valid key is only used if the page offers it
+    const runtime = { sortable: genericSortableColumns(partyTotals), defaultSort: [{ column: 'id', dir: 'asc' as const }], tiebreak: 'id', filters: {} as Record<never, never> } satisfies ListSpec<never>
+    expect(effectiveSort<never>(runtime, { page: 1, size: 25, sort: 'party_votes', dir: 'desc' })).toEqual([{ column: 'id', dir: 'asc' }])
+  })
+  it('a dataset made only of figures is requested with no ordering at all - never by its first column (second review)', () => {
+    const onlyFigures = genericSortableColumns([{ column_name: 'party_votes', data_type: 'bigint' }, { column_name: 'list_seats', data_type: 'integer' }])
+    expect(onlyFigures).toEqual([])
+    const runtime = { sortable: onlyFigures, defaultSort: [], tiebreak: onlyFigures[0] ?? '', filters: {} as Record<never, never> } satisfies ListSpec<never>
+    expect(effectiveSort<never>(runtime, { page: 1, size: 25, sort: 'party_votes', dir: 'desc' })).toEqual([])
+    // type spellings the catalogue can produce
+    for (const type of ['numeric(9,6)', 'double precision', 'bigint', 'integer[]', 'NUMERIC', 'smallint', 'real', 'money', 'vote_tally_domain', 'jsonb', 'int4range', 'text[]', '']) expect(genericSortableColumns([{ column_name: 'x', data_type: type }]), type).toEqual([])
+  })
+  it('no curated list sorts people by a number either, and the dead people spec is gone (review 16, 17)', () => {
+    expect(identitiesSpec.sortable).toEqual(['name_at_source', 'source_id', 'link_status'])
+    expect(Object.keys(identitiesSpec.filters)).not.toContain('tab')
+    expect(parseListSearch(identitiesSpec, { sort: 'candidacies', tab: 'people' })).toEqual({ page: 1, size: 25 })
+    expect(Object.keys(specs)).not.toContain('peopleSpec')
+    expect(Object.keys(specs)).not.toContain('peopleRouteSpec')
+    expect(candidaciesSpec.sortable).not.toContain('votes')
+  })
+})
+
+describe('PR 8 review: https only (review 15)', () => {
+  const anon = jwt('anon')
+  it('accepts http only for loopback in an explicitly marked local test stack build', () => {
+    expect(resolveConfig({ VITE_SUPABASE_URL: 'http://fixture.example', VITE_SUPABASE_ANON_KEY: anon })).toBeNull()
+    expect(resolveConfig({ VITE_SUPABASE_URL: 'http://127.0.0.1:55321', VITE_SUPABASE_ANON_KEY: anon })).toBeNull()
+    expect(resolveConfig({ VITE_SUPABASE_URL: 'http://fixture.example', VITE_SUPABASE_ANON_KEY: anon, VITE_LOCAL_TEST_STACK: '1' })).toBeNull()
+    expect(resolveConfig({ VITE_SUPABASE_URL: 'http://127.0.0.1.attacker.example', VITE_SUPABASE_ANON_KEY: anon, VITE_LOCAL_TEST_STACK: '1' })).toBeNull()
+    expect(resolveConfig({ VITE_SUPABASE_URL: 'http://127.0.0.1:55321', VITE_SUPABASE_ANON_KEY: anon, VITE_LOCAL_TEST_STACK: '1' })?.supabaseUrl).toBe('http://127.0.0.1:55321')
+    expect(resolveConfig({ VITE_SUPABASE_URL: 'https://fixture.example', VITE_SUPABASE_ANON_KEY: anon })?.supabaseUrl).toBe('https://fixture.example')
+  })
+  it('the build drops an http origin from the policy, and the bundle check fails one that got through', () => {
+    expect(supabaseOrigin('http://fixture.example')).toBeNull()
+    expect(supabaseOrigin('http://127.0.0.1:55321')).toBeNull()
+    expect(supabaseOrigin('http://127.0.0.1:55321', true)).toBe('http://127.0.0.1:55321')
+    expect(supabaseOrigin('http://fixture.example', true)).toBeNull()
+    const html = (origin: string) => `<meta http-equiv="Content-Security-Policy" content="${buildCsp(origin, false)}">`
+    expect(cspTransportProblems(html('https://fixture.example'), false)).toEqual([])
+    expect(cspTransportProblems(html('http://fixture.example'), false)[0]).toContain('unencrypted connection (http://fixture.example)')
+    expect(cspTransportProblems(html('http://127.0.0.1:55321'), false)[0]).toContain('unencrypted')
+    expect(cspTransportProblems(html('http://127.0.0.1:55321'), true)).toEqual([])
+    expect(cspTransportProblems(html('http://fixture.example'), true)[0]).toContain('unencrypted')
+  })
+})
+
+describe('PR 8 review: R9 confidence and human agreement (review 10)', () => {
+  it('shows a confidence only when the run reported one; unknown is never a number', () => {
+    expect(formatConfidence(0.8312, 'reported')).toBe('0.83')
+    expect(formatConfidence(0, 'reported')).toBe('0.00')
+    expect(formatConfidence('0.5', 'reported')).toBe('0.50')
+    expect(formatConfidence(null, 'not_reported')).toBe(CONFIDENCE_NOT_REPORTED)
+    expect(formatConfidence(0.9, 'not_reported')).toBe(CONFIDENCE_NOT_REPORTED)
+    expect(formatConfidence(null, 'reported')).toBe(CONFIDENCE_NOT_REPORTED)
+    expect(formatConfidence(7, 'reported')).toBe(CONFIDENCE_NOT_REPORTED)
+    expect(formatConfidence(null, 'not_applicable')).toBe(CONFIDENCE_NOT_APPLICABLE)
+    expect(formatConfidence(undefined, undefined)).toBe(CONFIDENCE_NOT_REPORTED)
+  })
+  it('keeps the human-review flag until an agreement study exists for the schema - approving one output does not clear it', () => {
+    const row = { model_metadata_status: 'recorded', model_name: 'fixture-model', model_version: '1', prompt_or_schema_version: 'v1' }
+    expect(modelProvenance({ ...row, schema_agreement_documented: false }).humanReviewNote).toBe(NOT_HUMAN_REVIEWED)
+    expect(modelProvenance({ ...row, review_status: 'approved' } as never).humanReviewNote).toBe(NOT_HUMAN_REVIEWED)
+    expect(modelProvenance({ ...row, schema_agreement_documented: true }).humanReviewNote).toBeNull()
+    expect(formatAgreement({ schema_agreement_documented: false, schema_agreement_rate: null, schema_agreement_sample: null })).toBe('none documented for this schema version')
+    expect(formatAgreement({ schema_agreement_documented: true, schema_agreement_rate: 0.85, schema_agreement_sample: 40 })).toBe('85.0% agreement with human reviewers on a sample of 40')
   })
 })

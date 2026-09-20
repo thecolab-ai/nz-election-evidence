@@ -53,6 +53,8 @@ jobs:
         run: npm test
       - name: Edge Function type-check (Deno)
         run: npm run check:deno
+      - name: Red lines R1 and R4 in explorer copy (TypeScript and TSX strings, JSX text)
+        run: node ../tools/red_lines_copy.ts
 
   database:
     name: Migrations and role tests on a disposable database
@@ -76,13 +78,15 @@ jobs:
       - name: Runner integration tests against that database (crash/resume, replay, overlap, blocked, export import)
         working-directory: ingest
         env:
-          # No connection string here. test/local-stack.ts assembles the loopback connection for the scoped
-          # worker login that supabase/seed.sql creates on this throwaway database, and the tests assert they
-          # are signed in as exactly that login. REQUIRE turns a skipped integration test into a failure.
+          # No connection string and no password here. The explicit bootstrap below creates the scoped worker
+          # login on THIS job's throwaway database with a random value (it has no target option and refuses any
+          # non-local Docker daemon); test/local-stack.ts reads that value and the tests assert they are signed
+          # in as exactly that login. REQUIRE turns a skipped integration test into a failure.
           EVIDENCE_TEST_LOCAL_STACK: "1"
           EVIDENCE_REQUIRE_INTEGRATION: "1"
         run: |
           npm ci --no-audit --no-fund
+          node src/local_bootstrap.ts
           node --test --test-reporter=spec test/integration.test.ts
       - if: always()
         run: supabase stop --no-backup

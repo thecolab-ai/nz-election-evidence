@@ -9,6 +9,19 @@ export interface RawEnv {
   VITE_SUPABASE_URL?: string | undefined
   VITE_SUPABASE_ANON_KEY?: string | undefined
   VITE_BASE_PATH?: string | undefined
+  /** '1' ONLY for the local test stack: permits plain http, and then only to a loopback address. */
+  VITE_LOCAL_TEST_STACK?: string | undefined
+}
+
+/**
+ * https always. Plain http would send every read and the anon key in clear text and widen the CSP, so it is
+ * accepted in exactly one configuration: the build was explicitly marked as a local test stack build AND the
+ * address is loopback. A production build never sets the flag, and the flag cannot make a remote http URL valid.
+ */
+export function isAcceptableApiUrl(parsed: URL, localTestStack: boolean): boolean {
+  if (parsed.protocol === 'https:') return true
+  const loopback = parsed.hostname === '127.0.0.1' || parsed.hostname === 'localhost' || parsed.hostname === '[::1]'
+  return parsed.protocol === 'http:' && localTestStack && loopback
 }
 
 const PLACEHOLDER_PATTERN = /your-project-ref|your-public-anon/i
@@ -21,7 +34,7 @@ export function resolveConfig(env: RawEnv): AppConfig | null {
   if (PLACEHOLDER_PATTERN.test(url) || PLACEHOLDER_PATTERN.test(key)) return null
   try {
     const parsed = new URL(url)
-    if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') return null
+    if (!isAcceptableApiUrl(parsed, env.VITE_LOCAL_TEST_STACK === '1')) return null
   } catch {
     return null
   }

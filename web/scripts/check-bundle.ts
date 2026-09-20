@@ -32,6 +32,19 @@ function walk(dir: string): string[] {
   })
 }
 
+/**
+ * The shipped policy may only let the page talk over TLS. Any http:// or ws:// origin in connect-src fails the
+ * check; the single exception is a loopback origin in a build explicitly marked as a local test stack build.
+ */
+export function cspTransportProblems(indexHtml: string, localTestStack: boolean): string[] {
+  const policy = /http-equiv="Content-Security-Policy"\s+content="([^"]*)"/i.exec(indexHtml)?.[1] ?? /content="([^"]*)"\s+http-equiv="Content-Security-Policy"/i.exec(indexHtml)?.[1]
+  if (!policy) return []
+  const connect = policy.split(';').map((d) => d.trim()).find((d) => d.startsWith('connect-src')) ?? ''
+  const insecure = connect.split(/\s+/).filter((o) => /^(http|ws):\/\//i.test(o))
+  const allowed = (o: string) => localTestStack && /^http:\/\/(127\.0\.0\.1|localhost|\[::1\])(:\d+)?$/i.test(o)
+  return insecure.filter((o) => !allowed(o)).map((o) => `content security policy allows an unencrypted connection (${o}); production builds are https only`)
+}
+
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
   const dist = join(dirname(fileURLToPath(import.meta.url)), '..', 'dist')
   // Same source and same default as vite.config.ts, so the check always matches what was built.
@@ -48,6 +61,7 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
       problems.push(`index.html does not load every asset from ${base}assets/ (built for a different base path?)`)
     }
     if (!/http-equiv="Content-Security-Policy"/i.test(index)) problems.push('no content security policy')
+    problems.push(...cspTransportProblems(index, process.env.VITE_LOCAL_TEST_STACK === '1'))
     const files = walk(dist).filter((f) => /\.(js|css|html|json|map|txt)$/.test(f)).map((f) => ({ name: f.slice(dist.length + 1), text: readFileSync(f, 'utf-8') }))
     problems.push(...bundleProblems(files))
   }

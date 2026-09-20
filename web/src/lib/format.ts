@@ -231,13 +231,17 @@ export interface ModelProvenance {
 const UNKNOWN_HISTORICAL = 'unknown (historical)'
 export const NOT_HUMAN_REVIEWED = 'not yet checked against human review'
 
-/** R9: every model output shows its model, version and prompt (or says they are unknown), and a review flag. */
+/**
+ * R9: every model output shows its model, version and prompt (or says they are unknown), and carries the
+ * "not yet checked against human review" flag until a documented human-agreement rate exists FOR ITS SCHEMA VERSION.
+ * Approving one output is a different thing and does not clear the flag.
+ */
 export function modelProvenance(row: {
   model_metadata_status?: string | null
   model_name?: string | null
   model_version?: string | null
   prompt_or_schema_version?: string | null
-  review_status?: string | null
+  schema_agreement_documented?: boolean | null
 }): ModelProvenance {
   const historical = row.model_metadata_status === 'historical_unknown'
   const pick = (v: string | null | undefined) => (!historical && v && v.trim() ? v : UNKNOWN_HISTORICAL)
@@ -245,6 +249,28 @@ export function modelProvenance(row: {
     model: pick(row.model_name),
     version: pick(row.model_version),
     prompt: pick(row.prompt_or_schema_version),
-    humanReviewNote: row.review_status === 'approved' ? null : NOT_HUMAN_REVIEWED,
+    humanReviewNote: row.schema_agreement_documented === true ? null : NOT_HUMAN_REVIEWED,
   }
+}
+
+export const CONFIDENCE_NOT_REPORTED = 'not reported by the model run'
+export const CONFIDENCE_NOT_APPLICABLE = 'not applicable to this schema'
+
+/**
+ * R9 confidence, shown exactly as stored. A number appears only when the run reported one (0 is a number);
+ * "not reported" is unknown, never 0; nothing is estimated, defaulted or rounded up here.
+ */
+export function formatConfidence(value: number | string | null | undefined, status: string | null | undefined): string {
+  if (status === 'not_applicable') return CONFIDENCE_NOT_APPLICABLE
+  if (status !== 'reported' || value === null || value === undefined || value === '') return CONFIDENCE_NOT_REPORTED
+  const n = typeof value === 'number' ? value : Number(value)
+  return Number.isFinite(n) && n >= 0 && n <= 1 ? n.toFixed(2) : CONFIDENCE_NOT_REPORTED
+}
+
+/** The documented human-agreement rate for a schema version, or the plain statement that there is none. */
+export function formatAgreement(row: { schema_agreement_documented?: boolean | null; schema_agreement_rate?: number | string | null; schema_agreement_sample?: number | null }): string {
+  if (row.schema_agreement_documented !== true || row.schema_agreement_rate == null || row.schema_agreement_sample == null) return 'none documented for this schema version'
+  const rate = Number(row.schema_agreement_rate)
+  if (!Number.isFinite(rate)) return 'none documented for this schema version'
+  return `${(rate * 100).toFixed(1)}% agreement with human reviewers on a sample of ${row.schema_agreement_sample}`
 }

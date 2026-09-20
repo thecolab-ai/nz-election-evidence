@@ -19,6 +19,11 @@ export type FilterDef =
 
 export interface ListSpec<F extends string = string> {
   sortable: readonly string[]
+  /**
+   * Only for a list whose columns are not known until run time (the generic dataset browser): the URL-level test
+   * a sort key must pass. The page then narrows it again to the columns it actually offers.
+   */
+  acceptsSortKey?: (value: string) => boolean
   /** Applied when the URL carries no valid sort. */
   defaultSort: readonly SortRule[]
   /** Appended to every ordering so server pagination is stable. */
@@ -78,7 +83,8 @@ export function parseFlag(value: unknown): '1' | undefined {
 
 export function parseListSearch<F extends string>(spec: ListSpec<F>, raw: Record<string, unknown>): ListSearch<F> {
   const out: Record<string, unknown> = { page: parsePage(raw.page), size: parseSize(raw.size) }
-  const sort = parseEnum(raw.sort, spec.sortable)
+  const rawSort = firstString(raw.sort)
+  const sort = spec.acceptsSortKey ? (rawSort !== undefined && spec.acceptsSortKey(rawSort) ? rawSort : undefined) : parseEnum(raw.sort, spec.sortable)
   if (sort) {
     out.sort = sort
     out.dir = raw.dir === 'desc' ? 'desc' : 'asc'
@@ -100,7 +106,8 @@ export function effectiveSort<F extends string>(spec: ListSpec<F>, search: ListS
   const rules: SortRule[] = search.sort && spec.sortable.includes(search.sort)
     ? [{ column: search.sort, dir: search.dir ?? 'asc' }]
     : spec.defaultSort.map((r) => ({ ...r }))
-  if (!rules.some((r) => r.column === spec.tiebreak)) rules.push({ column: spec.tiebreak, dir: 'asc' })
+  // An empty tiebreak means "no stable column is safe to order by" (a generic dataset made only of figures).
+  if (spec.tiebreak !== '' && !rules.some((r) => r.column === spec.tiebreak)) rules.push({ column: spec.tiebreak, dir: 'asc' })
   return rules
 }
 

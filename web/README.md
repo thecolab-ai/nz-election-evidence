@@ -20,7 +20,7 @@ Party labels and electorates link to their own pages (`/parties/$identityId`, `/
 
 Node 24. `npm ci`, then copy `.env.example` to `.env.local`:
 
-- `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` — public values only. Missing values render "Not connected — no data source configured"; sample data is never shown.
+- `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` — public values only. The URL must be **https**. Plain http is accepted in one case only: the build is explicitly marked `VITE_LOCAL_TEST_STACK=1` (set by the Playwright config and nowhere else) **and** the host is loopback; `npm run check:bundle` fails any other unencrypted origin in the content security policy. Missing values render "Not connected — no data source configured"; sample data is never shown.
 - `VITE_BASE_PATH` — `/` locally, `/nz-election-evidence/` for Pages.
 
 ## Scripts (all tooling is TypeScript, run directly by Node 24)
@@ -57,3 +57,9 @@ Latest stable on npm on 2026-09-20, installed exactly as pinned (no deviations):
 ## Security notes
 
 Content Security Policy is injected at build time with `connect-src` limited to the configured Supabase origin; no inline scripts. External links use `rel="noopener noreferrer"`. URL search parameters are validated against per-list allowlists before they reach a query. The relationship graph loads at most 50 edges per expansion and caps the canvas at 300 nodes. No party colours, no ordering by votes, no scores (R1).
+
+## Sorting and R1
+
+Curated lists name their sort columns; vote counts and per-person counts are never among them. The generic dataset browser does not know its columns until run time, so it is default deny (`src/lib/generic-sort.ts`): a column is a sort key only if its type is not numeric and no word of its name is a tally, share, seat count, rank, total, amount or confidence. Such a key in a URL is dropped before a request is built and removed from the address bar. Figures stay visible exactly as the source reported them; the page gives no way to arrange people, parties or electorates by a number, and does not describe a result as a score.
+
+Reader-facing wording in this directory is checked for R1/R4 terms by `node ../tools/red_lines_copy.ts` (strings, template text and JSX text; not comments, identifiers or regular expressions).

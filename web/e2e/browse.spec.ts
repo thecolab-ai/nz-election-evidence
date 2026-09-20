@@ -293,6 +293,33 @@ test.describe('anonymous browsing', () => {
     expect(new URL(page.url()).searchParams.has('evil')).toBe(false)
     expect(new URL(page.url()).searchParams.get('sort')).toBeNull()
 
+    // PR 8 review 5 (R1): the generic browser cannot be turned into a party scoreboard through the URL. The result
+    // sort key is dropped before any request is built, the header is not a sort control, and the note says why.
+    const orders: string[] = []
+    page.on('request', (request) => {
+      const url = new URL(request.url())
+      if (url.pathname.endsWith('/rest/v1/election_party_totals')) orders.push(url.searchParams.get('order') ?? '')
+    })
+    await page.goto('/datasets/evidence_open/election_party_totals?sort=party_votes&dir=desc')
+    await expect(page.getByTestId('dataset-sort-note')).toContainText('cannot be used to order rows here')
+    await expect.poll(() => orders.length).toBeGreaterThan(0)
+    for (const order of orders) expect(order).not.toMatch(/votes|share|seats|rank/)
+    expect(new URL(page.url()).searchParams.get('sort')).toBeNull()
+    await page.goto('/datasets/evidence_open/candidate_results?sort=votes&dir=desc')
+    await expect(page.getByTestId('dataset-sort-note')).toBeVisible()
+    expect(new URL(page.url()).searchParams.get('sort')).toBeNull()
+    // Header controls, on a dataset the fixtures populate: a numeric column is plain text, a text column is a sort button.
+    await page.goto('/datasets/evidence_open/fetch_log?sort=response_bytes&dir=desc')
+    await expect(page.getByTestId('data-row').first()).toBeVisible()
+    await expect.poll(() => new URL(page.url()).searchParams.get('sort')).toBeNull()
+    for (const numeric of ['http_status', 'response_bytes', 'duration_ms']) {
+      const header = page.getByRole('columnheader', { name: numeric, exact: true })
+      await expect(header).toBeVisible()
+      await expect(header.getByRole('button')).toHaveCount(0)
+      expect(await header.getAttribute('aria-sort')).toBeNull()
+    }
+    await expect(page.locator('th', { hasText: /^outcome/ }).getByRole('button')).toHaveCount(1)
+
     // A withheld kind cannot be forced through the URL.
     await page.goto('/graph?kind=person&id=f1f1f1f1-0000-4000-8000-0000000000aa')
     await expect(page.getByRole('heading', { name: 'Choose one start node' })).toBeVisible()

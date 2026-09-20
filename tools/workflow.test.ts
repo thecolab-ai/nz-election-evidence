@@ -60,5 +60,19 @@ test("branch-protection recommendations name real check jobs, and keep release a
   }
   const table = required.slice(0, required.indexOf("**Do not**"));
   assert.ok(!table.includes("R10 release gate") && !table.includes("Deploy explorer shell"), "release and deploy jobs are not merge requirements");
-  assert.ok(doc.includes("Nothing here has been applied"));
+  assert.ok(doc.includes("Nothing here has been applied"))
+  assert.match(doc, /protection is \*\*on\*\*/, "the current state is recorded as read, not assumed");
+});
+
+test("PR 8: older workflows pin checkout by commit and keep no credentials; the copy scanner and the explicit bootstrap run in CI", async () => {
+  for (const name of ["red-lines.yml", "validate.yml"]) {
+    const text = await readFile(new URL("../.github/workflows/" + name, import.meta.url), "utf-8");
+    for (const use of text.matchAll(/uses: (\S+)/g)) assert.match(use[1], /@[0-9a-f]{40}$/, name + ": " + use[1]);
+    assert.ok(text.includes("persist-credentials: false"), name + " leaves no token in the checkout");
+    assert.match(text, /permissions:\n  contents: read/, name + " is read-only");
+  }
+  assert.ok(workflow.includes("node ../tools/red_lines_copy.ts"), "explorer copy is scanned for R1 and R4 wording");
+  const bootstrap = workflow.indexOf("node src/local_bootstrap.ts");
+  assert.ok(bootstrap > 0 && bootstrap < workflow.indexOf("node --test --test-reporter=spec test/integration.test.ts"), "the login is bootstrapped explicitly, before the integration tests");
+  assert.ok(!workflow.includes("seed.sql") && !/password/i.test(workflow.replace(/no password here/g, "")), "no seed path and no password in CI config");
 });

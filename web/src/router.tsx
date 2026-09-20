@@ -3,7 +3,7 @@ import { PageHeader } from '@/components/page'
 import { Shell } from '@/components/shell'
 import { basePath } from '@/lib/env'
 import { parseGraphSearch, parseListSearch, type GraphSearch, type ListSearch, type ListSearchInput, type ListSpec } from '@/lib/search'
-import { candidaciesSpec, datasetRowsSpec, datasetsSpec, documentsSpec, financeSpec, operationsRouteSpec, parliamentSpec, peopleRouteSpec, recordsSpec, rightsSpec, sourcesSpec, statisticsRouteSpec } from '@/lib/specs'
+import { candidaciesSpec, datasetRowsSpec, datasetsSpec, documentsSpec, financeSpec, operationsRouteSpec, identitiesSpec, parliamentSpec, recordsSpec, rightsSpec, sourcesSpec, statisticsRouteSpec } from '@/lib/specs'
 import { ConfiguredOnly, PublicGate } from '@/routes/access'
 import { DatasetDetailPage, DatasetsPage } from '@/routes/datasets'
 import { DocumentsPage } from '@/routes/documents'
@@ -54,7 +54,7 @@ const sourcesRoute = createRoute({ getParentRoute: inspector, path: '/sources', 
 const sourceDetailRoute = createRoute({ getParentRoute: inspector, path: '/sources/$sourceId', component: SourceDetailPage })
 const recordsRoute = createRoute({ getParentRoute: inspector, path: '/records', validateSearch: listSearch(recordsSpec), component: RecordsPage })
 const recordDetailRoute = createRoute({ getParentRoute: inspector, path: '/records/$recordId', component: RecordDetailPage })
-const peopleRoute = createRoute({ getParentRoute: inspector, path: '/people', validateSearch: listSearch(peopleRouteSpec), component: PeoplePage })
+const peopleRoute = createRoute({ getParentRoute: inspector, path: '/people', validateSearch: listSearch(identitiesSpec), component: PeoplePage })
 const identityDetailRoute = createRoute({ getParentRoute: inspector, path: '/people/$identityId', component: IdentityDetailPage })
 const partyIdentityRoute = createRoute({ getParentRoute: inspector, path: '/parties/$identityId', component: PartyIdentityDetailPage })
 const electorateVersionRoute = createRoute({ getParentRoute: inspector, path: '/electorates/$versionId', component: ElectorateVersionDetailPage })

@@ -1,6 +1,6 @@
 import { createColumnHelper } from '@tanstack/react-table'
 import { getRouteApi, Link } from '@tanstack/react-router'
-import { useMemo } from 'react'
+import { useMemo, useEffect } from 'react'
 import { Badge } from '@/components/ui/badge'
 import { DataTable, type CoreFeatures, type DataColumn } from '@/components/data-table'
 import { FilterBar, SelectFilter, TextFilter } from '@/components/filters'
@@ -10,6 +10,7 @@ import { EmptyBlock, ErrorBlock, LoadingBlock } from '@/components/states'
 import { formatCount } from '@/lib/format'
 import { useListQuery, useRowsQuery, type DatasetRef } from '@/lib/queries'
 import { ilikeContains, type ListSpec } from '@/lib/search'
+import { genericSortableColumns } from '@/lib/generic-sort'
 import { datasetsSpec } from '@/lib/specs'
 import type { OpenTableName, PublicViewName } from '@/lib/supabase'
 import type { DatasetCatalogueRow, DatasetColumnRow, Json } from '@/lib/types'
@@ -107,16 +108,41 @@ function DatasetRows({ dataset, publicColumns }: { dataset: DatasetRef; publicCo
   const search = detailRoute.useSearch()
   const setSearch = useSetSearch()
   const names = useMemo(() => publicColumns.map((c) => c.column_name), [publicColumns])
-  // Sort keys are limited to the published column names of this dataset; anything else in the URL is dropped.
-  const spec = useMemo<ListSpec<never>>(() => ({ sortable: names, defaultSort: names[0] ? [{ column: names[0], dir: 'asc' }] : [], tiebreak: names[0] ?? '', filters: {} as Record<never, never> }), [names])
-  const safeSearch = useMemo(() => (search.sort && !names.includes(search.sort) ? { ...search, sort: undefined, dir: undefined } : search), [search, names])
+  // R1: sort keys are the published, non-numeric, non-result columns of this dataset (lib/generic-sort.ts).
+  // Anything else in the URL - a vote count, a seat total, a rank, a made-up name - is dropped, not sent.
+  const sortable = useMemo(() => genericSortableColumns(publicColumns), [publicColumns])
+  const figures = names.length - sortable.length
+  const spec = useMemo<ListSpec<never>>(() => {
+    // The tiebreak is a sortable column or nothing. A dataset made only of figures is sent with NO ordering at all:
+    // falling back to its first column would quietly order the rows by a figure.
+    return { sortable, defaultSort: sortable[0] ? [{ column: sortable[0], dir: 'asc' }] : [], tiebreak: sortable[0] ?? '', filters: {} as Record<never, never> }
+  }, [sortable])
+  const safeSearch = useMemo(() => (search.sort && !sortable.includes(search.sort) ? { ...search, sort: undefined, dir: undefined } : search), [search, sortable])
+  // A shape-valid key this dataset does not offer (a numeric column, a column of another dataset) is also removed
+  // from the address bar, so a shared link never looks as if it ordered the rows by it.
+  const rejectedSort = search.sort !== undefined && names.length > 0 && !sortable.includes(search.sort)
+  useEffect(() => {
+    if (rejectedSort) setSearch({ sort: undefined, dir: undefined }, { replace: true })
+  }, [rejectedSort, setSearch])
   const genericHelper = useMemo(() => createColumnHelper<CoreFeatures, GenericRow>(), [])
   const tableColumns = useMemo<DataColumn<GenericRow>[]>(
     () => names.map((name) => genericHelper.accessor((row) => row[name], { id: name, header: name, cell: ({ getValue }) => renderCell(getValue()) })),
     [names, genericHelper],
   )
   const query = useListQuery<GenericRow, never>({ view: dataset, select: names.join(','), spec, search: safeSearch, count: 'estimated', enabled: names.length > 0 })
-  return <DataTable caption="Rows" columns={tableColumns} query={query} spec={spec} search={safeSearch} onSearchChange={setSearch} getRowId={(row) => names.slice(0, 3).map((n) => String(row[n])).join('|')} />
+  return (
+    <>
+      {figures > 0 ? (
+        <div className="mb-3">
+          <Note testId="dataset-sort-note">
+            Rows can be ordered by identifiers, names and dates only. Counts, totals and other figures are shown as the source reported
+            them and cannot be used to order rows here, so this page never arranges people, parties or electorates by a number.
+          </Note>
+        </div>
+      ) : null}
+      <DataTable caption="Rows" columns={tableColumns} query={query} spec={spec} search={safeSearch} onSearchChange={setSearch} getRowId={(row) => names.slice(0, 3).map((n) => String(row[n])).join('|')} />
+    </>
+  )
 }
 
 export function DatasetDetailPage() {

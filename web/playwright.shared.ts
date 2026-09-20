@@ -9,6 +9,8 @@ export function appEnv(basePath: string): Record<string, string> {
     VITE_SUPABASE_URL: LOCAL_API_URL,
     VITE_SUPABASE_ANON_KEY: localKeys().anonKey,
     VITE_BASE_PATH: basePath,
+    // The ONLY place this flag is set: it lets the app under test talk plain http to the loopback local stack.
+    VITE_LOCAL_TEST_STACK: '1',
   }
 }
 

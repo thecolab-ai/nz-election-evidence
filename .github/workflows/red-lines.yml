@@ -10,9 +10,10 @@ jobs:
   red-lines:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-        # Full history is required to prove CORRECTIONS.md remained append-only.
-        with: { fetch-depth: 0 }
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        # Full history is required to prove CORRECTIONS.md remained append-only. The job only reads, so the
+        # token is not left in the checkout's git config.
+        with: { fetch-depth: 0, persist-credentials: false }
       - name: Enforce red lines
         run: python3 scripts/red_lines.py --freeze-check
       - name: Red-line and public-compliance unit tests

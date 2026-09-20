@@ -299,6 +299,15 @@ export interface SummaryRow {
   model_name: string | null
   model_version: string | null
   prompt_or_schema_version: string | null
+  /** R9: present only when confidence_status is 'reported'. null is unknown, never 0. */
+  confidence: number | null
+  confidence_status: string
+  confidence_basis: string | null
+  schema_agreement_rate: number | null
+  schema_agreement_sample: number | null
+  schema_agreement_method_url: string | null
+  schema_agreement_validated_at: string | null
+  schema_agreement_documented: boolean
 }
 
 export interface StatSeriesRow {

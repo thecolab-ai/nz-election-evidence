@@ -1,4 +1,5 @@
 import { CANDIDACY_STATUSES, FRESHNESS_STATUSES, SCOPE_ORDER } from './format'
+import { isAcceptableGenericSortKey } from './generic-sort'
 import type { ListSpec } from './search'
 
 /** One spec per list: the only sort columns and filter values a URL can ever send to the server. */
@@ -29,23 +30,19 @@ export const recordsSpec = {
   },
 } as const satisfies ListSpec
 
+/**
+ * R1: names and link state only. The per-person counts (service terms, candidacies, open proposals) are shown
+ * but are not sort keys, the same stance candidaciesSpec takes with votes: no "by person" ordering by a number.
+ */
 export const identitiesSpec = {
-  sortable: ['name_at_source', 'source_id', 'link_status', 'service_terms', 'candidacies', 'open_proposals'],
+  sortable: ['name_at_source', 'source_id', 'link_status'],
   defaultSort: [{ column: 'name_at_source', dir: 'asc' }],
   tiebreak: 'id',
   filters: {
-    tab: { kind: 'enum', values: ['identities', 'people'] },
     q: { kind: 'text' },
     source: { kind: 'text', maxLength: 63 },
     link: { kind: 'enum', values: ['unresolved', 'proposed', 'approved', 'rejected'] },
   },
-} as const satisfies ListSpec
-
-export const peopleSpec = {
-  sortable: ['display_name', 'public_role_basis', 'linked_identities', 'created_at'],
-  defaultSort: [{ column: 'display_name', dir: 'asc' }],
-  tiebreak: 'id',
-  filters: identitiesSpec.filters,
 } as const satisfies ListSpec
 
 export const parliamentSpec = {
@@ -175,7 +172,6 @@ function union(...lists: ReadonlyArray<readonly string[]>): string[] {
 }
 
 /** Tabbed routes validate the URL against the union of their tabs' sort columns. */
-export const peopleRouteSpec = { ...identitiesSpec, sortable: union(identitiesSpec.sortable, peopleSpec.sortable) } satisfies ListSpec
 export const statisticsRouteSpec = { ...statSeriesSpec, sortable: union(statSeriesSpec.sortable, statObservationsSpec.sortable) } satisfies ListSpec
 export const operationsRouteSpec = { ...runsSpec, sortable: union(runsSpec.sortable, errorsSpec.sortable, schedulesSpec.sortable) } satisfies ListSpec
 
@@ -195,9 +191,13 @@ export const datasetsSpec = {
   },
 } as const satisfies ListSpec
 
-/** Generic row browser: the sortable columns are decided at runtime from the published column catalogue. */
+/**
+ * Generic row browser: the columns are only known at run time, so the URL is held to a shape test that already
+ * refuses every result-like name (R1, lib/generic-sort.ts); the page then narrows to the non-numeric published columns.
+ */
 export const datasetRowsSpec = {
   sortable: [],
+  acceptsSortKey: isAcceptableGenericSortKey,
   defaultSort: [],
   tiebreak: '',
   filters: {},
