@@ -1,0 +1,63 @@
+{
+  "input_findings": null,
+  "receipt_version": 1,
+  "source_id": "nz_parliament_mp_directory",
+  "mode": "incremental",
+  "dry_run": false,
+  "status": "blocked",
+  "complete_snapshot": false,
+  "error_class": "publisher_robots_disallowed",
+  "error_detail": "the publisher's robots.txt disallows this path for this client",
+  "manifest_hash": "sha256:6b0b70ca056d3b86358b336d5221a25468dac1b34246b0a51af9dacb7f305314",
+  "manifest": {
+    "manifest_version": 1,
+    "config_version": 1,
+    "source_id": "nz_parliament_mp_directory",
+    "adapter_name": "nz_parliament_mp_directory",
+    "adapter_version": "1.0.0",
+    "mode": "incremental",
+    "allowed_hosts": [
+      "www3.parliament.nz"
+    ],
+    "snapshot_semantics": "complete_snapshot",
+    "source_config_hash": "sha256:5b08c5ca67a88c6bfd7b5726ef327e0f12b50c8e717a6d007d34325923a8d2e8",
+    "max_records": 2000
+  },
+  "run_id": "da96eb01-75c8-460d-bffd-f9d655b02d84",
+  "resumed_from_run_id": null,
+  "totals": {
+    "seen": 0,
+    "versions_inserted": 0,
+    "observations_inserted": 0,
+    "unchanged": 0,
+    "rejected": 0
+  },
+  "tombstoned": 0,
+  "pages": 0,
+  "projection": null,
+  "fetches": [
+    {
+      "method": "GET",
+      "url": "https://www3.parliament.nz/robots.txt",
+      "attempt": 1,
+      "outcome": "ok",
+      "http_status": 200,
+      "bytes": 714,
+      "body_sha256": "sha256:e19bf175c5b805494a9bfcf76e5a80483499f01e74c48bb4fe45498c5668b21a",
+      "retrieved_at": "2026-09-20T06:51:49.076Z",
+      "duration_ms": 554
+    },
+    {
+      "method": "GET",
+      "url": "https://www3.parliament.nz/en/mps-and-electorates/members-of-parliament/",
+      "attempt": 1,
+      "outcome": "robots_disallowed",
+      "http_status": null,
+      "bytes": null,
+      "body_sha256": null,
+      "retrieved_at": "2026-09-20T06:51:49.630Z",
+      "duration_ms": 0
+    }
+  ],
+  "receipt_note": "Real retrieval from the official publisher on 2026-09-20 (UTC), written to a disposable local database. Counts, hashes, statuses and publisher URLs only; no payloads or response bodies."
+}

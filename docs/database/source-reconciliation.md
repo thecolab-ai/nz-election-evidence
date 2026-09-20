@@ -1,10 +1,11 @@
 # Source reconciliation
 
-> **Status: NOT complete, NOT released, NOT security signed off.** Independent reviews of `6b8218e` and `b761023` both returned **NO-GO**; this revision addresses their bounded findings. A separate security re-review was interrupted and is **incomplete**, so no security sign-off exists or is claimed. Source completeness is partial: of the **24** catalogue products, **3** have a live adapter (P01 feed window only, P03, P10), **1** (P04, the 2023 candidacy product) imports through a pinned export contract on a local disposable database only, and **20 have no route into the store at all**. Nothing has been pushed, applied to a hosted project, scheduled, deployed or published.
+> **Status: NOT complete, NOT released, NOT security signed off.** Independent reviews of `6b8218e` and `b761023` both returned **NO-GO**; this revision addresses their bounded findings. A separate security re-review was interrupted and is **incomplete**, so no security sign-off exists or is claimed. The PR 8 review findings are dispositioned in [pr8-review-disposition.md](pr8-review-disposition.md). Source completeness is partial: of the **24** catalogue products, **3** have a live adapter (P01 feed window only, P03, P10) **of which only 1 (P01) may currently run** — the P10 host's robots.txt disallows automated clients and the P03 endpoint is undocumented, so both stop as blocked — **1** (P04, the 2023 candidacy product) imports through a pinned export contract on a local disposable database only, and **20 have no route into the store at all**. Nothing has been pushed, applied to a hosted project, scheduled, deployed or published.
 
 | Catalogue products | Count | Which |
 |---|---|---|
-| Live adapter, proven against the publisher | **3** | P01 (feed window only, not the 4,735-record history), P03, P10 |
+| Live adapter built and parser-tested | **3** | P01 (feed window only, not the 4,735-record history), P03, P10 |
+| …of those, permitted to run on the access evidence recorded so far | **1** | P01. P10 is blocked by the publisher's robots.txt; P03 has no documented route. Blocked is not empty. |
 | Export contract, run on the verified upstream product (local disposable database only; nothing hosted) | **1** | P04: 963 candidacies = 495 electorate + 468 list |
 | No route into the store | **20** | P02, P05, P06, P07, P08, P09, P11, P12, P13, P14, P15, P16, P17, P18, P19, P20, P21, P22, P23, P24 |
 
@@ -28,6 +29,15 @@ The 24 upstream source IDs, the 21 registry products and the 24 public catalogue
 
 ## Live adapters (proven against the publisher on 2026-09-20)
 
+**Access status after the PR 8 review (same day).** The fetch guard now reads each host's robots.txt before any request, paces requests per host, and refuses endpoints with no established basis for automated access. Applied to these three:
+
+| Source | robots.txt for this client | Access basis | Status now |
+|---|---|---|---|
+| `nz_government_releases_feed` | Path allowed | Public feed | **Runs.** Its schedule still cannot activate: no terms URL is recorded (the publisher's copyright page answered this client with a bot challenge) and no person has reviewed the terms. |
+| `nz_parliament_mp_directory` | **Disallowed** (`User-agent: *`, `Disallow: /`) | Public page | **Blocked**, disabled, schedule removed. Needs the publisher's permission or a documented data route. The 122 rows below were retrieved before robots.txt handling existed; they are history, not a continuing feed. |
+| `nz_parliament_current_bills` | Allowed, but not the point | **Undocumented internal endpoint** | **Blocked before any request**, disabled, schedule removed. A permissive robots.txt is not permission to use an internal API, and no documented bills route was found. The 93 rows below predate this rule. |
+
+
 | Source | Publisher endpoint | Retrieved | Snapshot semantics | Catalogue product | Not covered |
 |---|---|---|---|---|---|
 | `nz_parliament_mp_directory` | Official members listing | 122 rows: 71 electorate, 51 list; 7 distinct party labels | Complete snapshot | P10 | Roles and portfolios (profile pages not fetched); service start/end dates (not stated by the listing); any vacancy event. Seats in the House is a different number from members listed and is not derived. |
@@ -42,7 +52,7 @@ Receipts: [receipts/](receipts/README.md).
 |---|---|---|---|
 | `ec_2026_nominations` | 2026 primary | Bot-challenge page | **No official nominations loaded. The number of 2026 candidates is unknown, not zero.** Party announcements are a different status and are not collected. |
 | `ec_register_of_political_parties` | 2026 primary | Bot-challenge page | Current registered parties unknown here. |
-| `ec_2023_official_results` | 2023 baseline | Bot-challenge page (HTTP 403) | Baseline rows must arrive through the reviewed export import. |
+| `ec_2023_official_results` | 2023 baseline | robots.txt itself answers HTTP 403, so access is not assumed (previously: bot-challenge page) | Baseline rows must arrive through the reviewed export import. |
 | `ec_party_finance_returns` | 2025 finance | Bot-challenge page | Return status unknown here. Donor identities are never collected in any case. |
 | `nz_parliament_written_questions` | Current Parliament | Reachable after the allowlist was updated for the publisher's new host; no parser enabled | Nothing imported; no count implied. |
 

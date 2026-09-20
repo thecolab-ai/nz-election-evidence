@@ -96,7 +96,20 @@ Memberships live in `evidence_private.app_memberships`, written only by an admin
 
 `pg_cron` → `evidence_private.dispatch_ingest()` → `pg_net` → Edge Function `ingest-run`. The function URL and shared secret are read from **Supabase Vault** at dispatch time. The dispatcher accepts only a Supabase project functions endpoint as its target. The function compares the secret in constant time, accepts a configured `source_id` (never a URL), connects through a login that is only a member of `evidence_ingest`, and is bounded to 140 s and 2,000 records. Backfills run from the CLI, outside the function budget.
 
-Migrations schedule nothing. `activate_schedule()` refuses unless it is given a recent successful run that the **deployed function** created in response to an authenticated readback call; a CLI run is not proof. A check constraint prevents `state = 'active'` without that proof and a cron job id.
+Migrations schedule nothing. `activate_schedule()` refuses unless it is given a recent successful run that the **deployed function** created in response to an authenticated readback call; a CLI run is not proof. It also refuses unless publisher access is cleared (see Publisher access). An active schedule's configuration is frozen, for the worker (row level security) and for `sync_schedules()`. A check constraint prevents `state = 'active'` without that proof and a cron job id.
+
+## Publisher access
+
+Reaching a publisher is decided in layers, each of which fails closed and is recorded as **blocked**, never as "no records":
+
+1. **Configuration.** A live source must name its rights-register row and its `access_basis` (`public_page`, `public_feed`, `documented_api`, `undocumented_endpoint`); both are also table constraints. An undocumented endpoint can never be enabled and the runner stops before any request.
+2. **Fetch guard** (`_shared/http.ts`). HTTPS and an exact host allowlist; robots.txt per host, once per run, logged (RFC 9309; unreadable rules mean access is not assumed; `Crawl-delay` raises the pacing interval or blocks a run that cannot honour it); a minimum interval between requests to one host across the whole run; one abort signal covering headers and body, bounded by the run deadline; adapter headers and body dropped when a redirect changes origin; an adapter can never set `Origin`, `Referer`, `User-Agent`, cookies or authorisation. No 401/403/challenge is retried or worked around.
+3. **Recorded checks.** `publisher_access_checks` (append-only) holds what robots.txt and the register's terms page looked like to this client: URL, status, size, body hash, finding. It is provenance. It has no field that could pass for a legal conclusion and stores no page body.
+4. **A person's terms review.** `publisher_terms_reviews` (append-only, administrator-written, never by the worker or any tool) holds a named person's reading of the terms, resting on a recorded retrieval of that exact page. `automated_access_blocker()` requires a permitting review under a year old and an allowing robots check under 30 days old; `activate_schedule()` **and every dispatch** call it, so permission that lapses stops an active schedule.
+
+## Model outputs (R9)
+
+Summaries and model-made policy classifications carry their model run, a confidence with explicit semantics (`reported` with a value and what the number is, `not_reported`, `not_applicable`; unknown is never 0 and nothing is defaulted), and the review state of that output. Separately, `schema_agreement_validations` records documented human-agreement studies **per schema version**. Until one exists for a version, every output of that version is shown as not yet checked against human review, whether or not individual outputs were approved. The label columns are unconditional link metadata in the public projection, so a rights row can never release a model output without its label.
 
 ## Known limits
 

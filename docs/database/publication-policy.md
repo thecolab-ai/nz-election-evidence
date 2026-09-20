@@ -7,7 +7,7 @@ This is project process documentation, not legal advice. It restates how the bin
 - No migration has been applied to a hosted project and the explorer is not deployed.
 - The store is designed for **public read-only transparency within source rights**: default deny, provable source lineage for every projected object, and a release tier per source ([architecture](architecture.md#default-deny-source-lineage-and-release-tiers)). Transparency does not waive a publisher's rights.
 - Inside the database, anonymous readers receive evidence rows only while the `r10_public_surface_review` and `r8_accountable_legal_entity` gates are both open. Both are **closed** by default. The dataset catalogue and column list are always readable.
-- All 19 rights rows are **pending**, so every real source is `link_only`: the public would see identifiers, official links, dates, hashes and statuses, and **no** names, titles, labels, figures, payloads or publisher identifiers. A source with no rights row, or a `refused`, `restricted` or `withheld` one, shows nothing at all, including everything descended from it.
+- All 21 rights rows are **pending**, so every real source is `link_only`: the public would see identifiers, official links, dates, hashes and statuses, and **no** names, titles, labels, figures, payloads or publisher identifiers. A source with no rights row, or a `refused`, `restricted` or `withheld` one, shows nothing at all, including everything descended from it.
 - The explorer deployment is blocked by `tools/release_gate.ts` until `REVIEW-REGISTER.md` carries an approved row naming a reviewer, and by the repository variable `PAGES_DEPLOY_ENABLED`. Passing CI is not approval.
 
 ## What opening publication requires

@@ -10,21 +10,24 @@ Needs Docker, the Supabase CLI (2.113.0 tested) and Node 24. Ports are non-defau
 
 ```bash
 supabase start -x studio,imgproxy,storage-api,realtime,logflare,vector,supavisor,postgres-meta,mailpit,edge-runtime
-supabase test db                      # pgTAP (9 files)
+supabase test db                      # pgTAP (10 files)
 cd ingest && npm ci
 npm run typecheck && npm test         # ingestion + release tooling unit tests (TypeScript, no network)
 npm run check:deno                    # Edge Function type-check
-# CLI runs need a scoped worker connection in EVIDENCE_INGEST_DB_URL. On the LOCAL stack the login is
-# evidence_ingest_local, created by supabase/seed.sql; see ingest/test/local-stack.ts for how tests assemble it.
+node ../tools/red_lines_copy.ts       # R1/R4 wording in explorer copy (TS/TSX strings and JSX text)
+# The scoped worker login is NOT created by any seed or migration. Create it on the LOCAL stack explicitly:
+node src/local_bootstrap.ts           # random value, SCRAM verifier only, git-ignored owner-only file, expires in 14 days.
+                                      # No target option; refuses a remote Docker daemon; the SQL refuses any network session.
 EVIDENCE_TEST_LOCAL_STACK=1 EVIDENCE_REQUIRE_INTEGRATION=1 node --test test/integration.test.ts   # asserts the scoped login; a skip is a failure
 node src/cli.ts validate
-node src/cli.ts plan nz_parliament_current_bills           # deterministic manifest; no network, no writes
-node src/cli.ts run nz_parliament_current_bills --dry-run  # real fetch and parse; no writes
+node src/cli.ts plan nz_government_releases_feed           # deterministic manifest; no network, no writes
+node src/cli.ts run nz_government_releases_feed --dry-run  # real fetch (robots.txt first, paced) and parse; no writes
 node src/cli.ts registry-sync                              # sources, rights mirror, schedules (inactive)
-node src/cli.ts run nz_parliament_current_bills --receipt receipt.json
+node src/cli.ts run nz_government_releases_feed --receipt receipt.json
+node src/access_check.ts --record --receipt access.json     # robots.txt and terms-page retrievals, recorded as provenance (not approval)
 ```
 
-`supabase db reset` rebuilds the local database from the migrations. **Never run it against a linked hosted project.** `supabase/seed.sql` is local-only (it lets the local migration role act as the worker).
+`supabase db reset` rebuilds the local database from the migrations. **`supabase db reset --linked` is forbidden**: it would drop and rebuild a hosted project. There is no seed file and seeding is switched off in `supabase/config.toml`, so no reset of any kind can create a login; CLI runs read the local worker connection from the file the bootstrap writes (`EVIDENCE_INGEST_DB_URL` for anything else comes from the operator's environment, never from git).
 
 The CLI connects as a login that is only a member of `evidence_ingest`, exactly as in production, and refuses a superuser, `BYPASSRLS` or `CREATEROLE` login. It keeps no session state, so the connection string may point at a transaction-mode pooler.
 
@@ -49,16 +52,18 @@ The export location, producing system and any machine name never enter the ledge
 
 Pre-conditions: coordinator release review complete; `REVIEW-REGISTER.md` rows for the evidence store and the explorer addressed; a project backup/restore rehearsed on the chosen plan (do not assume point-in-time recovery is included).
 
-1. **Pre-flight, read-only:** `psql "$ADMIN_DB_URL" -f scripts/db/inspect_existing_objects.sql`. Keep the output. Stop if any `evidence_*` object, policy or cron job already exists unexpectedly.
+0. **Connecting as administrator:** use the `PGHOST` / `PGPORT` / `PGDATABASE` / `PGUSER` variables with a password file (`PGPASSFILE`) or a connection service, not a URL with a password on a command line: arguments are visible in the process list and in shell history.
+1. **Pre-flight, read-only:** `psql -f scripts/db/inspect_existing_objects.sql`. Keep the output. Stop if any `evidence_*` object, policy or cron job already exists unexpectedly.
 2. **Migrations:** `supabase link --project-ref <ref>`, `supabase db push --dry-run`, review, then `supabase db push`. Re-run the pre-flight and compare.
 3. **API exposure:** in project settings expose `evidence_public`, `evidence_open` and `evidence_inspector` only. Do **not** expose `evidence_private`, `evidence_views` or `evidence_api`. With the gates still closed this publishes the dataset catalogue and no evidence rows. Confirm sign-ups are disabled and the site URL / redirect list contains only the explorer URL.
-4. **Worker login:** `scripts/db/create_ingest_login.sql` with a freshly generated password. Verify the readback row: no superuser, no bypass of row level security, member of `evidence_ingest` only.
+4. **Worker login:** `node ingest/src/operator.ts set-ingest-login`. The password is typed or pasted at a hidden prompt (or piped on standard input from a password manager); it is never an argument and is never sent to the server, which receives a SCRAM-SHA-256 verifier computed locally. If the server would record the `ALTER ROLE` text and that cannot be switched off for the transaction, the tool stops; `--accept-logged-verifier` proceeds with a 32+ character password, since a log then holds only a salted hash. Verify the printed readback: no superuser, no bypass of row level security, member of `evidence_ingest` only.
 5. **Function secrets:** `supabase secrets set EVIDENCE_INGEST_DB_URL=... EVIDENCE_CRON_SECRET=...` (values from the operator's shell; 32+ characters for the cron secret). **Deploy:** `supabase functions deploy ingest-run` (JWT verification is off for this function by design; it authenticates the scheduler's shared secret).
 6. **Registry:** `node src/cli.ts registry-sync` with the worker connection. Schedules arrive **inactive**.
 7. **Live role checks** (repeat the boundary tests against the hosted project): with gates closed an anonymous `GET /rest/v1/records` returns `[]` and `dataset_catalogue` returns rows; anonymous `POST`/`PATCH`/`DELETE` are refused on both public schemas; `evidence_private`, `evidence_views`, `vault` and `auth` are unreachable; a withheld column such as `identity_decisions.decided_by` or `import_runs.error_detail` does not exist publicly; with gates open a pending source returns `safe_payload = null` and null content columns; an ordinary signed-in user gets zero inspector rows and `my_access.is_inspector = false`.
-8. **Vault:** `scripts/db/set_cron_vault_secrets.sql`. Readback shows names only.
+8. **Vault:** `node ingest/src/operator.ts set-cron-secrets --functions-base-url https://<project-ref>.supabase.co/functions/v1`, cron secret at the hidden prompt. The value travels only as a bind parameter, and only after the tool has confirmed that no logging setting in force (`log_statement`, duration logging, `log_parameter_max_length`, parameter logging on error, pgaudit) would record parameters. **If one would, the tool refuses and sends nothing**; set the two entries in the dashboard's Vault page instead. Output shows entry names and timestamps only.
 9. **Function readback (deployment proof):** call the deployed function once per source with the secret and `"trigger_kind": "function_readback"`. Expect HTTP 200 and a `run_id`; without the secret expect 401; with a `url` field expect 400.
-10. **Activate one schedule at a time:** `scripts/db/activate_schedule.sql` with that `run_id`. The database refuses without a successful readback run from the last 24 hours. Check the readback table: desired state and the real `cron.job` row must agree. Watch the first scheduled run in the explorer (Operations) before activating the next.
+9a. **Publisher access, per source, before any activation (a person's job):** run `node src/access_check.ts --record` so the robots.txt and terms-page retrievals are on record; make sure the rights register row names the publisher's terms URL; then a named person reads those terms and an administrator records their conclusion in `evidence_private.publisher_terms_reviews` (terms URL, the two check ids it rests on, `permitted` / `permitted_with_conditions` / `not_permitted` / `unclear`, conditions, reviewer). Nothing in this repository writes that row. A recorded retrieval is provenance, not approval.
+10. **Activate one schedule at a time:** `scripts/db/activate_schedule.sql` with that `run_id`. The database refuses without a successful readback run from the last 24 hours, and refuses unless the source has a rights row, a terms URL, a terms review that permits automated access (under a year old) and a robots.txt check from the last 30 days that allows the path. The same test runs at **every dispatch**, so a later adverse review or robots change stops an active schedule (`skipped_access_not_permitted`). An active schedule's configuration is frozen: deactivate before changing it. Check the readback table: desired state and the real `cron.job` row must agree. Watch the first scheduled run in the explorer (Operations) before activating the next.
 11. **Inspectors:** invite the user in Supabase Auth, then `scripts/db/grant_inspector.sql` with a reason.
 12. **Open the public gates (only after R8 and R10 are recorded):** `scripts/db/set_release_gate.sql` once per gate, with the evidence reference and the deciding person. Readback must show `public_rows_released = t`. `-v close=1` withholds everything again at once.
 13. **Explorer:** set repository variables `EXPLORER_SUPABASE_URL` and `EXPLORER_SUPABASE_ANON_KEY` (public anon key only). Deployment additionally needs an approved `REVIEW-REGISTER.md` row and `PAGES_DEPLOY_ENABLED=true`.
@@ -66,10 +71,10 @@ Pre-conditions: coordinator release review complete; `REVIEW-REGISTER.md` rows f
 ## 4. Operating
 
 - **Freshness:** explorer → Sources. `unavailable` means the publisher refused or failed; it does not mean the source is empty. `reachable_not_parsed` means the page answered and nothing is imported. `stale` means no success within twice the expected cadence.
-- **A blocked publisher:** do nothing clever. The run is recorded, nothing is tombstoned, the next scheduled attempt tries again. Persistent blocks need a publisher-approved route.
+- **A blocked publisher** (refusal, bot challenge, robots.txt disallow or unreadable, undocumented endpoint): do nothing clever. The run is recorded, nothing is tombstoned, the next scheduled attempt tries again. Persistent blocks need a publisher-approved route.
 - **Tombstone safety valve:** a complete snapshot that would drop more than half of a source's live records is downgraded to `partial` with `tombstone_safety_valve`, and needs a human look before anything is marked absent.
 - **Stuck lease:** leases expire by themselves (run budget + 30 s). The next run takes over and marks the dead run `abandoned`.
-- **Rotation:** re-run `create_ingest_login.sql` and `set_cron_vault_secrets.sql` with new values, update the function secrets, then call the readback.
+- **Rotation:** re-run `operator.ts set-ingest-login` and `operator.ts set-cron-secrets` with new values, update the function secrets, then call the readback.
 - **Pause everything** (election-day freeze, incident): `activate_schedule.sql -v deactivate=1` for each schedule; confirm `cron.job` holds no `evidence_private` command.
 - **Record a publisher's approval:** update `catalogue/rights-register.json` (owner-reviewed) and sync it **as administrator** with the row's `approved_fields`; the worker role can only ever write pending rows. Content stays blank until then. To withdraw, set the row to `restricted` or `refused`: everything descended from that source disappears from every projection at once.
 - **After a schema change:** record lineage in `public_lineage` (or withhold the object), run `select evidence_private.classify_public_columns()`, review the classes, run `select evidence_private.rebuild_exposed_views()`, then `npm run types:generate`. pgTAP fails on any drift.

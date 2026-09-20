@@ -1,6 +1,8 @@
-# Branch protection: recommended settings
+# Branch protection: current state and recommended settings
 
-**Nothing here has been applied.** This work does not modify the repository's remote settings. These are recommendations for the repository owner, written so that two different things stay separate:
+**Current state of `main`, read (not changed) on 2026-09-20:** protection is **on**. It applies to administrators; one approving review is required and it must come from a code owner; the required status checks are `red-lines` and `offline-validation`, with branches required to be up to date; force pushes and deletions are off. A review comment on PR 8 said protection was off; that was not accurate. What is true is narrower: the newer `explorer.yml` checks in section 1 are **not yet required**, so a pull request could merge with them failing. Adding them is the owner's decision.
+
+**Nothing here has been applied by this work**, and nothing below is a change to the remote. This work does not modify the repository's remote settings. These are recommendations for the repository owner, written so that two different things stay separate:
 
 - **Merging private development into `main`** should need *build and test* checks and an owner review. It should **not** need a release approval: merging code publishes nothing (the Pages deploy job and the database gates are separate, below).
 - **Deploying or releasing** needs the R10 review, the owner switch and the database gates. None of those should be a merge requirement, or development would stall on a legal review that code cannot complete.

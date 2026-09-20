@@ -50,7 +50,7 @@ This branch adds a Supabase evidence store, repeatable ingestion from official s
 - `web/` — the explorer (static shell; ships no evidence data; public anon key only; generated database types)
 - `scripts/db/` — versioned operator SQL scripts
 
-Coverage is partial and enumerated, not claimed: three official sources are ingested live (3 of 24 catalogue products); the Electoral Commission endpoints were unavailable to automated requests and are recorded as unavailable, which is not the same as empty.
+Coverage is partial and enumerated, not claimed: three live adapters exist (3 of 24 catalogue products), but after the PR 8 review only **one** is in use — the MP directory host's robots.txt disallows automated clients and the bills endpoint is undocumented, so both now stop as blocked until the publisher gives a route or permission; the Electoral Commission endpoints were unavailable to automated requests and are recorded as unavailable, which is not the same as empty.
 
 ## Start here
 

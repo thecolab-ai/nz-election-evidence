@@ -1,6 +1,6 @@
 # Implementation checklist
 
-> **Status: NOT complete, NOT released, NOT security signed off.** Independent reviews of `6b8218e` and `b761023` both returned **NO-GO**; this revision addresses their bounded findings. A separate security re-review was interrupted and is **incomplete**, so no security sign-off exists or is claimed. Source completeness is partial: of the **24** catalogue products, **3** have a live adapter (P01 feed window only, P03, P10), **1** (P04, the 2023 candidacy product) imports through a pinned export contract on a local disposable database only, and **20 have no route into the store at all**. Nothing has been pushed, applied to a hosted project, scheduled, deployed or published.
+> **Status: NOT complete, NOT released, NOT security signed off.** Independent reviews of `6b8218e` and `b761023` both returned **NO-GO**; a later revision addressed their bounded findings, and the PR 8 review of `c27f2b0` (changes requested) is dispositioned item by item in [pr8-review-disposition.md](pr8-review-disposition.md). A separate security re-review was interrupted and is **incomplete**, so no security sign-off exists or is claimed. Source completeness is partial: of the **24** catalogue products, **3** have a live adapter (P01 feed window only, P03, P10), **1** (P04, the 2023 candidacy product) imports through a pinned export contract on a local disposable database only, and **20 have no route into the store at all**. Nothing has been pushed, applied to a hosted project, scheduled, deployed or published.
 
 Branch `feat/supabase-evidence-explorer`. Legend: **[x]** done and verified here · **[~]** built, verification partial (reason given) · **[ ]** not done. "Verified" means the command was run in this work and passed; nothing below is claimed without that. All verification used a **disposable local stack**. No hosted project was touched, nothing was pushed, deployed, scheduled or published.
 
@@ -49,13 +49,14 @@ Branch `feat/supabase-evidence-explorer`. Legend: **[x]** done and verified here
 - [x] Edge Function `ingest-run`: shared-secret auth in constant time, strict body (a source id, never a URL), bounded runtime/records, scoped login, no payloads in responses — type-checked with Deno and **run locally** (401 / 405 / 400 / 404 / 200 paths exercised)
 - [x] `pg_cron` → dispatcher → `pg_net` → function, secrets read from Vault, target restricted to a Supabase functions endpoint — **proven locally end to end**, then deactivated (0 cron jobs left)
 - [x] Migrations schedule nothing; activation refused without a function readback run; check constraint forbids `active` without proof
-- [x] Versioned operator scripts: worker login, Vault secrets, activate/deactivate with readback, inspector grant/revoke, read-only pre-flight
+- [x] Versioned operator steps: activate/deactivate with readback, inspector grant/revoke, read-only pre-flight (SQL); worker login and Vault secrets through `ingest/src/operator.ts` (hidden input, SCRAM verifier, refuses where logging would capture a parameter)
+- [x] Activation and every dispatch also require a rights row, a terms URL, a named person's terms review and a fresh robots.txt check; **no such review exists, so no schedule can activate** (proven locally against a real readback run: refused)
 - [ ] Hosted deployment, Vault secrets, schedule activation — **deliberately not done**; awaits release review
 
 ## 4. Source freshness
 
 - [x] Freshness table and statuses: fresh, stale, partial, unavailable, reachable_not_parsed, never_run; last attempt, last success, last change, latest publisher date, consecutive failures
-- [x] Verified live for nine sources (three fresh, four unavailable, one reachable-not-parsed, one never run); freshness is part of the public projection
+- [x] Verified live for nine sources; freshness is part of the public projection. After the PR 8 fixes: one fresh (releases feed), six blocked (one robots.txt disallow, one undocumented endpoint, three bot challenges, one unreadable robots.txt), one reachable-not-parsed, one export-only
 
 ## 5. Public read-only access, source rights and the private boundary
 
@@ -100,10 +101,28 @@ Rewritten after the release review (findings 1–3). Public transparency does no
 - [x] Review register: two new **PENDING** rows (public explorer; evidence store). No approval is claimed
 - [x] No credentials, private hostnames, archive locations or response bodies in git; receipts are sanitised and asserted so
 
+## 9. PR 8 review fixes (all verified from scratch on the task-local stack)
+
+Item-by-item evidence is in [pr8-review-disposition.md](pr8-review-disposition.md).
+
+Final run, 2026-09-20, after confirming no other session or process was using the task-local stack: database rebuilt from the 13 migrations; **pgTAP 304/304** (10 files); integration tests **fail rather than skip** without the explicit bootstrap, then ingest + tooling **94/94 with 0 skipped** (17 of them against the database as the scoped login); Deno check; source config valid (9 sources, 1 schedule, inactive); explorer copy scan clean (60 files); generated types match the migrations; web typecheck and **vitest 32/32**; Pages build and bundle check; **browser 25/25**, **Pages routing 4/4**; Python validation, red lines with freeze check and 20 unit tests. Function served locally under the edge runtime: 401 without the secret, 400 with a `url` field, 200 readback; Vault entries set through the operator tool; **activation refused** for want of a terms URL and a person's terms review. Then a second rebuild for clean receipts: one source ran, six blocked, one not parsed; the 963-row import stored 963 and replayed 0. End state: all three gates closed, 0 cron jobs, 0 active schedules, 0 terms reviews, every rights row pending, anonymous readers see 0 evidence rows.
+
+- [x] Fetch guard: one abort signal over headers **and** body, bounded by the run deadline, stream cancelled; adapter headers dropped when a redirect changes origin; forbidden headers stripped
+- [x] Publisher access: robots.txt per host (fail closed when unreadable), per-host pacing and Crawl-delay, `access_basis` per source, undocumented endpoints never contacted, spoofed `Origin`/`Referer` removed
+- [x] Rights references required for live sources (config and table constraint); two new **pending** rows; recorded robots/terms retrievals as provenance; a person's terms review required before activation and at every dispatch
+- [x] No login on any automatic seed path: seed removed, explicit loopback-only bootstrap with tested refusal of remote targets and a server-side socket guard
+- [x] Operator secrets: no secret in arguments, output or statement text; SCRAM verifier for the role; Vault value only as a bind parameter after a logging check, otherwise refused
+- [x] R1: generic dataset browser never sorts by a figure (type and name, default deny); per-person numeric sorts and the dead people spec removed
+- [x] R9: explicit confidence semantics (reported / not reported / not applicable; no invented numbers), model run required for model-made policy classes, human-agreement studies as their own record distinct from per-output review
+- [x] Red lines R1/R4 now cover TS/TSX reader-facing copy, with regression and false-positive tests, in CI
+- [x] Nits: withheld-table row counts hidden; worker cannot edit an active schedule; https only outside an explicit loopback test build; older workflows SHA-pinned without persisted credentials; register and DDL privilege tests; FORCE RLS evaluated and its premises tested
+- [ ] R8 accountable person: **a human gate, not done and not claimed**. The footer says so and the gate stays closed
+- [ ] Terms URLs for the Beehive and Electoral Commission rows, every terms review, publisher permission for the MP directory and a documented bills route: **people's work, not done**
+
 ## Missing inputs and blocks
 
 1. Reviewed export files for the 2023 baseline and every other catalogue product (and the exporter's stated row counts).
-2. A publisher-approved route to Electoral Commission data (the sites refused automated requests from this host).
+2. A publisher-approved route to Electoral Commission data (the sites refused automated requests from this host), permission or a documented route for the Parliament members listing (robots.txt disallows automated clients), and a documented bills data route (only an internal endpoint was found).
 3. A hosted Supabase project reference, administrator connection and release approval.
 4. R8 legal entity, R10 reviews and rights decisions — human gates; not something code can satisfy. Release review should also confirm the withheld register and the decision that typed fields (titles, names of public office-holders, party labels, dates) are metadata within the pending link-only tier.
 5. Unimplemented adapters and loaders are enumerated, with their blockers, in [source-reconciliation.md](source-reconciliation.md#adapters-and-loaders-that-are-not-implemented).
