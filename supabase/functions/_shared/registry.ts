@@ -6,6 +6,9 @@ import type { Json, ScheduleConfig, SourceConfig, SourcesFile } from "./types.ts
 const SOURCE_ID = /^[a-z][a-z0-9_]{2,62}$/;
 const HOSTNAME = /^(?=.{4,253}$)([a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,}$/;
 
+/** Never collected, whatever else is true: content that needs a sign-in or a payment. */
+export const INELIGIBLE_ACCESS: ReadonlySet<string> = new Set(["authenticated", "paywalled"]);
+
 export function validateSourcesFile(file: SourcesFile): string[] {
   const problems: string[] = [];
   const ids = new Set<string>();
@@ -28,13 +31,17 @@ export function validateSourcesFile(file: SourcesFile): string[] {
       }
     }
     if (source.adapter_kind === "live_fetch") {
-      // A live source contacts a publisher, so the register must already hold a row for that publisher and
-      // the config must say on what basis the endpoint may be fetched. Neither has a default.
+      // A live source contacts a publisher, so the register must already hold a row for that publisher (a record of
+      // the rights question, not an approval) and the config must say what kind of endpoint it is. Neither has a default.
       if (!source.rights_id || !/^RIGHTS-[0-9]{2,}$/.test(source.rights_id)) problems.push(`${where}: a live source needs a rights_id from the rights register`);
       if (!source.access_basis) problems.push(`${where}: a live source must state its access_basis`);
-      if (source.access_basis === "undocumented_endpoint" && (source.enabled || !source.blocked_reason)) {
-        problems.push(`${where}: an undocumented endpoint is never enabled and must carry its blocker`);
+      if (source.access_basis && INELIGIBLE_ACCESS.has(source.access_basis) && (source.enabled || !source.blocked_reason)) {
+        problems.push(`${where}: a source behind a sign-in or a paywall is never enabled and must carry its blocker`);
       }
+      // No credential of any kind may ride along in a source's configuration: collection is anonymous.
+      const credentialKey = Object.keys(source.adapter_options ?? {}).find((key) => /auth|token|secret|password|cookie|session|api[_-]?key|credential/i.test(key));
+      if (credentialKey) problems.push(`${where}: adapter option "${credentialKey}" looks like a credential; only anonymous public requests are made`);
+      if (/^https:\/\/[^/]*@/.test(source.official_url)) problems.push(`${where}: official_url carries credentials`);
       if (source.min_interval_ms !== undefined && (source.min_interval_ms < 1000 || source.min_interval_ms > 60000)) problems.push(`${where}: min_interval_ms must be 1000-60000`);
       if (source.allowed_hosts.length === 0) problems.push(`${where}: live sources need an allowlist`);
       if (official && !source.allowed_hosts.includes(official.hostname)) problems.push(`${where}: official_url host is not on the allowlist`);

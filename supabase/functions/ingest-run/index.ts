@@ -22,6 +22,13 @@ function json(status: number, body: unknown): Response {
   return new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json", "Cache-Control": "no-store" } });
 }
 
+/** An allowlisted name must still resolve to public addresses. A name with no A or AAAA record is refused by the guard. */
+async function resolveHost(hostname: string): Promise<string[]> {
+  const [v4, v6] = await Promise.allSettled([Deno.resolveDns(hostname, "A"), Deno.resolveDns(hostname, "AAAA")]);
+  if (v4.status === "rejected" && v6.status === "rejected") throw new Error("unresolvable");
+  return [...(v4.status === "fulfilled" ? v4.value : []), ...(v6.status === "fulfilled" ? v6.value : [])];
+}
+
 Deno.serve(async (request: Request) => {
   if (request.method !== "POST") return json(405, { error: "POST only" });
   const auth = authoriseCronRequest(request.headers.get("x-evidence-cron-secret"), Deno.env.get("EVIDENCE_CRON_SECRET"));
@@ -50,7 +57,7 @@ Deno.serve(async (request: Request) => {
     const db = createPostgresDb(sql);
     const report = await runSource({
       file, source, adapter, mode: "incremental", triggerKind: body.trigger_kind,
-      maxRecords: body.max_records, maxRuntimeSeconds: body.max_runtime_seconds, dryRun: false, db,
+      maxRecords: body.max_records, maxRuntimeSeconds: body.max_runtime_seconds, dryRun: false, db, resolveHost,
     });
     // Counts and status only. Payloads and fetch bodies never leave through the response.
     return json(report.status === "failed" ? 502 : 200, {

@@ -10,6 +10,13 @@
 \if :{?deactivate}
 select evidence_private.deactivate_schedule(:'schedule_key');
 \else
+-- What is known about access to this source, shown to the person activating BEFORE the schedule is switched on.
+-- Advisories (robots.txt, missing terms URL or review, undocumented public endpoint) do not stop activation; they are
+-- copied into the activation proof. A blocker does (not a public unauthenticated source, or a recorded "not permitted").
+select s.source_id, evidence_private.automated_access_blocker(s.source_id) as blocker, a.advisory
+from evidence_private.ingest_schedules s
+left join lateral unnest(evidence_private.automated_access_advisories(s.source_id)) as a(advisory) on true
+where s.schedule_key = :'schedule_key';
 select evidence_private.activate_schedule(:'schedule_key', :'readback_run_id'::uuid, :'function_version', :'activated_by') as cron_jobid;
 \endif
 

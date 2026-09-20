@@ -208,14 +208,14 @@ begin
   for v_item in select * from jsonb_array_elements(coalesce(p_registry -> 'sources', '[]'::jsonb)) loop
     insert into evidence_private.sources (
       source_id, registry_key, title, publisher, official_url, adapter_kind, adapter_name,
-      allowed_hosts, rights_id, access_basis, view_scope, expected_cadence_seconds, snapshot_semantics,
+      allowed_hosts, rights_id, access_basis, known_access_restriction, view_scope, expected_cadence_seconds, snapshot_semantics,
       enabled, blocked_reason, config_hash)
     values (
       v_item ->> 'source_id', nullif(v_item ->> 'registry_key', ''), v_item ->> 'title',
       v_item ->> 'publisher', v_item ->> 'official_url', v_item ->> 'adapter_kind',
       v_item ->> 'adapter_name',
       coalesce((select array_agg(h) from jsonb_array_elements_text(v_item -> 'allowed_hosts') h), '{}'),
-      nullif(v_item ->> 'rights_id', ''), nullif(v_item ->> 'access_basis', ''), v_item ->> 'view_scope',
+      nullif(v_item ->> 'rights_id', ''), nullif(v_item ->> 'access_basis', ''), nullif(v_item ->> 'known_access_restriction', ''), v_item ->> 'view_scope',
       nullif(v_item ->> 'expected_cadence_seconds', '')::integer, v_item ->> 'snapshot_semantics',
       coalesce((v_item ->> 'enabled')::boolean, false), nullif(v_item ->> 'blocked_reason', ''),
       v_item ->> 'config_hash')
@@ -223,7 +223,8 @@ begin
       registry_key = excluded.registry_key, title = excluded.title, publisher = excluded.publisher,
       official_url = excluded.official_url, adapter_kind = excluded.adapter_kind,
       adapter_name = excluded.adapter_name, allowed_hosts = excluded.allowed_hosts,
-      rights_id = excluded.rights_id, access_basis = excluded.access_basis, view_scope = excluded.view_scope,
+      rights_id = excluded.rights_id, access_basis = excluded.access_basis,
+      known_access_restriction = excluded.known_access_restriction, view_scope = excluded.view_scope,
       expected_cadence_seconds = excluded.expected_cadence_seconds,
       snapshot_semantics = excluded.snapshot_semantics, enabled = excluded.enabled,
       blocked_reason = excluded.blocked_reason, config_hash = excluded.config_hash, synced_at = now();
@@ -342,6 +343,16 @@ begin
   select * into v_source from evidence_private.sources where source_id = p_source_id;
   if not found then
     raise exception 'unknown source %; run the registry sync first', p_source_id using errcode = 'P0001';
+  end if;
+  -- Collection eligibility is re-checked where every run starts, whatever started it.
+  if v_source.access_basis in ('authenticated', 'paywalled') then
+    raise exception 'source % is behind a sign-in or a paywall; only public unauthenticated content is collected', p_source_id using errcode = 'P0001';
+  end if;
+  -- RED-LINES R6: a source whose terms a PERSON has recorded as prohibiting automated access is not ingested.
+  -- (No review, an unclear one, or a robots.txt disallow is an advisory, not this.)
+  if (select r.automated_access from evidence_private.publisher_terms_reviews r
+       where r.source_id = p_source_id order by r.reviewed_at desc, r.id desc limit 1) = 'not_permitted' then
+    raise exception 'source %: the latest recorded terms review says automated access is not permitted (R6)', p_source_id using errcode = 'P0001';
   end if;
   if p_trigger_kind = 'cron' and not v_source.enabled then
     raise exception 'source % is not enabled for scheduled runs', p_source_id using errcode = 'P0001';

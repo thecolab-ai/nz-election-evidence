@@ -158,14 +158,26 @@ test("review 8: every rights id a source names exists in the public rights regis
   }
 });
 
-test("review 6: the bills endpoint is classed undocumented, can never be enabled or scheduled, and the adapter sends no Origin or Referer", async () => {
+test("policy: a PUBLIC undocumented endpoint is eligible (reported, not vetoed); a sign-in or paywalled source never is; the bills adapter stays anonymous", async () => {
   const bills = file.sources.find((s) => s.source_id === "nz_parliament_current_bills")!;
-  assert.deepEqual([bills.access_basis, bills.enabled], ["undocumented_endpoint", false]);
-  assert.match(bills.blocked_reason ?? "", /no published terms|No documented/i);
-  assert.ok(!file.schedules.some((s) => s.source_id === bills.source_id), "no schedule points at it");
-  const enabled = structuredClone(file);
-  enabled.sources.find((s) => s.source_id === bills.source_id)!.enabled = true;
-  assert.match(validateSourcesFile(enabled).join("\n"), /undocumented endpoint is never enabled/);
+  assert.deepEqual([bills.access_basis, bills.enabled], ["public_undocumented_endpoint", true]);
+  assert.match(bills.access_note ?? "", /undocumented/i, "the undocumented status is still written down for a person to weigh");
+  assert.match(bills.access_note ?? "", /No permission from the publisher is claimed/);
+  assert.ok(file.schedules.some((s) => s.source_id === bills.source_id), "it may be scheduled (every schedule still syncs inactive)");
+  const mps = file.sources.find((s) => s.source_id === "nz_parliament_mp_directory")!;
+  assert.deepEqual([mps.access_basis, mps.enabled], ["public_page", true]);
+  assert.match(mps.access_note ?? "", /robots\.txt.*Disallow/, "the robots.txt signal is recorded on the source, not hidden");
+
+  for (const basis of ["authenticated", "paywalled"] as const) {
+    const gated = structuredClone(file);
+    Object.assign(gated.sources.find((s) => s.source_id === bills.source_id)!, { access_basis: basis, enabled: true });
+    assert.match(validateSourcesFile(gated).join("\n"), /behind a sign-in or a paywall is never enabled/, basis);
+  }
+  for (const option of ["api_key", "authToken", "session_cookie", "password"]) {
+    const withCredential = structuredClone(file);
+    withCredential.sources.find((s) => s.source_id === bills.source_id)!.adapter_options = { [option]: "TEST FIXTURE" };
+    assert.match(validateSourcesFile(withCredential).join("\n"), /looks like a credential; only anonymous public requests/, option);
+  }
 
   const sent: { [key: string]: string }[] = [];
   const pages = billsAdapter.pages({

@@ -4,7 +4,7 @@
 
 import type { BatchResult, IngestDb } from "./db.ts";
 import { createSafeFetch } from "./http.ts";
-import { buildManifest, type RunManifest } from "./registry.ts";
+import { buildManifest, INELIGIBLE_ACCESS, type RunManifest } from "./registry.ts";
 import {
   type Adapter, type AdapterPage, type FetchLogEntry, IngestError, type IngestRecord, type Json,
   type SourceConfig, type SourcesFile, SourceUnavailableError,
@@ -26,6 +26,8 @@ export interface RunOptions {
   fetchImpl?: typeof fetch;
   sleep?: (ms: number) => Promise<void>;
   now?: () => Date;
+  /** Hostname resolver for the public-address check (node:dns in the CLI, Deno.resolveDns in the function). */
+  resolveHost?: (hostname: string) => Promise<string[]>;
   /** Tests only: override the per-host pacing interval. Production uses the source's min_interval_ms. */
   minIntervalMs?: number;
   /** Test hook: throw after this many stored batches to simulate a crash mid-run. */
@@ -76,7 +78,7 @@ export async function runSource(options: RunOptions): Promise<RunReport> {
 
   const safeFetch = createSafeFetch({
     allowedHosts: options.source.allowed_hosts, log: fetches, deadline, minIntervalMs: options.minIntervalMs ?? options.source.min_interval_ms,
-    fetchImpl: options.fetchImpl, sleep: options.sleep, now,
+    fetchImpl: options.fetchImpl, sleep: options.sleep, now, resolveHost: options.resolveHost,
   });
 
   const db = options.dryRun ? null : options.db;
@@ -112,9 +114,9 @@ export async function runSource(options: RunOptions): Promise<RunReport> {
   };
 
   try {
-    // Fail closed before any network request: an endpoint with no established basis for automated access.
-    if (options.source.access_basis === "undocumented_endpoint") {
-      throw new SourceUnavailableError("blocked", "no documented or permitted route to this data exists; the endpoint was not contacted", "access_basis_not_established");
+    // Collection eligibility, before any network request: only endpoints served to the anonymous public.
+    if (options.source.adapter_kind === "live_fetch" && (!options.source.access_basis || INELIGIBLE_ACCESS.has(options.source.access_basis))) {
+      throw new SourceUnavailableError("blocked", "this source needs a sign-in or a payment, or does not say what kind of endpoint it is; only public unauthenticated content is collected. The endpoint was not contacted", "not_public_unauthenticated");
     }
     const planned: NonNullable<RunReport["planned_records"]> = [];
     for await (const page of options.adapter.pages({

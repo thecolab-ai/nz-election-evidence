@@ -4,9 +4,10 @@
 --
 -- This migration schedules nothing. A schedule becomes active only through
 -- activate_schedule(), which demands proof that the deployed function answered
--- an authenticated readback call AND that a named person reviewed the publisher's
--- terms for automated access (publisher_terms_reviews). No migration, seed or tool
--- writes such a review.
+-- an authenticated readback call, names the person activating it, and only for a
+-- public unauthenticated source. robots.txt, terms pages and terms reviews are recorded
+-- and reported as advisories (owner collection policy, 2026-09-20); only a person's
+-- recorded "not permitted" blocks (RED-LINES R6). No migration, seed or tool writes a review.
 
 create extension if not exists pg_cron with schema pg_catalog;
 create extension if not exists pg_net with schema extensions;
@@ -69,7 +70,7 @@ create table evidence_private.publisher_access_checks (
   -- For a robots check: the path the adapter would fetch, and what the rules say about it.
   target_path text,
   outcome text not null check (outcome in (
-    'retrieved', 'not_found', 'challenge', 'blocked', 'robots_disallowed', 'http_error', 'network_error', 'not_attempted')),
+    'retrieved', 'not_found', 'challenge', 'blocked', 'http_error', 'network_error', 'not_attempted')),
   http_status integer,
   response_bytes bigint,
   body_sha256 text check (body_sha256 is null or body_sha256 ~ '^sha256:[0-9a-f]{64}$'),
@@ -173,10 +174,48 @@ create trigger publisher_terms_reviews_guard
   before insert on evidence_private.publisher_terms_reviews
   for each row execute function evidence_private.guard_terms_review();
 
--- Why a source may not be fetched on a schedule right now; null when nothing stands in the way.
--- Used by activation AND by every dispatch, so a later adverse review or robots change stops an active job.
+-- Collection policy (owner decision, 2026-09-20). Two different questions, two functions:
+--
+--   automated_access_blocker()     what STOPS a schedule. Only: the source is unknown or not enabled; it has no rights
+--                                  register row; it is not a public unauthenticated endpoint (behind a sign-in or a
+--                                  paywall, or its kind is not stated); or a PERSON has recorded that the publisher's
+--                                  terms do not permit automated access (RED-LINES R6).
+--   automated_access_advisories()  what is REPORTED for a person's decision and never stops anything by itself: a
+--                                  robots.txt disallow or an unreadable/missing/stale robots check, no terms URL, no
+--                                  terms review or an unclear/stale one, an undocumented public endpoint, and any known
+--                                  specific restriction written on the source.
+--
+-- Neither says anything about publication. Rights rows, release gates and withheld columns are separate and unchanged.
+-- Used by activation AND by every dispatch, so an adverse review recorded later stops an active job.
 create or replace function evidence_private.automated_access_blocker(p_source_id text)
 returns text
+language plpgsql
+stable
+set search_path = ''
+as $$
+declare
+  v_source evidence_private.sources%rowtype;
+  v_review evidence_private.publisher_terms_reviews%rowtype;
+begin
+  select * into v_source from evidence_private.sources where source_id = p_source_id;
+  if not found then return 'unknown source'; end if;
+  if not v_source.enabled then return 'source is not enabled'; end if;
+  if v_source.rights_id is null then return 'source has no rights register row'; end if;
+  if v_source.access_basis is null then return 'the source does not say what kind of endpoint it is'; end if;
+  if v_source.access_basis in ('authenticated', 'paywalled') then
+    return 'the source is behind a sign-in or a paywall; only public unauthenticated content is collected';
+  end if;
+  select * into v_review from evidence_private.publisher_terms_reviews
+   where source_id = p_source_id order by reviewed_at desc, id desc limit 1;
+  if found and v_review.automated_access = 'not_permitted' then
+    return 'the latest recorded terms review says automated access is not permitted (R6)';
+  end if;
+  return null;
+end
+$$;
+
+create or replace function evidence_private.automated_access_advisories(p_source_id text)
+returns text[]
 language plpgsql
 stable
 set search_path = ''
@@ -186,37 +225,47 @@ declare
   v_terms_url text;
   v_review evidence_private.publisher_terms_reviews%rowtype;
   v_robots evidence_private.publisher_access_checks%rowtype;
+  v_out text[] := '{}';
 begin
   select * into v_source from evidence_private.sources where source_id = p_source_id;
-  if not found then return 'unknown source'; end if;
-  if not v_source.enabled then return 'source is not enabled'; end if;
-  if v_source.rights_id is null then return 'source has no rights register row'; end if;
-  if v_source.access_basis is null or v_source.access_basis = 'undocumented_endpoint' then
-    return 'no established basis for automated access to this endpoint';
+  if not found then return array['unknown source']; end if;
+  if v_source.access_basis = 'public_undocumented_endpoint' then
+    v_out := array_append(v_out, 'the endpoint is public but undocumented: the publisher has not published terms for it'::text);
   end if;
+  if coalesce(trim(v_source.known_access_restriction), '') <> '' then
+    v_out := array_append(v_out, ('known restriction: ' || v_source.known_access_restriction)::text);
+  end if;
+
   select licence_or_terms_url into v_terms_url from evidence_private.source_rights where rights_id = v_source.rights_id;
-  if v_terms_url is null then return 'the rights register records no terms URL for this publisher'; end if;
+  if v_terms_url is null then v_out := array_append(v_out, 'the rights register records no terms URL for this publisher'::text); end if;
 
   select * into v_review from evidence_private.publisher_terms_reviews
    where source_id = p_source_id order by reviewed_at desc, id desc limit 1;
-  if not found then return 'no person has reviewed the publisher''s terms for automated access'; end if;
-  if v_review.terms_url <> v_terms_url then return 'the terms URL changed since the last terms review'; end if;
-  if v_review.automated_access not in ('permitted', 'permitted_with_conditions') then
-    return 'the latest terms review does not permit automated access';
+  if not found then
+    v_out := array_append(v_out, 'no person has reviewed the publisher''s terms for automated access'::text);
+  else
+    if v_terms_url is not null and v_review.terms_url <> v_terms_url then v_out := array_append(v_out, 'the terms URL changed since the last terms review'::text); end if;
+    if v_review.automated_access = 'unclear' then v_out := array_append(v_out, 'the latest terms review found the terms unclear on automated access'::text); end if;
+    if v_review.automated_access = 'permitted_with_conditions' then v_out := array_append(v_out, 'the latest terms review permits automated access with conditions'::text); end if;
+    if v_review.automated_access = 'not_permitted' then v_out := array_append(v_out, 'the latest terms review says automated access is not permitted (this one also blocks: R6)'::text); end if;
+    if v_review.reviewed_at < now() - interval '365 days' then v_out := array_append(v_out, 'the terms review is more than a year old'::text); end if;
   end if;
-  if v_review.reviewed_at < now() - interval '365 days' then return 'the terms review is more than a year old'; end if;
 
   select * into v_robots from evidence_private.publisher_access_checks
    where source_id = p_source_id and check_kind = 'robots_txt' order by recorded_at desc, id desc limit 1;
-  if not found or least(v_robots.checked_at, v_robots.recorded_at) < now() - interval '30 days' then
-    return 'no robots.txt check recorded in the last 30 days';
+  if not found then
+    v_out := array_append(v_out, 'no robots.txt check is on record'::text);
+  else
+    if least(v_robots.checked_at, v_robots.recorded_at) < now() - interval '30 days' then v_out := array_append(v_out, 'the latest robots.txt check is more than 30 days old'::text); end if;
+    if v_robots.finding = 'path_disallowed' then v_out := array_append(v_out, 'robots.txt disallows this path for this client'::text); end if;
+    if v_robots.finding = 'not_retrievable' then v_out := array_append(v_out, 'robots.txt could not be read'::text); end if;
   end if;
-  if v_robots.finding not in ('path_allowed', 'no_rules_published') then
-    return 'the latest robots.txt check does not allow this path';
-  end if;
-  return null;
+  return v_out;
 end
 $$;
+
+comment on function evidence_private.automated_access_advisories(text) is
+  'Signals reported for a person''s decision before and after activation. None of them stops collection by itself.';
 
 create or replace function evidence_private.sync_schedules(p_schedules jsonb)
 returns integer
@@ -295,7 +344,8 @@ begin
     return 'skipped_inactive';
   end if;
 
-  -- Permission can lapse after activation: a disabled source, an adverse or stale terms review, a robots change.
+  -- A schedule stops when its source is disabled, stops being a public unauthenticated endpoint, or a person records
+  -- that the terms do not permit automated access. Advisories (robots.txt, missing review) do not stop it.
   if evidence_private.automated_access_blocker(v_schedule.source_id) is not null then
     insert into evidence_private.schedule_dispatch_log (schedule_key, outcome, detail)
     values (p_schedule_key, 'skipped_access_not_permitted', evidence_private.automated_access_blocker(v_schedule.source_id));
@@ -364,7 +414,8 @@ begin
   if not exists (select 1 from evidence_private.sources s where s.source_id = v_schedule.source_id and s.enabled) then
     raise exception 'source % is not enabled', v_schedule.source_id using errcode = 'P0001';
   end if;
-  -- Rights row, terms URL, a person's terms review permitting automated access, and a fresh robots check.
+  -- Hard stops only (not public and unauthenticated, no rights row, a recorded "not permitted"). Everything else
+  -- known about access is copied into the activation proof, so the record shows what the activating person was told.
   v_blocker := evidence_private.automated_access_blocker(v_schedule.source_id);
   if v_blocker is not null then
     raise exception 'automated access is not cleared for %: %', v_schedule.source_id, v_blocker using errcode = 'P0001';
@@ -385,7 +436,8 @@ begin
          activation_proof = jsonb_build_object(
            'readback_run_id', v_run.id, 'readback_finished_at', v_run.finished_at,
            'function_version', p_function_version, 'adapter_version', v_run.adapter_version,
-           'terms_review_id', v_review_id)
+           'terms_review_id', v_review_id,
+           'access_advisories_at_activation', to_jsonb(evidence_private.automated_access_advisories(v_schedule.source_id)))
    where schedule_key = p_schedule_key;
   return v_jobid;
 end

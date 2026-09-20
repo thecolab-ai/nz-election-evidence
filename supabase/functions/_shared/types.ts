@@ -88,15 +88,20 @@ export interface SourceConfig {
   catalogue_products?: { product_id: string; mapping_note: string }[];
   adapter_options?: { [key: string]: Json };
   /**
-   * What makes automated access to this endpoint legitimate, as far as this project has established:
-   *   public_page / public_feed   a page or feed the publisher offers to the public; still subject to robots.txt
-   *   documented_api              an interface the publisher documents for reuse
-   *   undocumented_endpoint       an internal endpoint with no published terms of use. NEVER fetched: every run
-   *                               ends as blocked until the publisher documents a route or gives permission
+   * What kind of endpoint this is. Collection eligibility (owner policy, 2026-09-20) turns on ONE question: is it a
+   * read-only endpoint the publisher serves to the anonymous public?
+   *   public_page / public_feed / documented_api   yes
+   *   public_undocumented_endpoint                 yes: an endpoint the publisher's own public website calls without
+   *                                                any sign-in. Undocumented is reported, it is not a veto.
+   *   authenticated / paywalled                    NO. Never enabled, never scheduled, never contacted.
+   * robots.txt, a missing terms page and a missing human terms review are recorded signals, not part of this test.
+   * Eligibility to COLLECT says nothing about rights to PUBLISH: those gates are separate and unchanged.
    */
-  access_basis?: "public_page" | "public_feed" | "documented_api" | "undocumented_endpoint";
+  access_basis?: "public_page" | "public_feed" | "documented_api" | "public_undocumented_endpoint" | "authenticated" | "paywalled";
+  /** A specific legal or contractual restriction the project knows of, in plain words, reported for a person's decision. */
+  known_access_restriction?: string;
   access_note?: string;
-  /** Minimum gap between two requests to one host in a run (ms). robots.txt Crawl-delay can only raise it. */
+  /** Minimum gap between two requests to one host in a run (ms). robots.txt Crawl-delay can only raise it (up to a cap). */
   min_interval_ms?: number;
   export_contract?: ExportContract;
 }
@@ -149,9 +154,13 @@ export type FetchOutcome =
   | "too_large"
   | "host_denied"
   | "parse_error"
-  | "robots_disallowed"
-  | "robots_unavailable"
-  | "robots_crawl_delay_exceeds_budget";
+  // robots.txt is recorded, never a veto: these mark what it said about a request that then went ahead.
+  | "robots_advisory_disallowed"
+  | "robots_advisory_unreadable"
+  | "robots_advisory_crawl_delay_capped"
+  // Only public, unauthenticated content is collected: either of these ends the request as unavailable.
+  | "login_required"
+  | "paywall";
 
 export interface FetchLogEntry {
   method: "GET" | "POST";

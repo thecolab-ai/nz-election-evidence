@@ -5,16 +5,19 @@
 //
 // What this is: PROVENANCE. For each source it retrieves robots.txt (through the same fetch guard the adapters
 // use, so with the same honest user agent, pacing and allowlist), evaluates the path the adapter would request,
-// and - only where robots.txt allows it - retrieves the terms page named in the public rights register, keeping
-// status, size and a body hash. Page bodies are never stored.
+// and retrieves the public terms page named in the rights register, keeping status, size and a body hash. Page
+// bodies are never stored. Under the owner's collection policy (2026-09-20) robots.txt is a recorded advisory: what
+// it says is written down here for a person to weigh, and it does not stop a read of a public page.
 // What this is NOT: a legal reading, a permission, or a rights review. It fills in no review date and approves
 // nothing. Whether the terms permit automated access is for a named person to read and record
-// (evidence_private.publisher_terms_reviews); activate_schedule() refuses until one has.
+// (evidence_private.publisher_terms_reviews). A missing review is reported at activation as an advisory; a recorded
+// "not permitted" stops the source (RED-LINES R6).
 // --record writes the rows to publisher_access_checks using EVIDENCE_INGEST_DB_URL (scoped worker login).
 import { readFile, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import postgres from "postgres";
+import { resolveHost } from "./resolve_host.ts";
 import { createSafeFetch } from "../../supabase/functions/_shared/http.ts";
 import type { FetchLogEntry, SourceConfig, SourcesFile } from "../../supabase/functions/_shared/types.ts";
 import sourcesFile from "../../supabase/functions/_shared/sources.config.json" with { type: "json" };
@@ -28,7 +31,7 @@ export interface AccessCheck {
   checked_url: string;
   checked_host: string;
   target_path: string | null;
-  outcome: "retrieved" | "not_found" | "challenge" | "blocked" | "robots_disallowed" | "http_error" | "network_error" | "not_attempted";
+  outcome: "retrieved" | "not_found" | "challenge" | "blocked" | "http_error" | "network_error" | "not_attempted";
   http_status: number | null;
   response_bytes: number | null;
   body_sha256: string | null;
@@ -58,13 +61,12 @@ function outcomeOf(entry: FetchLogEntry | undefined): AccessCheck["outcome"] {
   if (!entry) return "network_error";
   if (entry.outcome === "ok") return entry.http_status === 404 || entry.http_status === 410 ? "not_found" : "retrieved";
   if (entry.outcome === "challenge") return "challenge";
-  if (entry.outcome === "blocked") return "blocked";
-  if (entry.outcome === "robots_disallowed") return "robots_disallowed";
+  if (entry.outcome === "blocked" || entry.outcome === "login_required" || entry.outcome === "paywall") return "blocked";
   if (entry.outcome === "http_error") return entry.http_status === 404 || entry.http_status === 410 ? "not_found" : "http_error";
   return "network_error";
 }
 
-export async function checkSource(source: SourceConfig, rights: RightsRow | undefined, options: { fetchImpl?: typeof fetch; sleep?: (ms: number) => Promise<void>; now?: () => Date } = {}): Promise<AccessCheck[]> {
+export async function checkSource(source: SourceConfig, rights: RightsRow | undefined, options: { fetchImpl?: typeof fetch; sleep?: (ms: number) => Promise<void>; now?: () => Date; resolveHost?: (hostname: string) => Promise<string[]> } = {}): Promise<AccessCheck[]> {
   const now = options.now ?? (() => new Date());
   const checks: AccessCheck[] = [];
   const target = new URL(source.official_url);
@@ -74,7 +76,7 @@ export async function checkSource(source: SourceConfig, rights: RightsRow | unde
   const safeFetch = createSafeFetch({
     allowedHosts: termsHostOk ? [...new Set([...source.allowed_hosts, termsUrl!.hostname])] : source.allowed_hosts,
     log, deadline: now().getTime() + 60_000, maxAttempts: 1, timeoutMs: 15_000, maxBytes: 2_000_000,
-    minIntervalMs: source.min_interval_ms, fetchImpl: options.fetchImpl, sleep: options.sleep,
+    minIntervalMs: source.min_interval_ms, fetchImpl: options.fetchImpl, sleep: options.sleep, resolveHost: options.resolveHost,
   });
 
   // 1. robots.txt for the path the adapter would request. The path itself is NOT requested.
@@ -89,7 +91,8 @@ export async function checkSource(source: SourceConfig, rights: RightsRow | unde
     crawl_delay_seconds: verdict.crawlDelaySeconds, checked_at: robotsEntry?.retrieved_at ?? now().toISOString(), tool_version: TOOL_VERSION,
   });
 
-  // 2. The terms page named in the public rights register, if any, and only if its own host's robots.txt allows it.
+  // 2. The public terms page named in the rights register, if any. A sign-in, paywall, refusal or bot challenge ends it
+  //    as not retrievable; robots.txt for that host is recorded in the log and is not a veto.
   const base = { source_id: source.source_id, check_kind: "terms_page" as const, target_path: null, crawl_delay_seconds: null, tool_version: TOOL_VERSION };
   if (!termsUrl || !termsHostOk) {
     checks.push({ ...base, checked_url: termsUrl?.toString() ?? source.official_url, checked_host: termsUrl?.hostname ?? target.hostname, outcome: "not_attempted",
@@ -102,7 +105,7 @@ export async function checkSource(source: SourceConfig, rights: RightsRow | unde
     await safeFetch({ url: termsUrl.toString(), accept: "text/html,*/*;q=0.5" });
     retrieved = true;
   } catch { /* the log entry carries the outcome; nothing is retried or worked around */ }
-  const entry = log.slice(before).filter((e) => e.url === termsUrl.toString()).at(-1);
+  const entry = log.slice(before).filter((e) => e.url === termsUrl.toString() && !e.outcome.startsWith("robots_advisory")).at(-1);
   checks.push({ ...base, checked_url: termsUrl.toString(), checked_host: termsUrl.hostname, outcome: outcomeOf(entry),
     http_status: entry?.http_status ?? null, response_bytes: entry?.bytes ?? null, body_sha256: entry?.body_sha256 ?? null,
     finding: retrieved && entry?.body_sha256 ? "terms_page_retrieved" : "not_retrievable", checked_at: entry?.retrieved_at ?? now().toISOString() });
@@ -130,7 +133,7 @@ async function main(argv: string[]): Promise<number> {
   const only = flag("--source");
   const sources = file.sources.filter((s) => s.adapter_kind === "live_fetch" && (!only || s.source_id === only));
   const all: AccessCheck[] = [];
-  for (const source of sources) all.push(...await checkSource(source, rights.find((r) => r.rights_id === source.rights_id)));
+  for (const source of sources) all.push(...await checkSource(source, rights.find((r) => r.rights_id === source.rights_id), { resolveHost }));
   for (const c of all) console.log(`${c.source_id}\t${c.check_kind}\t${c.outcome}\t${c.http_status ?? "-"}\t${c.finding}\t${c.checked_url}`);
   let recorded = 0;
   if (argv.includes("--record")) {

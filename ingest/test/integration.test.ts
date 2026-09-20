@@ -188,27 +188,41 @@ test("runner against a real database", { skip }, async (t) => {
     assert.equal(blocked.tombstoned, 0);
   });
 
-  await t.test("review 7: a robots.txt disallow ends the run as blocked, is stored in fetch_log, and removes nothing", async () => {
-    const pages: string[] = [];
-    const impl = (async (requested: string | URL | Request) => {
-      pages.push(String(requested));
-      return new Response("User-agent: *\nDisallow: /\n", { status: 200 });
-    }) as typeof fetch;
-    const blocked = await runSource({ ...base, holder, fetchImpl: impl });
-    assert.deepEqual([blocked.status, blocked.error_class, blocked.tombstoned], ["blocked", "publisher_robots_disallowed", 0]);
-    assert.deepEqual(pages, ["https://bills.fixture.example/robots.txt"], "only robots.txt was requested; the disallowed endpoint never was");
-    const logged = await sql`select outcome from evidence_private.fetch_log where run_id = ${blocked.run_id} order by id`;
-    assert.deepEqual(logged.map((r) => r.outcome), ["ok", "robots_disallowed"], "the database accepts and keeps the robots outcome");
+  await t.test("policy: a robots.txt disallow alone does not block a public source - the run succeeds and the signal is stored in fetch_log", async () => {
+    const pub = publisher();
+    const impl = (async (requested: string | URL | Request, init?: RequestInit) =>
+      String(requested).endsWith("/robots.txt") ? new Response("User-agent: *\nDisallow: /\n", { status: 200 }) : pub.impl(requested, init)) as typeof fetch;
+    const run = await runSource({ ...base, holder, fetchImpl: impl });
+    assert.deepEqual([run.status, run.error_class, run.totals.seen], ["succeeded", null, 120]);
+    const logged = await sql`select outcome, count(*)::int as n from evidence_private.fetch_log where run_id = ${run.run_id} group by outcome order by outcome`;
+    assert.deepEqual(logged.map((r) => [r.outcome, r.n]), [["ok", 4], ["robots_advisory_disallowed", 1]], "robots.txt + 3 pages fetched; the advisory is kept once");
   });
 
-  await t.test("review 6: an undocumented endpoint is never contacted - the run is blocked before any request", async () => {
-    let calls = 0;
-    const impl = (async () => { calls++; return new Response("{}", { status: 200 }); }) as typeof fetch;
-    const undocumented = { ...source, access_basis: "undocumented_endpoint" as const };
-    const blocked = await runSource({ ...base, source: undocumented, holder, fetchImpl: impl });
-    assert.deepEqual([blocked.status, blocked.error_class, blocked.tombstoned, calls], ["blocked", "access_basis_not_established", 0, 0]);
-    const dry = await runSource({ ...base, source: undocumented, dryRun: true, db: null, fetchImpl: impl });
-    assert.deepEqual([dry.status, dry.error_class, calls], ["blocked", "access_basis_not_established", 0], "a dry run does not contact it either");
+  await t.test("policy: an unreadable robots.txt alone does not block, and a PUBLIC undocumented endpoint is collected", async () => {
+    const pub = publisher();
+    const impl = (async (requested: string | URL | Request, init?: RequestInit) =>
+      String(requested).endsWith("/robots.txt") ? new Response("no", { status: 403 }) : pub.impl(requested, init)) as typeof fetch;
+    const undocumented = { ...source, access_basis: "public_undocumented_endpoint" as const };
+    const run = await runSource({ ...base, source: undocumented, holder, fetchImpl: impl });
+    assert.deepEqual([run.status, run.error_class, run.totals.seen], ["succeeded", null, 120]);
+    assert.ok(run.fetches.some((f) => f.outcome === "robots_advisory_unreadable"));
+  });
+
+  await t.test("policy: a source behind a sign-in or a paywall is never contacted; a sign-in wall met mid-run ends it as blocked and removes nothing", async () => {
+    for (const basis of ["authenticated", "paywalled"] as const) {
+      let calls = 0;
+      const impl = (async () => { calls++; return new Response("{}", { status: 200 }); }) as typeof fetch;
+      const blocked = await runSource({ ...base, source: { ...source, access_basis: basis }, holder, fetchImpl: impl });
+      assert.deepEqual([blocked.status, blocked.error_class, blocked.tombstoned, calls], ["blocked", "not_public_unauthenticated", 0, 0], basis);
+      const dry = await runSource({ ...base, source: { ...source, access_basis: basis }, dryRun: true, db: null, fetchImpl: impl });
+      assert.deepEqual([dry.status, dry.error_class, calls], ["blocked", "not_public_unauthenticated", 0], basis + ": a dry run does not contact it either");
+    }
+    const wall = (async (requested: string | URL | Request) =>
+      String(requested).endsWith("/robots.txt") ? new Response("", { status: 404 }) : new Response("sign in", { status: 401 })) as typeof fetch;
+    const walled = await runSource({ ...base, holder, fetchImpl: wall });
+    assert.deepEqual([walled.status, walled.error_class, walled.tombstoned], ["blocked", "publisher_login_required", 0]);
+    const [row] = await sql`select outcome from evidence_private.fetch_log where run_id = ${walled.run_id} and outcome = 'login_required'`;
+    assert.ok(row, "the database keeps the login_required outcome");
   });
 
   await t.test("a failing page mid-pagination fails the run and removes nothing", async () => {

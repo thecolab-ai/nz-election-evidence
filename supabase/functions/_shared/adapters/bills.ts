@@ -1,6 +1,7 @@
 // New Zealand Parliament: current bills catalogue (metadata only, never bill text).
-// NOT IN USE: the endpoint is the site's internal search API (access_basis undocumented_endpoint), so the runner
-// blocks every run before any request. Kept, with its parser tests, for the day a documented route exists.
+// The endpoint is the search API the publisher's own PUBLIC bills website calls, with no sign-in. It is undocumented
+// (access_basis public_undocumented_endpoint): under the owner's collection policy of 2026-09-20 that is reported, not
+// a veto. Requests are anonymous: no Origin, Referer, cookie or token is sent, and none would survive the fetch guard.
 // Paginated JSON search endpoint; resumable by page; total must stay stable across pages.
 
 import { contentHash } from "../canonical.ts";

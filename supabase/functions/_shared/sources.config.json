@@ -58,7 +58,7 @@
       "view_scope": "current_parliament",
       "expected_cadence_seconds": 86400,
       "snapshot_semantics": "complete_snapshot",
-      "enabled": false,
+      "enabled": true,
       "catalogue_products": [
         {
           "product_id": "P10",
@@ -71,8 +71,7 @@
       },
       "access_basis": "public_page",
       "min_interval_ms": 5000,
-      "blocked_reason": "The publisher's robots.txt (read 2026-09-20) disallows every path for clients it does not name, which includes this one. The adapter honours that and ends each run as blocked. Needs the publisher's permission or a documented data route. Blocked is not the same as no members.",
-      "access_note": "Public listing page. robots.txt on this host: 'User-agent: *' then 'Disallow: /'."
+      "access_note": "Public members listing, served to anyone without sign-in. Recorded signal for a person's decision: this host's robots.txt (read 2026-09-20) says 'User-agent: *' then 'Disallow: /'. Under the owner's collection policy of 2026-09-20 that is recorded with every run and is not a veto. No permission from the publisher is claimed."
     },
     {
       "source_id": "nz_parliament_current_bills",
@@ -89,17 +88,16 @@
       "view_scope": "current_parliament",
       "expected_cadence_seconds": 21600,
       "snapshot_semantics": "complete_snapshot",
-      "enabled": false,
+      "enabled": true,
       "catalogue_products": [
         {
           "product_id": "P03",
           "mapping_note": "Current bills index. P02 (bill publications) is a different upstream product and is not covered by this adapter."
         }
       ],
-      "access_basis": "undocumented_endpoint",
+      "access_basis": "public_undocumented_endpoint",
       "min_interval_ms": 3000,
-      "blocked_reason": "The only machine-readable route found on 2026-09-20 is the site's own internal search endpoint, which has no published terms of use or documentation. No documented official bills data route was found. The adapter therefore never contacts it: every run ends as blocked until Parliament documents a route or gives written permission. Blocked is not the same as no bills.",
-      "access_note": "robots.txt on this host allows all paths, but a permissive robots.txt is not permission to use an internal API."
+      "access_note": "The search endpoint the publisher's own public bills website calls, without any sign-in. It is undocumented and has no published terms of use of its own; no documented bills data route was found on 2026-09-20. Under the owner's collection policy of 2026-09-20 that is a reported signal, not a veto. Requests are anonymous and carry no Origin, Referer, cookie or token. No permission from the publisher is claimed."
     },
     {
       "source_id": "nz_government_releases_feed",
@@ -419,6 +417,22 @@
     }
   ],
   "schedules": [
+    {
+      "schedule_key": "mp-directory-daily",
+      "source_id": "nz_parliament_mp_directory",
+      "cron_expr": "20 17 * * *",
+      "function_slug": "ingest-run",
+      "max_runtime_seconds": 60,
+      "max_records": 200
+    },
+    {
+      "schedule_key": "current-bills-6-hourly",
+      "source_id": "nz_parliament_current_bills",
+      "cron_expr": "35 */6 * * *",
+      "function_slug": "ingest-run",
+      "max_runtime_seconds": 120,
+      "max_records": 1000
+    },
     {
       "schedule_key": "releases-feed-hourly",
       "source_id": "nz_government_releases_feed",

@@ -1665,6 +1665,7 @@ export type Database = {
           config_hash: string | null
           enabled: boolean | null
           expected_cadence_seconds: number | null
+          known_access_restriction: string | null
           official_url: string | null
           publisher: string | null
           registry_key: string | null

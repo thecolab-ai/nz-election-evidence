@@ -49,7 +49,7 @@ test("review 7: a disallowed path, an unreadable robots.txt and an absent one ar
   assert.deepEqual([none[0].finding, none[0].outcome], ["no_rules_published", "not_found"]);
 });
 
-test("review 8: a terms page behind a bot challenge or a robots.txt disallow is recorded as NOT retrievable, never worked around", async () => {
+test("a terms page behind a bot challenge or a sign-in is recorded as NOT retrievable, never worked around; robots.txt on its host is recorded, not a veto", async () => {
   const challenge = publisher({
     "https://www.fixture.govt.nz/copyright": () => new Response("<iframe src='/_Incapsula_Resource'></iframe>", { status: 200 }),
   });
@@ -57,13 +57,17 @@ test("review 8: a terms page behind a bot challenge or a robots.txt disallow is 
   assert.deepEqual([a.finding, a.outcome], ["not_retrievable", "challenge"]);
   assert.equal(challenge.requested.filter((u) => u.endsWith("/copyright")).length, 1, "one attempt, no retry");
 
+  const signIn = publisher({ "https://www.fixture.govt.nz/copyright": () => new Response("sign in", { status: 401 }) });
+  const [, s] = await run(signIn);
+  assert.deepEqual([s.finding, s.outcome], ["not_retrievable", "blocked"]);
+
+  // Owner collection policy, 2026-09-20: a public terms page is read even where robots.txt disallows crawling.
   const robotsSaysNo = publisher({
     "https://www.fixture.govt.nz/robots.txt": () => new Response("User-agent: *\nDisallow: /\n", { status: 200 }),
-    "https://www.fixture.govt.nz/copyright": () => new Response("should never be requested", { status: 200 }),
+    "https://www.fixture.govt.nz/copyright": () => new Response("<html><h1>TEST FIXTURE Copyright</h1></html>", { status: 200 }),
   });
   const [, b] = await run(robotsSaysNo);
-  assert.deepEqual([b.finding, b.outcome], ["not_retrievable", "robots_disallowed"]);
-  assert.ok(!robotsSaysNo.requested.includes("https://www.fixture.govt.nz/copyright"), "the terms page is not fetched against the host's robots.txt either");
+  assert.deepEqual([b.finding, b.outcome, b.http_status], ["terms_page_retrieved", "retrieved", 200]);
 });
 
 test("a terms URL on somebody else's domain is not fetched at all", async () => {

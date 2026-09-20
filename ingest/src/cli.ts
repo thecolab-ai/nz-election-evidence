@@ -22,6 +22,7 @@ import { buildManifest, registryPayload, schedulePayload, validateSourcesFile } 
 import { type RunReport, runSource } from "../../supabase/functions/_shared/runner.ts";
 import type { Json, SourcesFile } from "../../supabase/functions/_shared/types.ts";
 import sourcesFile from "../../supabase/functions/_shared/sources.config.json" with { type: "json" };
+import { resolveHost } from "./resolve_host.ts";
 import { exportAdapter, type ImportFindings, loadExport, preflightExport } from "./export_import.ts";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
@@ -121,7 +122,7 @@ async function main(argv: string[]): Promise<number> {
     if (!adapter) throw new Error(`adapter ${source.adapter_name} not found`);
     const db = dryRun ? null : await connect();
     try {
-      report = await runSource({ file, source, adapter, mode: backfill ? "backfill" : "incremental", triggerKind: "cli", maxRecords, maxRuntimeSeconds, dryRun, db });
+      report = await runSource({ file, source, adapter, mode: backfill ? "backfill" : "incremental", triggerKind: "cli", maxRecords, maxRuntimeSeconds, dryRun, db, resolveHost });
     } finally {
       await db?.close();
     }
