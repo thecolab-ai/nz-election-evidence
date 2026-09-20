@@ -133,6 +133,24 @@ export function useRowsQuery<Row>(options: RowsQueryOptions): UseQueryResult<Row
   })
 }
 
+/** A server-side count (HEAD request, no rows). Null when the server gives none: unknown, not zero. */
+export function useCountQuery(options: { view: DatasetRef; key: readonly unknown[]; build?: (query: SelectQuery) => SelectQuery; enabled?: boolean }): UseQueryResult<number | null, DataError> {
+  const { view, key, build, enabled = true } = options
+  return useQuery<number | null, DataError>({
+    queryKey: ['count', datasetKey(view), key],
+    enabled,
+    queryFn: async ({ signal }) => {
+      const source = requireSupabase() as unknown as { from(name: string): { select(columns: string, options: { count: 'exact'; head: true }): unknown }; schema(name: string): { from(name: string): { select(columns: string, options: { count: 'exact'; head: true }): unknown } } }
+      const table = typeof view === 'string' ? source.from(view) : source.schema(OPEN_SCHEMA).from(view.open)
+      let query = table.select('id', { count: 'exact', head: true }) as SelectQuery
+      if (build) query = build(query)
+      const { error, count, status } = await query.abortSignal(signal)
+      if (error) throw toDataError(error, status)
+      return count ?? null
+    },
+  })
+}
+
 /** Exactly one row by key, or null when the view returns nothing for it. */
 export function useOneQuery<Row>(options: {
   view: PublicViewName

@@ -3,6 +3,8 @@ import { StateBadge } from '@/components/badges'
 import { Note, PageHeader, Section } from '@/components/page'
 import { EmptyBlock, ErrorBlock, LoadingBlock } from '@/components/states'
 import { formatCount, formatDateTime, humanise, SCOPE_LABELS, SCOPE_ORDER, type ViewScope } from '@/lib/format'
+import { coverageFromSources, type CoverageSource } from '@/lib/coverage'
+import { RIGHTS_NOTE } from '@/lib/format'
 import { useRowsQuery } from '@/lib/queries'
 import type { CoverageRow, ReleaseGateRow, RightsRow } from '@/lib/types'
 
@@ -64,11 +66,12 @@ function ScopeCard({ scope, row }: { scope: ViewScope; row: CoverageRow | undefi
 }
 
 export function OverviewPage() {
-  const coverage = useRowsQuery<CoverageRow>({ view: 'coverage_by_scope', select: 'view_scope,sources,sources_with_a_successful_run,sources_currently_unavailable,live_records,latest_successful_retrieval', key: ['overview'], limit: 20 })
+  // Derived from the rights-filtered sources view; the database publishes no cross-source aggregate.
+  const coverage = useRowsQuery<CoverageSource>({ view: 'sources', select: 'view_scope,freshness_status,last_success_at,live_records', key: ['overview-coverage'], limit: 200 })
   const gates = useRowsQuery<ReleaseGateRow>({ view: 'release_gates', select: 'gate_key,state,evidence_reference,decided_at', key: ['overview'], limit: 20, build: (q) => q.order('gate_key') })
   const rights = useRowsQuery<Pick<RightsRow, 'rights_id' | 'review_status'>>({ view: 'rights_register', select: 'rights_id,review_status', key: ['overview'], limit: 200 })
 
-  const byScope = new Map((coverage.data ?? []).map((row) => [row.view_scope, row]))
+  const byScope = new Map(coverageFromSources(coverage.data ?? []).map((row) => [row.view_scope, row]))
   const otherScopes = SCOPE_ORDER.filter((scope) => !ELECTION_SCOPES.includes(scope))
   const rightsRows = rights.data ?? []
   const notPending = rightsRows.filter((row) => row.review_status !== 'pending').length
@@ -78,8 +81,10 @@ export function OverviewPage() {
       <PageHeader eyebrow="Overview" title="What has been retrieved, by scope">
         <p>
           Coverage is reported separately for each scope and is never added together: the 2026 election, the 2023 baseline and the
-          2025 finance returns answer different questions. A count is what was retrieved, not what exists.
+          2025 finance returns answer different questions. A count is what was retrieved, not what exists. Sources whose
+          rights allow no release are not listed or counted.
         </p>
+        <p data-testid="rights-note">{RIGHTS_NOTE}</p>
       </PageHeader>
 
       <Section id="election-scopes" title="Election scopes" description="Three scopes, always kept apart.">

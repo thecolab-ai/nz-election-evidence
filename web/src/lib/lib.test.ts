@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { bundleProblems } from '../../scripts/check-bundle.ts'
+import { coverageFromSources } from './coverage'
 import { looksLikeServiceRoleKey, resolveConfig, routerBasePath } from './env'
 import { formatMoney, formatStatValue, formatVotes } from './format'
 import { EDGES_PER_EXPANSION, initialGraph, MAX_NODES, mergeExpansion, nodeCount, edgeFilterFor, type EdgeRow } from './graph'
@@ -16,7 +17,7 @@ describe('unknown is not zero', () => {
     expect(formatVotes(0, 'not_reported')).toBe('not reported')
     expect(formatVotes(null, 'suppressed')).toBe('suppressed')
     expect(formatVotes(null, null, 'list')).toBe('not applicable (list candidacy)')
-    expect(formatVotes(null, null)).toBe('no result loaded')
+    expect(formatVotes(null, null)).toBe('no result shown')
   })
   it('never renders a suppressed, confidential or missing statistic as a number', () => {
     expect(formatStatValue(0, null, 'suppressed')).toBe('suppressed')
@@ -105,5 +106,20 @@ describe('configuration and bundle safety', () => {
     expect(bundleProblems([{ name: 'a.js', text: `const k="${jwt('service_role')}"` }])[0]).toContain('service_role')
     expect(bundleProblems([{ name: 'b.js', text: 'sb_secret_abcdefghijkl' }])[0]).toContain('secret-style')
     expect(bundleProblems([{ name: 'c.js', text: 'from("evidence_private.source_records")' }])[0]).toContain('private schema')
+  })
+})
+
+describe('coverage is derived from the rights-filtered sources view', () => {
+  it('counts per scope, never across scopes, and treats an absent success as none yet', () => {
+    const rows = coverageFromSources([
+      { view_scope: 'current_parliament', freshness_status: 'fresh', last_success_at: '2026-09-20T01:00:00Z', live_records: 122 },
+      { view_scope: 'current_parliament', freshness_status: 'fresh', last_success_at: '2026-09-20T03:00:00Z', live_records: '93' },
+      { view_scope: 'primary_2026', freshness_status: 'unavailable', last_success_at: null, live_records: 0 },
+    ])
+    const parliament = rows.find((r) => r.view_scope === 'current_parliament')
+    expect(parliament).toMatchObject({ sources: 2, sources_with_a_successful_run: 2, sources_currently_unavailable: 0, live_records: 215, latest_successful_retrieval: '2026-09-20T03:00:00Z' })
+    expect(rows.find((r) => r.view_scope === 'primary_2026')).toMatchObject({ sources: 1, sources_with_a_successful_run: 0, sources_currently_unavailable: 1, latest_successful_retrieval: null })
+    expect(rows.find((r) => r.view_scope === 'baseline_2023')).toBeUndefined()
+    expect(coverageFromSources([])).toEqual([])
   })
 })

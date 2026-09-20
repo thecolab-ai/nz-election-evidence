@@ -77,6 +77,15 @@ export type VotesStatus = 'reported' | 'not_reported' | 'suppressed'
  * Candidate votes. Only a `reported` status with a number shows a number. Everything else is
  * text, including a stray 0 paired with a non-reported status.
  */
+/**
+ * A blank content field has two possible causes and the page cannot always tell which: the source did
+ * not state it, or the publisher's rights do not (yet) allow this project to show it.
+ */
+export const NOT_SHOWN = 'not shown — not stated by the source, or withheld under publisher rights'
+
+export const RIGHTS_NOTE =
+  'Names, titles, labels and figures are shown only for sources whose publisher has approved those fields. For every other source this register shows the link, identifiers, dates and hashes, and leaves content blank. Each source lists its release tier.'
+
 export function formatVotes(
   votes: number | string | null | undefined,
   status: string | null | undefined,
@@ -87,7 +96,7 @@ export function formatVotes(
   if (status === 'suppressed') return 'suppressed'
   if (status === 'reported') return 'reported, value unavailable'
   if (candidacyType === 'list') return 'not applicable (list candidacy)'
-  return 'no result loaded'
+  return 'no result shown'
 }
 
 const STAT_STATUS_TEXT: Record<string, string> = {

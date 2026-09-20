@@ -6,8 +6,8 @@ import { EvidenceVersionLink } from '@/components/evidence-link'
 import { FilterBar, SelectFilter, TextFilter } from '@/components/filters'
 import { KeyValueList, Note, PageHeader, Section } from '@/components/page'
 import { EmptyBlock, ErrorBlock, LoadingBlock } from '@/components/states'
-import { CANDIDACY_STATUS_LABELS, CANDIDACY_STATUSES, formatCount, formatPlainDate, formatVotes, humanise, scopeLabel } from '@/lib/format'
-import { useListQuery, useOneQuery, useRowsQuery } from '@/lib/queries'
+import { CANDIDACY_STATUS_LABELS, CANDIDACY_STATUSES, formatCount, NOT_SHOWN, RIGHTS_NOTE, formatPlainDate, formatVotes, humanise, scopeLabel } from '@/lib/format'
+import { useCountQuery, useListQuery, useOneQuery, useRowsQuery } from '@/lib/queries'
 import { ilikeContains } from '@/lib/search'
 import { candidaciesSpec } from '@/lib/specs'
 import type { CandidacyRow, ElectionRow } from '@/lib/types'
@@ -17,6 +17,33 @@ export const NO_NOMINATIONS_NOTE = 'No official nominations loaded. Unknown, not
 
 function isPrimary2026(election: Pick<ElectionRow, 'view_scope'>): boolean {
   return election.view_scope === 'primary_2026'
+}
+
+/**
+ * Counts come from the rights-filtered candidacies view, so they cover only sources that may be shown.
+ * Status is a content field: for a link-only source it is blank and cannot be counted here.
+ */
+function useElectionCounts(slug: string) {
+  const total = useCountQuery({ view: 'candidacies', key: [slug, 'all'], build: (q) => q.eq('election_slug', slug) })
+  const nominated = useCountQuery({ view: 'candidacies', key: [slug, 'nominated'], build: (q) => q.eq('election_slug', slug).eq('current_status', 'officially_nominated') })
+  const announced = useCountQuery({ view: 'candidacies', key: [slug, 'announced'], build: (q) => q.eq('election_slug', slug).eq('current_status', 'announced') })
+  return { total: total.data, nominated: nominated.data, announced: announced.data, settled: total.isSuccess && nominated.isSuccess }
+}
+
+const countText = (value: number | null | undefined) => (value === null || value === undefined ? 'unknown' : formatCount(value))
+
+function ElectionCounts({ slug, primary }: { slug: string; primary: boolean }) {
+  const counts = useElectionCounts(slug)
+  return (
+    <>
+      <dl className="grid grid-cols-3 gap-4 px-4 py-3 text-sm">
+        <div><dt className="eyebrow">Candidacies shown</dt><dd className="num text-lg">{countText(counts.total)}</dd></div>
+        <div><dt className="eyebrow">Officially nominated</dt><dd className="num text-lg">{countText(counts.nominated)}</dd></div>
+        <div><dt className="eyebrow">Announced only</dt><dd className="num text-lg">{countText(counts.announced)}</dd></div>
+      </dl>
+      {primary && counts.settled && counts.nominated === 0 ? <div className="px-4 pb-3"><Note tone="caution" testId="no-nominations-note">{NO_NOMINATIONS_NOTE}</Note></div> : null}
+    </>
+  )
 }
 
 export function ElectionsPage() {
@@ -35,12 +62,7 @@ export function ElectionsPage() {
                 <h2 className="mt-0.5 text-lg"><Link to="/elections/$slug" params={{ slug: e.slug }} className="doc-link">{e.title}</Link></h2>
                 <p className="mt-1 text-[13px] text-muted-foreground">{humanise(e.election_type)} · {humanise(e.status)} · {formatPlainDate(e.election_date, 'date not established')}</p>
               </div>
-              <dl className="grid grid-cols-3 gap-4 px-4 py-3 text-sm">
-                <div><dt className="eyebrow">Candidacies loaded</dt><dd className="num text-lg">{formatCount(e.candidacies)}</dd></div>
-                <div><dt className="eyebrow">Officially nominated</dt><dd className="num text-lg">{formatCount(e.officially_nominated)}</dd></div>
-                <div><dt className="eyebrow">Announced only</dt><dd className="num text-lg">{formatCount(e.announced_only)}</dd></div>
-              </dl>
-              {isPrimary2026(e) && Number(e.officially_nominated) === 0 ? <div className="px-4 pb-3"><Note tone="caution" testId="no-nominations-note">{NO_NOMINATIONS_NOTE}</Note></div> : null}
+              <ElectionCounts slug={e.slug} primary={isPrimary2026(e)} />
             </li>
           ))}
         </ul>
@@ -57,12 +79,12 @@ const columns = helper.columns([
     header: 'Candidate (name at source)',
     cell: ({ row }) => (
       <div className="space-y-0.5">
-        <Link to="/people/$identityId" params={{ identityId: row.original.person_identity_id }} className="doc-link font-medium">{row.original.candidate_name}</Link>
+        <Link to="/people/$identityId" params={{ identityId: row.original.person_identity_id }} className="doc-link font-medium">{row.original.candidate_name ?? NOT_SHOWN}</Link>
         {row.original.identity_link_status !== 'approved' ? <div><LinkStatusBadge status={row.original.identity_link_status} /></div> : null}
       </div>
     ),
   }),
-  helper.accessor('party_label', { header: 'Party label at source', cell: ({ row }) => <>{row.original.party_label ?? 'not stated by source'}{row.original.stood_as_independent ? <span className="ml-1.5"><Pill tone="muted">label, not a registered party</Pill></span> : null}</> }),
+  helper.accessor('party_label', { header: 'Party label at source', cell: ({ row }) => <>{row.original.party_label ?? NOT_SHOWN}{row.original.stood_as_independent ? <span className="ml-1.5"><Pill tone="muted">label, not a registered party</Pill></span> : null}</> }),
   helper.accessor('candidacy_type', { header: 'Type', cell: ({ row }) => `${humanise(row.original.candidacy_type)}${row.original.list_rank ? ` · list position ${row.original.list_rank}` : ''}` }),
   helper.accessor('current_status', { header: 'Status', cell: ({ getValue }) => <CandidacyStatusBadge status={getValue()} /> }),
   helper.accessor('votes', {
@@ -117,7 +139,8 @@ export function ElectionDetailPage() {
         <p>Candidacies are listed alphabetically by electorate, then by candidate name. Vote counts are shown as the source reported them and cannot be used to order this list.</p>
       </PageHeader>
 
-      {isPrimary2026(e) && Number(e.officially_nominated) === 0 ? <div className="mb-6"><Note tone="caution" testId="no-nominations-note">{NO_NOMINATIONS_NOTE}</Note></div> : null}
+      <div className="mb-6 border border-border bg-paper"><ElectionCounts slug={e.slug} primary={isPrimary2026(e)} /></div>
+      <div className="mb-6"><Note testId="rights-note">{RIGHTS_NOTE}</Note></div>
 
       <Section id="summary" title="What is loaded">
         <KeyValueList
@@ -126,9 +149,6 @@ export function ElectionDetailPage() {
             { label: 'Election date', value: `${formatPlainDate(e.election_date, 'not established')}${e.election_date_basis ? ` · ${e.election_date_basis}` : ''}` },
             { label: 'Status', value: humanise(e.status) },
             { label: 'Scope', value: scopeLabel(e.view_scope) },
-            { label: 'Candidacies loaded', value: <span className="num">{formatCount(e.candidacies)}</span> },
-            { label: 'Officially nominated', value: <span className="num">{formatCount(e.officially_nominated)}</span> },
-            { label: 'Announced (not officially nominated)', value: <span className="num">{formatCount(e.announced_only)}</span> },
           ]}
         />
       </Section>

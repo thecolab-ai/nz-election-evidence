@@ -30,7 +30,7 @@ const runColumns = runHelper.columns([
   runHelper.accessor('versions_inserted', { header: 'New versions', cell: ({ getValue }) => <span className="num">{formatCount(getValue())}</span> }),
   runHelper.accessor('rejected', { header: 'Rejected', cell: ({ getValue }) => <span className="num">{formatCount(getValue())}</span> }),
   runHelper.accessor('tombstoned', { header: 'Tombstoned', cell: ({ getValue }) => <span className="num">{formatCount(getValue())}</span> }),
-  runHelper.accessor('error_class', { header: 'Error', cell: ({ row }) => (row.original.error_class ? <><Mono>{row.original.error_class}</Mono>{row.original.error_detail ? <span className="block text-xs text-muted-foreground">{row.original.error_detail}</span> : null}</> : '—') }),
+  runHelper.accessor('error_class', { header: 'Error', cell: ({ row }) => (row.original.error_class ? <><Mono>{row.original.error_class}</Mono></> : '—') }),
 ])
 
 const errorHelper = createColumnHelper<CoreFeatures, IngestErrorRow>()
@@ -38,8 +38,6 @@ const errorColumns = errorHelper.columns([
   errorHelper.accessor('occurred_at', { header: 'Occurred', cell: ({ getValue }) => formatDateTime(getValue()) }),
   errorHelper.accessor('source_id', { header: 'Source', cell: ({ getValue }) => sourceLink(getValue()) }),
   errorHelper.accessor('error_class', { header: 'Class', cell: ({ getValue }) => <Mono>{getValue()}</Mono> }),
-  errorHelper.accessor('message', { header: 'Message' }),
-  errorHelper.accessor('record_ref', { header: 'Record reference', cell: ({ getValue }) => (getValue() ? <Mono>{getValue()}</Mono> : '—') }),
 ])
 
 const scheduleHelper = createColumnHelper<CoreFeatures, ScheduleRow>()

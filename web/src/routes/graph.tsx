@@ -1,3 +1,4 @@
+import { NOT_SHOWN } from '@/lib/format'
 import { getRouteApi, Link } from '@tanstack/react-router'
 import { lazy, Suspense, useState } from 'react'
 import { FilterBar, TextFilter } from '@/components/filters'
@@ -40,7 +41,7 @@ function StartNodePicker() {
         <ul className="divide-y divide-border border border-border bg-paper text-sm">
           {results.data.map((identity) => (
             <li key={identity.id} className="flex flex-wrap items-baseline justify-between gap-2 px-4 py-2">
-              <Link to="/graph" search={{ kind: 'person_identity', id: identity.id }} className="doc-link font-medium">{identity.name_at_source}</Link>
+              <Link to="/graph" search={{ kind: 'person_identity', id: identity.id }} className="doc-link font-medium">{identity.name_at_source ?? NOT_SHOWN}</Link>
               <span className="font-mono text-xs text-muted-foreground">{identity.source_id}</span>
             </li>
           ))}

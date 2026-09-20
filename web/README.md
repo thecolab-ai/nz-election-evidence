@@ -10,7 +10,7 @@ Public, read-only, no sign-in. A static React shell for GitHub Pages that reads 
 | Every domain table | `evidence_open` | Generic browser under **Datasets and schema**: every table, every column, and for anything withheld, the reason |
 | Catalogue | `evidence_public.dataset_catalogue`, `dataset_columns`, `surface_status` | Always readable, even while evidence rows are withheld |
 
-The database, not this app, decides what is visible. While the R8 and R10 release gates are closed it returns no evidence rows and the app shows "Public release is pending review". The app holds the public anon key only, stores no session, calls `.select()` only, and there is no RPC. `src/lib/env.ts` refuses to start with a service-role or secret key.
+The database, not this app, decides what is visible, and it honours source rights: a source with pending publisher rights shows links, identifiers, dates and hashes only, with every content field blank; content appears only for fields a publisher has approved; a refused, restricted or rights-less source does not appear at all. The pages say why a field is blank and show each source's release tier. While the R8 and R10 release gates are closed it returns no evidence rows and the app shows "Public release is pending review". The app holds the public anon key only, stores no session, calls `.select()` only, and there is no RPC. `src/lib/env.ts` refuses to start with a service-role or secret key.
 
 ## Set-up
 
@@ -27,7 +27,7 @@ Node 24. `npm ci`, then copy `.env.example` to `.env.local`:
 | `npm run typecheck` | `tsc` over app, tests and scripts, including the compile-time database contract |
 | `npm test` | Vitest unit tests (formatters: unknown is not zero; pagination; URL validation; bounded graph; configuration and bundle safety; compliance text) |
 | `npm run build` / `build:pages` | Production build; writes `404.html` (copy of `index.html`) and `.nojekyll` for Pages refresh and deep links |
-| `npm run check:bundle` | Fails if the build is not Pages-routable or carries key material, private schema names or fixture evidence |
+| `npm run check:bundle` / `check:bundle:pages` | Fails if the build is not routable under `VITE_BASE_PATH` (same variable and default as the build; a mismatch fails) or carries key material, private schema names or fixture evidence |
 | `npm run types:generate` / `types:check` | Regenerates `src/lib/database.types.ts` from the **local** stack, or fails when the committed file has drifted from the migrations (CI) |
 | `npm run e2e` | Playwright against the local Supabase stack through the dev server |
 | `npm run e2e:pages` | Playwright against a production build served like GitHub Pages (base path, `404.html` with HTTP 404) |
@@ -39,6 +39,8 @@ Node 24. `npm ci`, then copy `.env.example` to `.env.local`:
 ## Browser tests
 
 They need the local stack from the repository root (`supabase start …`, see `docs/database/runbook.md`). Global set-up reads the local anon and service-role keys from `supabase status -o env` at run time (local demo keys; held in memory, never written or printed), creates two fixture accounts through the local auth admin API, seeds clearly labelled fixtures (`fixture_*` sources, "TEST FIXTURE" titles) through the real ingestion SQL functions, and records the two release gates as open **on the local disposable database only**. One test closes the gates again to prove the withheld state. It refuses to run against a non-local API host.
+
+Fixtures include one publisher standing in for an approved-fields publisher (so content pages can be tested) and one pending publisher whose stored content contains the word WITHHELD; a test walks **every** public dataset and requires that word never to appear.
 
 Covered: anonymous browsing with no sign-in and nothing stored in the browser; every public view and table readable; catalogue completeness (public tables readable, withheld tables absent, withheld columns non-existent, each with a reason); private, base, inspector, release, `vault` and `auth` schemas closed; every write verb refused on both public layers, through REST and through the app's own client; signed-in accounts gain nothing; gates closed returns no rows while the catalogue stays readable; sources and freshness wording; server pagination, sorting and filters; empty, loading and error states; record provenance and version history; tombstones; Parliament and election rules (announced is not nominated, unknown is not zero, no ordering by votes); unresolved identities; bounded graph; Pages deep links, reload, base-path assets and navigation; bundle safety.
 

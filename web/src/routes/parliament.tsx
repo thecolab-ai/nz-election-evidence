@@ -3,7 +3,7 @@ import { getRouteApi, Link } from '@tanstack/react-router'
 import { DataTable, type CoreFeatures } from '@/components/data-table'
 import { FilterBar, SelectFilter, TextFilter } from '@/components/filters'
 import { Note, PageHeader } from '@/components/page'
-import { formatDateTime, formatServiceDate, humanise } from '@/lib/format'
+import { formatDateTime, formatServiceDate, humanise, NOT_SHOWN } from '@/lib/format'
 import { useListQuery } from '@/lib/queries'
 import { ilikeContains } from '@/lib/search'
 import { parliamentSpec } from '@/lib/specs'
@@ -19,13 +19,13 @@ const columns = helper.columns([
     header: 'Member (name at source)',
     cell: ({ row }) => (
       <Link to="/people/$identityId" params={{ identityId: row.original.person_identity_id }} className="doc-link font-medium">
-        {row.original.member_name}
+        {row.original.member_name ?? NOT_SHOWN}
       </Link>
     ),
   }),
-  helper.accessor('party_label', { header: 'Party label at source', cell: ({ getValue }) => getValue() ?? 'not stated by source' }),
+  helper.accessor('party_label', { header: 'Party label at source', cell: ({ getValue }) => getValue() ?? NOT_SHOWN }),
   helper.accessor('representation', { header: 'Representation', cell: ({ getValue }) => humanise(getValue()) }),
-  helper.accessor('electorate_name_at_source', { header: 'Electorate at source', cell: ({ getValue }) => getValue() ?? 'none (list member)' }),
+  helper.accessor('electorate_name_at_source', { header: 'Electorate at source', cell: ({ row }) => row.original.electorate_name_at_source ?? (row.original.representation === 'list' ? 'none (list member)' : NOT_SHOWN) }),
   helper.accessor('observed_first_at', { header: 'Observed in directory from', cell: ({ getValue }) => formatDateTime(getValue()) }),
   helper.accessor('observed_last_at', {
     header: 'Observed in directory to',

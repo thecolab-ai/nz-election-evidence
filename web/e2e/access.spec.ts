@@ -29,7 +29,7 @@ test.describe('public read-only boundary', () => {
   })
 
   test('anonymous REST: every public layer reads, the dataset catalogue is complete, withheld columns do not exist', async ({ request }) => {
-    for (const view of ['records', 'sources', 'record_versions', 'person_identities', 'graph_edges', 'import_runs', 'fetch_log', 'rights_register', 'elections', 'coverage_by_scope']) {
+    for (const view of ['records', 'sources', 'record_versions', 'person_identities', 'graph_edges', 'import_runs', 'fetch_log', 'rights_register', 'elections', 'dataset_catalogue', 'dataset_columns', 'surface_status']) {
       const response = await request.get(`${REST}/${view}?select=*&limit=1`, { headers: restHeaders() })
       expect(response.status(), `evidence_public.${view}`).toBe(200)
     }
@@ -54,6 +54,65 @@ test.describe('public read-only boundary', () => {
       const response = await request.get(`${REST}/${column.dataset}?select=${column.column_name}&limit=1`, { headers: restHeaders(undefined, column.exposed_schema as Profile) })
       expect([400, 404], `${column.exposed_schema}.${column.dataset}.${column.column_name}`).toContain(response.status())
     }
+  })
+
+  test('source rights: a pending publisher gets links and metadata only, in EVERY public dataset and on every page', async ({ page, request }) => {
+    // The pending fixture source stores content that contains the word WITHHELD. Walk the whole published
+    // catalogue: no public dataset, curated or per-table, may return it.
+    const catalogue = (await (await request.get(`${REST}/dataset_catalogue?select=exposed_schema,dataset&disposition=eq.public&limit=200`, { headers: restHeaders() })).json()) as Array<{ exposed_schema: Profile; dataset: string }>
+    expect(catalogue.length).toBeGreaterThan(80)
+    let rowsSeen = 0
+    for (const entry of catalogue) {
+      for (let offset = 0; offset < 1000; offset += 200) {
+        const response = await request.get(`${REST}/${entry.dataset}?select=*&limit=200&offset=${offset}`, { headers: restHeaders(undefined, entry.exposed_schema) })
+        expect(response.status(), `${entry.exposed_schema}.${entry.dataset}`).toBe(200)
+        const body = await response.text()
+        expect(body.includes('WITHHELD'), `${entry.exposed_schema}.${entry.dataset} leaks pending-rights content`).toBe(false)
+        const rows = JSON.parse(body) as unknown[]
+        rowsSeen += rows.length
+        if (rows.length < 200) break
+      }
+    }
+    expect(rowsSeen).toBeGreaterThan(500)
+
+    const versions = (await (await request.get(`${REST}/record_versions?select=source_url,content_hash,safe_payload,source_date_text,omitted_fields&source_id=eq.fixture_pending_rights`, { headers: restHeaders() })).json()) as Array<{ source_url: string | null; content_hash: string | null; safe_payload: unknown; source_date_text: string | null }>
+    expect(versions).toHaveLength(2)
+    for (const v of versions) {
+      expect(v.safe_payload).toBeNull()
+      expect(v.source_url).toMatch(/^https:\/\/fixture\.example\/pending\//)
+      expect(v.content_hash).toMatch(/^sha256:/)
+    }
+    const approved = (await (await request.get(`${REST}/record_versions?select=safe_payload&source_id=eq.fixture_releases&limit=1`, { headers: restHeaders() })).json()) as Array<{ safe_payload: { title?: string } | null }>
+    expect(approved[0]?.safe_payload?.title).toContain('TEST FIXTURE Release')
+
+    await page.goto('/sources/fixture_pending_rights')
+    await expect(page.getByTestId('release-tier')).toContainText('Links and metadata only')
+    await page.goto('/records?source=fixture_pending_rights')
+    await expect(page.getByTestId('data-row')).toHaveCount(2)
+    await expect(page.getByTestId('data-row').first()).toContainText('not shown — not stated by the source, or withheld under publisher rights')
+    await expect(page.locator('body')).not.toContainText('WITHHELD')
+    await page.getByTestId('data-row').first().getByRole('link').first().click()
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText('Record (label not shown)')
+    await expect(page.getByTestId('provenance-source-url').getByRole('link')).toHaveAttribute('href', /fixture\.example\/pending\//)
+    await expect(page.locator('body')).not.toContainText('WITHHELD')
+    await page.screenshot({ path: `${SCREENS}/17-link-only-record.png`, fullPage: true })
+    await page.goto('/parliament?source=fixture_pending_rights')
+    await expect(page.getByTestId('data-row')).toHaveCount(1)
+    await expect(page.locator('body')).not.toContainText('WITHHELD')
+  })
+
+  test('operational text is not published: error classes only, no messages, details, references or checkpoints', async ({ request }) => {
+    for (const [profile, name, column] of [
+      ['evidence_open', 'import_runs', 'error_detail'], ['evidence_public', 'import_runs', 'error_detail'], ['evidence_open', 'import_runs', 'source_watermark'],
+      ['evidence_open', 'ingest_errors', 'message'], ['evidence_public', 'ingest_errors', 'message'], ['evidence_open', 'ingest_errors', 'record_ref'],
+      ['evidence_open', 'run_checkpoints', 'cursor_state'], ['evidence_open', 'record_lifecycle_events', 'reason'], ['evidence_open', 'record_lifecycle_events', 'requested_by'],
+    ] as Array<[Profile, string, string]>) {
+      const response = await request.get(`${REST}/${name}?select=${column}&limit=1`, { headers: restHeaders(undefined, profile) })
+      expect([400, 404], `${profile}.${name}.${column}`).toContain(response.status())
+    }
+    const errors = (await (await request.get(`${REST}/ingest_errors?select=*&source_id=eq.fixture_bills`, { headers: restHeaders() })).json()) as Array<Record<string, unknown>>
+    expect(errors.length).toBeGreaterThan(0)
+    expect(Object.keys(errors[0] ?? {}).sort()).toEqual(['error_class', 'id', 'occurred_at', 'run_id', 'source_id'])
   })
 
   test('anonymous REST: private, base, inspector, release and system schemas are closed', async ({ request }) => {
@@ -152,6 +211,7 @@ test.describe('public read-only boundary', () => {
 
   test('datasets: every table and column is listed, withheld ones with their reason, and public rows browse generically', async ({ page }) => {
     await page.goto('/datasets?disposition=withheld')
+    await page.goto('/datasets?disposition=withheld&q=app_memberships')
     const withheld = page.getByTestId('data-row').filter({ hasText: 'app_memberships' })
     await expect(withheld).toContainText('Withheld — reason given')
     await expect(withheld).toContainText('Access-control records identify individual account holders')
@@ -163,10 +223,14 @@ test.describe('public read-only boundary', () => {
     await expect(page.getByRole('columnheader', { name: 'decided_by' })).toHaveCount(0)
 
     await page.goto('/datasets/evidence_open/bills')
+    await expect(page.getByTestId('dataset-lineage')).toContainText('content columns are null unless that source has approved the field')
+    await expect(page.getByTestId('dataset-columns').getByRole('row').filter({ hasText: 'bill_number' })).toContainText('Content — needs publisher approval')
     await expect(page.getByRole('columnheader', { name: /bill_number/ })).toBeVisible()
     await expect(page.getByTestId('data-row').first()).toBeVisible()
     await page.screenshot({ path: `${SCREENS}/15-dataset-detail.png`, fullPage: true })
 
+    await page.goto('/datasets/evidence_open/people')
+    await expect(page.getByTestId('dataset-withheld')).toContainText('no single provable source')
     await page.goto('/datasets/evidence_open/summary_versions')
     await expect(page.getByTestId('dataset-row-rule')).toContainText('human review')
   })

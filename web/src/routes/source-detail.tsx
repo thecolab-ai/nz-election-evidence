@@ -112,6 +112,7 @@ export function SourceDetailPage() {
             { label: 'Snapshot semantics', value: humanise(s.snapshot_semantics) },
             { label: 'Adapter', value: `${s.adapter_name} (${humanise(s.adapter_kind).toLowerCase()})` },
             { label: 'Blocked reason', value: s.blocked_reason ?? 'none recorded' },
+            { label: 'Public release tier', testId: 'release-tier', value: s.public_release_tier === 'fields' ? `Approved fields: ${s.public_approved_fields.join(', ') || 'none named'}` : 'Links and metadata only. Content fields are blank until the publisher approves them.' },
             { label: 'Rights', value: s.rights_id ? `${s.rights_id} · ${s.rights_review_status} · default release ${s.rights_default_release}` : `no rights row · treated as ${s.rights_review_status}, ${s.rights_default_release}` },
             { label: 'Registry key', value: s.registry_key ?? 'none' },
             { label: 'Catalogue products', value: s.catalogue_product_ids.length ? s.catalogue_product_ids.join(', ') : 'none mapped' },
@@ -131,7 +132,7 @@ export function SourceDetailPage() {
               <Cell className="num">{formatCount(run.unchanged)}</Cell>
               <Cell className="num">{formatCount(run.rejected)}</Cell>
               <Cell className="num">{formatCount(run.tombstoned)}</Cell>
-              <Cell>{run.error_class ? <><Mono>{run.error_class}</Mono>{run.error_detail ? <span className="block text-muted-foreground">{run.error_detail}</span> : null}</> : '—'}</Cell>
+              <Cell>{run.error_class ? <><Mono>{run.error_class}</Mono></> : '—'}</Cell>
             </TableRow>
           )}
         </Panel>
@@ -159,8 +160,6 @@ export function SourceDetailPage() {
             <TableRow key={String(e.id)}>
               <Cell>{formatDateTime(e.occurred_at)}</Cell>
               <Cell><Mono>{e.error_class}</Mono></Cell>
-              <Cell>{e.message}</Cell>
-              <Cell>{e.record_ref ? <Mono>{e.record_ref}</Mono> : '—'}</Cell>
             </TableRow>
           )}
         </Panel>

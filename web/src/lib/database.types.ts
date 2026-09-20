@@ -27,30 +27,6 @@ export type Database = {
           party_label_at_source: string | null
           select_committee: string | null
         }
-        Insert: {
-          bill_number?: string | null
-          bill_type?: string | null
-          current_stage?: string | null
-          document_id?: string | null
-          last_activity_at?: string | null
-          member_identity_id?: string | null
-          member_name_at_source?: string | null
-          parliament_number?: number | null
-          party_label_at_source?: string | null
-          select_committee?: string | null
-        }
-        Update: {
-          bill_number?: string | null
-          bill_type?: string | null
-          current_stage?: string | null
-          document_id?: string | null
-          last_activity_at?: string | null
-          member_identity_id?: string | null
-          member_name_at_source?: string | null
-          parliament_number?: number | null
-          party_label_at_source?: string | null
-          select_committee?: string | null
-        }
         Relationships: [
           {
             foreignKeyName: "bills_document_id_fkey"
@@ -68,33 +44,6 @@ export type Database = {
           },
         ]
       }
-      boundary_editions: {
-        Row: {
-          basis_note: string | null
-          effective_from: string | null
-          id: string | null
-          slug: string | null
-          title: string | null
-          verified: boolean | null
-        }
-        Insert: {
-          basis_note?: string | null
-          effective_from?: string | null
-          id?: string | null
-          slug?: string | null
-          title?: string | null
-          verified?: boolean | null
-        }
-        Update: {
-          basis_note?: string | null
-          effective_from?: string | null
-          id?: string | null
-          slug?: string | null
-          title?: string | null
-          verified?: boolean | null
-        }
-        Relationships: []
-      }
       candidacies: {
         Row: {
           candidacy_type: string | null
@@ -106,28 +55,6 @@ export type Database = {
           party_identity_id: string | null
           person_identity_id: string | null
           stood_as_independent: boolean | null
-        }
-        Insert: {
-          candidacy_type?: string | null
-          contest_id?: string | null
-          current_status?: string | null
-          election_id?: string | null
-          evidence_version_id?: string | null
-          id?: string | null
-          party_identity_id?: string | null
-          person_identity_id?: string | null
-          stood_as_independent?: boolean | null
-        }
-        Update: {
-          candidacy_type?: string | null
-          contest_id?: string | null
-          current_status?: string | null
-          election_id?: string | null
-          evidence_version_id?: string | null
-          id?: string | null
-          party_identity_id?: string | null
-          person_identity_id?: string | null
-          stood_as_independent?: boolean | null
         }
         Relationships: [
           {
@@ -178,26 +105,6 @@ export type Database = {
           status: string | null
           status_date: string | null
         }
-        Insert: {
-          candidacy_id?: string | null
-          date_precision?: string | null
-          evidence_version_id?: string | null
-          id?: string | null
-          recorded_at?: string | null
-          source_class?: string | null
-          status?: string | null
-          status_date?: string | null
-        }
-        Update: {
-          candidacy_id?: string | null
-          date_precision?: string | null
-          evidence_version_id?: string | null
-          id?: string | null
-          recorded_at?: string | null
-          source_class?: string | null
-          status?: string | null
-          status_date?: string | null
-        }
         Relationships: [
           {
             foreignKeyName: "candidacy_status_events_candidacy_id_fkey"
@@ -223,20 +130,6 @@ export type Database = {
           vote_share: number | null
           votes: number | null
         }
-        Insert: {
-          candidacy_id?: string | null
-          result_set_id?: string | null
-          value_status?: string | null
-          vote_share?: number | null
-          votes?: number | null
-        }
-        Update: {
-          candidacy_id?: string | null
-          result_set_id?: string | null
-          value_status?: string | null
-          vote_share?: number | null
-          votes?: number | null
-        }
         Relationships: [
           {
             foreignKeyName: "candidate_results_candidacy_id_fkey"
@@ -260,16 +153,6 @@ export type Database = {
           product_id: string | null
           source_id: string | null
         }
-        Insert: {
-          mapping_note?: string | null
-          product_id?: string | null
-          source_id?: string | null
-        }
-        Update: {
-          mapping_note?: string | null
-          product_id?: string | null
-          source_id?: string | null
-        }
         Relationships: [
           {
             foreignKeyName: "catalogue_product_map_source_id_fkey"
@@ -285,16 +168,6 @@ export type Database = {
           committee: string | null
           document_id: string | null
           reported_on: string | null
-        }
-        Insert: {
-          committee?: string | null
-          document_id?: string | null
-          reported_on?: string | null
-        }
-        Update: {
-          committee?: string | null
-          document_id?: string | null
-          reported_on?: string | null
         }
         Relationships: [
           {
@@ -392,22 +265,6 @@ export type Database = {
           title: string | null
           view_scope: string | null
         }
-        Insert: {
-          document_type?: string | null
-          id?: string | null
-          official_url?: string | null
-          source_record_id?: string | null
-          title?: string | null
-          view_scope?: string | null
-        }
-        Update: {
-          document_type?: string | null
-          id?: string | null
-          official_url?: string | null
-          source_record_id?: string | null
-          title?: string | null
-          view_scope?: string | null
-        }
         Relationships: [
           {
             foreignKeyName: "documents_source_record_id_fkey"
@@ -428,26 +285,6 @@ export type Database = {
           party_votes: number | null
           result_set_id: string | null
           value_status: string | null
-        }
-        Insert: {
-          denominator_note?: string | null
-          electorate_seats?: number | null
-          list_seats?: number | null
-          party_identity_id?: string | null
-          party_vote_share?: number | null
-          party_votes?: number | null
-          result_set_id?: string | null
-          value_status?: string | null
-        }
-        Update: {
-          denominator_note?: string | null
-          electorate_seats?: number | null
-          list_seats?: number | null
-          party_identity_id?: string | null
-          party_vote_share?: number | null
-          party_votes?: number | null
-          result_set_id?: string | null
-          value_status?: string | null
         }
         Relationships: [
           {
@@ -520,39 +357,7 @@ export type Database = {
           name: string | null
           official_code: string | null
         }
-        Insert: {
-          boundary_edition_id?: string | null
-          electorate_id?: string | null
-          electorate_type?: string | null
-          evidence_version_id?: string | null
-          id?: string | null
-          name?: string | null
-          official_code?: string | null
-        }
-        Update: {
-          boundary_edition_id?: string | null
-          electorate_id?: string | null
-          electorate_type?: string | null
-          evidence_version_id?: string | null
-          id?: string | null
-          name?: string | null
-          official_code?: string | null
-        }
         Relationships: [
-          {
-            foreignKeyName: "electorate_versions_boundary_edition_id_fkey"
-            columns: ["boundary_edition_id"]
-            isOneToOne: false
-            referencedRelation: "boundary_editions"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "electorate_versions_electorate_id_fkey"
-            columns: ["electorate_id"]
-            isOneToOne: false
-            referencedRelation: "electorates"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "electorate_versions_evidence_version_id_fkey"
             columns: ["evidence_version_id"]
@@ -561,24 +366,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      electorates: {
-        Row: {
-          canonical_name: string | null
-          id: string | null
-          slug: string | null
-        }
-        Insert: {
-          canonical_name?: string | null
-          id?: string | null
-          slug?: string | null
-        }
-        Update: {
-          canonical_name?: string | null
-          id?: string | null
-          slug?: string | null
-        }
-        Relationships: []
       }
       fetch_log: {
         Row: {
@@ -595,36 +382,6 @@ export type Database = {
           retrieved_at: string | null
           run_id: string | null
           source_id: string | null
-        }
-        Insert: {
-          attempt?: number | null
-          body_sha256?: string | null
-          duration_ms?: number | null
-          http_status?: number | null
-          id?: number | null
-          outcome?: string | null
-          request_host?: string | null
-          request_method?: string | null
-          request_url?: string | null
-          response_bytes?: number | null
-          retrieved_at?: string | null
-          run_id?: string | null
-          source_id?: string | null
-        }
-        Update: {
-          attempt?: number | null
-          body_sha256?: string | null
-          duration_ms?: number | null
-          http_status?: number | null
-          id?: number | null
-          outcome?: string | null
-          request_host?: string | null
-          request_method?: string | null
-          request_url?: string | null
-          response_bytes?: number | null
-          retrieved_at?: string | null
-          run_id?: string | null
-          source_id?: string | null
         }
         Relationships: [
           {
@@ -658,34 +415,6 @@ export type Database = {
           return_type: string | null
           total_status: string | null
         }
-        Insert: {
-          approved_total?: number | null
-          candidacy_id?: string | null
-          document_id?: string | null
-          election_id?: string | null
-          filing_status?: string | null
-          filing_status_basis?: string | null
-          id?: string | null
-          is_image_only?: boolean | null
-          party_identity_id?: string | null
-          reporting_year?: number | null
-          return_type?: string | null
-          total_status?: string | null
-        }
-        Update: {
-          approved_total?: number | null
-          candidacy_id?: string | null
-          document_id?: string | null
-          election_id?: string | null
-          filing_status?: string | null
-          filing_status_basis?: string | null
-          id?: string | null
-          is_image_only?: boolean | null
-          party_identity_id?: string | null
-          reporting_year?: number | null
-          return_type?: string | null
-          total_status?: string | null
-        }
         Relationships: [
           {
             foreignKeyName: "finance_return_references_candidacy_id_fkey"
@@ -717,30 +446,6 @@ export type Database = {
           },
         ]
       }
-      geography_versions: {
-        Row: {
-          code: string | null
-          edition: string | null
-          id: string | null
-          name: string | null
-          scheme: string | null
-        }
-        Insert: {
-          code?: string | null
-          edition?: string | null
-          id?: string | null
-          name?: string | null
-          scheme?: string | null
-        }
-        Update: {
-          code?: string | null
-          edition?: string | null
-          id?: string | null
-          name?: string | null
-          scheme?: string | null
-        }
-        Relationships: []
-      }
       identity_decisions: {
         Row: {
           decided_at: string | null
@@ -754,32 +459,6 @@ export type Database = {
           supersedes_id: string | null
           target_party_id: string | null
           target_person_id: string | null
-        }
-        Insert: {
-          decided_at?: string | null
-          decision?: string | null
-          evidence?: Json | null
-          id?: string | null
-          method?: string | null
-          party_identity_id?: string | null
-          person_identity_id?: string | null
-          subject_kind?: string | null
-          supersedes_id?: string | null
-          target_party_id?: string | null
-          target_person_id?: string | null
-        }
-        Update: {
-          decided_at?: string | null
-          decision?: string | null
-          evidence?: Json | null
-          id?: string | null
-          method?: string | null
-          party_identity_id?: string | null
-          person_identity_id?: string | null
-          subject_kind?: string | null
-          supersedes_id?: string | null
-          target_party_id?: string | null
-          target_person_id?: string | null
         }
         Relationships: [
           {
@@ -803,20 +482,6 @@ export type Database = {
             referencedRelation: "identity_decisions"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "identity_decisions_target_party_id_fkey"
-            columns: ["target_party_id"]
-            isOneToOne: false
-            referencedRelation: "parties"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "identity_decisions_target_person_id_fkey"
-            columns: ["target_person_id"]
-            isOneToOne: false
-            referencedRelation: "people"
-            referencedColumns: ["id"]
-          },
         ]
       }
       import_runs: {
@@ -824,9 +489,7 @@ export type Database = {
           adapter_version: string | null
           complete_snapshot: boolean | null
           error_class: string | null
-          error_detail: string | null
           finished_at: string | null
-          holder: string | null
           id: string | null
           manifest_hash: string | null
           mode: string | null
@@ -835,59 +498,12 @@ export type Database = {
           rejected: number | null
           resumed_from_run_id: string | null
           source_id: string | null
-          source_watermark: string | null
           started_at: string | null
           status: string | null
           tombstoned: number | null
           trigger_kind: string | null
           unchanged: number | null
           versions_inserted: number | null
-        }
-        Insert: {
-          adapter_version?: string | null
-          complete_snapshot?: boolean | null
-          error_class?: string | null
-          error_detail?: string | null
-          finished_at?: string | null
-          holder?: string | null
-          id?: string | null
-          manifest_hash?: string | null
-          mode?: string | null
-          observations_inserted?: number | null
-          records_seen?: number | null
-          rejected?: number | null
-          resumed_from_run_id?: string | null
-          source_id?: string | null
-          source_watermark?: string | null
-          started_at?: string | null
-          status?: string | null
-          tombstoned?: number | null
-          trigger_kind?: string | null
-          unchanged?: number | null
-          versions_inserted?: number | null
-        }
-        Update: {
-          adapter_version?: string | null
-          complete_snapshot?: boolean | null
-          error_class?: string | null
-          error_detail?: string | null
-          finished_at?: string | null
-          holder?: string | null
-          id?: string | null
-          manifest_hash?: string | null
-          mode?: string | null
-          observations_inserted?: number | null
-          records_seen?: number | null
-          rejected?: number | null
-          resumed_from_run_id?: string | null
-          source_id?: string | null
-          source_watermark?: string | null
-          started_at?: string | null
-          status?: string | null
-          tombstoned?: number | null
-          trigger_kind?: string | null
-          unchanged?: number | null
-          versions_inserted?: number | null
         }
         Relationships: [
           {
@@ -910,29 +526,9 @@ export type Database = {
         Row: {
           error_class: string | null
           id: number | null
-          message: string | null
           occurred_at: string | null
-          record_ref: string | null
           run_id: string | null
           source_id: string | null
-        }
-        Insert: {
-          error_class?: string | null
-          id?: number | null
-          message?: string | null
-          occurred_at?: string | null
-          record_ref?: string | null
-          run_id?: string | null
-          source_id?: string | null
-        }
-        Update: {
-          error_class?: string | null
-          id?: number | null
-          message?: string | null
-          occurred_at?: string | null
-          record_ref?: string | null
-          run_id?: string | null
-          source_id?: string | null
         }
         Relationships: [
           {
@@ -964,32 +560,6 @@ export type Database = {
           schedule_key: string | null
           source_id: string | null
           state: string | null
-        }
-        Insert: {
-          activated_at?: string | null
-          activation_proof?: Json | null
-          config_hash?: string | null
-          cron_expr?: string | null
-          cron_jobid?: number | null
-          function_slug?: string | null
-          max_records?: number | null
-          max_runtime_seconds?: number | null
-          schedule_key?: string | null
-          source_id?: string | null
-          state?: string | null
-        }
-        Update: {
-          activated_at?: string | null
-          activation_proof?: Json | null
-          config_hash?: string | null
-          cron_expr?: string | null
-          cron_jobid?: number | null
-          function_slug?: string | null
-          max_records?: number | null
-          max_runtime_seconds?: number | null
-          schedule_key?: string | null
-          source_id?: string | null
-          state?: string | null
         }
         Relationships: [
           {
@@ -1052,40 +622,6 @@ export type Database = {
           valid_from: string | null
           valid_to: string | null
         }
-        Insert: {
-          basis?: string | null
-          date_precision?: string | null
-          electorate_name_at_source?: string | null
-          electorate_version_id?: string | null
-          evidence_version_id?: string | null
-          id?: string | null
-          observed_absent_at?: string | null
-          observed_first_at?: string | null
-          observed_last_at?: string | null
-          parliament_number?: number | null
-          party_identity_id?: string | null
-          person_identity_id?: string | null
-          representation?: string | null
-          valid_from?: string | null
-          valid_to?: string | null
-        }
-        Update: {
-          basis?: string | null
-          date_precision?: string | null
-          electorate_name_at_source?: string | null
-          electorate_version_id?: string | null
-          evidence_version_id?: string | null
-          id?: string | null
-          observed_absent_at?: string | null
-          observed_first_at?: string | null
-          observed_last_at?: string | null
-          parliament_number?: number | null
-          party_identity_id?: string | null
-          person_identity_id?: string | null
-          representation?: string | null
-          valid_from?: string | null
-          valid_to?: string | null
-        }
         Relationships: [
           {
             foreignKeyName: "parliamentary_service_terms_electorate_version_id_fkey"
@@ -1117,27 +653,6 @@ export type Database = {
           },
         ]
       }
-      parties: {
-        Row: {
-          canonical_name: string | null
-          created_at: string | null
-          id: string | null
-          short_name: string | null
-        }
-        Insert: {
-          canonical_name?: string | null
-          created_at?: string | null
-          id?: string | null
-          short_name?: string | null
-        }
-        Update: {
-          canonical_name?: string | null
-          created_at?: string | null
-          id?: string | null
-          short_name?: string | null
-        }
-        Relationships: []
-      }
       party_affiliations: {
         Row: {
           basis: string | null
@@ -1150,30 +665,6 @@ export type Database = {
           person_identity_id: string | null
           valid_from: string | null
           valid_to: string | null
-        }
-        Insert: {
-          basis?: string | null
-          date_precision?: string | null
-          evidence_version_id?: string | null
-          id?: string | null
-          observed_first_at?: string | null
-          observed_last_at?: string | null
-          party_identity_id?: string | null
-          person_identity_id?: string | null
-          valid_from?: string | null
-          valid_to?: string | null
-        }
-        Update: {
-          basis?: string | null
-          date_precision?: string | null
-          evidence_version_id?: string | null
-          id?: string | null
-          observed_first_at?: string | null
-          observed_last_at?: string | null
-          party_identity_id?: string | null
-          person_identity_id?: string | null
-          valid_from?: string | null
-          valid_to?: string | null
         }
         Relationships: [
           {
@@ -1208,35 +699,12 @@ export type Database = {
           valid_from: string | null
           valid_to: string | null
         }
-        Insert: {
-          alias?: string | null
-          evidence_version_id?: string | null
-          id?: string | null
-          party_id?: string | null
-          valid_from?: string | null
-          valid_to?: string | null
-        }
-        Update: {
-          alias?: string | null
-          evidence_version_id?: string | null
-          id?: string | null
-          party_id?: string | null
-          valid_from?: string | null
-          valid_to?: string | null
-        }
         Relationships: [
           {
             foreignKeyName: "party_aliases_evidence_version_id_fkey"
             columns: ["evidence_version_id"]
             isOneToOne: false
             referencedRelation: "source_record_versions"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "party_aliases_party_id_fkey"
-            columns: ["party_id"]
-            isOneToOne: false
-            referencedRelation: "parties"
             referencedColumns: ["id"]
           },
         ]
@@ -1247,18 +715,6 @@ export type Database = {
           list_id: string | null
           list_rank: number | null
           person_identity_id: string | null
-        }
-        Insert: {
-          candidacy_id?: string | null
-          list_id?: string | null
-          list_rank?: number | null
-          person_identity_id?: string | null
-        }
-        Update: {
-          candidacy_id?: string | null
-          list_id?: string | null
-          list_rank?: number | null
-          person_identity_id?: string | null
         }
         Relationships: [
           {
@@ -1291,20 +747,6 @@ export type Database = {
           id: string | null
           list_version: number | null
           party_identity_id: string | null
-        }
-        Insert: {
-          election_id?: string | null
-          evidence_version_id?: string | null
-          id?: string | null
-          list_version?: number | null
-          party_identity_id?: string | null
-        }
-        Update: {
-          election_id?: string | null
-          evidence_version_id?: string | null
-          id?: string | null
-          list_version?: number | null
-          party_identity_id?: string | null
         }
         Relationships: [
           {
@@ -1340,24 +782,6 @@ export type Database = {
           valid_from: string | null
           valid_to: string | null
         }
-        Insert: {
-          date_precision?: string | null
-          evidence_version_id?: string | null
-          id?: string | null
-          party_identity_id?: string | null
-          status?: string | null
-          valid_from?: string | null
-          valid_to?: string | null
-        }
-        Update: {
-          date_precision?: string | null
-          evidence_version_id?: string | null
-          id?: string | null
-          party_identity_id?: string | null
-          status?: string | null
-          valid_from?: string | null
-          valid_to?: string | null
-        }
         Relationships: [
           {
             foreignKeyName: "party_registrations_evidence_version_id_fkey"
@@ -1382,20 +806,6 @@ export type Database = {
           result_set_id: string | null
           value_status: string | null
           votes: number | null
-        }
-        Insert: {
-          contest_id?: string | null
-          party_identity_id?: string | null
-          result_set_id?: string | null
-          value_status?: string | null
-          votes?: number | null
-        }
-        Update: {
-          contest_id?: string | null
-          party_identity_id?: string | null
-          result_set_id?: string | null
-          value_status?: string | null
-          votes?: number | null
         }
         Relationships: [
           {
@@ -1432,34 +842,7 @@ export type Database = {
           party_id: string | null
           source_id: string | null
         }
-        Insert: {
-          created_at?: string | null
-          external_id?: string | null
-          id?: string | null
-          is_independent_label?: boolean | null
-          link_status?: string | null
-          name_at_source?: string | null
-          party_id?: string | null
-          source_id?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          external_id?: string | null
-          id?: string | null
-          is_independent_label?: boolean | null
-          link_status?: string | null
-          name_at_source?: string | null
-          party_id?: string | null
-          source_id?: string | null
-        }
         Relationships: [
-          {
-            foreignKeyName: "party_source_identities_party_id_fkey"
-            columns: ["party_id"]
-            isOneToOne: false
-            referencedRelation: "parties"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "party_source_identities_source_id_fkey"
             columns: ["source_id"]
@@ -1468,27 +851,6 @@ export type Database = {
             referencedColumns: ["source_id"]
           },
         ]
-      }
-      people: {
-        Row: {
-          created_at: string | null
-          display_name: string | null
-          id: string | null
-          public_role_basis: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          display_name?: string | null
-          id?: string | null
-          public_role_basis?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          display_name?: string | null
-          id?: string | null
-          public_role_basis?: string | null
-        }
-        Relationships: []
       }
       person_source_identities: {
         Row: {
@@ -1502,41 +864,12 @@ export type Database = {
           person_id: string | null
           source_id: string | null
         }
-        Insert: {
-          created_at?: string | null
-          external_id?: string | null
-          first_version_id?: string | null
-          id?: string | null
-          identity_scheme?: string | null
-          link_status?: string | null
-          name_at_source?: string | null
-          person_id?: string | null
-          source_id?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          external_id?: string | null
-          first_version_id?: string | null
-          id?: string | null
-          identity_scheme?: string | null
-          link_status?: string | null
-          name_at_source?: string | null
-          person_id?: string | null
-          source_id?: string | null
-        }
         Relationships: [
           {
             foreignKeyName: "person_source_identities_first_version_id_fkey"
             columns: ["first_version_id"]
             isOneToOne: false
             referencedRelation: "source_record_versions"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "person_source_identities_person_id_fkey"
-            columns: ["person_id"]
-            isOneToOne: false
-            referencedRelation: "people"
             referencedColumns: ["id"]
           },
           {
@@ -1555,20 +888,6 @@ export type Database = {
           election_id: string | null
           party_identity_id: string | null
           policy_class: string | null
-        }
-        Insert: {
-          classification_basis?: string | null
-          document_id?: string | null
-          election_id?: string | null
-          party_identity_id?: string | null
-          policy_class?: string | null
-        }
-        Update: {
-          classification_basis?: string | null
-          document_id?: string | null
-          election_id?: string | null
-          party_identity_id?: string | null
-          policy_class?: string | null
         }
         Relationships: [
           {
@@ -1602,20 +921,6 @@ export type Database = {
           value_pct: number | null
           value_status: string | null
         }
-        Insert: {
-          party_identity_id?: string | null
-          party_label_at_source?: string | null
-          poll_document_id?: string | null
-          value_pct?: number | null
-          value_status?: string | null
-        }
-        Update: {
-          party_identity_id?: string | null
-          party_label_at_source?: string | null
-          poll_document_id?: string | null
-          value_pct?: number | null
-          value_status?: string | null
-        }
         Relationships: [
           {
             foreignKeyName: "poll_results_party_identity_id_fkey"
@@ -1643,24 +948,6 @@ export type Database = {
           sample_size: number | null
           sponsor: string | null
         }
-        Insert: {
-          document_id?: string | null
-          fieldwork_end?: string | null
-          fieldwork_start?: string | null
-          methodology_status?: string | null
-          pollster?: string | null
-          sample_size?: number | null
-          sponsor?: string | null
-        }
-        Update: {
-          document_id?: string | null
-          fieldwork_end?: string | null
-          fieldwork_start?: string | null
-          methodology_status?: string | null
-          pollster?: string | null
-          sample_size?: number | null
-          sponsor?: string | null
-        }
         Relationships: [
           {
             foreignKeyName: "polls_document_id_fkey"
@@ -1670,6 +957,54 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      public_columns: {
+        Row: {
+          column_name: string | null
+          field_token: string | null
+          object_name: string | null
+          object_schema: string | null
+          release_class: string | null
+        }
+        Insert: {
+          column_name?: string | null
+          field_token?: string | null
+          object_name?: string | null
+          object_schema?: string | null
+          release_class?: string | null
+        }
+        Update: {
+          column_name?: string | null
+          field_token?: string | null
+          object_name?: string | null
+          object_schema?: string | null
+          release_class?: string | null
+        }
+        Relationships: []
+      }
+      public_lineage: {
+        Row: {
+          lineage_kind: string | null
+          lineage_sql: string | null
+          note: string | null
+          object_name: string | null
+          object_schema: string | null
+        }
+        Insert: {
+          lineage_kind?: string | null
+          lineage_sql?: string | null
+          note?: string | null
+          object_name?: string | null
+          object_schema?: string | null
+        }
+        Update: {
+          lineage_kind?: string | null
+          lineage_sql?: string | null
+          note?: string | null
+          object_name?: string | null
+          object_schema?: string | null
+        }
+        Relationships: []
       }
       public_row_rules: {
         Row: {
@@ -1718,25 +1053,8 @@ export type Database = {
           event: string | null
           id: number | null
           occurred_at: string | null
-          reason: string | null
           record_id: string | null
           run_id: string | null
-        }
-        Insert: {
-          event?: string | null
-          id?: number | null
-          occurred_at?: string | null
-          reason?: string | null
-          record_id?: string | null
-          run_id?: string | null
-        }
-        Update: {
-          event?: string | null
-          id?: number | null
-          occurred_at?: string | null
-          reason?: string | null
-          record_id?: string | null
-          run_id?: string | null
         }
         Relationships: [
           {
@@ -1832,20 +1150,6 @@ export type Database = {
           source_id: string | null
           version_id: string | null
         }
-        Insert: {
-          batch_id?: string | null
-          document_id?: string | null
-          item_kind?: string | null
-          source_id?: string | null
-          version_id?: string | null
-        }
-        Update: {
-          batch_id?: string | null
-          document_id?: string | null
-          item_kind?: string | null
-          source_id?: string | null
-          version_id?: string | null
-        }
         Relationships: [
           {
             foreignKeyName: "release_items_batch_id_fkey"
@@ -1883,16 +1187,6 @@ export type Database = {
           published_at: string | null
           publisher_item_id: string | null
         }
-        Insert: {
-          document_id?: string | null
-          published_at?: string | null
-          publisher_item_id?: string | null
-        }
-        Update: {
-          document_id?: string | null
-          published_at?: string | null
-          publisher_item_id?: string | null
-        }
         Relationships: [
           {
             foreignKeyName: "releases_document_id_fkey"
@@ -1911,22 +1205,6 @@ export type Database = {
           result_status: string | null
           source_version_id: string | null
           supersedes_id: string | null
-        }
-        Insert: {
-          declared_on?: string | null
-          election_id?: string | null
-          id?: string | null
-          result_status?: string | null
-          source_version_id?: string | null
-          supersedes_id?: string | null
-        }
-        Update: {
-          declared_on?: string | null
-          election_id?: string | null
-          id?: string | null
-          result_status?: string | null
-          source_version_id?: string | null
-          supersedes_id?: string | null
         }
         Relationships: [
           {
@@ -2030,30 +1308,6 @@ export type Database = {
           valid_from: string | null
           valid_to: string | null
         }
-        Insert: {
-          date_precision?: string | null
-          evidence_version_id?: string | null
-          id?: string | null
-          observed_first_at?: string | null
-          observed_last_at?: string | null
-          person_identity_id?: string | null
-          role_title?: string | null
-          role_type?: string | null
-          valid_from?: string | null
-          valid_to?: string | null
-        }
-        Update: {
-          date_precision?: string | null
-          evidence_version_id?: string | null
-          id?: string | null
-          observed_first_at?: string | null
-          observed_last_at?: string | null
-          person_identity_id?: string | null
-          role_title?: string | null
-          role_type?: string | null
-          valid_from?: string | null
-          valid_to?: string | null
-        }
         Relationships: [
           {
             foreignKeyName: "role_terms_evidence_version_id_fkey"
@@ -2074,24 +1328,9 @@ export type Database = {
       run_checkpoints: {
         Row: {
           created_at: string | null
-          cursor_state: Json | null
           records_so_far: number | null
           run_id: string | null
           seq: number | null
-        }
-        Insert: {
-          created_at?: string | null
-          cursor_state?: Json | null
-          records_so_far?: number | null
-          run_id?: string | null
-          seq?: number | null
-        }
-        Update: {
-          created_at?: string | null
-          cursor_state?: Json | null
-          records_so_far?: number | null
-          run_id?: string | null
-          seq?: number | null
         }
         Relationships: [
           {
@@ -2105,28 +1344,11 @@ export type Database = {
       }
       schedule_dispatch_log: {
         Row: {
-          detail: string | null
           dispatched_at: string | null
           id: number | null
           net_request_id: number | null
           outcome: string | null
           schedule_key: string | null
-        }
-        Insert: {
-          detail?: string | null
-          dispatched_at?: string | null
-          id?: number | null
-          net_request_id?: number | null
-          outcome?: string | null
-          schedule_key?: string | null
-        }
-        Update: {
-          detail?: string | null
-          dispatched_at?: string | null
-          id?: number | null
-          net_request_id?: number | null
-          outcome?: string | null
-          schedule_key?: string | null
         }
         Relationships: [
           {
@@ -2150,30 +1372,6 @@ export type Database = {
           last_success_run_id: string | null
           latest_source_published_at: string | null
           source_id: string | null
-        }
-        Insert: {
-          consecutive_failures?: number | null
-          last_attempt_at?: string | null
-          last_attempt_run_id?: string | null
-          last_attempt_status?: string | null
-          last_change_at?: string | null
-          last_error_class?: string | null
-          last_success_at?: string | null
-          last_success_run_id?: string | null
-          latest_source_published_at?: string | null
-          source_id?: string | null
-        }
-        Update: {
-          consecutive_failures?: number | null
-          last_attempt_at?: string | null
-          last_attempt_run_id?: string | null
-          last_attempt_status?: string | null
-          last_change_at?: string | null
-          last_error_class?: string | null
-          last_success_at?: string | null
-          last_success_run_id?: string | null
-          latest_source_published_at?: string | null
-          source_id?: string | null
         }
         Relationships: [
           {
@@ -2204,25 +1402,8 @@ export type Database = {
           acquired_at: string | null
           expires_at: string | null
           heartbeat_at: string | null
-          holder: string | null
           run_id: string | null
           source_id: string | null
-        }
-        Insert: {
-          acquired_at?: string | null
-          expires_at?: string | null
-          heartbeat_at?: string | null
-          holder?: string | null
-          run_id?: string | null
-          source_id?: string | null
-        }
-        Update: {
-          acquired_at?: string | null
-          expires_at?: string | null
-          heartbeat_at?: string | null
-          holder?: string | null
-          run_id?: string | null
-          source_id?: string | null
         }
         Relationships: [
           {
@@ -2246,16 +1427,6 @@ export type Database = {
           observed_at: string | null
           run_id: string | null
           version_id: string | null
-        }
-        Insert: {
-          observed_at?: string | null
-          run_id?: string | null
-          version_id?: string | null
-        }
-        Update: {
-          observed_at?: string | null
-          run_id?: string | null
-          version_id?: string | null
         }
         Relationships: [
           {
@@ -2291,40 +1462,6 @@ export type Database = {
           source_date_text: string | null
           source_published_at: string | null
           source_url: string | null
-        }
-        Insert: {
-          content_hash?: string | null
-          first_retrieved_at?: string | null
-          id?: string | null
-          import_run_id?: string | null
-          loaded_at?: string | null
-          omitted_fields?: Json | null
-          original_content_hash?: string | null
-          predecessor_id?: string | null
-          projection_version?: number | null
-          record_id?: string | null
-          record_kind?: string | null
-          safe_payload?: Json | null
-          source_date_text?: string | null
-          source_published_at?: string | null
-          source_url?: string | null
-        }
-        Update: {
-          content_hash?: string | null
-          first_retrieved_at?: string | null
-          id?: string | null
-          import_run_id?: string | null
-          loaded_at?: string | null
-          omitted_fields?: Json | null
-          original_content_hash?: string | null
-          predecessor_id?: string | null
-          projection_version?: number | null
-          record_id?: string | null
-          record_kind?: string | null
-          safe_payload?: Json | null
-          source_date_text?: string | null
-          source_published_at?: string | null
-          source_url?: string | null
         }
         Relationships: [
           {
@@ -2362,28 +1499,6 @@ export type Database = {
           tombstone_reason: string | null
           tombstoned_at: string | null
         }
-        Insert: {
-          current_version_id?: string | null
-          external_record_id?: string | null
-          first_seen_at?: string | null
-          id?: string | null
-          last_seen_at?: string | null
-          record_kind?: string | null
-          source_id?: string | null
-          tombstone_reason?: string | null
-          tombstoned_at?: string | null
-        }
-        Update: {
-          current_version_id?: string | null
-          external_record_id?: string | null
-          first_seen_at?: string | null
-          id?: string | null
-          last_seen_at?: string | null
-          record_kind?: string | null
-          source_id?: string | null
-          tombstone_reason?: string | null
-          tombstoned_at?: string | null
-        }
         Relationships: [
           {
             foreignKeyName: "source_records_current_version_same_record"
@@ -2403,6 +1518,7 @@ export type Database = {
       }
       source_rights: {
         Row: {
+          approved_fields: string[] | null
           attribution: string | null
           default_release: string | null
           excluded_assets: string | null
@@ -2417,6 +1533,7 @@ export type Database = {
           verified_permissions: string | null
         }
         Insert: {
+          approved_fields?: string[] | null
           attribution?: string | null
           default_release?: string | null
           excluded_assets?: string | null
@@ -2431,6 +1548,7 @@ export type Database = {
           verified_permissions?: string | null
         }
         Update: {
+          approved_fields?: string[] | null
           attribution?: string | null
           default_release?: string | null
           excluded_assets?: string | null
@@ -2465,42 +1583,6 @@ export type Database = {
           title: string | null
           view_scope: string | null
         }
-        Insert: {
-          adapter_kind?: string | null
-          adapter_name?: string | null
-          allowed_hosts?: string[] | null
-          blocked_reason?: string | null
-          config_hash?: string | null
-          enabled?: boolean | null
-          expected_cadence_seconds?: number | null
-          official_url?: string | null
-          publisher?: string | null
-          registry_key?: string | null
-          rights_id?: string | null
-          snapshot_semantics?: string | null
-          source_id?: string | null
-          synced_at?: string | null
-          title?: string | null
-          view_scope?: string | null
-        }
-        Update: {
-          adapter_kind?: string | null
-          adapter_name?: string | null
-          allowed_hosts?: string[] | null
-          blocked_reason?: string | null
-          config_hash?: string | null
-          enabled?: boolean | null
-          expected_cadence_seconds?: number | null
-          official_url?: string | null
-          publisher?: string | null
-          registry_key?: string | null
-          rights_id?: string | null
-          snapshot_semantics?: string | null
-          source_id?: string | null
-          synced_at?: string | null
-          title?: string | null
-          view_scope?: string | null
-        }
         Relationships: [
           {
             foreignKeyName: "sources_registry_key_fkey"
@@ -2527,22 +1609,6 @@ export type Database = {
           safe_payload: Json | null
           staged_at: string | null
         }
-        Insert: {
-          id?: string | null
-          label_at_source?: string | null
-          reason?: string | null
-          result_set_id?: string | null
-          safe_payload?: Json | null
-          staged_at?: string | null
-        }
-        Update: {
-          id?: string | null
-          label_at_source?: string | null
-          reason?: string | null
-          result_set_id?: string | null
-          safe_payload?: Json | null
-          staged_at?: string | null
-        }
         Relationships: [
           {
             foreignKeyName: "staged_unmatched_results_result_set_id_fkey"
@@ -2560,20 +1626,6 @@ export type Database = {
           publisher: string | null
           source_id: string | null
           title: string | null
-        }
-        Insert: {
-          dataset_key?: string | null
-          id?: string | null
-          publisher?: string | null
-          source_id?: string | null
-          title?: string | null
-        }
-        Update: {
-          dataset_key?: string | null
-          id?: string | null
-          publisher?: string | null
-          source_id?: string | null
-          title?: string | null
         }
         Relationships: [
           {
@@ -2604,50 +1656,7 @@ export type Database = {
           value_double: number | null
           value_status: string | null
         }
-        Insert: {
-          canonical_route?: string | null
-          content_hash?: string | null
-          geography_version_id?: string | null
-          id?: number | null
-          import_run_id?: string | null
-          parse_status?: string | null
-          period_end?: string | null
-          period_label?: string | null
-          period_start?: string | null
-          raw_value?: string | null
-          release_id?: string | null
-          row_locator?: string | null
-          series_id?: string | null
-          value?: number | null
-          value_double?: number | null
-          value_status?: string | null
-        }
-        Update: {
-          canonical_route?: string | null
-          content_hash?: string | null
-          geography_version_id?: string | null
-          id?: number | null
-          import_run_id?: string | null
-          parse_status?: string | null
-          period_end?: string | null
-          period_label?: string | null
-          period_start?: string | null
-          raw_value?: string | null
-          release_id?: string | null
-          row_locator?: string | null
-          series_id?: string | null
-          value?: number | null
-          value_double?: number | null
-          value_status?: string | null
-        }
         Relationships: [
-          {
-            foreignKeyName: "stat_observations_geography_version_id_fkey"
-            columns: ["geography_version_id"]
-            isOneToOne: false
-            referencedRelation: "geography_versions"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "stat_observations_import_run_id_fkey"
             columns: ["import_run_id"]
@@ -2678,20 +1687,6 @@ export type Database = {
           release_key: string | null
           released_on: string | null
           source_snapshot_id: string | null
-        }
-        Insert: {
-          dataset_id?: string | null
-          id?: string | null
-          release_key?: string | null
-          released_on?: string | null
-          source_snapshot_id?: string | null
-        }
-        Update: {
-          dataset_id?: string | null
-          id?: string | null
-          release_key?: string | null
-          released_on?: string | null
-          source_snapshot_id?: string | null
         }
         Relationships: [
           {
@@ -2740,26 +1735,6 @@ export type Database = {
           series_key: string | null
           title: string | null
           unit: string | null
-        }
-        Insert: {
-          dataset_id?: string | null
-          dimensions?: Json | null
-          id?: string | null
-          magnitude?: string | null
-          seasonal_adjustment?: string | null
-          series_key?: string | null
-          title?: string | null
-          unit?: string | null
-        }
-        Update: {
-          dataset_id?: string | null
-          dimensions?: Json | null
-          id?: string | null
-          magnitude?: string | null
-          seasonal_adjustment?: string | null
-          series_key?: string | null
-          title?: string | null
-          unit?: string | null
         }
         Relationships: [
           {
@@ -2848,22 +1823,6 @@ export type Database = {
           review_status: string | null
           version_id: string | null
         }
-        Insert: {
-          bill_document_id?: string | null
-          id?: string | null
-          method?: string | null
-          relationship_type?: string | null
-          review_status?: string | null
-          version_id?: string | null
-        }
-        Update: {
-          bill_document_id?: string | null
-          id?: string | null
-          method?: string | null
-          relationship_type?: string | null
-          review_status?: string | null
-          version_id?: string | null
-        }
         Relationships: [
           {
             foreignKeyName: "version_bill_links_bill_document_id_fkey"
@@ -2889,22 +1848,6 @@ export type Database = {
           relationship_type: string | null
           review_status: string | null
           version_id: string | null
-        }
-        Insert: {
-          electorate_version_id?: string | null
-          id?: string | null
-          method?: string | null
-          relationship_type?: string | null
-          review_status?: string | null
-          version_id?: string | null
-        }
-        Update: {
-          electorate_version_id?: string | null
-          id?: string | null
-          method?: string | null
-          relationship_type?: string | null
-          review_status?: string | null
-          version_id?: string | null
         }
         Relationships: [
           {
@@ -2933,24 +1876,6 @@ export type Database = {
           review_status: string | null
           version_id: string | null
         }
-        Insert: {
-          evidence_locator?: string | null
-          id?: string | null
-          method?: string | null
-          party_identity_id?: string | null
-          relationship_type?: string | null
-          review_status?: string | null
-          version_id?: string | null
-        }
-        Update: {
-          evidence_locator?: string | null
-          id?: string | null
-          method?: string | null
-          party_identity_id?: string | null
-          relationship_type?: string | null
-          review_status?: string | null
-          version_id?: string | null
-        }
         Relationships: [
           {
             foreignKeyName: "version_party_links_party_identity_id_fkey"
@@ -2977,24 +1902,6 @@ export type Database = {
           relationship_type: string | null
           review_status: string | null
           version_id: string | null
-        }
-        Insert: {
-          evidence_locator?: string | null
-          id?: string | null
-          method?: string | null
-          person_identity_id?: string | null
-          relationship_type?: string | null
-          review_status?: string | null
-          version_id?: string | null
-        }
-        Update: {
-          evidence_locator?: string | null
-          id?: string | null
-          method?: string | null
-          person_identity_id?: string | null
-          relationship_type?: string | null
-          review_status?: string | null
-          version_id?: string | null
         }
         Relationships: [
           {
@@ -3023,26 +1930,6 @@ export type Database = {
           lodged_on: string | null
           portfolio: string | null
           question_number: string | null
-        }
-        Insert: {
-          answer_status?: string | null
-          answered_by_identity_id?: string | null
-          answered_on?: string | null
-          asked_by_identity_id?: string | null
-          document_id?: string | null
-          lodged_on?: string | null
-          portfolio?: string | null
-          question_number?: string | null
-        }
-        Update: {
-          answer_status?: string | null
-          answered_by_identity_id?: string | null
-          answered_on?: string | null
-          asked_by_identity_id?: string | null
-          document_id?: string | null
-          lodged_on?: string | null
-          portfolio?: string | null
-          question_number?: string | null
         }
         Relationships: [
           {
@@ -3141,26 +2028,6 @@ export type Database = {
           status: string | null
           status_date: string | null
         }
-        Insert: {
-          candidacy_id?: string | null
-          date_precision?: string | null
-          evidence_version_id?: string | null
-          id?: string | null
-          recorded_at?: string | null
-          source_class?: string | null
-          status?: string | null
-          status_date?: string | null
-        }
-        Update: {
-          candidacy_id?: string | null
-          date_precision?: string | null
-          evidence_version_id?: string | null
-          id?: string | null
-          recorded_at?: string | null
-          source_class?: string | null
-          status?: string | null
-          status_date?: string | null
-        }
         Relationships: [
           {
             foreignKeyName: "candidacy_status_events_candidacy_id_fkey"
@@ -3178,20 +2045,10 @@ export type Database = {
           },
         ]
       }
-      coverage_by_scope: {
-        Row: {
-          latest_successful_retrieval: string | null
-          live_records: number | null
-          sources: number | null
-          sources_currently_unavailable: number | null
-          sources_with_a_successful_run: number | null
-          view_scope: string | null
-        }
-        Relationships: []
-      }
       dataset_catalogue: {
         Row: {
           approximate_rows: number | null
+          columns_rights_gated: number | null
           columns_total: number | null
           columns_withheld: number | null
           dataset: string | null
@@ -3199,6 +2056,8 @@ export type Database = {
           description: string | null
           disposition: string | null
           exposed_schema: string | null
+          lineage_kind: string | null
+          lineage_note: string | null
           row_rule_reason: string | null
           withheld_reason: string | null
         }
@@ -3212,6 +2071,7 @@ export type Database = {
           description: string | null
           disposition: string | null
           exposed_schema: string | null
+          field_token: string | null
           nullable: boolean | null
           ordinal: number | null
           withheld_reason: string | null
@@ -3259,39 +2119,30 @@ export type Database = {
       }
       elections: {
         Row: {
-          announced_only: number | null
-          candidacies: number | null
           election_date: string | null
           election_date_basis: string | null
           election_type: string | null
           id: string | null
-          officially_nominated: number | null
           slug: string | null
           status: string | null
           title: string | null
           view_scope: string | null
         }
         Insert: {
-          announced_only?: never
-          candidacies?: never
           election_date?: string | null
           election_date_basis?: string | null
           election_type?: string | null
           id?: string | null
-          officially_nominated?: never
           slug?: string | null
           status?: string | null
           title?: string | null
           view_scope?: string | null
         }
         Update: {
-          announced_only?: never
-          candidacies?: never
           election_date?: string | null
           election_date_basis?: string | null
           election_type?: string | null
           id?: string | null
-          officially_nominated?: never
           slug?: string | null
           status?: string | null
           title?: string | null
@@ -3337,36 +2188,6 @@ export type Database = {
           retrieved_at: string | null
           run_id: string | null
           source_id: string | null
-        }
-        Insert: {
-          attempt?: number | null
-          body_sha256?: string | null
-          duration_ms?: number | null
-          http_status?: number | null
-          id?: number | null
-          outcome?: string | null
-          request_host?: string | null
-          request_method?: string | null
-          request_url?: string | null
-          response_bytes?: number | null
-          retrieved_at?: string | null
-          run_id?: string | null
-          source_id?: string | null
-        }
-        Update: {
-          attempt?: number | null
-          body_sha256?: string | null
-          duration_ms?: number | null
-          http_status?: number | null
-          id?: number | null
-          outcome?: string | null
-          request_host?: string | null
-          request_method?: string | null
-          request_url?: string | null
-          response_bytes?: number | null
-          retrieved_at?: string | null
-          run_id?: string | null
-          source_id?: string | null
         }
         Relationships: [
           {
@@ -3453,32 +2274,6 @@ export type Database = {
           target_party_id: string | null
           target_person_id: string | null
         }
-        Insert: {
-          decided_at?: string | null
-          decision?: string | null
-          evidence?: Json | null
-          id?: string | null
-          method?: string | null
-          party_identity_id?: string | null
-          person_identity_id?: string | null
-          subject_kind?: string | null
-          supersedes_id?: string | null
-          target_party_id?: string | null
-          target_person_id?: string | null
-        }
-        Update: {
-          decided_at?: string | null
-          decision?: string | null
-          evidence?: Json | null
-          id?: string | null
-          method?: string | null
-          party_identity_id?: string | null
-          person_identity_id?: string | null
-          subject_kind?: string | null
-          supersedes_id?: string | null
-          target_party_id?: string | null
-          target_person_id?: string | null
-        }
         Relationships: [
           {
             foreignKeyName: "identity_decisions_party_identity_id_fkey"
@@ -3501,13 +2296,6 @@ export type Database = {
             referencedRelation: "identity_decisions"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "identity_decisions_target_person_id_fkey"
-            columns: ["target_person_id"]
-            isOneToOne: false
-            referencedRelation: "people"
-            referencedColumns: ["id"]
-          },
         ]
       }
       import_runs: {
@@ -3516,7 +2304,6 @@ export type Database = {
           checkpoints: number | null
           complete_snapshot: boolean | null
           error_class: string | null
-          error_detail: string | null
           finished_at: string | null
           id: string | null
           manifest_hash: string | null
@@ -3526,59 +2313,12 @@ export type Database = {
           rejected: number | null
           resumed_from_run_id: string | null
           source_id: string | null
-          source_watermark: string | null
           started_at: string | null
           status: string | null
           tombstoned: number | null
           trigger_kind: string | null
           unchanged: number | null
           versions_inserted: number | null
-        }
-        Insert: {
-          adapter_version?: string | null
-          checkpoints?: never
-          complete_snapshot?: boolean | null
-          error_class?: string | null
-          error_detail?: string | null
-          finished_at?: string | null
-          id?: string | null
-          manifest_hash?: string | null
-          mode?: string | null
-          observations_inserted?: number | null
-          records_seen?: number | null
-          rejected?: number | null
-          resumed_from_run_id?: string | null
-          source_id?: string | null
-          source_watermark?: string | null
-          started_at?: string | null
-          status?: string | null
-          tombstoned?: number | null
-          trigger_kind?: string | null
-          unchanged?: number | null
-          versions_inserted?: number | null
-        }
-        Update: {
-          adapter_version?: string | null
-          checkpoints?: never
-          complete_snapshot?: boolean | null
-          error_class?: string | null
-          error_detail?: string | null
-          finished_at?: string | null
-          id?: string | null
-          manifest_hash?: string | null
-          mode?: string | null
-          observations_inserted?: number | null
-          records_seen?: number | null
-          rejected?: number | null
-          resumed_from_run_id?: string | null
-          source_id?: string | null
-          source_watermark?: string | null
-          started_at?: string | null
-          status?: string | null
-          tombstoned?: number | null
-          trigger_kind?: string | null
-          unchanged?: number | null
-          versions_inserted?: number | null
         }
         Relationships: [
           {
@@ -3601,29 +2341,9 @@ export type Database = {
         Row: {
           error_class: string | null
           id: number | null
-          message: string | null
           occurred_at: string | null
-          record_ref: string | null
           run_id: string | null
           source_id: string | null
-        }
-        Insert: {
-          error_class?: string | null
-          id?: number | null
-          message?: string | null
-          occurred_at?: string | null
-          record_ref?: string | null
-          run_id?: string | null
-          source_id?: string | null
-        }
-        Update: {
-          error_class?: string | null
-          id?: number | null
-          message?: string | null
-          occurred_at?: string | null
-          record_ref?: string | null
-          run_id?: string | null
-          source_id?: string | null
         }
         Relationships: [
           {
@@ -3702,30 +2422,6 @@ export type Database = {
           },
         ]
       }
-      people: {
-        Row: {
-          created_at: string | null
-          display_name: string | null
-          id: string | null
-          linked_identities: number | null
-          public_role_basis: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          display_name?: string | null
-          id?: string | null
-          linked_identities?: never
-          public_role_basis?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          display_name?: string | null
-          id?: string | null
-          linked_identities?: never
-          public_role_basis?: string | null
-        }
-        Relationships: []
-      }
       person_identities: {
         Row: {
           candidacies: number | null
@@ -3747,13 +2443,6 @@ export type Database = {
             columns: ["first_version_id"]
             isOneToOne: false
             referencedRelation: "record_versions"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "person_source_identities_person_id_fkey"
-            columns: ["person_id"]
-            isOneToOne: false
-            referencedRelation: "people"
             referencedColumns: ["id"]
           },
           {
@@ -3791,25 +2480,8 @@ export type Database = {
           event: string | null
           id: number | null
           occurred_at: string | null
-          reason: string | null
           record_id: string | null
           run_id: string | null
-        }
-        Insert: {
-          event?: string | null
-          id?: number | null
-          occurred_at?: string | null
-          reason?: string | null
-          record_id?: string | null
-          run_id?: string | null
-        }
-        Update: {
-          event?: string | null
-          id?: number | null
-          occurred_at?: string | null
-          reason?: string | null
-          record_id?: string | null
-          run_id?: string | null
         }
         Relationships: [
           {
@@ -3996,34 +2668,6 @@ export type Database = {
           source_id: string | null
           state: string | null
         }
-        Insert: {
-          activated_at?: string | null
-          activation_proof?: Json | null
-          cron_expr?: string | null
-          cron_jobid?: number | null
-          function_slug?: string | null
-          last_dispatch_at?: never
-          last_dispatch_outcome?: never
-          max_records?: number | null
-          max_runtime_seconds?: number | null
-          schedule_key?: string | null
-          source_id?: string | null
-          state?: string | null
-        }
-        Update: {
-          activated_at?: string | null
-          activation_proof?: Json | null
-          cron_expr?: string | null
-          cron_jobid?: number | null
-          function_slug?: string | null
-          last_dispatch_at?: never
-          last_dispatch_outcome?: never
-          max_records?: number | null
-          max_runtime_seconds?: number | null
-          schedule_key?: string | null
-          source_id?: string | null
-          state?: string | null
-        }
         Relationships: [
           {
             foreignKeyName: "ingest_schedules_source_id_fkey"
@@ -4113,6 +2757,8 @@ export type Database = {
           latest_source_published_at: string | null
           live_records: number | null
           official_url: string | null
+          public_approved_fields: string[] | null
+          public_release_tier: string | null
           publisher: string | null
           registry_key: string | null
           rights_default_release: string | null

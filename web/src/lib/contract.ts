@@ -27,7 +27,6 @@ export const CONTRACT: {
   record_versions: Check<T.RecordVersionRow, 'record_versions'>
   record_lifecycle_events: Check<T.LifecycleEventRow, 'record_lifecycle_events'>
   person_identities: Check<T.PersonIdentityRow, 'person_identities'>
-  people: Check<T.PersonRow, 'people'>
   identity_decisions: Check<T.IdentityDecisionRow, 'identity_decisions'>
   service_terms: Check<T.ServiceTermRow, 'service_terms'>
   party_affiliations: Check<T.PartyAffiliationRow, 'party_affiliations'>
@@ -41,14 +40,13 @@ export const CONTRACT: {
   stat_route_reconciliation: Check<T.StatRouteRow, 'stat_route_reconciliation'>
   schedules: Check<T.ScheduleRow, 'schedules'>
   release_gates: Check<T.ReleaseGateRow, 'release_gates'>
-  coverage_by_scope: Check<T.CoverageRow, 'coverage_by_scope'>
   surface_status: Check<T.SurfaceStatusRow, 'surface_status'>
   dataset_catalogue: Check<T.DatasetCatalogueRow, 'dataset_catalogue'>
   dataset_columns: Check<T.DatasetColumnRow, 'dataset_columns'>
 } = {
   sources: true, rights_register: true, import_runs: true, fetch_log: true, ingest_errors: true, records: true,
-  record_versions: true, record_lifecycle_events: true, person_identities: true, people: true, identity_decisions: true,
+  record_versions: true, record_lifecycle_events: true, person_identities: true, identity_decisions: true,
   service_terms: true, party_affiliations: true, elections: true, candidacies: true, documents: true, finance_returns: true,
   summaries: true, stat_series: true, stat_observations: true, stat_route_reconciliation: true, schedules: true,
-  release_gates: true, coverage_by_scope: true, surface_status: true, dataset_catalogue: true, dataset_columns: true,
+  release_gates: true, surface_status: true, dataset_catalogue: true, dataset_columns: true,
 }

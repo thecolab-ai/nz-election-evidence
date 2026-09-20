@@ -35,7 +35,10 @@ test.describe('anonymous browsing', () => {
     await expect(blocked).toContainText('never retrieved')
     const bills = page.getByTestId('data-row').filter({ has: page.getByRole('link', { name: 'TEST FIXTURE bills list' }) })
     await expect(bills.getByTestId('freshness-fresh')).toHaveText('Fresh')
-    await expect(bills).toContainText('Rights review pending')
+    // The main fixture publisher stands in for an approved-fields publisher; the pending one is tested in access.spec.
+    await expect(bills.getByTestId('release-tier')).toHaveText('Approved fields shown')
+    const pendingRow = page.getByTestId('data-row').filter({ has: page.getByRole('link', { name: 'TEST FIXTURE blocked nominations endpoint' }) })
+    await expect(pendingRow).toHaveCount(1)
     await page.screenshot({ path: `${SCREENS}/04-sources.png`, fullPage: true })
 
     await blocked.getByRole('link', { name: 'TEST FIXTURE blocked nominations endpoint' }).click()
@@ -46,7 +49,8 @@ test.describe('anonymous browsing', () => {
     await page.screenshot({ path: `${SCREENS}/05-source-unavailable.png`, fullPage: true })
 
     await page.goto(`/sources/${BILLS}`)
-    await expect(page.getByRole('table', { name: 'Ingest errors' })).toContainText('forbidden_field_name')
+    await expect(page.getByRole('table', { name: 'Ingest errors' })).toContainText(/record.rejected/i)
+    await expect(page.getByRole('table', { name: 'Ingest errors' })).not.toContainText('forbidden_field_name')
     await expect(page.getByRole('table', { name: 'Schedules' })).toContainText('Inactive')
   })
 
@@ -141,8 +145,10 @@ test.describe('anonymous browsing', () => {
   })
 
   test('elections: unknown is not zero, and unreported votes are words', async ({ page, request }) => {
-    const response = await request.get(`${REST}/elections?select=slug,officially_nominated&slug=eq.general-2026`, { headers: restHeaders() })
-    const [election] = (await response.json()) as Array<{ officially_nominated: number }>
+    // Counts are taken from the rights-filtered candidacies view; the elections view publishes no cross-source count.
+    const response = await request.get(`${REST}/candidacies?select=id&election_slug=eq.general-2026&current_status=eq.officially_nominated&limit=1`, { headers: restHeaders() })
+    const nominated = (await response.json()) as unknown[]
+    const election = { officially_nominated: nominated.length }
     await page.goto('/elections')
     const card = page.getByTestId('election-general-2026')
     await expect(card).toBeVisible()

@@ -27,6 +27,9 @@ export interface SourceRow {
   rights_id: string | null
   rights_review_status: string
   rights_default_release: string
+  /** A source at tier none is not listed at all, so only link_only and fields are seen here. */
+  public_release_tier: string
+  public_approved_fields: string[]
   last_attempt_at: string | null
   last_attempt_status: string | null
   last_success_at: string | null
@@ -67,7 +70,6 @@ export interface ImportRunRow {
   finished_at: string | null
   resumed_from_run_id: string | null
   manifest_hash: string | null
-  source_watermark: string | null
   records_seen: Numeric | null
   versions_inserted: Numeric | null
   observations_inserted: Numeric | null
@@ -75,7 +77,6 @@ export interface ImportRunRow {
   rejected: Numeric | null
   tombstoned: Numeric | null
   error_class: string | null
-  error_detail: string | null
   checkpoints: Numeric
 }
 
@@ -100,8 +101,6 @@ export interface IngestErrorRow {
   run_id: string | null
   source_id: string
   error_class: string
-  message: string
-  record_ref: string | null
   occurred_at: string
 }
 
@@ -109,7 +108,7 @@ export interface RecordRow {
   id: string
   source_id: string
   view_scope: string
-  external_record_id: string
+  external_record_id: string | null
   record_kind: string
   label: string | null
   source_url: string | null
@@ -152,16 +151,15 @@ export interface LifecycleEventRow {
   record_id: string
   run_id: string | null
   event: string
-  reason: string | null
   occurred_at: string
 }
 
 export interface PersonIdentityRow {
   id: string
   source_id: string
-  external_id: string
+  external_id: string | null
   identity_scheme: string
-  name_at_source: string
+  name_at_source: string | null
   link_status: string
   person_id: string | null
   linked_person_name: string | null
@@ -169,14 +167,6 @@ export interface PersonIdentityRow {
   service_terms: Numeric
   candidacies: Numeric
   open_proposals: Numeric
-}
-
-export interface PersonRow {
-  id: string
-  display_name: string
-  public_role_basis: string
-  created_at: string
-  linked_identities: Numeric
 }
 
 export interface IdentityDecisionRow {
@@ -196,10 +186,10 @@ export interface IdentityDecisionRow {
 export interface ServiceTermRow {
   id: string
   person_identity_id: string
-  member_name: string
+  member_name: string | null
   source_id: string
   parliament_number: number | null
-  representation: string
+  representation: string | null
   electorate_name_at_source: string | null
   electorate_version_id: string | null
   party_identity_id: string | null
@@ -219,7 +209,7 @@ export interface PartyAffiliationRow {
   person_identity_id: string
   person_name: string
   party_identity_id: string
-  party_label: string
+  party_label: string | null
   valid_from: string | null
   valid_to: string | null
   date_precision: string
@@ -238,19 +228,16 @@ export interface ElectionRow {
   election_date_basis: string | null
   status: string
   view_scope: string
-  candidacies: Numeric
-  officially_nominated: Numeric
-  announced_only: Numeric
 }
 
 export interface CandidacyRow {
   id: string
   election_slug: string
   view_scope: string
-  candidacy_type: string
-  current_status: string
+  candidacy_type: string | null
+  current_status: string | null
   person_identity_id: string
-  candidate_name: string
+  candidate_name: string | null
   identity_link_status: string
   party_identity_id: string | null
   party_label: string | null
@@ -407,6 +394,9 @@ export interface DatasetCatalogueRow {
   disposition: string
   withheld_reason: string | null
   row_rule_reason: string | null
+  lineage_kind: string | null
+  lineage_note: string | null
+  columns_rights_gated: number
   description: string | null
   columns_total: number
   columns_withheld: number
@@ -422,5 +412,6 @@ export interface DatasetColumnRow {
   nullable: boolean
   disposition: string
   withheld_reason: string | null
+  field_token: string | null
   description: string | null
 }

@@ -5,7 +5,7 @@ import { JsonViewer } from '@/components/json-viewer'
 import { KeyValueList, Mono, Note, PageHeader, Section } from '@/components/page'
 import { EmptyBlock, ErrorBlock, LoadingBlock } from '@/components/states'
 import { TableRow } from '@/components/ui/table'
-import { formatDateTime, formatServiceDate, formatVotes, humanise, scopeLabel } from '@/lib/format'
+import { formatDateTime, formatServiceDate, formatVotes, humanise, scopeLabel, NOT_SHOWN } from '@/lib/format'
 import { useOneQuery, useRowsQuery } from '@/lib/queries'
 import type { CandidacyRow, IdentityDecisionRow, PartyAffiliationRow, PersonIdentityRow, ServiceTermRow } from '@/lib/types'
 import { UNRESOLVED_NOTE } from './people'
@@ -39,7 +39,7 @@ export function IdentityDetailPage() {
   return (
     <>
       <p className="mb-3 text-sm"><Link to="/people" className="doc-link">← All people</Link></p>
-      <PageHeader eyebrow="Source identity" title={i.name_at_source}>
+      <PageHeader eyebrow="Source identity" title={i.name_at_source ?? 'Source identity (name not shown)'}>
         <p>As written by <Mono>{i.source_id}</Mono>. This page describes one identity in one source, not a person.</p>
         <div className="flex flex-wrap gap-2 pt-1"><LinkStatusBadge status={i.link_status} /></div>
       </PageHeader>
@@ -52,7 +52,7 @@ export function IdentityDetailPage() {
           items={[
             { label: 'Canonical person', value: i.person_id ? `${i.linked_person_name} (reviewed link)` : UNRESOLVED_NOTE },
             { label: 'Identity scheme', value: humanise(i.identity_scheme) },
-            { label: 'External id', value: <Mono>{i.external_id}</Mono> },
+            { label: 'External id', value: i.external_id ? <Mono>{i.external_id}</Mono> : NOT_SHOWN },
             { label: 'First evidence', value: <EvidenceVersionLink versionId={i.first_version_id} /> },
             { label: 'Relationship graph', value: <Link to="/graph" search={{ kind: 'person_identity', id: i.id }} className="doc-link" data-testid="open-graph">Open bounded graph from this identity</Link> },
           ]}
@@ -64,8 +64,8 @@ export function IdentityDetailPage() {
           {(t) => (
             <TableRow key={t.id}>
               <Cell>{humanise(t.representation)}</Cell>
-              <Cell>{t.electorate_name_at_source ?? 'none (list member)'}</Cell>
-              <Cell>{t.party_label ?? 'not stated by source'}</Cell>
+              <Cell>{t.electorate_name_at_source ?? (t.representation === 'list' ? 'none (list member)' : NOT_SHOWN)}</Cell>
+              <Cell>{t.party_label ?? NOT_SHOWN}</Cell>
               <Cell>{formatDateTime(t.observed_first_at)}</Cell>
               <Cell>{formatDateTime(t.observed_last_at)}</Cell>
               <Cell>{formatServiceDate(t.valid_from)}</Cell>
@@ -80,7 +80,7 @@ export function IdentityDetailPage() {
         <Panel query={affiliations} caption="Party affiliations" head={['Party label', 'Basis', 'Observed from', 'Observed to', 'Valid from', 'Evidence']}>
           {(a) => (
             <TableRow key={a.id}>
-              <Cell>{a.party_label}</Cell>
+              <Cell>{a.party_label ?? NOT_SHOWN}</Cell>
               <Cell>{humanise(a.basis)}</Cell>
               <Cell>{formatDateTime(a.observed_first_at)}</Cell>
               <Cell>{formatDateTime(a.observed_last_at)}</Cell>
@@ -97,8 +97,8 @@ export function IdentityDetailPage() {
             <TableRow key={c.id}>
               <Cell><Link to="/elections/$slug" params={{ slug: c.election_slug }} className="doc-link">{c.election_slug}</Link><span className="block text-xs text-muted-foreground">{scopeLabel(c.view_scope)}</span></Cell>
               <Cell>{humanise(c.candidacy_type)}{c.list_rank ? ` · list position ${c.list_rank}` : ''}</Cell>
-              <Cell>{c.electorate_name ?? 'none (party list)'}</Cell>
-              <Cell>{c.party_label ?? 'not stated by source'}</Cell>
+              <Cell>{c.electorate_name ?? (c.candidacy_type === 'list' ? 'none (party list)' : NOT_SHOWN)}</Cell>
+              <Cell>{c.party_label ?? NOT_SHOWN}</Cell>
               <Cell><CandidacyStatusBadge status={c.current_status} /></Cell>
               <Cell>{formatVotes(c.votes, c.votes_status, c.candidacy_type)}</Cell>
               <Cell><EvidenceVersionLink versionId={c.evidence_version_id} /></Cell>

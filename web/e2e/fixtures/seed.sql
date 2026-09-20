@@ -20,7 +20,10 @@ begin;
 select evidence_private.sync_registry(jsonb_build_object(
   'rights', jsonb_build_array(jsonb_build_object(
     'rights_id', 'RIGHTS-99', 'publisher', 'Fixture Publisher (TEST FIXTURE)', 'source_url', 'https://fixture.example/',
-    'review_status', 'pending', 'default_release', 'link-only', 'register_hash', 'fixture-h1')),
+    'review_status', 'pending', 'default_release', 'link-only', 'register_hash', 'fixture-h1'),
+    -- A second fixture publisher that stays pending, so the link-only presentation can be tested.
+    jsonb_build_object('rights_id', 'RIGHTS-98', 'publisher', 'Fixture Pending Publisher (TEST FIXTURE)', 'source_url', 'https://fixture.example/',
+    'review_status', 'pending', 'default_release', 'link-only', 'register_hash', 'fixture-h2')),
   'sources', jsonb_build_array(
     jsonb_build_object('source_id', 'fixture_bills', 'title', 'TEST FIXTURE bills list', 'publisher', 'Fixture Publisher (TEST FIXTURE)',
       'official_url', 'https://fixture.example/bills', 'adapter_kind', 'live_fetch', 'adapter_name', 'fixture',
@@ -42,7 +45,11 @@ select evidence_private.sync_registry(jsonb_build_object(
       'official_url', 'https://fixture.example/nominations-2026', 'adapter_kind', 'live_fetch', 'adapter_name', 'fixture',
       'allowed_hosts', jsonb_build_array('fixture.example'), 'rights_id', 'RIGHTS-99', 'view_scope', 'primary_2026',
       'expected_cadence_seconds', 86400, 'snapshot_semantics', 'complete_snapshot', 'enabled', true,
-      'blocked_reason', 'TEST FIXTURE: endpoint answers with a challenge page', 'config_hash', 'fixture-c5'))));
+      'blocked_reason', 'TEST FIXTURE: endpoint answers with a challenge page', 'config_hash', 'fixture-c5'),
+    jsonb_build_object('source_id', 'fixture_pending_rights', 'title', 'TEST FIXTURE source with pending publisher rights', 'publisher', 'Fixture Pending Publisher (TEST FIXTURE)',
+      'official_url', 'https://fixture.example/pending', 'adapter_kind', 'live_fetch', 'adapter_name', 'fixture',
+      'allowed_hosts', jsonb_build_array('fixture.example'), 'rights_id', 'RIGHTS-98', 'view_scope', 'current_parliament',
+      'expected_cadence_seconds', 86400, 'snapshot_semantics', 'complete_snapshot', 'enabled', true, 'config_hash', 'fixture-c6'))));
 
 -- Bills: 65 records in one source (pagination), two versions of bill 001, bill 065 tombstoned,
 -- and one record refused by the payload guard (so the errors panel has a row).
@@ -70,7 +77,7 @@ begin
       'source_url', 'https://fixture.example/bills/' || lpad(g::text, 3, '0'),
       'retrieved_at', now() - interval '2 days',
       'projection_version', 1,
-      'omitted_fields', jsonb_build_array('explanatory_note', 'digest_text'),
+      'omitted_fields', jsonb_build_array(jsonb_build_object('field', 'explanatory_note', 'reason', 'TEST FIXTURE: copied text is never stored'), jsonb_build_object('field', 'digest_text', 'reason', 'TEST FIXTURE: copied text is never stored')),
       'safe_payload', jsonb_build_object(
         'title', 'TEST FIXTURE Bill ' || lpad(g::text, 3, '0'),
         'public_page_url', 'https://fixture.example/bills/' || lpad(g::text, 3, '0'),
@@ -104,7 +111,7 @@ begin
       'source_url', 'https://fixture.example/bills/' || lpad(g::text, 3, '0'),
       'retrieved_at', now(),
       'projection_version', 1,
-      'omitted_fields', jsonb_build_array('explanatory_note', 'digest_text'),
+      'omitted_fields', jsonb_build_array(jsonb_build_object('field', 'explanatory_note', 'reason', 'TEST FIXTURE: copied text is never stored'), jsonb_build_object('field', 'digest_text', 'reason', 'TEST FIXTURE: copied text is never stored')),
       'safe_payload', jsonb_build_object(
         'title', 'TEST FIXTURE Bill ' || lpad(g::text, 3, '0') || case when g = 1 then ' (amended)' else '' end,
         'public_page_url', 'https://fixture.example/bills/' || lpad(g::text, 3, '0'),
@@ -241,6 +248,50 @@ begin
   perform evidence_private.finish_run(v_run, v_holder, 'blocked', true, null, 'publisher_challenge', 'TEST FIXTURE: HTTP 403 interstitial');
 end
 $$;
+
+-- Pending-rights source: one member and one bill whose content must never reach an anonymous reader.
+do $$
+declare
+  v_holder uuid := 'f1f1f1f1-0000-4000-8000-000000000006';
+  v_run uuid;
+begin
+  if exists (select 1 from evidence_private.import_runs where source_id = 'fixture_pending_rights') then
+    raise notice 'fixture_pending_rights already seeded';
+    return;
+  end if;
+  perform evidence_private.acquire_lease('fixture_pending_rights', v_holder, 120);
+  v_run := (evidence_private.start_run('fixture_pending_rights', v_holder, 'fixture-v1', 'incremental', 'test', 'fixture-m1') ->> 'run_id')::uuid;
+  perform evidence_private.ingest_batch(v_run, v_holder, jsonb_build_array(
+    jsonb_build_object('external_record_id', 'fixture-pending-member', 'record_kind', 'mp_directory_entry',
+      'content_hash', 'sha256:' || encode(sha256('fixture-pending-member'::bytea), 'hex'),
+      'source_url', 'https://fixture.example/pending/member', 'retrieved_at', now(),
+      'safe_payload', jsonb_build_object('name_display', 'WITHHELD Fixture Pending Member', 'party_label', 'WITHHELD Fixture Pending Party',
+        'representation', 'list')),
+    jsonb_build_object('external_record_id', 'fixture-pending-bill', 'record_kind', 'bill',
+      'content_hash', 'sha256:' || encode(sha256('fixture-pending-bill'::bytea), 'hex'),
+      'source_url', 'https://fixture.example/pending/bill', 'retrieved_at', now(),
+      'safe_payload', jsonb_build_object('title', 'WITHHELD TEST FIXTURE pending bill', 'bill_number', 'W-1',
+        'public_page_url', 'https://fixture.example/pending/bill'))));
+  perform evidence_private.project_run(v_run, v_holder);
+  perform evidence_private.finish_run(v_run, v_holder, 'succeeded', true, null, null, null);
+end
+$$;
+
+-- The main fixture publisher stands in for a publisher whose review is APPROVED with release mode
+-- approved-fields and who has cleared every content field, so the content pages can be tested. This is a
+-- fixture decision on the local disposable database only; no real publisher has approved anything.
+-- (The worker role cannot do this: only an administrator can record a rights row that is not pending.)
+update evidence_private.source_rights
+   set review_status = 'approved', default_release = 'approved-fields', reviewed_on = date '2026-09-20',
+       approved_fields = (
+         select array_agg(distinct f order by f) from (
+           select field_token as f from evidence_private.public_columns where release_class = 'content'
+           union
+           select k from evidence_private.source_record_versions v
+             join evidence_private.source_records r on r.id = v.record_id, lateral jsonb_object_keys(v.safe_payload) k
+            where r.source_id like 'fixture\_%' escape '\') x
+         where f ~ '^[a-z][a-z0-9_]*$')
+ where rights_id = 'RIGHTS-99';
 
 -- One inactive schedule, so the schedules panel has a row. Never activated.
 insert into evidence_private.ingest_schedules (schedule_key, source_id, cron_expr, function_slug, max_runtime_seconds, max_records, config_hash)

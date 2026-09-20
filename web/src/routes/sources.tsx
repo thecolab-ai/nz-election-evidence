@@ -32,11 +32,16 @@ const columns = helper.columns([
   helper.accessor('last_success_at', { header: 'Last retrieved', cell: ({ getValue }) => formatDateTime(getValue(), 'never retrieved') }),
   helper.accessor('latest_source_published_at', { header: 'Latest publisher date', cell: ({ getValue }) => formatDateTime(getValue(), NOT_STATED) }),
   helper.accessor('live_records', { header: 'Live records', cell: ({ getValue }) => <span className="num">{formatCount(getValue())}</span> }),
-  helper.accessor('rights_review_status', { header: 'Rights', cell: ({ getValue }) => <RightsBadge status={getValue()} /> }),
+  helper.accessor('rights_review_status', { header: 'Rights', cell: ({ row }) => <><RightsBadge status={row.original.rights_review_status} /><span className="mt-1 block text-xs text-muted-foreground" data-testid="release-tier">{RELEASE_TIER_LABELS[row.original.public_release_tier] ?? row.original.public_release_tier}</span></> }),
   helper.accessor('enabled', { header: 'Enabled', cell: ({ getValue }) => (getValue() ? <Pill>Enabled</Pill> : <Pill tone="muted">Not enabled</Pill>) }),
 ])
 
-const SELECT = 'source_id,title,publisher,view_scope,freshness_status,last_success_at,latest_source_published_at,live_records,rights_review_status,enabled'
+export const RELEASE_TIER_LABELS: Record<string, string> = {
+  link_only: 'Links and metadata only',
+  fields: 'Approved fields shown',
+}
+
+const SELECT = 'source_id,title,publisher,view_scope,freshness_status,last_success_at,latest_source_published_at,live_records,rights_review_status,public_release_tier,enabled'
 
 export function SourcesPage() {
   const search = route.useSearch()

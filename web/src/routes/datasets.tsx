@@ -24,8 +24,16 @@ export const LAYER_LABELS: Record<string, string> = {
   evidence_public: 'Curated view',
 }
 
+export const DISPOSITION_LABELS: Record<string, string> = {
+  public: 'Public',
+  link_metadata: 'Link metadata — shown',
+  rights_gated_content: 'Content — needs publisher approval',
+  withheld: 'Withheld — reason given',
+}
+
 export function DispositionBadge({ disposition }: { disposition: string }) {
-  return disposition === 'withheld' ? <Badge variant="outline">Withheld — reason given</Badge> : <Badge variant="secondary">Public</Badge>
+  const label = DISPOSITION_LABELS[disposition] ?? disposition
+  return disposition === 'public' || disposition === 'link_metadata' ? <Badge variant="secondary">{label}</Badge> : <Badge variant="outline">{label}</Badge>
 }
 
 const helper = createColumnHelper<CoreFeatures, DatasetCatalogueRow>()
@@ -40,7 +48,7 @@ const columns = helper.columns([
   }),
   helper.accessor('exposed_schema', { header: 'Layer', cell: ({ getValue }) => LAYER_LABELS[getValue()] ?? getValue() }),
   helper.accessor('disposition', { header: 'Disposition', cell: ({ getValue }) => <DispositionBadge disposition={getValue()} /> }),
-  helper.accessor('columns_total', { header: 'Columns', cell: ({ row }) => <span className="num">{row.original.columns_total}{row.original.columns_withheld > 0 ? ` (${row.original.columns_withheld} withheld)` : ''}</span> }),
+  helper.accessor('columns_total', { header: 'Columns', cell: ({ row }) => <span className="num">{row.original.columns_total}{row.original.columns_withheld > 0 ? ` (${row.original.columns_withheld} withheld)` : ''}{row.original.columns_rights_gated > 0 ? ` (${row.original.columns_rights_gated} rights-gated)` : ''}</span> }),
   helper.accessor('approximate_rows', { header: 'Rows (estimate)', cell: ({ getValue }) => { const v = getValue(); return <span className="num">{v === null ? 'not estimated' : formatCount(v)}</span> } }),
   helper.accessor('description', { header: 'Description', cell: ({ row }) => row.original.withheld_reason ?? row.original.row_rule_reason ?? row.original.description ?? 'no description recorded' }),
 ])
@@ -65,8 +73,10 @@ export function DatasetsPage() {
     <>
       <PageHeader eyebrow="Stewardship" title="Datasets and schema">
         <p>
-          Every table in the evidence store is listed here, with every column. A column is public unless it is marked withheld, and a
-          withheld column always carries its reason. Nothing is left out without saying so.
+          Every table in the evidence store is listed here, with every column and what happens to it. The rule is default deny: a
+          dataset is shown only if every row can be traced to one source, and then only for sources whose publisher rights allow it.
+          Link metadata is shown; content is blank unless that source's publisher has approved the field; withheld columns carry
+          their reason.
         </p>
       </PageHeader>
       <div className="mb-4 space-y-2">
@@ -123,7 +133,7 @@ export function DatasetDetailPage() {
 
   // The name has just been confirmed against the published catalogue, so it is a real dataset of that layer.
   const dataset: DatasetRef = schema === 'evidence_open' ? { open: name as OpenTableName } : (name as PublicViewName)
-  const publicColumns = cols.data.filter((c) => c.disposition === 'public')
+  const publicColumns = cols.data.filter((c) => c.disposition !== 'withheld')
   const released = (status.data ?? []).length > 0 && (status.data ?? []).every((g) => g.public_rows_released === true)
 
   return (
@@ -133,6 +143,7 @@ export function DatasetDetailPage() {
       </PageHeader>
       <div className="mb-6 space-y-2">
         {entry.disposition === 'withheld' ? <Note tone="caution" testId="dataset-withheld">This whole dataset is withheld. Reason: {entry.withheld_reason}</Note> : null}
+        {entry.lineage_note ? <Note testId="dataset-lineage">Source lineage: {entry.lineage_note}</Note> : null}
         {entry.row_rule_reason ? <Note testId="dataset-row-rule">Some rows are withheld. Reason: {entry.row_rule_reason}</Note> : null}
       </div>
       <Section title="Columns" description="Every column of the underlying table or view, whether or not it is public.">
@@ -151,7 +162,7 @@ export function DatasetDetailPage() {
                   <td className="px-3 py-2 font-mono text-[13px]">{c.data_type}</td>
                   <td className="px-3 py-2">{c.nullable ? 'yes' : 'no'}</td>
                   <td className="px-3 py-2"><DispositionBadge disposition={c.disposition} /></td>
-                  <td className="px-3 py-2">{c.withheld_reason ?? c.description ?? ''}</td>
+                  <td className="px-3 py-2">{c.withheld_reason ?? c.description ?? ''}{c.field_token ? <span className="block font-mono text-xs text-muted-foreground">field token: {c.field_token}</span> : null}</td>
                 </tr>
               ))}
             </tbody>

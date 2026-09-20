@@ -4,7 +4,7 @@ import { TombstoneBadge } from '@/components/badges'
 import { DataTable, type CoreFeatures } from '@/components/data-table'
 import { FilterBar, SelectFilter, TextFilter } from '@/components/filters'
 import { Mono, PageHeader } from '@/components/page'
-import { formatCount, formatDateTime, formatPublisherDate, humanise, SCOPE_LABELS, SCOPE_ORDER, scopeLabel } from '@/lib/format'
+import { formatCount, formatDateTime, formatPublisherDate, humanise, SCOPE_LABELS, SCOPE_ORDER, scopeLabel, NOT_SHOWN } from '@/lib/format'
 import { useListQuery } from '@/lib/queries'
 import { ilikeContains } from '@/lib/search'
 import { RECORD_KINDS_HINT, recordsSpec } from '@/lib/specs'
@@ -20,7 +20,7 @@ const columns = helper.columns([
     cell: ({ row }) => (
       <div className="space-y-0.5">
         <Link to="/records/$recordId" params={{ recordId: row.original.id }} className="doc-link font-medium">
-          {row.original.label ?? 'No label field in stored payload'}
+          {row.original.label ?? NOT_SHOWN}
         </Link>
         <p className="font-mono text-xs break-all text-muted-foreground">{row.original.external_record_id}</p>
         {row.original.tombstoned_at ? <TombstoneBadge reason={row.original.tombstone_reason} /> : null}

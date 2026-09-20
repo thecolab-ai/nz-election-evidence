@@ -6,7 +6,7 @@ import { FilterBar, SelectFilter, TextFilter } from '@/components/filters'
 import { ExternalLink, PageHeader, Section } from '@/components/page'
 import { EmptyBlock, ErrorBlock, LoadingBlock } from '@/components/states'
 import { SummaryCard } from '@/components/summary-card'
-import { formatDate, formatDateTime, humanise, NOT_STATED, SCOPE_LABELS, SCOPE_ORDER, scopeLabel } from '@/lib/format'
+import { formatDate, formatDateTime, humanise, NOT_STATED, SCOPE_LABELS, SCOPE_ORDER, scopeLabel, NOT_SHOWN } from '@/lib/format'
 import { useListQuery, useRowsQuery } from '@/lib/queries'
 import { ilikeContains } from '@/lib/search'
 import { DOCUMENT_TYPES, documentsSpec } from '@/lib/specs'
@@ -20,7 +20,7 @@ const columns = helper.columns([
     header: 'Document',
     cell: ({ row }) => (
       <div className="space-y-0.5">
-        <Link to="/records/$recordId" params={{ recordId: row.original.source_record_id }} className="doc-link font-medium">{row.original.title ?? 'Untitled at source'}</Link>
+        <Link to="/records/$recordId" params={{ recordId: row.original.source_record_id }} className="doc-link font-medium">{row.original.title ?? NOT_SHOWN}</Link>
         {row.original.bill_number ? <p className="text-xs text-muted-foreground">Bill {row.original.bill_number}{row.original.current_stage ? ` · ${row.original.current_stage}` : ''}{row.original.select_committee ? ` · ${row.original.select_committee}` : ''}</p> : null}
         {row.original.member_name_at_source ? <p className="text-xs text-muted-foreground">Member in charge at source: {row.original.member_name_at_source}{row.original.party_label_at_source ? ` (${row.original.party_label_at_source})` : ''}</p> : null}
         {row.original.tombstoned_at ? <TombstoneBadge /> : null}

@@ -8,7 +8,7 @@ import { FilterBar, TextFilter } from '@/components/filters'
 import { JsonViewer } from '@/components/json-viewer'
 import { Mono, Note, PageHeader, Section } from '@/components/page'
 import { Button } from '@/components/ui/button'
-import { formatCount, formatDateTime, formatPlainDate, formatStatValue, humanise } from '@/lib/format'
+import { formatCount, formatDateTime, formatPlainDate, formatStatValue, humanise, NOT_SHOWN } from '@/lib/format'
 import { useListQuery, useRowsQuery } from '@/lib/queries'
 import { ilikeContains, isUuid } from '@/lib/search'
 import { statObservationsSpec, statSeriesSpec } from '@/lib/specs'
@@ -41,7 +41,7 @@ export function StatisticsPage() {
 
   const seriesColumns = useMemo(() => seriesHelper.columns([
     seriesHelper.accessor('dataset_title', { header: 'Dataset' }),
-    seriesHelper.accessor('title', { header: 'Series', cell: ({ row }) => <>{row.original.title ?? 'Untitled at source'}<span className="block font-mono text-xs text-muted-foreground">{row.original.series_key}</span></> }),
+    seriesHelper.accessor('title', { header: 'Series', cell: ({ row }) => <>{row.original.title ?? NOT_SHOWN}<span className="block font-mono text-xs text-muted-foreground">{row.original.series_key}</span></> }),
     seriesHelper.accessor('unit', { header: 'Unit', cell: ({ row }) => [row.original.unit, row.original.magnitude].filter(Boolean).join(' · ') || 'not stated by source' }),
     seriesHelper.accessor('observations', { header: 'Observations', cell: ({ getValue }) => <span className="num">{formatCount(getValue())}</span> }),
     seriesHelper.display({

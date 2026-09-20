@@ -4,7 +4,7 @@ import { Pill, TombstoneBadge } from '@/components/badges'
 import { JsonViewer } from '@/components/json-viewer'
 import { ExternalLink, KeyValueList, Mono, PageHeader, Section } from '@/components/page'
 import { EmptyBlock, ErrorBlock, LoadingBlock } from '@/components/states'
-import { formatCount, formatDateTime, formatPublisherDate, humanise, scopeLabel } from '@/lib/format'
+import { formatCount, formatDateTime, formatPublisherDate, humanise, scopeLabel, NOT_SHOWN } from '@/lib/format'
 import { EDGES_PER_EXPANSION, type EdgeRow } from '@/lib/graph'
 import { useOneQuery, useRowsQuery } from '@/lib/queries'
 import type { GraphNodeKind } from '@/lib/search'
@@ -13,8 +13,16 @@ import { Cell, Panel } from './source-detail'
 
 const route = getRouteApi('/_released/records/$recordId')
 
+/** Stored as `{ field, reason }`; the value of an omitted field is never stored, so only its name and reason exist. */
 function omittedList(value: unknown): string[] {
-  return Array.isArray(value) ? value.map((item) => (typeof item === 'string' ? item : JSON.stringify(item))) : []
+  if (!Array.isArray(value)) return []
+  return value.map((item) => {
+    if (typeof item === 'object' && item !== null && 'field' in item) {
+      const entry = item as { field?: unknown; reason?: unknown }
+      return typeof entry.reason === 'string' ? `${String(entry.field)} — ${entry.reason}` : String(entry.field)
+    }
+    return String(item)
+  })
 }
 
 function VersionCard({ version, index, total }: { version: RecordVersionRow; index: number; total: number }) {
@@ -53,7 +61,11 @@ function VersionCard({ version, index, total }: { version: RecordVersionRow; ind
             </ul>
           )}
         </div>
-        <JsonViewer value={version.safe_payload} />
+        {version.safe_payload === null ? (
+          <p className="text-sm text-muted-foreground" data-testid="payload-withheld">Stored fields are not shown: this source's publisher has not approved any field for release. The link above goes to the publisher's own page.</p>
+        ) : (
+          <JsonViewer value={version.safe_payload} />
+        )}
       </div>
     </li>
   )
@@ -71,7 +83,8 @@ export function RecordDetailPage() {
     key: ['record', currentVersionId],
     limit: EDGES_PER_EXPANSION,
     enabled: !!currentVersionId,
-    build: (q) => q.or(`from_id.eq."${currentVersionId}",to_id.eq."${currentVersionId}",evidence_version_id.eq.${currentVersionId}`),
+    // Edge endpoints and labels are content: for a link-only source they are blank, and a blank edge says nothing.
+    build: (q) => q.or(`from_id.eq."${currentVersionId}",to_id.eq."${currentVersionId}",evidence_version_id.eq.${currentVersionId}`).not('from_id', 'is', null).not('to_id', 'is', null),
   })
 
   if (record.isPending) return <LoadingBlock label="Loading record" />
@@ -91,8 +104,8 @@ export function RecordDetailPage() {
       <p className="mb-3 text-sm">
         <Link to="/records" className="doc-link">← All records</Link>
       </p>
-      <PageHeader eyebrow={`Record · ${humanise(r.record_kind)} · ${scopeLabel(r.view_scope)}`} title={r.label ?? 'No label field in stored payload'}>
-        <p><Mono>{r.external_record_id}</Mono></p>
+      <PageHeader eyebrow={`Record · ${humanise(r.record_kind)} · ${scopeLabel(r.view_scope)}`} title={r.label ?? 'Record (label not shown)'}>
+        <p>{r.external_record_id ? <Mono>{r.external_record_id}</Mono> : NOT_SHOWN}</p>
         {r.tombstoned_at ? (
           <div className="flex flex-wrap items-center gap-2 pt-1">
             <TombstoneBadge reason={r.tombstone_reason} />
@@ -134,7 +147,6 @@ export function RecordDetailPage() {
             <TableRow key={String(event.id)} data-testid="lifecycle-event">
               <Cell>{formatDateTime(event.occurred_at)}</Cell>
               <Cell>{humanise(event.event)}</Cell>
-              <Cell>{event.reason ? humanise(event.reason) : '—'}</Cell>
             </TableRow>
           )}
         </Panel>
