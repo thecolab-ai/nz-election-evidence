@@ -114,7 +114,9 @@ export const billsAdapter: Adapter = {
       yield {
         records,
         cursor: { next_page: page + 1, total },
-        done: lastPage || budgetSpent,
+        // done means the publisher's list is exhausted. Stopping early for budget leaves done=false,
+        // so the runner records a partial run and the next one resumes from this cursor.
+        done: lastPage,
         // Complete only when this run itself walked every page from the first.
         completeSnapshot: lastPage && !resumed,
         watermark: `total=${total}`,

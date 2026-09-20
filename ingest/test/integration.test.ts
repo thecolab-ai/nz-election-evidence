@@ -84,6 +84,29 @@ test("runner against a real database", { skip: !url ? "EVIDENCE_TEST_DB_URL not 
     assert.deepEqual([replay.totals.seen, replay.totals.versions_inserted, replay.totals.unchanged], [120, 0, 120]);
   });
 
+  await t.test("record budget: partial runs resume page by page under the same manifest, then finish", async () => {
+    // A schedule always uses the same bound, so the manifest (which includes it) matches and resume applies.
+    const small = { ...base, holder, maxRecords: 50 };
+    const a = publisher({ total: 130 });
+    const first = await runSource({ ...small, fetchImpl: a.impl });
+    assert.deepEqual([first.status, first.error_class, first.complete_snapshot, first.tombstoned], ["partial", "budget_exhausted", false, 0]);
+    const b = publisher({ total: 130 });
+    const second = await runSource({ ...small, fetchImpl: b.impl });
+    assert.equal(second.resumed_from_run_id, first.run_id);
+    assert.deepEqual(b.requests, [2], "resumed at page two");
+    assert.equal(second.status, "partial");
+    const c = publisher({ total: 130 });
+    const third = await runSource({ ...small, fetchImpl: c.impl });
+    assert.equal(third.resumed_from_run_id, second.run_id);
+    assert.deepEqual(c.requests, [3]);
+    assert.equal(third.status, "succeeded");
+    assert.equal(third.totals.versions_inserted, 10, "only the ten records added upstream are new");
+    assert.deepEqual([third.complete_snapshot, third.tombstoned], [false, 0], "a run assembled from resumes never marks anything absent");
+    // Bring the fixture publisher back to 120 for the cases below; the ten extras are then absent.
+    const back = await runSource({ ...base, holder, fetchImpl: publisher().impl });
+    assert.deepEqual([back.complete_snapshot, back.tombstoned], [true, 10]);
+  });
+
   await t.test("overlap prevention: a second worker is refused while a lease is live", async () => {
     assert.equal(await db.acquireLease(source.source_id, holder, 60), true);
     const other = await runSource({ ...base, holder: crypto.randomUUID(), fetchImpl: publisher().impl });

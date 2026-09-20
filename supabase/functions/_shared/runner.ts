@@ -142,7 +142,8 @@ export async function runSource(options: RunOptions): Promise<RunReport> {
       return report;
     }
 
-    const truncated = !lastPage?.done || (report.totals.seen >= options.maxRecords && !lastPage?.completeSnapshot && options.source.snapshot_semantics === "complete_snapshot");
+    // Anything short of the adapter reporting the end of the publisher's list is a partial run.
+    const truncated = !lastPage?.done;
     const complete = Boolean(lastPage?.completeSnapshot) && !report.resumed_from_run_id && report.totals.rejected === 0;
     report.projection = await db!.projectRun(report.run_id!, holder);
     const status = truncated ? "partial" : "succeeded";
