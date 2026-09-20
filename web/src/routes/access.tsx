@@ -73,7 +73,7 @@ export function ReleasePending({ gates }: { gates: SurfaceStatusRow[] }) {
 export function useSurfaceStatus() {
   return useRowsQuery<SurfaceStatusRow>({
     view: 'surface_status',
-    select: 'gate_key,state,evidence_reference,decided_at,public_rows_released',
+    select: 'gate_key,state,evidence_reference,decided_at,public_rows_released,release_basis,owner_authorization_id,owner_decided_on,owner_expires_on,owner_fields_in_force',
     key: ['surface-status'],
     limit: 10,
     enabled: appConfig !== null,

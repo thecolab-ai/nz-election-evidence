@@ -1,11 +1,13 @@
 import { render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 import { renderCell } from '@/routes/datasets'
+import { coverageCounts, RELEASE_COVERAGE } from '@/lib/release-coverage'
 import { AccountabilityFooter } from './footer'
+import { OwnerOverrideNotice, ownerBasis } from './owner-override-notice'
 import { PREVIEW_BANNER, PreviewBanner } from './shell'
 import { EmptyBlock, ErrorBlock } from './states'
 import { SummaryCard } from './summary-card'
-import type { SummaryRow } from '@/lib/types'
+import type { SummaryRow, SurfaceStatusRow } from '@/lib/types'
 
 describe('compliance text on every page', () => {
   it('footer names the project, the maintainer, independence, pending review, and links the three policy documents (R8)', () => {
@@ -17,7 +19,8 @@ describe('compliance text on every page', () => {
     // R8 is a human gate: until someone accepts the role the footer must say so, and must not present the maintainer as that person.
     expect(screen.getByTestId('accountable-person').textContent).toContain('Accountable person: not yet confirmed')
     expect(screen.getByTestId('accountable-person').textContent).not.toContain('Adam Holt')
-    expect(footer.textContent).toContain('stays withheld until a named person has accepted it')
+    expect(footer.textContent).toContain('repository owner’s own recorded decision')
+    expect(footer.textContent).toContain('is not a substitute for either')
     const hrefs = Array.from(footer.querySelectorAll('a')).map((a) => a.getAttribute('href'))
     expect(hrefs).toContain('https://github.com/thecolab-ai/nz-election-evidence/issues')
     for (const file of ['RED-LINES.md', 'CORRECTIONS.md', 'REVIEW-REGISTER.md']) expect(hrefs).toContain(`https://github.com/thecolab-ai/nz-election-evidence/blob/main/${file}`)
@@ -78,5 +81,60 @@ describe('model output card (R9)', () => {
     expect(screen.queryByTestId('not-human-reviewed')).toBeNull()
     expect(screen.getByTestId('summary-agreement').textContent).toContain('85.0% agreement with human reviewers on a sample of 40')
     expect(screen.getByRole('link', { name: /method/ }).getAttribute('href')).toBe('https://fixture.example/method')
+  })
+})
+
+describe('owner override: stated as what it is, never as a review or a publisher approval', () => {
+  const gate = (patch: Partial<SurfaceStatusRow>): SurfaceStatusRow => ({
+    gate_key: 'r10_public_surface_review', state: 'closed', evidence_reference: null, decided_at: null, public_rows_released: true,
+    release_basis: 'owner_override', owner_authorization_id: 'OWNER-AUTH-2026-09-20-01', owner_decided_on: '2026-09-20', owner_expires_on: '2026-11-06',
+    owner_fields_in_force: true, ...patch,
+  })
+  const both = (patch: Partial<SurfaceStatusRow>) => [gate(patch), gate({ ...patch, gate_key: 'r8_accountable_legal_entity' })]
+  it('names the decision, its dates, the reviews still outstanding (read from the gates) and the absence of any publisher approval', () => {
+    render(<OwnerOverrideNotice status={both({})} />)
+    const text = screen.getByTestId('owner-override-notice').textContent ?? ''
+    for (const phrase of ['repository owner’s decision', 'ahead of independent review', '(R10)', '(R8)', 'Not yet on record', 'Those release gates read closed', 'does not open or replace them', 'No publisher has approved or licensed the fields shown', 'OWNER-AUTH-2026-09-20-01', 'in force until']) {
+      expect(text).toContain(phrase)
+    }
+    expect(text).not.toMatch(/\b(legally reviewed|review complete|approved by (the )?(publisher|reviewer)|licensed by)\b/i)
+    const hrefs = Array.from(screen.getByTestId('owner-override-notice').querySelectorAll('a')).map((a) => a.getAttribute('href'))
+    expect(hrefs).toContain('https://github.com/thecolab-ai/nz-election-evidence/blob/main/governance/owner-authorizations.json')
+    expect(hrefs).toContain('https://github.com/thecolab-ai/nz-election-evidence/blob/main/REVIEW-REGISTER.md')
+  })
+  it('says only what the gates say: one review on record leaves only the other named as outstanding', () => {
+    render(<OwnerOverrideNotice status={[gate({ state: 'open' }), gate({ gate_key: 'r8_accountable_legal_entity' })]} />)
+    const gates = screen.getByTestId('owner-notice-gates').textContent ?? ''
+    expect(gates).toContain('(R8)')
+    expect(gates).not.toContain('(R10)')
+    expect(gates).toContain('That release gate reads closed')
+  })
+  it('stays up after the reviews are recorded while fields are still shown on the owner decision, without claiming gates are closed', () => {
+    const recorded = both({ state: 'open', release_basis: 'reviews_recorded', owner_fields_in_force: true })
+    expect(ownerBasis(recorded)?.rowsOnOwnerDecision).toBe(false)
+    render(<OwnerOverrideNotice status={recorded} />)
+    const text = screen.getByTestId('owner-override-notice').textContent ?? ''
+    expect(text).toContain('Names and titles are shown on the repository owner’s decision')
+    expect(text).toContain('No publisher has approved or licensed the fields shown')
+    expect(text).not.toContain('closed')
+    expect(screen.queryByTestId('owner-notice-gates')).toBeNull()
+  })
+  it('is absent when nothing rests on an owner decision, and before the database has answered', () => {
+    expect(ownerBasis(undefined)).toBeNull()
+    expect(ownerBasis([])).toBeNull()
+    expect(ownerBasis(both({ release_basis: 'none', public_rows_released: false, owner_fields_in_force: false }))).toBeNull()
+    expect(ownerBasis(both({ release_basis: 'reviews_recorded', state: 'open', owner_fields_in_force: false }))).toBeNull()
+    // A claimed basis without released rows is not an override in force.
+    expect(ownerBasis(both({ public_rows_released: false }))).toBeNull()
+    const { container } = render(<OwnerOverrideNotice status={both({ release_basis: 'none', public_rows_released: false, owner_fields_in_force: false })} />)
+    expect(container.textContent).toBe('')
+  })
+})
+
+describe('release coverage is stated with what is missing', () => {
+  it('counts 3 live adapters, 1 historical export and 20 products not in the store, out of 24', () => {
+    expect(coverageCounts()).toEqual({ total: 24, live: 3, export: 1, none: 20 })
+    expect(RELEASE_COVERAGE.filter((row) => row.route !== 'none').map((row) => row.product_id)).toEqual(['P01', 'P03', 'P04', 'P10'])
+    expect(RELEASE_COVERAGE.find((row) => row.product_id === 'P04')?.note).toContain('963')
   })
 })

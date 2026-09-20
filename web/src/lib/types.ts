@@ -42,6 +42,8 @@ export interface SourceRow {
   tombstoned_records: Numeric
   content_versions: Numeric
   catalogue_product_ids: string[]
+  /** Field names shown for this source on a current OWNER decision, not on a publisher's approval. */
+  owner_authorized_fields: string[]
 }
 
 export interface RightsRow {
@@ -391,6 +393,13 @@ export interface SurfaceStatusRow {
   evidence_reference: string | null
   decided_at: string | null
   public_rows_released: boolean | null
+  /** reviews_recorded | owner_override | none. An owner decision is never reported as a recorded review. */
+  release_basis: string | null
+  owner_authorization_id: string | null
+  owner_decided_on: string | null
+  owner_expires_on: string | null
+  /** True while any field is shown on an owner decision, whatever releases the rows. */
+  owner_fields_in_force: boolean | null
 }
 
 export interface DatasetCatalogueRow {

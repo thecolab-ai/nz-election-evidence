@@ -5,6 +5,10 @@
 begin;
 select plan(53);
 
+-- Isolation: these assertions are about the recorded reviews and rights alone, so any owner decision already in this
+-- (disposable) database is set aside for the length of this transaction. Rolled back with everything else.
+update evidence_private.owner_authorizations set revoked_at = now(), revoked_reason = 'pgTAP isolation; rolled back' where revoked_at is null;
+
 create function pg_temp.seed(p_source text, p_prefix text) returns void language plpgsql as $$
 declare
   v_holder uuid := '77777777-7777-7777-7777-777777777777';
@@ -209,7 +213,7 @@ select 'person', i.id, '99999999-0000-0000-0000-0000000000aa', 'approved', 'manu
 from evidence_private.person_source_identities i where i.source_id = 'pgtap_fields' limit 1;
 update evidence_private.person_source_identities set person_id = '99999999-0000-0000-0000-0000000000aa', link_status = 'approved'
  where id = (select person_identity_id from evidence_private.identity_decisions where target_person_id = '99999999-0000-0000-0000-0000000000aa');
-select is((select count(*)::int from evidence_views.graph_edges where to_kind = 'person'), 1, 'privately, the reviewed identity link is an edge');
+select is((select count(*)::int from evidence_views.graph_edges where to_kind = 'person' and to_id = '99999999-0000-0000-0000-0000000000aa'), 1, 'privately, the reviewed identity link is an edge');
 set local role anon;
 select is((select count(*)::int from evidence_public.graph_edges where to_kind in ('person', 'party') or from_kind in ('person', 'party')), 0,
   'no edge to a canonical person or party is public');

@@ -4,13 +4,15 @@ Everything operational is a versioned file in this repository: migrations in `su
 
 **Hosted-project steps below have NOT been run.** They await coordinator release review.
 
+**Connected release on the owner's authorization (2026-09-20):** the exact hosted sequence for the first release, and what that authorization is and is not, are in [connected-release.md](connected-release.md). It does not replace the reviews in section 3; it is the owner's decision to proceed ahead of them, recorded as a departure from R8 and R10.
+
 ## 1. Local development (disposable stack)
 
 Needs Docker, the Supabase CLI (2.113.0 tested) and Node 24. Ports are non-default (API 55321, database 55322).
 
 ```bash
 supabase start -x studio,imgproxy,storage-api,realtime,logflare,vector,supavisor,postgres-meta,mailpit,edge-runtime
-supabase test db                      # pgTAP (10 files)
+supabase test db                      # pgTAP (11 files)
 cd ingest && npm ci
 npm run typecheck && npm test         # ingestion + release tooling unit tests (TypeScript, no network)
 npm run check:deno                    # Edge Function type-check
@@ -65,8 +67,9 @@ Pre-conditions: coordinator release review complete; `REVIEW-REGISTER.md` rows f
 9a. **Publisher access, per source, before any activation:** run `node src/access_check.ts --record` so the robots.txt and terms-page retrievals are on record, and make sure the rights register row names the publisher's terms URL where one can be verified. Collection is limited to read-only pages and endpoints served to the anonymous public (owner collection policy, 2026-09-20): a source behind a sign-in or a paywall can never be enabled. robots.txt, an undocumented public endpoint, a missing terms URL and a missing terms review are **advisories**: they do not stop activation, they are shown to you first and stored with it. A person who has read the terms may record the conclusion in `evidence_private.publisher_terms_reviews` (administrator only; nothing in this repository writes that row). A recorded `not_permitted` **does** stop the source everywhere (RED-LINES R6). A recorded retrieval is provenance, not approval, and none of this is a right to publish.
 10. **Activate one schedule at a time:** `scripts/db/activate_schedule.sql` with that `run_id`. It first prints the source's blocker (if any) and every access advisory: read them, because activating is your decision and the advisories are copied into the activation proof under your name. The database refuses without a successful readback run from the last 24 hours, without Vault secrets, without a named activator, for a source that is not a public unauthenticated endpoint, and where a terms review says `not_permitted`. The blocker test runs again at **every dispatch** (`skipped_access_not_permitted`). An active schedule's configuration is frozen: deactivate before changing it. Check the readback table: desired state and the real `cron.job` row must agree. Watch the first scheduled run in the explorer (Operations) before activating the next.
 11. **Inspectors:** invite the user in Supabase Auth, then `scripts/db/grant_inspector.sql` with a reason.
-12. **Open the public gates (only after R8 and R10 are recorded):** `scripts/db/set_release_gate.sql` once per gate, with the evidence reference and the deciding person. Readback must show `public_rows_released = t`. `-v close=1` withholds everything again at once.
-13. **Explorer:** set repository variables `EXPLORER_SUPABASE_URL` and `EXPLORER_SUPABASE_ANON_KEY` (public anon key only). Deployment additionally needs an approved `REVIEW-REGISTER.md` row and `PAGES_DEPLOY_ENABLED=true`.
+12. **Open the public gates (only after R8 and R10 are recorded):** `scripts/db/set_release_gate.sql` once per gate, with the evidence reference and the deciding person. Readback must show `public_rows_released = t`. `-v close=1` withholds everything again at once. **Never open a gate on the strength of an owner decision:** a gate records a review. The owner's decision has its own record and its own script, below.
+12a. **Owner authorization (a different thing from step 12):** `node tools/owner_authorization.ts`, then as administrator `psql -v ON_ERROR_STOP=1 -f scripts/db/sync_owner_authorizations.sql` from the repository root. It mirrors `governance/owner-authorizations.json`; it opens no gate and approves no rights row, and its readback shows that (`release_basis = owner_override`, gates `closed`, `rights_rows_not_pending = 0`). To withdraw, mark the entry `revoked` in the file and run it again.
+13. **Explorer:** set repository variables `EXPLORER_SUPABASE_URL` and `EXPLORER_SUPABASE_ANON_KEY` (public anon or publishable key only; the build refuses any other role and `check:bundle -- --require-connected` fails the release on anything privileged, on a key from another project, or on an unconnected build). Deployment additionally needs `PAGES_DEPLOY_ENABLED=true` and either an approved `REVIEW-REGISTER.md` row or, while that row is PENDING, a current owner decision with the `pages_deploy` scope (logged as an owner override, never as a review).
 
 ## 4. Operating
 
@@ -78,6 +81,7 @@ Pre-conditions: coordinator release review complete; `REVIEW-REGISTER.md` rows f
 - **Pause everything** (election-day freeze, incident): `activate_schedule.sql -v deactivate=1` for each schedule; confirm `cron.job` holds no `evidence_private` command.
 - **Record a publisher's approval:** update `catalogue/rights-register.json` (owner-reviewed) and sync it **as administrator** with the row's `approved_fields`; the worker role can only ever write pending rows. Content stays blank until then. To withdraw, set the row to `restricted` or `refused`: everything descended from that source disappears from every projection at once.
 - **After a schema change:** record lineage in `public_lineage` (or withhold the object), run `select evidence_private.classify_public_columns()`, review the classes, run `select evidence_private.rebuild_exposed_views()`, then `npm run types:generate`. pgTAP fails on any drift.
+- **Withdraw the owner's authorization:** set `"status": "revoked"`, `revoked_on` and `revoked_reason` on the entry in `governance/owner-authorizations.json`, commit, run `scripts/db/sync_owner_authorizations.sql`. Rows and fields shown on it are withheld at once. It also lapses by itself on `expires_on`; to continue, record a new entry with a new id (an entry is never edited).
 - **Revoke an inspector:** `grant_inspector.sql -v revoke=1`.
 - **Correction:** log it in `CORRECTIONS.md` within the hour, then add a `corrections` row that points at the entry. Never edit history.
 - **Erasure / takedown:** withdraw any published copy first, then `select evidence_private.redact_version('<version id>', '<reason with reference>', '<requester>')` as administrator. The row and lineage remain; the projection is blanked and the action logged.

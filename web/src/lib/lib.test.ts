@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest'
-import { bundleProblems, cspTransportProblems } from '../../scripts/check-bundle.ts'
+import { bundleProblems, connectedProblems, cspTransportProblems } from '../../scripts/check-bundle.ts'
 import { buildCsp, supabaseOrigin } from '../../vite.config.ts'
 import { coverageFromSources } from './coverage'
-import { looksLikeServiceRoleKey, resolveConfig, routerBasePath } from './env'
+import { isPublicBrowserKey, looksLikeServiceRoleKey, resolveConfig, routerBasePath } from './env'
 import { genericSortableColumns, isAcceptableGenericSortKey, isResultLikeName } from './generic-sort'
 import { CONFIDENCE_NOT_APPLICABLE, CONFIDENCE_NOT_REPORTED, formatAgreement, formatConfidence, formatMoney, formatStatValue, formatVotes, modelProvenance, NOT_HUMAN_REVIEWED } from './format'
 import { EDGES_PER_EXPANSION, edgeFilterFor, entityRoute, initialGraph, MAX_NODES, mergeExpansion, nodeCount, type EdgeRow } from './graph'
@@ -249,5 +249,45 @@ describe('PR 8 review: R9 confidence and human agreement (review 10)', () => {
     expect(modelProvenance({ ...row, schema_agreement_documented: true }).humanReviewNote).toBeNull()
     expect(formatAgreement({ schema_agreement_documented: false, schema_agreement_rate: null, schema_agreement_sample: null })).toBe('none documented for this schema version')
     expect(formatAgreement({ schema_agreement_documented: true, schema_agreement_rate: 0.85, schema_agreement_sample: 40 })).toBe('85.0% agreement with human reviewers on a sample of 40')
+  })
+})
+
+describe('connected release: the bundle carries the public URL and the public key, and nothing else', () => {
+  const REF = 'abcdefghijklmnopqrst'
+  const URL_OK = `https://${REF}.supabase.co`
+  const refJwt = (role: string, ref: string) => `eyJhbGciOiJIUzI1NiJ9.${Buffer.from(JSON.stringify({ role, ref, iss: 'supabase' })).toString('base64url')}.c2lnbmF0dXJlLWZpeHR1cmU`
+  const html = (origin: string | null) => `<meta http-equiv="Content-Security-Policy" content="${buildCsp(origin, false)}" />`
+  const bundle = (key: string, url = URL_OK) => [{ name: 'app.js', text: `createClient("${url}","${key}")` }]
+
+  it('only a public key can configure the browser client: anon token or publishable key; every other role is refused', () => {
+    expect(isPublicBrowserKey(jwt('anon'))).toBe(true)
+    expect(isPublicBrowserKey('sb_publishable_fixturefixture')).toBe(true)
+    for (const key of [jwt('service_role'), jwt('supabase_admin'), jwt('authenticated'), jwt('evidence_ingest'), jwt('postgres'), 'sb_secret_fixturefixture', 'not-a-key', '']) {
+      expect(isPublicBrowserKey(key), key).toBe(false)
+      expect(resolveConfig({ VITE_SUPABASE_URL: URL_OK, VITE_SUPABASE_ANON_KEY: key }), key).toBeNull()
+    }
+    expect(resolveConfig({ VITE_SUPABASE_URL: URL_OK, VITE_SUPABASE_ANON_KEY: 'sb_publishable_fixturefixture' })?.supabaseUrl).toBe(URL_OK)
+  })
+  it('passes a build connected with the public pair', () => {
+    expect(connectedProblems(bundle(refJwt('anon', REF)), html(URL_OK), URL_OK)).toEqual([])
+    expect(connectedProblems(bundle('sb_publishable_fixturefixture'), html(URL_OK), URL_OK)).toEqual([])
+    expect(bundleProblems(bundle(refJwt('anon', REF)))).toEqual([])
+  })
+  it('fails a build that is not connected, is connected elsewhere, or pairs a key with another project', () => {
+    expect(connectedProblems(bundle(''), html(null), undefined)[0]).toContain('needs VITE_SUPABASE_URL')
+    expect(connectedProblems(bundle(jwt('anon')), html(URL_OK), 'http://fixture.example')[0]).toContain('https project URL')
+    expect(connectedProblems(bundle(jwt('anon')), html(URL_OK), `https://user:pw@${REF}.supabase.co`).join()).toContain('bare project URL')
+    expect(connectedProblems(bundle(jwt('anon')), html('https://elsewhere.example'), URL_OK).join()).toContain('connect-src must allow exactly')
+    expect(connectedProblems([{ name: 'app.js', text: URL_OK }], html(URL_OK), URL_OK).join()).toContain('none is in the bundle')
+    expect(connectedProblems(bundle(refJwt('anon', 'zzzzzzzzzzzzzzzzzzzz')), html(URL_OK), URL_OK).join()).toContain('different project')
+  })
+  it('a privileged key or a server-side setting name anywhere in the bundle fails the release', () => {
+    expect(bundleProblems(bundle(refJwt('service_role', REF))).join()).toContain('only the anon key may ship')
+    expect(bundleProblems(bundle(jwt('authenticated'))).join()).toContain('only the anon key may ship')
+    expect(bundleProblems([{ name: 'x.js', text: 'sb_secret_abcdefghijkl' }]).join()).toContain('secret-style')
+    for (const name of ['EVIDENCE_INGEST_DB_URL', 'EVIDENCE_CRON_SECRET', 'SUPABASE_SERVICE_ROLE_KEY', 'SUPABASE_ACCESS_TOKEN', 'SUPABASE_DB_PASSWORD']) {
+      expect(bundleProblems([{ name: 'x.js', text: `process.env.${name}` }]).join(), name).toContain('server-side secret setting')
+    }
+    expect(bundleProblems([{ name: 'x.js', text: 'postgresql://u@h/db' }]).join()).toContain('connection string')
   })
 })

@@ -81,10 +81,10 @@ export type VotesStatus = 'reported' | 'not_reported' | 'suppressed'
  * A blank content field has two possible causes and the page cannot always tell which: the source did
  * not state it, or the publisher's rights do not (yet) allow this project to show it.
  */
-export const NOT_SHOWN = 'not shown — not stated by the source, or withheld under publisher rights'
+export const NOT_SHOWN = 'not shown — not stated by the source, or not released for this source'
 
 export const RIGHTS_NOTE =
-  'Names, titles, labels and figures are shown only for sources whose publisher has approved those fields. For every other source this register shows the link, identifiers, dates and hashes, and leaves content blank. Each source lists its release tier.'
+  'Names, titles, labels and figures are shown only where a publisher has approved those fields, or where a recorded decision of the repository owner names the field for that one source. An owner decision is not a publisher approval or licence: every such source still reads rights pending. Everything else shows the link, identifiers, dates and hashes, and leaves content blank.'
 
 export function formatVotes(
   votes: number | string | null | undefined,
