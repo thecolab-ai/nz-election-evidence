@@ -4,7 +4,15 @@
 
 A community-maintained, nonpartisan map of New Zealand election evidence: what public sources exist, what a dated research snapshot contained, where the gaps are, and how to make claims that readers can trace back to publishers.
 
-This is a practical starting point for **The Colab WhatsApp community** to work together without needing a database, ETL system or specialist software. It is not affiliated with, endorsed by, or an advocacy vehicle for any political party or candidate.
+This is a practical starting point for **The Colab WhatsApp community** to work together without needing a database, ETL system or specialist software.
+
+> **Accountability, independence, and pending review**
+>
+> Responsible project: **The Colab — NZ Election Evidence project**. Project maintainer/contact: **Adam Holt ([@adam91holt](https://github.com/adam91holt))**. This names the project and its maintainer; it does not claim that The Colab is an incorporated legal entity or that the maintainer has accepted a formal legal-review role. The responsible legal entity and an independent legal reviewer have not been confirmed.
+>
+> This is an independent project. It is **not affiliated with, endorsed by, or acting for the New Zealand Parliament, the Electoral Commission, or any political party or candidate**. The initial repository catalogue is an existing public surface and has **not completed legal review**. Technical changes and automated checks cannot complete the [R10 review gate](RED-LINES.md#r10--new-surface-new-review). See the [red lines](RED-LINES.md), [corrections log](CORRECTIONS.md), and [review register](REVIEW-REGISTER.md). These project notices are not legal advice.
+
+Automation limit: a previously green CI status is **not a durable election-day merge lock**. On election day, repository owners must block merges and rerun the freeze check; the scheduled default-branch check cannot itself lock branch protection.
 
 ![Abstract map of evidence cards connected to a central source ledger](docs/assets/evidence-network.svg)
 
@@ -39,7 +47,7 @@ Read [FIRST-STEPS.md](FIRST-STEPS.md) for three bounded contributions that are r
 
 The count is a dated observation of a prior research snapshot, not a live counter and not proof of universal completeness. Capture timestamps describe when records were observed; they are not automatically the dates the underlying events occurred. Examples of important caveats:
 
-- 17 party-policy records are **17 substantive policy URLs, not 17 manifestos**. The bounded review classified 2 manifestos, 4 collections, 2 platforms and 9 hubs.
+- 17 party-policy records are **17 substantive policy URLs, not 17 manifestos**. The snapshot retained a preliminary model-assisted classification of 2 manifestos, 4 collections, 2 platforms and 9 hubs. Model name/version: **unknown**; schema/prompt: **unavailable**; confidence: **unavailable**; human review: **not yet completed**. Treat these historical labels as unreviewed, not verified findings; the catalogue links to the [publisher source](https://elections.nz/democracy-in-nz/political-parties-in-new-zealand/register-of-political-parties/).
 - 12 poll records were held; methodology/sponsor disclosure was verified for 9, while 3 remained unresolved.
 - 492 candidate-finance document records were held; 224 were image-only. This repository does not redistribute those PDFs.
 - Written-question validation was still pending; its count is not a completeness certificate.
@@ -64,6 +72,7 @@ Read [methodology](docs/methodology.md), the [data dictionary](docs/data-diction
 - `atlas/index.html` — self-contained static explorer
 - `docs/` — methods, provenance, collaboration and project ideas
 - `scripts/` and `tests/` — portable offline tooling
+- `RED-LINES.md`, `CORRECTIONS.md`, and `REVIEW-REGISTER.md` — publication boundaries, correction history, and pending review gates
 
 ## Licence and citation
 

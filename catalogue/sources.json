@@ -294,7 +294,7 @@
     "coverage_window": "Observed at snapshot date",
     "release_mode": "metadata-and-links-only",
     "rights_status": "pending-publisher-review",
-    "known_limitations": "17 substantive policy URLs, not 17 manifestos; observed 2 manifestos, 4 collections, 2 platforms and 9 hubs"
+    "known_limitations": "17 substantive policy URLs, not 17 manifestos. Historical preliminary model-assisted classification: 2 manifestos, 4 collections, 2 platforms and 9 hubs. Model name/version unknown; schema/prompt unavailable; confidence unavailable; not yet checked against human review. Treat labels as unreviewed, not verified findings."
   },
   {
     "product_id": "P14",

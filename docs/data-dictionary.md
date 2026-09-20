@@ -14,6 +14,8 @@
 - `rights_status`: source-specific rights review state.
 - `known_limitations`: gaps and interpretation constraints.
 
+In the rights register, `verified_permissions` is an explicit decision-state field. Pending rows use `Not verified; release restricted to catalogue metadata and source links pending rights review`; they do not assert permission.
+
 ## Roadmap
 
 - `lane_id`: public roadmap ID.
