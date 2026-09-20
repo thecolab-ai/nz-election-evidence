@@ -1,4 +1,5 @@
 {
+  "input_findings": null,
   "receipt_version": 1,
   "source_id": "nz_parliament_written_questions",
   "mode": "incremental",
@@ -22,7 +23,7 @@
     "source_config_hash": "sha256:d6dcec925bb8934aac4c1dda6e35bf1e20b0480fe58c411241b987c68e1fbcd8",
     "max_records": 2000
   },
-  "run_id": "0d1d10ed-2ec6-493f-8b81-1de847f20a38",
+  "run_id": "91367e4e-346f-4546-a92a-121e49d61207",
   "resumed_from_run_id": null,
   "totals": {
     "seen": 0,
@@ -42,9 +43,9 @@
       "outcome": "ok",
       "http_status": 200,
       "bytes": 13626,
-      "body_sha256": "sha256:e5f4fa9863ec3a69b2dfe85f592e3da1e1ad69d25f0bd15b82c8e7672217c0e2",
-      "retrieved_at": "2026-09-20T04:54:21.637Z",
-      "duration_ms": 163
+      "body_sha256": "sha256:6f7013ebd0d66514a8786978357ecb87baa4fe86c9f849025866ec70d8823df1",
+      "retrieved_at": "2026-09-20T05:28:46.432Z",
+      "duration_ms": 168
     }
   ],
   "receipt_note": "Real retrieval from the official publisher on 2026-09-20 (UTC), written to a disposable local database. Counts, hashes, statuses and publisher URLs only; no payloads or response bodies."

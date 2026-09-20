@@ -1,6 +1,6 @@
 # Source reconciliation
 
-> **Status: NOT complete, NOT released.** Independent review of commit `6b8218e` returned **NO-GO**; this revision addresses its security and CI findings only. Source completeness is unchanged and partial: of the **24** catalogue products, **3** have a live adapter (P01 feed window only, P03, P10), **1** (P04) has an export contract that has now been run on the verified upstream product, **on a local disposable database only**, and **20 have no route into the store at all**. Nothing has been pushed, applied to a hosted project, scheduled, deployed or published.
+> **Status: NOT complete, NOT released, NOT security signed off.** Independent reviews of `6b8218e` and `b761023` both returned **NO-GO**; this revision addresses their bounded findings. A separate security re-review was interrupted and is **incomplete**, so no security sign-off exists or is claimed. Source completeness is partial: of the **24** catalogue products, **3** have a live adapter (P01 feed window only, P03, P10), **1** (P04, the 2023 candidacy product) imports through a pinned export contract on a local disposable database only, and **20 have no route into the store at all**. Nothing has been pushed, applied to a hosted project, scheduled, deployed or published.
 
 | Catalogue products | Count | Which |
 |---|---|---|

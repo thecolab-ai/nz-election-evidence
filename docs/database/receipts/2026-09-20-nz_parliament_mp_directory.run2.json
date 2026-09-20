@@ -1,4 +1,5 @@
 {
+  "input_findings": null,
   "receipt_version": 1,
   "source_id": "nz_parliament_mp_directory",
   "mode": "incremental",
@@ -22,7 +23,7 @@
     "source_config_hash": "sha256:a26112d75097cffdd07985daa0a8d4961dce0ee264a7e28439f23119878e2be2",
     "max_records": 2000
   },
-  "run_id": "b4f74b1d-3731-4f55-8435-5c31459c2893",
+  "run_id": "0ff9e719-be7b-4cee-8ea4-57855b626061",
   "resumed_from_run_id": null,
   "totals": {
     "seen": 122,
@@ -45,10 +46,10 @@
       "attempt": 1,
       "outcome": "ok",
       "http_status": 200,
-      "bytes": 354179,
-      "body_sha256": "sha256:4209e7f855999421e2d07fc2622ab4f372c8230f666beb52d43fdbf09526ee26",
-      "retrieved_at": "2026-09-20T04:54:16.675Z",
-      "duration_ms": 1716
+      "bytes": 354159,
+      "body_sha256": "sha256:376485a64b924ff984cb797104eae776ae45645340036e2724b82bdfb10a8420",
+      "retrieved_at": "2026-09-20T05:28:42.474Z",
+      "duration_ms": 1434
     }
   ],
   "receipt_note": "Real retrieval from the official publisher on 2026-09-20 (UTC), written to a disposable local database. Counts, hashes, statuses and publisher URLs only; no payloads or response bodies."
