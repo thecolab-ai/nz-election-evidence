@@ -199,6 +199,7 @@ All on an isolated, disposable stack; the hosted database was never contacted.
 | node suite | 279 tests, 271 pass, 7 skipped, **1 known failure** (§8) |
 | `npx vitest run` (web) | 46 pass |
 | `npm run types:check`, `vite build`, `tsc --noEmit` | pass |
+| the Donations page **rendered in a real browser** against the loaded store | 291 rows, 25 per page, all three notices present, 0 console errors |
 | `scripts/validate.py`, `scripts/red_lines.py`, `pytest tests` | pass (26 products, 353,336 records; 20 python tests) |
 
 Every receipt pins the clean commit `cd99e0c` with `dirty: false`; the CLI was run from a clean checkout and the
@@ -207,6 +208,22 @@ stack from a clone of the same commit. Receipts:
 
 Playwright e2e was **not** run: it seeds fixtures and opens both release gates, which would destroy the measured
 state, and three other stacks were already running on this host.
+
+### Two defects the browser found that no other check would have
+
+Both were only visible by loading the page against a store that actually held the data.
+
+1. **The link to the return was blank for every reader.** `classify_public_columns()` reads a column called
+   `official_url` or `source_url` as link metadata; the column was called `return_document_url`, so it was
+   classified as content and withheld. Renamed to `official_url`, which is what every other table in this store
+   calls a publisher link. A figure is now never shown without the document it came from, at any tier.
+2. **The publication notice was still telling readers no donor is ever named** — above a table naming 291 of them.
+   Not because the branch forgot to change the sentence (it had), but because
+   `useSurfaceStatus()` selected a fixed column list that left `owner_figure_scopes` out. The notice is
+   data-driven, so the missing column did not fail: the figure clause silently rendered as nothing, and the
+   fallback sentence stayed. That has been true since the parent branch added the figure clause, and neither a type
+   check nor a unit test would catch it, because the data was simply absent. The column is now in a named constant
+   (`SURFACE_STATUS_COLUMNS`) with a test that holds it against every field the notice reads.
 
 ## 8. Known, and not papered over
 

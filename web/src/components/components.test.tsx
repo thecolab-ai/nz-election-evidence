@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 import { renderCell } from '@/routes/datasets'
+import { SURFACE_STATUS_COLUMNS } from '@/routes/access'
 import { coverageCounts, heldFor, NOT_PUBLISHED_FOR_2026, RELEASE_COVERAGE } from '@/lib/release-coverage'
 import { AccountabilityFooter } from './footer'
 import { figureWords, OwnerOverrideNotice, ownerBasis, showsDonationFacts } from './owner-override-notice'
@@ -101,6 +102,14 @@ describe('owner override: stated as what it is, never as a review or a publisher
     const hrefs = Array.from(screen.getByTestId('owner-override-notice').querySelectorAll('a')).map((a) => a.getAttribute('href'))
     expect(hrefs).toContain('https://github.com/thecolab-ai/nz-election-evidence/blob/main/governance/owner-authorizations.json')
     expect(hrefs).toContain('https://github.com/thecolab-ai/nz-election-evidence/blob/main/REVIEW-REGISTER.md')
+  })
+  it('asks the database for every field the notice reads: a column left out of the select blanks a sentence', () => {
+    // The notice is data-driven, so a missing column is not a type error - it is a sentence that quietly stops
+    // appearing. Every field the component reads must therefore be in the query that feeds it.
+    for (const column of ['release_basis', 'public_rows_released', 'owner_authorization_id', 'owner_decided_on',
+                          'owner_expires_on', 'owner_fields_in_force', 'owner_figure_scopes', 'gate_key', 'state']) {
+      expect(SURFACE_STATUS_COLUMNS.split(',')).toContain(column)
+    }
   })
   it('says what a donation row is, and what it can never hold, once donation facts rest on the decision', () => {
     render(<OwnerOverrideNotice status={both({ owner_figure_scopes: ['published_donation_facts'] })} />)

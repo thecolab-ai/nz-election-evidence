@@ -70,10 +70,19 @@ export function ReleasePending({ gates }: { gates: SurfaceStatusRow[] }) {
   )
 }
 
+/**
+ * The columns the publication notice and the access page read. `owner_figure_scopes` is on it because the notice
+ * reads it to say WHICH kinds of figure rest on the owner's decision; leaving it out made that sentence silently
+ * disappear, and the notice went on claiming no donor is ever named while the store held hundreds of them. A test
+ * holds this list against every field the notice uses.
+ */
+export const SURFACE_STATUS_COLUMNS =
+  'gate_key,state,evidence_reference,decided_at,public_rows_released,release_basis,owner_authorization_id,owner_decided_on,owner_expires_on,owner_fields_in_force,owner_figure_scopes'
+
 export function useSurfaceStatus() {
   return useRowsQuery<SurfaceStatusRow>({
     view: 'surface_status',
-    select: 'gate_key,state,evidence_reference,decided_at,public_rows_released,release_basis,owner_authorization_id,owner_decided_on,owner_expires_on,owner_fields_in_force',
+    select: SURFACE_STATUS_COLUMNS,
     key: ['surface-status'],
     limit: 10,
     enabled: appConfig !== null,
