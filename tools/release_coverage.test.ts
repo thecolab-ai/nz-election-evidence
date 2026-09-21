@@ -44,7 +44,9 @@ test("the coverage file claims no loaded data: with an empty store every product
 test("every owner field decision names a source this project has a route for, and only those", async () => {
   const owner = JSON.parse(await readFile(new URL("governance/owner-authorizations.json", root), "utf-8")) as { authorizations: { status: string; scopes: { scope: string; source_id?: string }[] }[] };
   const routed = new Set([...RELEASE_COVERAGE.flatMap((r) => [...r.backfill_source_ids, ...r.refresh_source_ids]), "stats_nz_census_2013_meshblock", "election_2026_official_page_status_export", "election_2026_boundary_map_links_export"]);
-  const decided = owner.authorizations.filter((a) => a.status === "active").flatMap((a) => a.scopes).filter((s) => s.scope === "source_fields" || s.scope === "statistical_facts").map((s) => s.source_id!);
+  // Every scope kind that names a source, not a named few: a new figure scope must be covered by this too.
+  const decided = owner.authorizations.filter((a) => a.status === "active").flatMap((a) => a.scopes)
+    .filter((s) => s.scope !== "pages_deploy" && s.scope !== "public_rows").map((s) => s.source_id!);
   for (const id of decided) assert.ok(routed.has(id), `${id}: an owner field decision for a source without a route`);
   // The four sources of the first connected release keep their decision.
   for (const id of ["nz_parliament_mp_directory", "nz_parliament_current_bills", "nz_government_releases_feed", "baseline_2023_candidacies_export"]) assert.ok(decided.includes(id), id);

@@ -1620,6 +1620,418 @@
         "canonical (merged) people or parties: names stay exactly as each source printed them and are never merged across sources",
         "any source whose rights row is refused, restricted or withheld: those stay invisible whatever this file says"
       ]
+    },
+    {
+      "authorization_id": "OWNER-AUTH-2026-09-21-02",
+      "status": "active",
+      "decided_on": "2026-09-21",
+      "expires_on": "2026-11-06",
+      "decided_by": "Adam Holt",
+      "decided_by_role": "repository owner and project maintainer",
+      "request_source": "The same owner direction as OWNER-AUTH-2026-09-21-01 (\"Ok well we want all the data and links etc to show\"), with the owner's clarification of 2026-09-21 relayed by the release coordinator: officially disclosed donor names, amounts, donation dates, recipients and original-return links belong in the explorer and donors are not to be blanket-hidden as private, while residential addresses, signatures and contact details stay out; and that withholding published poll figures only because an independent rights review is pending is inconsistent with that direction. Neither message is kept here: the text of each is not held in this repository. This entry exists because a re-reading of the first one against the loaded store found that the allowlisted payload is released KEY BY KEY and 108 keys were still being dropped; the fields below were derived by reading those keys, not dictated by the owner.",
+      "statement": "The owner directs that the public-safe factual values this project holds be shown rather than blanked. This entry extends that to the parts the first entry missed: (1) the allowlisted payload of each imported source, key by key - the publisher's own identifiers, names as published, dates as printed, page and file digests, status words and this project's own capture and completeness notes; (2) the disclosed finance facts that were captured and left unread - the donation, expense and loan totals the Electoral Commission itself prints on its own public index pages, the filing dates it states, whether it says an audit report was required, the party and candidate names as published, and the links to the original return documents; (3) the party-vote percentages each pollster published, with the sample size where one was disclosed, the pollster's own account of how the poll was run, and this project's record of whether a methodology disclosure was found. It deploys nothing and releases no rows by itself.",
+      "departs_from": [
+        "RED-LINES R10 as written: no legal-review entry names a reviewer for showing these fields. The owner proceeds anyway; this is a departure from R10, not compliance with it.",
+        "RED-LINES R8 as written: nobody has accepted the accountable-person role. The owner proceeds anyway; this is a departure from R8, not compliance with it.",
+        "OWNER-AUTH-2026-09-21-01 said poll figures and sample sizes were never in its scope. This entry shows them. That entry is not edited and is not withdrawn; this one is wider, and the difference is stated here rather than hidden.",
+        "RED-LINES.md itself is not amended by this decision."
+      ],
+      "scopes": [
+        {
+          "scope": "source_fields",
+          "source_id": "baseline_2023_candidacies_export",
+          "rights_id": "RIGHTS-01",
+          "fields": [
+            "candidate_votes_evidence",
+            "electorate_type_upstream_label",
+            "list_rank_evidence",
+            "nomination_status",
+            "party_selection_status",
+            "upstream_candidacy_type",
+            "upstream_election_id",
+            "upstream_nomination_status"
+          ],
+          "basis": "The upstream identifiers and status words the capture carries for each candidacy row: the nomination and party-selection status as the export states them, the upstream candidacy type and election reference, the upstream electorate-type label, and the two one-word records of how the figures were evidenced. Identifiers and status words, with the official link."
+        },
+        {
+          "scope": "official_result_figures",
+          "source_id": "baseline_2023_candidacies_export",
+          "rights_id": "RIGHTS-01",
+          "fields": [
+            "candidate_votes"
+          ],
+          "basis": "The candidate vote count as the payload of the verified 963-row capture of the official 2023 results holds it: the same fact the typed column already shows, released by the same decision so the record and the projection cannot disagree. No total, average, ranking or trend is derived (R1)."
+        },
+        {
+          "scope": "source_fields",
+          "source_id": "election_2023_electorate_results_export",
+          "rights_id": "RIGHTS-01",
+          "fields": [
+            "archive_complete",
+            "baseline_candidacy_join",
+            "baseline_candidacy_ref",
+            "candidate_result_count",
+            "capture_mode",
+            "election_year",
+            "electorate_name",
+            "electorate_number",
+            "original_document_digest",
+            "party_result_count",
+            "product_complete",
+            "result_scope",
+            "source_display_order",
+            "vote_type"
+          ],
+          "basis": "The electorate name and number as the official result page prints them, the publisher's own row identifiers and display order, the vote TYPE each line is ('party' or 'candidate'), the counts of result lines read, this project's record of how a line was joined to the 2023 candidacy product, and the digest and completeness flags of the captured page. Names, identifiers and counts, with the official link."
+        },
+        {
+          "scope": "official_result_figures",
+          "source_id": "election_2023_electorate_results_export",
+          "rights_id": "RIGHTS-01",
+          "fields": [
+            "candidate_total",
+            "party_total"
+          ],
+          "basis": "The candidate and party vote totals each official 2023 electorate result page prints, with the official link. A cell the page reported no number for is shown as its status, never as zero. No ranking, average or trend is derived from them (R1)."
+        },
+        {
+          "scope": "source_fields",
+          "source_id": "election_2023_nationwide_results_export",
+          "rights_id": "RIGHTS-01",
+          "fields": [
+            "archive_complete",
+            "capture_mode",
+            "coverage_scope",
+            "election_year",
+            "original_document_digest",
+            "party_name",
+            "result_scope"
+          ],
+          "basis": "The party name as the official nationwide table prints it, the coverage and result scope of the table, the election year, and the digest and completeness flags of the captured page. Names and scope labels, with the official link."
+        },
+        {
+          "scope": "official_result_figures",
+          "source_id": "election_2023_nationwide_results_export",
+          "rights_id": "RIGHTS-01",
+          "fields": [
+            "vote_percent"
+          ],
+          "basis": "The party vote percentage exactly as the official 2023 nationwide results table prints it, beside the denominator note that says what it is a percentage of. No ranking, average or trend is derived from it (R1)."
+        },
+        {
+          "scope": "source_fields",
+          "source_id": "election_2026_boundary_map_links_export",
+          "rights_id": "RIGHTS-21",
+          "fields": [
+            "boundary_edition",
+            "link_kind",
+            "original_document_digest",
+            "upstream_election_ref"
+          ],
+          "basis": "The boundary edition, the kind of link and the publisher's own election reference for each of the three official 2025 boundary summary maps, with the digest of the captured page."
+        },
+        {
+          "scope": "source_fields",
+          "source_id": "election_2026_official_page_status_export",
+          "rights_id": "RIGHTS-21",
+          "fields": [
+            "election_name",
+            "official_page_status",
+            "upstream_election_ref"
+          ],
+          "basis": "The election name and the availability status of the official 2026 electorate finder page, with the publisher's own election reference. An availability record; it lists no nomination and no candidate."
+        },
+        {
+          "scope": "source_fields",
+          "source_id": "finance_2023_candidate_returns_export",
+          "rights_id": "RIGHTS-02",
+          "fields": [
+            "amendment_labelled",
+            "candidate_name_as_published",
+            "capture_status",
+            "catalogue_page_sha256",
+            "catalogue_page_url",
+            "donations_as_published_status",
+            "electorate_as_published",
+            "expenses_as_published_status",
+            "identity_status",
+            "loans_as_published_status",
+            "normalization_status",
+            "original_document_digest",
+            "page_count",
+            "party_name_as_published",
+            "return_kind",
+            "text_layer_status"
+          ],
+          "basis": "The candidate, party and electorate names as the Electoral Commission publishes them on its public index of filed returns, the return kind, the reporting year, the page count, the status of each published total, the link and digest of the index page, and this project's own capture and normalisation status words. Nothing is read from inside a return document."
+        },
+        {
+          "scope": "official_finance_figures",
+          "source_id": "finance_2023_candidate_returns_export",
+          "rights_id": "RIGHTS-02",
+          "fields": [
+            "amounts_basis",
+            "donations_as_published_nzd",
+            "expenses_as_published_nzd",
+            "loans_as_published_nzd"
+          ],
+          "basis": "The donation, expense and loan totals the Electoral Commission itself prints on its public 2023 candidate returns index page, and the recorded basis for reading them (the stored records state amounts_basis = commission_index_page_as_published). Nothing is read from inside a return: no donor, no postal address of a donor, no signature, no line of a return."
+        },
+        {
+          "scope": "source_fields",
+          "source_id": "finance_2025_party_aggregates_export",
+          "rights_id": "RIGHTS-04",
+          "fields": [
+            "capture_mode",
+            "original_document_digest",
+            "party_name_as_published",
+            "period_end",
+            "period_start",
+            "return_urls"
+          ],
+          "basis": "The party name as the Commission publishes it, the period the return covers, the links to the original return documents the Commission lists, and the digest of the captured index page. Nothing is read from inside a return document."
+        },
+        {
+          "scope": "official_finance_figures",
+          "source_id": "finance_2025_party_aggregates_export",
+          "rights_id": "RIGHTS-04",
+          "fields": [
+            "aggregates",
+            "amounts_basis"
+          ],
+          "basis": "The list of totals the Electoral Commission itself prints on its public 2025 party finance index page, each with the amount, its status, the filing dates the Commission states and whether it says an audit report was required, and the recorded basis for reading them. Nothing is read from inside a return: no donor, no postal address of a donor, no signature, no line of a return."
+        },
+        {
+          "scope": "source_fields",
+          "source_id": "finance_2025_party_returns_export",
+          "rights_id": "RIGHTS-04",
+          "fields": [
+            "amendment_labelled",
+            "capture_status",
+            "catalogue_page_sha256",
+            "catalogue_page_url",
+            "document_version_type",
+            "identity_status",
+            "normalization_status",
+            "original_document_digest",
+            "page_count",
+            "page_count_from_document",
+            "pages_visually_reviewed",
+            "party_name_as_published",
+            "return_kind",
+            "text_layer_status",
+            "transcription_scope"
+          ],
+          "basis": "The party name as the Commission publishes it, the return kind and version type, the reporting year, the page counts, how many pages were looked at, this project's own sentence about what it entered and what it did not, and the link and digest of the index page. Nothing is read from inside a return document."
+        },
+        {
+          "scope": "source_fields",
+          "source_id": "parliament_export_bill_publications",
+          "rights_id": "RIGHTS-09",
+          "fields": [
+            "current_stage",
+            "parliament_number",
+            "public_page_url",
+            "status_label",
+            "version_index_url"
+          ],
+          "basis": "The stage and status of a bill as the publisher's public catalogue states them, the Parliament number, and the publisher's own page links for the bill and for the index of its published versions. Never bill text; no file is held (R6)."
+        },
+        {
+          "scope": "source_fields",
+          "source_id": "parliament_export_bill_register",
+          "rights_id": "RIGHTS-09",
+          "fields": [
+            "member_names_at_source",
+            "source_last_updated_at",
+            "stage_count",
+            "stages"
+          ],
+          "basis": "The members named in charge of a bill as the publisher prints them, the publisher's own last-updated timestamp, and the count and list of recorded stages. Office-holders in their public capacity (R7). Never bill text (R6)."
+        },
+        {
+          "scope": "source_fields",
+          "source_id": "parliament_export_committee_business",
+          "rights_id": "RIGHTS-11",
+          "fields": [
+            "document_type",
+            "publication_date",
+            "source_last_modified_at"
+          ],
+          "basis": "The document type of each item of business, the publisher's publication date and its own last-modified timestamp. NOT the item title, label or subtitle: petition items are titled with the name of the private person who petitioned (R7)."
+        },
+        {
+          "scope": "source_fields",
+          "source_id": "parliament_export_committee_report_files",
+          "rights_id": "RIGHTS-12",
+          "fields": [
+            "metadata_only",
+            "public_page_url",
+            "publication_date",
+            "select_committee",
+            "title"
+          ],
+          "basis": "The title, committee, publication date and public page link of each report FILE as the publisher lists them, and the flag that says this row is metadata only. A link to the publisher's own file; the file and its text are never held or shown (R6)."
+        },
+        {
+          "scope": "source_fields",
+          "source_id": "parliament_export_committee_reports",
+          "rights_id": "RIGHTS-12",
+          "fields": [
+            "document_type",
+            "source_last_modified_at"
+          ],
+          "basis": "The document type of each report and the publisher's own last-modified timestamp. NOT the report title, label or subtitle: 247 of the 1,286 reports are petition reports whose titles name the private person who petitioned (R7)."
+        },
+        {
+          "scope": "source_fields",
+          "source_id": "parliament_export_current_bills_history",
+          "rights_id": "RIGHTS-09",
+          "fields": [
+            "last_activity_at"
+          ],
+          "basis": "The publisher's own last-activity timestamp for a bill in its current-bills catalogue. Never bill text (R6)."
+        },
+        {
+          "scope": "source_fields",
+          "source_id": "parliament_export_member_terms",
+          "rights_id": "RIGHTS-13",
+          "fields": [
+            "date_basis",
+            "metadata_only",
+            "person_name_at_source",
+            "person_ref",
+            "public_page_url"
+          ],
+          "basis": "The member name as the open-data file prints it, the publisher's own person reference and public page link, the stated basis of each date, and the flag that says this row is metadata only. Office-holders in their public capacity (R7); no contact detail of anyone."
+        },
+        {
+          "scope": "source_fields",
+          "source_id": "parliament_export_minister_roles",
+          "rights_id": "RIGHTS-08",
+          "fields": [
+            "date_basis",
+            "metadata_only",
+            "person_name_at_source",
+            "person_ref",
+            "portfolio_name",
+            "public_page_url",
+            "role_name",
+            "role_type_at_source"
+          ],
+          "basis": "The office-holder's name as the Government's own minister pages print it, the role and portfolio names, the role type at source, the publisher's own person reference and page link, and the stated basis of each date. Office-holders in their public capacity (R7)."
+        },
+        {
+          "scope": "source_fields",
+          "source_id": "parliament_export_release_attributions",
+          "rights_id": "RIGHTS-08",
+          "fields": [
+            "metadata_only",
+            "minister_page_urls",
+            "portfolio_page_urls",
+            "public_page_url",
+            "published_at_text",
+            "publisher_item_id",
+            "source_last_modified_at",
+            "title"
+          ],
+          "basis": "The release title and the publisher's own item id, page link, minister and portfolio page links, its date exactly as printed and its own last-modified timestamp. Never the release text or a summary of it (R6)."
+        },
+        {
+          "scope": "source_fields",
+          "source_id": "parliament_export_releases_history",
+          "rights_id": "RIGHTS-08",
+          "fields": [
+            "collection_method",
+            "metadata_only",
+            "page_bytes",
+            "page_sha256",
+            "published_at"
+          ],
+          "basis": "The publisher date of each release, how this project collected the page, and the size and digest of the page it read. Never the release text or a summary of it (R6)."
+        },
+        {
+          "scope": "source_fields",
+          "source_id": "parliament_export_written_questions",
+          "rights_id": "RIGHTS-10",
+          "fields": [
+            "attachment_bytes",
+            "attachment_ref",
+            "ministerial_title",
+            "role_ref",
+            "source_last_modified_at"
+          ],
+          "basis": "The ministerial title and role reference of the minister answering, the publisher's own attachment reference and its size, and the publisher's own last-modified timestamp. Office-holders in their public capacity (R7). Never the text of a question or a reply, and never a digest or character count of that text (R6)."
+        },
+        {
+          "scope": "source_fields",
+          "source_id": "party_policy_pages_2026_export",
+          "rights_id": "RIGHTS-14",
+          "fields": [
+            "capture_status",
+            "current_official_policy_source",
+            "document_title",
+            "linked_document_count",
+            "original_document_digest",
+            "party_name",
+            "publisher_stated_date",
+            "source_published_basis"
+          ],
+          "basis": "The page title and party name as each registered party's own public policy page prints them, the date the publisher states, the basis recorded for that date, the count of linked documents, and the digest of the captured page. Never page text (R6). The upstream classification labels this capture carries are NOT in this decision: no model run is recorded and nobody has reviewed them (R9)."
+        },
+        {
+          "scope": "source_fields",
+          "source_id": "party_vote_polls_2026_export",
+          "rights_id": "RIGHTS-07",
+          "fields": [
+            "capture_status",
+            "commissioner",
+            "disclosure_margin_of_error",
+            "disclosure_mode",
+            "disclosure_provider",
+            "disclosure_source_url",
+            "disclosure_sponsor",
+            "disclosure_url",
+            "document_title",
+            "index_url",
+            "metadata_complete_public_poll",
+            "metadata_completeness_reason",
+            "verification_status"
+          ],
+          "basis": "The pollster's own disclosure of how the poll was run, as the pollster published it: the commissioner, the provider, the sponsor, the mode, the stated margin of error, the links to the pollster's own index and disclosure pages, and this project's own record of how complete that disclosure was and why. Published so that a reader sees a poll figure with the pollster's own account of the poll beside it."
+        },
+        {
+          "scope": "published_poll_figures",
+          "source_id": "party_vote_polls_2026_export",
+          "rights_id": "RIGHTS-07",
+          "fields": [
+            "disclosure_sample_size",
+            "results",
+            "sample_size",
+            "value_pct",
+            "value_status"
+          ],
+          "basis": "The party-vote percentages each pollster published, the sample size where the pollster disclosed one, and the status that says whether a figure was reported at all. Every figure is shown beside this project's own record of whether a methodology disclosure was found for that poll, which is link metadata and cannot be blank. No average, ranking or trend across polls is derived (R1)."
+        }
+      ],
+      "not_claimed": [
+        "No independent legal review has been carried out. Every REVIEW-REGISTER.md row stays PENDING with nobody appointed (R10).",
+        "Nobody has accepted the accountable-person role (R8). This decision does not name one.",
+        "No publisher has granted a licence or permission. Every rights-register row stays pending and link-only; none is marked approved by this decision. That a pollster published a number, or that the Electoral Commission printed a total on a public page, is not that publisher's permission to republish it.",
+        "No security sign-off exists for the evidence store.",
+        "No claim that any poll's methodology is sound. Three of the twelve polls held record that no methodology disclosure was found, and that record is shown beside every figure of those polls.",
+        "This field list was derived by reading the loaded store key by key, not dictated field by field by the owner. It is recorded as derived."
+      ],
+      "never_in_scope": [
+        "donor names, donation amounts, donation dates and per-donation recipients: NOT because they are being withheld, but because this project has never collected a donation record. There is no donations table and no donor column; the loader's contract refuses any key matching donor or contributor at any depth. The only money held is the Electoral Commission's own published per-candidate and per-party totals, and those ARE shown, with the filing dates and the link to each original return",
+        "residential addresses, signatures and contact details of anyone, in any projection",
+        "anything read from INSIDE a finance return: no line, no amount, no name from a return document. approved_total is on no token list anywhere",
+        "the character counts and digests of question, reply, release and document text: the text itself is never held, and OWNER-AUTH-2026-09-20-02 recorded that its digest is not shown either",
+        "titles, labels and subtitles of select committee reports and items of business: petition titles name the private person who petitioned",
+        "the upstream classification labels of the party policy pages: no model run is recorded and nobody has reviewed them (R9). The policy class published for every one of them is 'unknown' on a recorded basis of 'none'",
+        "canonical (merged) people or parties: names stay exactly as each source printed them",
+        "any source whose rights row is refused, restricted or withheld: those stay invisible whatever this file says, figure and label together"
+      ]
     }
   ]
 }

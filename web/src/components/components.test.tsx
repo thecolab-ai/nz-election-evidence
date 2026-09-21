@@ -103,19 +103,20 @@ describe('owner override: stated as what it is, never as a review or a publisher
     expect(hrefs).toContain('https://github.com/thecolab-ai/nz-election-evidence/blob/main/REVIEW-REGISTER.md')
   })
   it('names the kinds of figure that rest on the decision, from the database, and never poll figures', () => {
-    render(<OwnerOverrideNotice status={both({ owner_figure_scopes: ['official_finance_figures', 'official_result_figures', 'statistical_facts'] })} />)
+    render(<OwnerOverrideNotice status={both({ owner_figure_scopes: ['official_finance_figures', 'official_result_figures', 'published_poll_figures', 'statistical_facts'] })} />)
     const text = screen.getByTestId('owner-override-notice').textContent ?? ''
     expect(text).toContain('the vote counts, shares, seat numbers and list positions the official election-results publications printed')
     expect(text).toContain('the donation, expense and loan totals the Electoral Commission prints on its own public index pages')
     expect(text).toContain('the published figures of official statistics')
-    expect(text).toContain('Poll figures and sample sizes are not shown, and nothing is read from inside a finance return')
+    expect(text).toContain('the party-vote percentages each pollster published, each shown beside whether that pollster disclosed a methodology')
+    expect(text).toContain('Nothing is read from inside a finance return, and no donor is named anywhere')
     // A scope the database does not report is not claimed, and an unknown kind is not invented.
     expect(figureWords(['statistical_facts'])).toEqual(['the published figures of official statistics'])
     expect(figureWords(['something_new', null as unknown as string])).toEqual([])
     expect(figureWords(null)).toEqual([])
     const none = render(<OwnerOverrideNotice status={both({})} />).container
     expect(none.querySelector('[data-testid="owner-notice-figures"]')).toBeNull()
-    expect(none.textContent).toContain('Poll figures and sample sizes are not shown')
+    expect(none.textContent).toContain('no donor is named anywhere')
   })
   it('says only what the gates say: one review on record leaves only the other named as outstanding', () => {
     render(<OwnerOverrideNotice status={[gate({ state: 'open' }), gate({ gate_key: 'r8_accountable_legal_entity' })]} />)

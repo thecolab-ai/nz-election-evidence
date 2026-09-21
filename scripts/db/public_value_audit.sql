@@ -13,6 +13,9 @@
 -- Part B  every catalogue product, source by source: release tier, how many field names a current owner
 --         decision shows, and what the anonymous sources view reports the source holds.
 -- Part C  the gaps, stated as gaps: content columns that are published and empty, and datasets with no rows.
+-- Part D  the allowlisted payload, KEY BY KEY, per source. `safe_payload` is one column whose keys are gated
+--         individually, so "that column has a value" says nothing about which keys a reader receives. Part A
+--         cannot see this; Part D is the only place a dropped payload key shows up.
 --
 -- `sample` bounds the per-column pass (default 20000 rows); the row count itself is always exact. A dataset
 -- smaller than the sample is measured exactly and reads `exact`. A larger one is measured over an ARBITRARY,
@@ -126,3 +129,63 @@ select count(distinct (exposed_schema, dataset)) as datasets,
        count(*) filter (where disposition = 'rights_gated_content') as content_columns,
        count(*) filter (where disposition = 'rights_gated_content' and with_value > 0) as content_columns_with_values
 from public_value_audit;
+
+-- Part D ---------------------------------------------------------------------------------------------------
+-- Both passes read at most `sample_versions` record versions per source, so this is a per-source sample and a
+-- key seen in neither pass may simply not be in that sample. A key in `held_not_shown` IS a real gap: it was
+-- read from the publisher, it is stored, and an anonymous reader does not receive it.
+\if :{?sample_versions}
+\else
+\set sample_versions 300
+\endif
+set public_value_audit.sample_versions = :sample_versions;
+
+create temporary table if not exists public_payload_audit (source_id text, key text, held bigint, shown bigint);
+truncate public_payload_audit;
+grant insert on public_payload_audit to anon;
+
+-- Held: read as administrator, straight from the private ledger.
+insert into public_payload_audit (source_id, key, held, shown)
+select src.source_id, e.key, count(*), 0
+from evidence_private.sources src
+cross join lateral (
+  select v.safe_payload
+  from evidence_private.source_records rr
+  join evidence_private.source_record_versions v on v.record_id = rr.id
+  where rr.source_id = src.source_id
+  limit current_setting('public_value_audit.sample_versions')::integer) v
+cross join lateral jsonb_each(v.safe_payload) e
+group by 1, 2;
+
+-- Shown: read AS ANON, through the same projection a reader uses. Driven from the curated record_versions view,
+-- which carries source_id itself: joining the two open table projections instead costs minutes on a loaded store,
+-- because a barrier view will not push the source filter through the join.
+set local role anon;
+insert into public_payload_audit (source_id, key, held, shown)
+select src.source_id, e.key, 0, count(*)
+from evidence_public.sources src
+cross join lateral (
+  select v.safe_payload from evidence_public.record_versions v
+  where v.source_id = src.source_id
+  limit current_setting('public_value_audit.sample_versions')::integer) v
+cross join lateral jsonb_each(v.safe_payload) e
+group by 1, 2;
+reset role;
+
+\echo '== Part D: payload keys HELD by a source but NOT shown to an anonymous reader =='
+select p.source_id, p.key, sum(p.held) as held,
+       case when p.key = any (max(r.owner_fields::text)::text[]) then 'an owner scope names this key, and it is still not shown'
+            else 'no owner scope and no publisher approval names this key' end as why
+from public_payload_audit p
+join evidence_private.source_release r on r.source_id = p.source_id
+group by p.source_id, p.key
+having sum(p.held) > 0 and sum(p.shown) = 0
+order by 1, 2;
+
+\echo '== Part D2: payload keys an anonymous reader does receive, per source =='
+select source_id,
+       count(*) filter (where shown > 0) as keys_shown,
+       count(*) filter (where held > 0) as keys_held,
+       string_agg(key, ', ' order by key) filter (where shown > 0) as shown
+from (select source_id, key, sum(held) as held, sum(shown) as shown from public_payload_audit group by 1, 2) k
+group by 1 order by 1;

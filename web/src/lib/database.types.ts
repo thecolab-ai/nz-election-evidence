@@ -1339,8 +1339,6 @@ export type Database = {
           party_identity_id: string | null
           party_label_at_source: string | null
           poll_document_id: string | null
-          value_pct: number | null
-          value_status: string | null
         }
         Relationships: [
           {
@@ -3252,6 +3250,38 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "party_identities"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      poll_figures: {
+        Row: {
+          fieldwork_end: string | null
+          fieldwork_start: string | null
+          methodology_status: string | null
+          official_url: string | null
+          party_identity_id: string | null
+          party_label_at_source: string | null
+          poll_document_id: string | null
+          pollster: string | null
+          sample_size: number | null
+          sponsor: string | null
+          value_pct: number | null
+          value_status: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "poll_results_party_identity_id_fkey"
+            columns: ["party_identity_id"]
+            isOneToOne: false
+            referencedRelation: "party_identities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "poll_results_poll_document_id_fkey"
+            columns: ["poll_document_id"]
+            isOneToOne: false
+            referencedRelation: "polls"
+            referencedColumns: ["document_id"]
           },
         ]
       }

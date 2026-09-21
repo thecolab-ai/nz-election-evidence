@@ -28,13 +28,17 @@ export const FORBIDDEN_FIELD =
   /(email|e_mail|phone|mobile|fax|address|postal|contact|twitter|facebook|instagram|linkedin|handle|body|content|html|text|passage|description|summary|excerpt|transcript|portrait|image|photo|donor|birth|gender|ethnic|vote|share|rank|seats|score|confidence|value|pct|percent|total|amount|sample|payload|external_id|external_record_id|publisher_item_id)/;
 
 /**
- * The CLOSED list of column names the rule above matches without being the thing it protects: publisher-assigned
- * public identifiers, a date as the publisher printed it, a kind label, and two status flags. Each was read on a
- * loaded store before it was listed. Kept equal to the same list in owner_field_scope_forbidden (tested).
+ * The CLOSED list of column and payload-key names the rule above matches without being the thing it protects:
+ * publisher-assigned public identifiers, a date as the publisher printed it, a kind label ('minister' or
+ * 'portfolio'), a vote TYPE ('party' or 'candidate'), a sentence about what was entered from a return, and four
+ * status words. Every one was read on a loaded store
+ * before it was listed. Names, not prefixes. Kept equal to the same list in owner_field_scope_forbidden (tested).
  */
 export const SOURCE_FIELD_EXCEPTIONS = [
   "external_id", "external_record_id", "publisher_item_id", "source_date_text",
   "content_kind", "text_extraction_status", "publisher_modified_text",
+  "vote_type", "candidate_votes_evidence", "list_rank_evidence", "text_layer_status",
+  "transcription_scope", "published_at_text",
 ] as const;
 
 /**
@@ -52,28 +56,41 @@ export const STATISTICAL_FACT_FIELDS = ["value", "value_double", "raw_value", "v
  * number read from inside a return document. Kept equal to owner_result_figure_tokens (tested).
  */
 export const RESULT_FIGURE_FIELDS = [
-  "candidate_informals", "candidate_lines", "candidate_votes_with_informals", "electorate_seats", "list_rank",
-  "list_seats", "party_informals", "party_lines", "party_vote_share", "party_votes", "party_votes_with_informals",
-  "this_route_votes", "total_seats", "value_status", "vote_share", "votes", "votes_counted", "votes_counted_pct",
-  "votes_status",
+  "candidate_informals", "candidate_lines", "candidate_total", "candidate_votes", "candidate_votes_with_informals",
+  "electorate_seats", "list_rank", "list_seats", "party_informals", "party_lines", "party_total", "party_vote_share",
+  "party_votes", "party_votes_with_informals", "this_route_votes", "total_seats", "value_status", "vote_percent",
+  "vote_share", "votes", "votes_counted", "votes_counted_pct", "votes_status",
 ] as const;
 
 /**
- * The published totals of an official FINANCE RETURNS product: the amount the Electoral Commission prints on its
- * own public index page, the status of that amount, whether a total was read at all, and whether the return
- * document is a scan. Nothing read from INSIDE a return: no donor, no address, no signature, no approved total.
- * Kept equal to owner_finance_figure_tokens (tested).
+ * The published totals of an official FINANCE RETURNS product: the amounts the Electoral Commission prints on its
+ * own public index pages (per candidate and per party, and the list that carries a party's totals with their filing
+ * dates), the recorded basis for reading them, the status of each, whether a total was read at all, and whether the
+ * return document is a scan. Nothing read from INSIDE a return: no donor, no postal address, no signature, no
+ * approved total. Kept equal to owner_finance_figure_tokens (tested).
  */
-export const FINANCE_FIGURE_FIELDS = ["amount_nzd", "is_image_only", "total_status", "value_status"] as const;
+export const FINANCE_FIGURE_FIELDS = [
+  "aggregates", "amount_nzd", "amounts_basis", "donations_as_published_nzd", "expenses_as_published_nzd",
+  "is_image_only", "loans_as_published_nzd", "total_status", "value_status",
+] as const;
 
 /**
- * The registry products whose sources may carry a figure scope at all. Kept equal to the two literal lists in
+ * The published numbers of a poll, and the payload key that carries them. A closed list, for a source registered
+ * as the party-vote poll product only. `methodology_status` is NOT here: it is link metadata for every source at
+ * every tier, so the label that says whether a methodology was disclosed always travels with the figure.
+ * Kept equal to owner_poll_figure_tokens (tested).
+ */
+export const POLL_FIGURE_FIELDS = ["value_pct", "value_status", "sample_size", "disclosure_sample_size", "results"] as const;
+
+/**
+ * The registry products whose sources may carry a figure scope at all. Kept equal to the literal lists in
  * the migration (owner_scope_guard and evidence_private.source_release), which are checked both when a decision
  * is recorded and every time a release tier is read. Widening this is a migration, never a file edit.
  */
-export const FIGURE_REGISTRIES: Record<"official_result_figures" | "official_finance_figures", readonly string[]> = {
+export const FIGURE_REGISTRIES: Record<"official_result_figures" | "official_finance_figures" | "published_poll_figures", readonly string[]> = {
   official_result_figures: ["election_2023_results"],
   official_finance_figures: ["candidate_finance_returns", "party_finance_returns"],
+  published_poll_figures: ["party_vote_polls"],
 };
 
 /** Field scopes, by kind: the closed list of tokens each may name. `source_fields` is the pattern rule instead. */
@@ -81,19 +98,21 @@ export const FIGURE_SCOPE_FIELDS: Record<string, readonly string[]> = {
   statistical_facts: STATISTICAL_FACT_FIELDS,
   official_result_figures: RESULT_FIGURE_FIELDS,
   official_finance_figures: FINANCE_FIGURE_FIELDS,
+  published_poll_figures: POLL_FIGURE_FIELDS,
 };
 
 const FIGURE_SCOPE_LABEL: Record<string, string> = {
   statistical_facts: "a statistical fact",
   official_result_figures: "an official result figure",
   official_finance_figures: "an official finance figure",
+  published_poll_figures: "a published poll figure",
 };
 
 /** What the validator needs to know about a registered source to check a field decision against it. */
 export interface RegisteredSource { source_id: string; rights_id?: string; view_scope: string; registry_key?: string }
 
 /** Every scope kind that names fields of one source. */
-export const FIELD_SCOPES = ["source_fields", "statistical_facts", "official_result_figures", "official_finance_figures"] as const;
+export const FIELD_SCOPES = ["source_fields", "statistical_facts", "official_result_figures", "official_finance_figures", "published_poll_figures"] as const;
 type FieldScopeKind = (typeof FIELD_SCOPES)[number];
 const isFieldScope = (value: unknown): value is FieldScopeKind => (FIELD_SCOPES as readonly string[]).includes(String(value));
 

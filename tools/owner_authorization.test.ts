@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { test } from "node:test";
-import { authorizationProblems, deployAuthorization, FIGURE_REGISTRIES, FINANCE_FIGURE_FIELDS, FORBIDDEN_FIELD, MAX_DAYS_IN_FORCE, type RegisteredSource, RESULT_FIGURE_FIELDS, scopesInForce, SOURCE_FIELD_EXCEPTIONS, STATISTICAL_FACT_FIELDS, type AuthorizationFile } from "./owner_authorization.ts";
+import { authorizationProblems, deployAuthorization, FIGURE_REGISTRIES, FINANCE_FIGURE_FIELDS, FORBIDDEN_FIELD, MAX_DAYS_IN_FORCE, POLL_FIGURE_FIELDS, type RegisteredSource, RESULT_FIGURE_FIELDS, scopesInForce, SOURCE_FIELD_EXCEPTIONS, STATISTICAL_FACT_FIELDS, type AuthorizationFile } from "./owner_authorization.ts";
 import { gate, gateWithOwnerOverride, registerRows, unparsedRegisterLines } from "./release_gate.ts";
 
 const root = new URL("../", import.meta.url);
@@ -290,13 +290,21 @@ test("a figure scope is for the official product that publishes the figure, and 
   assert.match(authorizationProblems(both, FIGURE_REGISTRY).join("\n"), /second official_result_figures decision/);
 });
 
-test("no poll figure is in any scope of the committed file: a pollster's numbers are that pollster's own product", async () => {
+test("in the committed file a figure is only ever named in a figure scope, and never one that is on no list", async () => {
   const doc = JSON.parse(await readFile(new URL("governance/owner-authorizations.json", root), "utf-8")) as AuthorizationFile;
+  const registry = (JSON.parse(await readFile(new URL("supabase/functions/_shared/sources.config.json", root), "utf-8")) as { sources: RegisteredSource[] }).sources;
   for (const a of doc.authorizations) {
     for (const s of a.scopes) {
       if (s.scope === "pages_deploy" || s.scope === "public_rows") continue;
-      for (const field of ["value_pct", "sample_size"]) assert.ok(!s.fields.includes(field), `${s.source_id}: ${field}`);
-      if (/poll/.test(s.source_id)) assert.equal(s.scope, "source_fields", `${s.source_id}: a poll source may hold descriptive fields only`);
+      // A number read from INSIDE a return document is on no list anywhere, in any scope, for any source.
+      assert.ok(!s.fields.includes("approved_total"), `${s.source_id}: approved_total`);
+      for (const field of ["value_pct", "sample_size", "disclosure_sample_size", "results"]) {
+        if (!s.fields.includes(field)) continue;
+        assert.equal(s.scope, "published_poll_figures", `${s.source_id}: ${field} outside a poll figure scope`);
+        assert.equal(registry.find((e) => e.source_id === s.source_id)?.registry_key, "party_vote_polls", s.source_id);
+      }
+      // The methodology label is link metadata and needs no decision; naming it would imply it did.
+      assert.ok(!s.fields.includes("methodology_status") || s.scope === "source_fields", `${s.source_id}: methodology_status`);
     }
   }
 });
@@ -307,8 +315,10 @@ test("the database constraints and this tool agree on every field rule", async (
   assert.ok(stats, "closed list present");
   assert.deepEqual(tokens(stats[1]), [...STATISTICAL_FACT_FIELDS]);
 
-  // The current forbidden-name rule and its closed exception list live in the values migration.
-  const values = await readFile(new URL("supabase/migrations/20260921060100_public_factual_values.sql", root), "utf-8");
+  // The current forbidden-name rule, its closed exception list and the figure lists live in the latest of the
+  // two public-values migrations. Reading the LAST one that defines each constraint is the point: an earlier
+  // migration's copy is history, and this test must follow the definition that is actually in force.
+  const values = await readFile(new URL("supabase/migrations/20260921070100_public_payload_and_poll_figures.sql", root), "utf-8");
   const forbidden = /owner_field_scope_forbidden\s+check \(scope_kind is distinct from 'source_fields'\s+or field_token in \(([^)]+)\)\s+or field_token !~ '([^']+)'\)/.exec(values);
   assert.ok(forbidden, "the forbidden-name rule still binds every source_fields row");
   assert.deepEqual(tokens(forbidden[1]), [...SOURCE_FIELD_EXCEPTIONS]);
@@ -317,6 +327,7 @@ test("the database constraints and this tool agree on every field rule", async (
   for (const [constraint, kind, expected] of [
     ["owner_result_figure_tokens", "official_result_figures", RESULT_FIGURE_FIELDS],
     ["owner_finance_figure_tokens", "official_finance_figures", FINANCE_FIGURE_FIELDS],
+    ["owner_poll_figure_tokens", "published_poll_figures", POLL_FIGURE_FIELDS],
   ] as const) {
     const match = new RegExp(`${constraint}\\s+check \\(scope_kind is distinct from '${kind}' or field_token in \\(([^)]+)\\)\\)`).exec(values);
     assert.ok(match, `${constraint} present`);
@@ -330,6 +341,14 @@ test("the database constraints and this tool agree on every field rule", async (
   }
   assert.match(values, /v_registry_key is distinct from 'election_2023_results'/);
   assert.match(values, /not in \('candidate_finance_returns', 'party_finance_returns'\)/);
+  assert.match(values, /new\.scope_kind = 'published_poll_figures' and v_registry_key is distinct from 'party_vote_polls'/);
+  // The label that says whether a methodology was disclosed is link metadata, so it can never be blank beside a
+  // poll figure, and the figure itself is published only through the view that carries the label in the row.
+  assert.match(values, /'methodology_status',/);
+  assert.match(values, /create or replace view evidence_views\.poll_figures as/);
+  for (const column of ["value_pct", "value_status"]) {
+    assert.match(values, new RegExp(`'poll_results', '${column}',\\s*\\n\\s*'A poll figure is published only through evidence_public.poll_figures`));
+  }
 });
 
 test("every field decision in the committed file names a registered source under its own rights row", async () => {
