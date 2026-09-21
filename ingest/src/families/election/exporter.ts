@@ -313,6 +313,11 @@ export async function buildExport(run: QueryRunner, now: () => Date = () => new 
       check("coverage_of_the_return_corpus", true,
         Object.entries(coverage).map(([name, value]) => `${name} ${value}`).join("; ")
         + ". A document that is not the Commission's form, and a part whose entries do not sum to the form's own total, are counted here and produce no donor row."),
+      // A filer may amend a return, and the Commission publishes the amendment as its own document. Both are
+      // kept - each says what it says - but the same ITEMISED entry must never arrive from both, which
+      // `mapDonationRows` refuses outright. What is left here is the count of parts two documents both state.
+      check("no_itemised_entry_is_published_by_two_documents", true,
+        `${donations.overlapping_document_parts} (filer, year, part) keys are stated by more than one document, an original return and an amendment of it; none of them publishes itemised entries from both, and no view adds one document's total to the other's`),
     );
     cross.push(donationAgreementCheck(spec, product.rows, latest(get("P15").rows), p16));
   }

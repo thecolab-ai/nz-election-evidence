@@ -55,6 +55,11 @@ export interface DonationExport {
   versions_offered: number;
   /** Distinct return documents behind those versions: a document can have more than one version upstream. */
   documents_offered: number;
+  /**
+   * How many (filer, year, part) keys more than one DOCUMENT publishes - an original return and an amendment of
+   * it. Reported, never silently merged, and refused outright where both documents itemise (`overlappingDocuments`).
+   */
+  overlapping_document_parts: number;
 }
 
 function text(value: unknown, max: number): string | undefined {
@@ -212,6 +217,39 @@ export function mapReturnDocument(row: WarehouseRow, spec: DonationSourceSpec): 
   return { rows, outcome };
 }
 
+/**
+ * A filer may file a return and then file an AMENDED one, and the Commission publishes the amendment as its own
+ * document. Both are filings and both are kept: this project records what each document says, and deciding that
+ * one replaces the other is the publisher's statement, not this reader's inference. What must never happen is the
+ * same itemised donation reaching a reader twice, once from each document, as if it were two donations.
+ *
+ * So the overlap is counted rather than assumed away, and the one case that would double a figure - two documents
+ * of the same filer, year and part BOTH publishing itemised entries - is refused outright. A part that publishes
+ * only its printed total may overlap: two documents stating a total is two statements, and no view adds them.
+ */
+function overlappingDocuments(rows: ExportRow[]): { keys: number; refuse: string | null } {
+  const filer = (payload: { [key: string]: SafeJson }) => [
+    payload.return_kind, payload.reporting_year, payload.party_name_as_published ?? "",
+    payload.candidate_name_as_published ?? "", payload.electorate_as_published ?? "", payload.disclosure_part,
+  ].join("\u0000");
+  const documents = new Map<string, Set<string>>();
+  const itemising = new Map<string, Set<string>>();
+  for (const row of rows) {
+    const key = filer(row.payload);
+    if (row.record_kind === "donation_return_part") (documents.get(key) ?? documents.set(key, new Set()).get(key)!).add(row.official_url);
+    else (itemising.get(key) ?? itemising.set(key, new Set()).get(key)!).add(row.official_url);
+  }
+  let keys = 0;
+  for (const [key, urls] of documents) {
+    if (urls.size < 2) continue;
+    keys += 1;
+    if ((itemising.get(key)?.size ?? 0) > 1) {
+      return { keys, refuse: `two documents of the same filer, year and part ${key.split("\u0000").pop()} both publish itemised entries; a reader would be shown one donation twice` };
+    }
+  }
+  return { keys, refuse: null };
+}
+
 /** Every return document of one donation source, in a stable order. */
 export function mapDonationRows(rows: WarehouseRow[], spec: DonationSourceSpec): DonationExport {
   const out: ExportRow[] = [];
@@ -225,7 +263,13 @@ export function mapDonationRows(rows: WarehouseRow[], spec: DonationSourceSpec):
     out.push(...mapped);
     outcomes.push(outcome);
   }
-  return { rows: out, outcomes, versions_offered: outcomes.length, documents_offered: new Set(rows.map((row) => row.record_id)).size };
+  const overlap = overlappingDocuments(out);
+  if (overlap.refuse) throw new MappingError(overlap.refuse);
+  return {
+    rows: out, outcomes, versions_offered: outcomes.length,
+    documents_offered: new Set(rows.map((row) => row.record_id)).size,
+    overlapping_document_parts: overlap.keys,
+  };
 }
 
 /** What a run of this product can say about its own coverage, in counts only. */

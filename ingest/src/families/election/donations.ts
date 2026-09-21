@@ -210,9 +210,22 @@ function amountsIn(text: string): number[] {
 const ADDRESS_START =
   /(^|[,\-–]\s*|\s)(\d+[A-Za-z]?(?:[/-]\d+[A-Za-z]?)?\s+\p{Lu}|Level\s+\d|Floor\s+\d|Flat\s+\d|Unit\s+\d|Suite\s+\d|Apartment\s+\d|Apt\s+\d|Villa\s+\d|PO\s*Box|P\.O\.\s*Box|Private\s+Bag|C\/[-o]|RD\s*\d)/u;
 
-/** Words that only ever appear in an address here. A candidate name holding one is refused. */
-const ADDRESS_WORD =
-  /\b(road|rd|street|st|avenue|ave|drive|dr|lane|place|pl|terrace|crescent|quay|parade|highway|way|close|grove|court|rise|esplanade|boulevard|mews|heights|bay|flat|level|floor|unit|suite|apartment|box|postcode)\b/i;
+/**
+ * Words that only ever appear in an address here. A candidate name holding one is refused.
+ *
+ * The donor-name COLUMN carries its own list (migration 20260921080100). The two are NOT the same list and are
+ * not meant to be: the column's is deliberately shorter, because a store-level constraint that refused every
+ * name containing `st`, `dr` or `bay` would refuse real people. What must hold is the direction - this reader is
+ * never more permissive than the column - so every word the column refuses is on this list too, and a test holds
+ * that containment against the migration file.
+ */
+export const ADDRESS_WORDS = [
+  "road", "rd", "street", "st", "avenue", "ave", "drive", "dr", "lane", "place", "pl", "terrace", "crescent",
+  "quay", "parade", "highway", "way", "close", "grove", "court", "rise", "esplanade", "boulevard", "mews",
+  "heights", "bay", "flat", "level", "floor", "unit", "suite", "apartment", "box", "postcode",
+] as const;
+
+const ADDRESS_WORD = new RegExp(`\\b(${ADDRESS_WORDS.join("|")})\\b`, "i");
 
 /**
  * The name half of a donor cell, or null when this module cannot prove it has one.

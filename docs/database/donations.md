@@ -63,13 +63,26 @@ is in front of it, and then **refuses the result** unless it holds letters, **no
 postal address, and passes the store's own text guard. A cell it cannot split that way produces **no name at all**:
 the entry is stored with `donor_name_status = 'not_separable'`. Never a best guess, never the whole cell.
 
-That rule is enforced three times over, in three places that cannot drift apart without a test failing:
+That rule is enforced three times over:
 
 1. the reader refuses the value;
 2. the import contract refuses every donor field name except three vetted ones
    (`donor_name_as_published`, `donor_name_status`, `donor_identity_kind`) — `address`, `street` and `postcode`
    stay refused outright, so a `donor_address` is refused twice over;
 3. the **column itself** carries a CHECK refusing any value holding a digit or a street word.
+
+The three-name list of (2) is held **equal** in the loader and the migration by a test. The address-word list of
+(3) is deliberately **not** equal to the reader's: a store-level constraint refusing every name containing `st`,
+`dr`, `way` or `bay` would refuse real people, so the column's list is the shorter one. What a test does hold is
+the direction — every word the column refuses, the reader refuses too — so the reader can never be the more
+permissive of the two, and neither list can shrink without the test saying so.
+
+### What the reader does not claim about a name
+
+`donorName` proves the value is not a **street address**. It does not prove the value is *only* a name. A cell
+printing a name with no street number and no address word — a suburb, a town — is kept whole, because there is
+nothing in it this reader can prove is the address half. Measured on the loaded store, no public value holds a
+digit or a street word; that is the claim, and it is not the same as the claim that no value holds a place name.
 
 There is no address column anywhere in either new table. Measured on the loaded store, as `anon`, across every
 public text value of both datasets — donor names, party and candidate names, electorates and part labels:
@@ -102,10 +115,33 @@ compares them and **never adds them**:
 
 ### Double counting
 
-Part A of an annual return **for a general-election year** also carries that year's separately published $20,000
-notices — the form's own instructions say so. Every row therefore carries `overlaps_election_year_notices`, and no
-view adds one publication to the other. 2025 is not an election year, so nothing held today overlaps; 63 rows (the
-2023 candidate returns) are marked because their reporting year is one.
+There are two ways the same money could be counted twice here, and they are different problems.
+
+**The separately published $20,000 notices.** Part A of an annual return **for a general-election year** also
+carries that year's separately published $20,000 notices — the form's own instructions say so. Every row
+therefore carries `overlaps_election_year_notices`, and no view adds one publication to the other. 2025 is not an
+election year, so nothing held today overlaps; 63 rows (the 2023 candidate returns) are marked because their
+reporting year is one.
+
+**An amendment is its own document.** A filer who has already filed may file an **amended** return, and the
+Commission publishes the amendment as a separate document rather than replacing the first. Both are filings, and
+this store keeps both: each row says what its own document says, and deciding that one replaces the other is the
+publisher's statement, not an inference this project is entitled to make. `amendment_labelled` marks which
+document is which.
+
+That leaves one thing that must never happen — the same itemised donation reaching a reader twice, once from each
+document. It is refused rather than trusted, in two places:
+
+* the exporter (`mapDonationRows`) **refuses the whole export** if two documents of one source publish itemised
+  entries for the same filer, year and part, and reports the count of parts more than one document states;
+* `reconcile P25 P26` counts, in the loaded store, entries that share a filer, year, part and printed entry
+  position across **different** documents, and expects **zero**. A non-zero count fails the reconciliation.
+
+Measured on what is loaded today: **one** 2025 party filed an original and an amendment, overlapping on **5**
+parts (A, C, D, G, H); four of those five are nil and the fifth (Part G) is a count-and-total part that itemises
+nothing, so **no itemised entry is stated by two documents**, and no entry of the whole corpus is. 83 of the 2023
+candidate part rows are `amendment_labelled`, and none of them overlaps another document. Two documents stating
+the same part's printed total are two statements and are both shown; nothing anywhere adds them.
 
 ### What the law withholds
 

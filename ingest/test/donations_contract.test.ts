@@ -11,6 +11,7 @@ import { fileURLToPath } from "node:url";
 import test from "node:test";
 import { contractProblem, FORBIDDEN_KEY, forbiddenKey, KIND_CONTRACTS, VETTED_DONOR_FIELDS } from "../src/families/election/contracts.ts";
 import { mapReturnDocument } from "../src/families/election/donation_export.ts";
+import { ADDRESS_WORDS, donorName } from "../src/families/election/donations.ts";
 import type { VersionedExportRow } from "../src/families/election/exporter.ts";
 import type { WarehouseRow } from "../src/families/election/mapping.ts";
 
@@ -100,6 +101,22 @@ test("the database refuses a donor name that carries a number or a street word",
   const tables = sql.slice(sql.indexOf("create table evidence_private.donation_return_parts"), sql.indexOf("-- Access:"));
   for (const name of ["address", "street", "postcode", "signature", "contact", "email", "phone", "bank", "account_number"]) {
     assert.equal(new RegExp(`^\\s+\\w*${name}\\w*\\s`, "mi").test(tables), false, `no column named for ${name}`);
+  }
+});
+
+test("the reader is never more permissive than the column: every word the CHECK refuses, the reader refuses too", async () => {
+  const sql = await readFile(MIGRATION, "utf-8");
+  const list = /donor_name_as_published !~\* '\\y\(([^)]+)\)\\y'/.exec(sql);
+  assert.ok(list, "the donor-name column still refuses a closed list of address words");
+  const inTheColumn = list[1].split("|");
+  assert.ok(inTheColumn.length >= 15, "and the list is not empty or collapsed to nothing");
+  // The two lists are deliberately different sizes - a constraint refusing every name holding `st`, `dr` or
+  // `bay` would refuse real people - but the containment must hold in this direction, or a value the store
+  // means to refuse could be produced by the reader and simply fail the insert instead of being reported.
+  for (const word of inTheColumn) {
+    const single = word.split(" ").pop()!;   // `po box` is refused by the reader as `box`
+    assert.ok((ADDRESS_WORDS as readonly string[]).includes(single), `the reader does not refuse "${word}", which the column does`);
+    assert.equal(donorName(`Someone ${single} Somewhere`), null, `a name holding "${single}" is refused by the reader`);
   }
 });
 

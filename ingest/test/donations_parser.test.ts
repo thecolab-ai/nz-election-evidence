@@ -10,6 +10,8 @@ import test from "node:test";
 import {
   amount, donorName, DONATION_PARSER_VERSION, ELECTION_YEARS, isoFromPrinted, PART_DEFINITIONS, parseReturn,
 } from "../src/families/election/donations.ts";
+import { mapDonationRows } from "../src/families/election/donation_export.ts";
+import type { WarehouseRow } from "../src/families/election/mapping.ts";
 
 /** Lays a row out in columns the way `pdftotext -layout` does: text at the given character positions. */
 function columns(...cells: [number, string][]): string {
@@ -281,4 +283,53 @@ test("an identity the publisher withholds is never given a name", () => {
   assert.equal(partC.entries[0].donor_name_status, "withheld_by_publisher");
   assert.equal(partC.entries[0].donor_identity_kind, "anonymous");
   assert.equal(partC.entries[0].amount_nzd, 3000);
+});
+
+// An amendment is its own document ------------------------------------------------------------------------------
+//
+// A party that has already filed may file an AMENDED return, and the Commission publishes it as a separate
+// document rather than replacing the first one. Both are filings and this store keeps both: which one supersedes
+// the other is the publisher's statement, not this reader's inference. What must never happen is one donation
+// reaching a reader as two, once from each document.
+
+test("two documents may state the same part's total, but never itemise it twice", () => {
+  const spec = {
+    product: "P26" as const, source_id: "political_finance_2025_returns",
+    reporting_year: 2025, return_kind: "party_annual_return" as const,
+  };
+  const document = (id: string, url: string, body: string[]): WarehouseRow => ({
+    source_id: spec.source_id, record_id: id, record_kind: "official_party_finance_return_document",
+    source_url: url, observed_at: "2026-09-19 00:00:00.000", content_hash: id.repeat(64).slice(0, 64),
+    payload_json: JSON.stringify({
+      reporting_year: 2025, party_name_as_published: "Example Party of New Zealand",
+      amendment_labelled: url.includes("amended"), full_text: body.join("\n"),
+    }),
+  });
+  const totalsOnly = [...PARTY_HEADING, ...partySummary({ G: "$ 1,200.00" })];
+  const itemised = [
+    ...PARTY_HEADING,
+    ...partySummary({ A: "$6,000.00" }),
+    ...partyPartAPage("$6,000.00", [...partyRow(1, "Te Rangi Pouaka", "04/06/2025", "$  6,000.00")]),
+  ];
+
+  // Two filings that state only their printed totals: the overlap is counted, both rows are kept, and no view
+  // adds one document's total to the other's.
+  const stated = mapDonationRows([
+    document("a", "https://elections.nz/original.pdf", totalsOnly),
+    document("b", "https://elections.nz/amended.pdf", totalsOnly),
+  ], spec);
+  assert.ok(stated.overlapping_document_parts >= 1, "a part two documents both state is counted, not hidden");
+  assert.equal(stated.rows.filter((r) => r.record_kind === "donation_disclosure_entry").length, 0);
+
+  // One document itemising on its own is ordinary.
+  const alone = mapDonationRows([document("a", "https://elections.nz/original.pdf", itemised)], spec);
+  assert.equal(alone.rows.filter((r) => r.record_kind === "donation_disclosure_entry").length, 1);
+  assert.equal(alone.overlapping_document_parts, 0);
+
+  // Both documents itemising the same part would show a reader one donation as two: refused outright, because
+  // there is no evidence here about which filing replaced which.
+  assert.throws(() => mapDonationRows([
+    document("a", "https://elections.nz/original.pdf", itemised),
+    document("b", "https://elections.nz/amended.pdf", itemised),
+  ], spec), /both publish itemised entries/);
 });

@@ -21,6 +21,22 @@ function total(rows: VersionedExportRow[], key: string): number {
   return rows.reduce((sum, row) => sum + (typeof row.payload[key] === "number" ? (row.payload[key] as number) : 0), 0);
 }
 
+/**
+ * Every counter the two return-disclosure products reconcile on. Named once so the expected side and the
+ * destination side cannot name different things, and so a source that wrote nothing still reports zeros.
+ */
+const DONATION_COUNTERS = [
+  "donation_return_parts", "donation_return_parts_reconciled", "donation_return_parts_with_a_printed_total",
+  "donation_return_parts_total_cents", "donation_disclosures", "donation_disclosures_named",
+  "donation_disclosures_withheld_by_publisher", "donation_disclosures_not_separable",
+  "donation_disclosures_amount_cents", "donation_disclosures_duplicated_entries",
+] as const;
+
+/** Money as whole cents, so a source-to-destination comparison never turns on a float. */
+function cents(rows: VersionedExportRow[], key: string): number {
+  return rows.reduce((sum, row) => sum + (typeof row.payload[key] === "number" ? Math.round((row.payload[key] as number) * 100) : 0), 0);
+}
+
 export async function expectedDestination(loaded: LoadedProduct): Promise<Expected> {
   const source = ELECTION_EXPORT_SOURCES.find((e) => e.product === loaded.product)!.source;
   const now = latest(loaded.rows);
@@ -85,6 +101,32 @@ export async function expectedDestination(loaded: LoadedProduct): Promise<Expect
     case "P17":
       Object.assign(expect, { documents: now.length, finance_return_references: now.length, finance_return_references_image_only: count(now, (r) => r.payload.is_image_only === true) });
       break;
+    // P25 and P26 are the same two record kinds, so they reconcile the same way. Without these the two products
+    // would be checked only by their source-record count, and a projection that wrote no typed row at all - or
+    // wrote a different amount than the export carries - would still reconcile. The money is compared in whole
+    // cents, because that is how the part's own arithmetic gate compares it.
+    case "P25":
+    case "P26": {
+      const parts = kind("donation_return_part");
+      const entries = kind("donation_disclosure_entry");
+      const status = (value: string) => count(entries, (r) => r.payload.donor_name_status === value);
+      Object.assign(expect, {
+        donation_return_parts: parts.length,
+        donation_return_parts_reconciled: count(parts, (r) => r.payload.itemisation_status === "reconciled"),
+        donation_return_parts_with_a_printed_total: count(parts, (r) => typeof r.payload.disclosed_total_nzd === "number"),
+        donation_return_parts_total_cents: cents(parts, "disclosed_total_nzd"),
+        donation_disclosures: entries.length,
+        donation_disclosures_named: status("published"),
+        donation_disclosures_withheld_by_publisher: status("withheld_by_publisher"),
+        donation_disclosures_not_separable: status("not_separable"),
+        donation_disclosures_amount_cents: cents(entries, "disclosed_amount_nzd"),
+        // Two documents of one source may describe the same part of the same filer's return for the same year -
+        // an original and its amendment. Both are held, because both were filed. What must never happen is the
+        // SAME itemised entry arriving twice: that would show a reader one donation as two.
+        donation_disclosures_duplicated_entries: 0,
+      });
+      break;
+    }
     case "C26A":
       Object.assign(expect, { election_official_page_status: now.length, official_page_unavailable: count(now, (r) => r.payload.official_page_status === "official_page_unavailable") });
       break;
@@ -167,6 +209,45 @@ export async function destinationCounts(sql: postgres.Sql): Promise<{ [sourceId:
     published_aggregates_reported_nil: count(rows, (r) => r.value_status === "reported_nil" && Number(r.amount_nzd) === 0),
     published_aggregates_not_reported: count(rows, (r) => r.value_status === "not_reported" && r.amount_nzd === null),
   }));
+  // The two return-disclosure products. Every count is scoped to a source through the source record the row
+  // hangs off, exactly as the others are, and the money is read as whole cents.
+  group(await sql`select r.source_id, p.itemisation_status, p.disclosed_total_nzd from evidence_private.donation_return_parts p
+    join evidence_private.source_records r on r.id = p.source_record_id where r.source_id = any(${ids})`, (rows) => ({
+    donation_return_parts: rows.length,
+    donation_return_parts_reconciled: count(rows, (r) => r.itemisation_status === "reconciled"),
+    donation_return_parts_with_a_printed_total: count(rows, (r) => r.disclosed_total_nzd !== null),
+    donation_return_parts_total_cents: rows.reduce((s, r) => s + Math.round(Number(r.disclosed_total_nzd ?? 0) * 100), 0),
+  }));
+  group(await sql`select r.source_id, d.donor_name_status, d.disclosed_amount_nzd from evidence_private.donation_disclosures d
+    join evidence_private.source_records r on r.id = d.source_record_id where r.source_id = any(${ids})`, (rows) => ({
+    donation_disclosures: rows.length,
+    donation_disclosures_named: count(rows, (r) => r.donor_name_status === "published"),
+    donation_disclosures_withheld_by_publisher: count(rows, (r) => r.donor_name_status === "withheld_by_publisher"),
+    donation_disclosures_not_separable: count(rows, (r) => r.donor_name_status === "not_separable"),
+    donation_disclosures_amount_cents: rows.reduce((s, r) => s + Math.round(Number(r.disclosed_amount_nzd ?? 0) * 100), 0),
+  }));
+  // An original return and its amendment are two documents, and both are held. The same ENTRY arriving from both
+  // would show a reader one donation as two, so it is counted here and expected to be zero. Grouped on what
+  // identifies the disclosure rather than on the document it came from: the filer, the year, the part and the
+  // entry's own printed position.
+  group(await sql`select r.source_id, count(*) as donation_disclosures_duplicated_entries from (
+      select r2.source_id, d.return_kind, d.reporting_year,
+             coalesce(d.party_name_as_published, ''), coalesce(d.candidate_name_as_published, ''),
+             coalesce(d.electorate_as_published, ''), d.disclosure_part, d.entry_index
+        from evidence_private.donation_disclosures d
+        join evidence_private.source_records r2 on r2.id = d.source_record_id
+       where r2.source_id = any(${ids})
+       group by 1, 2, 3, 4, 5, 6, 7, 8
+      having count(distinct d.official_url) > 1
+    ) r group by 1`, (rows) => ({ donation_disclosures_duplicated_entries: Number(rows[0]?.donation_disclosures_duplicated_entries ?? 0) }));
+  // A destination count that is absent is not the same as zero, and a missing key fails its check rather than
+  // passing quietly. A disclosure source that wrote no entry at all still reports an explicit zero for each.
+  for (const entry of ELECTION_EXPORT_SOURCES) {
+    if (entry.product !== "P25" && entry.product !== "P26") continue;
+    const target = (out[entry.source.source_id] ??= {});
+    for (const name of DONATION_COUNTERS) target[name] ??= 0;
+  }
+
   group(await sql`select r.source_id, s.page_status from evidence_private.election_official_page_status s
     join evidence_private.source_record_versions v on v.id = s.evidence_version_id join evidence_private.source_records r on r.id = v.record_id
     where r.source_id = any(${ids})`, (rows) => ({ election_official_page_status: rows.length, official_page_unavailable: count(rows, (r) => r.page_status === "official_page_unavailable") }));
