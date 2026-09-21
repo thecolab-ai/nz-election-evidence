@@ -57,8 +57,10 @@ export function figureWords(scopes: readonly string[] | null | undefined): strin
 }
 
 /**
- * Shown on every page while the DATABASE reports that rows or fields rest on the owner's decision. It states what
- * that decision is and, as plainly, what it is not. Which reviews are outstanding is read from the gate states.
+ * Shown on every page while the DATABASE reports that rows or fields rest on the owner's decision. The warnings a
+ * reader must not be able to miss — which reviews are not on record, and what the decision is not — stay in the
+ * visible line. The exact scope, which runs long, sits in a native disclosure below it: still on every page, still
+ * in the text of the page, but no longer taking a phone's whole first screen before the site's first action.
  */
 export function OwnerOverrideNotice({ status }: { status: readonly SurfaceStatusRow[] | undefined }) {
   const basis = ownerBasis(status)
@@ -68,38 +70,53 @@ export function OwnerOverrideNotice({ status }: { status: readonly SurfaceStatus
   const figures = figureWords(row.owner_figure_scopes)
   return (
     <div role="note" aria-label="Basis of publication" data-testid="owner-override-notice" className="border-b border-caution-foreground/30 bg-caution text-caution-foreground">
-      <div className="mx-auto flex max-w-[92rem] items-start gap-2 px-5 py-2.5 text-[13px] lg:px-8">
-        <ShieldAlert aria-hidden="true" className="mt-0.5 size-3.5 shrink-0" />
-        <p className="max-w-5xl">
-          <strong className="font-semibold">
-            {rowsOnOwnerDecision ? 'Published on the repository owner’s decision, ahead of independent review.' : 'Names and titles are shown on the repository owner’s decision.'}
-          </strong>{' '}
-          {outstanding.length > 0 ? (
-            <span data-testid="owner-notice-gates">
-              Not yet on record: {outstanding.join(' and ')}. {outstanding.length > 1 ? 'Those release gates read' : 'That release gate reads'} closed, and the owner’s decision
-              does not open or replace {outstanding.length > 1 ? 'them' : 'it'}.{' '}
-            </span>
-          ) : null}
-          No publisher has approved or licensed the fields shown on this decision. Names, parties, seats, titles
-          {figures.length > 0 ? <span data-testid="owner-notice-figures">, and {figures.join(', ')},</span> : null} appear as each official
-          source published them, each with a link to that source, and each source’s page lists the fields shown for it.{' '}
-          {showsDonationFacts(row.owner_figure_scopes) ? (
-            <span data-testid="owner-notice-donations">
-              Donations are shown as the filed return discloses them. No street address, contact detail or signature is held anywhere in this
-              store, an identity the law withholds stays withheld, and an entry is shown only where the entries of its part add up exactly to
-              the total the Commission’s own form prints.{' '}
-            </span>
-          ) : (
-            <span data-testid="owner-notice-no-donations">
-              Nothing is read from inside a finance return, and no donor is named anywhere: this project has never collected a donation record.{' '}
-            </span>
-          )}
-          Owner decision{' '}
-          <span className="font-mono">{row.owner_authorization_id}</span> of {formatDate(row.owner_decided_on)}, in force until{' '}
-          {formatDate(row.owner_expires_on)}.{' '}
-          <ExternalLink href={`${REPO_BASE}governance/owner-authorizations.json`}>Read the decision and its limits</ExternalLink>{' '}
-          <ExternalLink href={`${REPO_BASE}REVIEW-REGISTER.md`}>Review register</ExternalLink>
+      <div className="mx-auto max-w-[92rem] px-5 py-2 text-[13px] lg:px-8">
+        <p data-testid="owner-notice-summary" className="flex max-w-5xl items-start gap-2">
+          <ShieldAlert aria-hidden="true" className="mt-0.5 size-3.5 shrink-0" />
+          <span>
+            <strong className="font-semibold">
+              {rowsOnOwnerDecision ? 'Published on the repository owner’s decision, ahead of independent review.' : 'Names and titles are shown on the repository owner’s decision.'}
+            </strong>{' '}
+            {outstanding.length > 0 ? <span data-testid="owner-notice-gates">Not yet on record: {outstanding.join(' and ')}. </span> : null}
+            No publisher has approved or licensed the fields shown on this decision, and the decision is not a legal
+            approval, a publisher’s permission or a rights clearance.
+          </span>
         </p>
+        <details data-testid="owner-notice-scope" className="ml-[1.375rem] max-w-5xl">
+          <summary className="cursor-pointer py-0.5 underline underline-offset-2">What this decision covers, and what it does not</summary>
+          <div className="space-y-1.5 pb-1">
+            {outstanding.length > 0 ? (
+              <p data-testid="owner-notice-gates-detail">
+                {outstanding.length > 1 ? 'Those release gates read' : 'That release gate reads'} closed, and the owner’s decision does not open or
+                replace {outstanding.length > 1 ? 'them' : 'it'}.
+              </p>
+            ) : null}
+            <p>
+              Names, parties, seats, titles
+              {figures.length > 0 ? <span data-testid="owner-notice-figures">, and {figures.join(', ')},</span> : null} appear as each official
+              source published them, each with a link to that source, and each source’s page lists the fields shown for it.
+            </p>
+            {showsDonationFacts(row.owner_figure_scopes) ? (
+              <p data-testid="owner-notice-donations">
+                Donations are shown as the filed return discloses them. No street address, contact detail or signature is held anywhere in this
+                store, an identity the law withholds stays withheld, and an entry is shown only where the entries of its part add up exactly to
+                the total the Commission’s own form prints.
+              </p>
+            ) : (
+              <p data-testid="owner-notice-no-donations">
+                Nothing read from inside a filed finance return is published on this decision: no donor name and no donated amount is shown to
+                any reader here. Whatever returns this store holds stay withheld until a decision releases them, and this decision does not
+                release them.
+              </p>
+            )}
+            <p>
+              Owner decision <span className="font-mono">{row.owner_authorization_id}</span> of {formatDate(row.owner_decided_on)}, in force
+              until {formatDate(row.owner_expires_on)}.{' '}
+              <ExternalLink href={`${REPO_BASE}governance/owner-authorizations.json`}>Read the decision and its limits</ExternalLink>{' '}
+              <ExternalLink href={`${REPO_BASE}REVIEW-REGISTER.md`}>Review register</ExternalLink>
+            </p>
+          </div>
+        </details>
       </div>
     </div>
   )

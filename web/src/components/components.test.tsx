@@ -118,8 +118,8 @@ describe('owner override: stated as what it is, never as a review or a publisher
     expect(text).toContain('Donations are shown as the filed return discloses them.')
     expect(text).toContain('No street address, contact detail or signature is held anywhere in this store')
     expect(text).toContain('an identity the law withholds stays withheld')
-    // The older sentence claimed no donation record existed. It must not appear once one does.
-    expect(text).not.toContain('this project has never collected a donation record')
+    // The older sentence claimed no donation record existed. It must not appear at all, in either branch.
+    expect(text).not.toContain('never collected a donation record')
     expect(showsDonationFacts(['published_poll_figures'])).toBe(false)
     expect(showsDonationFacts(null)).toBe(false)
   })
@@ -130,7 +130,7 @@ describe('owner override: stated as what it is, never as a review or a publisher
     expect(text).toContain('the donation, expense and loan totals the Electoral Commission prints on its own public index pages')
     expect(text).toContain('the published figures of official statistics')
     expect(text).toContain('the party-vote percentages each pollster published, each shown beside whether that pollster disclosed a methodology')
-    expect(text).toContain('Nothing is read from inside a finance return, and no donor is named anywhere')
+    expect(text).toContain('Nothing read from inside a filed finance return is published on this decision')
     expect(screen.getByTestId('owner-override-notice').querySelector('[data-testid="owner-notice-donations"]')).toBeNull()
     // A scope the database does not report is not claimed, and an unknown kind is not invented.
     expect(figureWords(['statistical_facts'])).toEqual(['the published figures of official statistics'])
@@ -138,14 +138,14 @@ describe('owner override: stated as what it is, never as a review or a publisher
     expect(figureWords(null)).toEqual([])
     const none = render(<OwnerOverrideNotice status={both({})} />).container
     expect(none.querySelector('[data-testid="owner-notice-figures"]')).toBeNull()
-    expect(none.textContent).toContain('no donor is named anywhere')
+    expect(none.textContent).toContain('no donor name and no donated amount is shown to any reader here')
   })
   it('says only what the gates say: one review on record leaves only the other named as outstanding', () => {
     render(<OwnerOverrideNotice status={[gate({ state: 'open' }), gate({ gate_key: 'r8_accountable_legal_entity' })]} />)
     const gates = screen.getByTestId('owner-notice-gates').textContent ?? ''
     expect(gates).toContain('(R8)')
     expect(gates).not.toContain('(R10)')
-    expect(gates).toContain('That release gate reads closed')
+    expect(screen.getByTestId('owner-notice-gates-detail').textContent).toContain('That release gate reads closed')
   })
   it('stays up after the reviews are recorded while fields are still shown on the owner decision, without claiming gates are closed', () => {
     const recorded = both({ state: 'open', release_basis: 'reviews_recorded', owner_fields_in_force: true })
@@ -156,6 +156,51 @@ describe('owner override: stated as what it is, never as a review or a publisher
     expect(text).toContain('No publisher has approved or licensed the fields shown')
     expect(text).not.toContain('closed')
     expect(screen.queryByTestId('owner-notice-gates')).toBeNull()
+    expect(screen.queryByTestId('owner-notice-gates-detail')).toBeNull()
+  })
+  it('keeps the warnings in the visible line and the long scope in a closed native disclosure (mobile first screen)', () => {
+    // A phone showed this notice as ~20 lines of prose above the site's first action. The warnings a reader must not
+    // miss stay unconditionally visible; only the exact scope moved, and it moved into the page, not out of it.
+    render(<OwnerOverrideNotice status={both({ owner_figure_scopes: ['official_result_figures', 'published_poll_figures'] })} />)
+    const notice = screen.getByTestId('owner-override-notice')
+    const summary = screen.getByTestId('owner-notice-summary')
+    expect(summary.closest('details')).toBeNull()
+    for (const phrase of ['ahead of independent review', 'Not yet on record', '(R10)', '(R8)',
+                          'No publisher has approved or licensed the fields shown on this decision',
+                          'not a legal approval', 'a publisher’s permission or a rights clearance']) {
+      expect(summary.textContent).toContain(phrase)
+    }
+    // The visible line stays short enough to leave a phone's first screen usable; the scope it replaced did not.
+    expect((summary.textContent ?? '').length).toBeLessThan(400)
+    const scope = screen.getByTestId('owner-notice-scope')
+    expect(scope.tagName).toBe('DETAILS')
+    expect(scope.hasAttribute('open')).toBe(false)
+    expect(scope.querySelector('summary')?.textContent).toBe('What this decision covers, and what it does not')
+    // Closed is not gone: every governance sentence, the decision's identity and both links are still in the page.
+    for (const inside of ['Those release gates read closed', 'does not open or replace them', 'Names, parties, seats, titles',
+                          'the vote counts, shares, seat numbers and list positions', 'OWNER-AUTH-2026-09-20-01', 'in force until']) {
+      expect(notice.textContent).toContain(inside)
+    }
+    expect(Array.from(scope.querySelectorAll('a')).map((a) => a.getAttribute('href'))).toEqual([
+      'https://github.com/thecolab-ai/nz-election-evidence/blob/main/governance/owner-authorizations.json',
+      'https://github.com/thecolab-ai/nz-election-evidence/blob/main/REVIEW-REGISTER.md',
+    ])
+  })
+  it('says what is public about donations, and never that no donation record was ever collected', () => {
+    // The store's donation records are loaded privately; the public surface shows no donor name and no amount. A
+    // categorical claim about what this project has ever collected is not a claim this component can make.
+    for (const scopes of [[], ['official_finance_figures'], ['published_donation_facts']]) {
+      const { container, unmount } = render(<OwnerOverrideNotice status={both({ owner_figure_scopes: scopes })} />)
+      expect(container.textContent).not.toMatch(/never collected|has never held|no donation record exists/i)
+      unmount()
+    }
+    render(<OwnerOverrideNotice status={both({ owner_figure_scopes: ['official_finance_figures'] })} />)
+    const withheld = screen.getByTestId('owner-notice-no-donations').textContent ?? ''
+    expect(withheld).toContain('Nothing read from inside a filed finance return is published on this decision')
+    expect(withheld).toContain('no donor name and no donated amount is shown to any reader here')
+    // What is withheld stays withheld: the wording must not read as a release, and must not deny that records exist.
+    expect(withheld).toContain('stay withheld until a decision releases them, and this decision does not release them')
+    expect(screen.queryByTestId('owner-notice-donations')).toBeNull()
   })
   it('is absent when nothing rests on an owner decision, and before the database has answered', () => {
     expect(ownerBasis(undefined)).toBeNull()
