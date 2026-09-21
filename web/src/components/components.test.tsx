@@ -2,7 +2,8 @@ import { render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 import { renderCell } from '@/routes/datasets'
 import { SURFACE_STATUS_COLUMNS } from '@/routes/access'
-import { coverageCounts, heldFor, NOT_PUBLISHED_FOR_2026, RELEASE_COVERAGE } from '@/lib/release-coverage'
+import { coverageCounts, heldFor, ledgerRouteIds, NOT_PUBLISHED_FOR_2026, RELEASE_COVERAGE } from '@/lib/release-coverage'
+import { RECORDS_NOT_COUNTED_HERE, RELEASE_COVERAGE_SELECT, routeWords } from './release-coverage'
 import { AccountabilityFooter } from './footer'
 import { figureWords, OwnerOverrideNotice, ownerBasis, showsDonationFacts } from './owner-override-notice'
 import { PREVIEW_BANNER, PreviewBanner } from './shell'
@@ -178,31 +179,71 @@ describe('release coverage keeps routes and held data apart', () => {
     for (const row of RELEASE_COVERAGE) {
       // A product without a working refresh route always says why.
       if (row.refresh !== 'scheduled' && row.refresh !== 'operator_run') expect(row.refresh_gap, row.product_id).toBeTruthy()
-      // Nothing is held until the database says so.
-      expect(heldFor(row, []).held, row.product_id).toBe(false)
+      // Nothing is held until the database says so, and with no rows at all nothing is undetermined either.
+      expect(heldFor(row, []), row.product_id).toMatchObject({ held: false, routes: [], undetermined: [] })
     }
   })
-  it('held is read from the store: ledger records, or typed observations for a statistics source, never a guess', () => {
+  it('held is read from the store: typed observations for a statistics source, never a guess', () => {
     const p23 = RELEASE_COVERAGE.find((row) => row.product_id === 'P23')!
-    const empty = heldFor(p23, [{ source_id: 'stats_tenancy_rental_bonds', live_records: 0, statistical_observations: null, statistical_catalogue_entries: null, last_success_at: null }])
-    expect(empty).toMatchObject({ held: false, sources_seen: 1, routes: [] })
-    const loaded = heldFor(p23, [{ source_id: 'stats_tenancy_rental_bonds', live_records: 0, statistical_observations: '57888', statistical_catalogue_entries: 4, last_success_at: '2026-09-20T10:00:00Z' }])
+    // A source that has never been loaded reports a null observation count, which a statistics source and a ledger
+    // source share; until the probe answers, the honest reading is undetermined rather than empty.
+    const never = heldFor(p23, [{ source_id: 'stats_tenancy_rental_bonds', statistical_observations: null, statistical_catalogue_entries: null, last_success_at: null }])
+    expect(never).toMatchObject({ held: false, sources_seen: 1, routes: [], undetermined: ['stats_tenancy_rental_bonds'] })
+    const empty = heldFor(p23, [{ source_id: 'stats_tenancy_rental_bonds', statistical_observations: 0, statistical_catalogue_entries: 0, last_success_at: '2026-09-20T10:00:00Z' }])
+    // Loaded and counted at zero is an answer the row itself carries: not held, and nothing left to probe.
+    expect(empty).toMatchObject({ held: false, sources_seen: 1, routes: [], undetermined: [] })
+    const loaded = heldFor(p23, [{ source_id: 'stats_tenancy_rental_bonds', statistical_observations: '57888', statistical_catalogue_entries: 4, last_success_at: '2026-09-20T10:00:00Z' }])
     expect(loaded.held).toBe(true)
-    expect(loaded.routes).toEqual([{ source_id: 'stats_tenancy_rental_bonds', ledger_records: 0, statistical_observations: 57888, catalogue_entries: 4 }])
+    expect(loaded.routes).toEqual([{ source_id: 'stats_tenancy_rental_bonds', ledger_records: null, statistical_observations: 57888, catalogue_entries: 4, holds_records: false }])
     // A source of another product never counts towards this one.
-    expect(heldFor(p23, [{ source_id: 'stats_msd_benefits', live_records: 0, statistical_observations: 903, statistical_catalogue_entries: 26, last_success_at: '2026-09-20T10:00:00Z' }]).held).toBe(false)
+    expect(heldFor(p23, [{ source_id: 'stats_msd_benefits', statistical_observations: 903, statistical_catalogue_entries: 26, last_success_at: '2026-09-20T10:00:00Z' }]).held).toBe(false)
   })
-  it('never adds overlapping routes of one product together: each route keeps its own count', () => {
+  it('a ledger route is held on an existence probe, and carries no record count at all', () => {
     const p24 = RELEASE_COVERAGE.find((row) => row.product_id === 'P24')!
-    const held = heldFor(p24, [
-      { source_id: 'parliament_export_written_questions', live_records: 187956, statistical_observations: null, statistical_catalogue_entries: null, last_success_at: '2026-09-20T10:00:00Z' },
-      { source_id: 'nz_parliament_written_questions_recent', live_records: 2000, statistical_observations: null, statistical_catalogue_entries: null, last_success_at: '2026-09-20T11:00:00Z' },
-    ])
-    expect(held.routes.map((r) => [r.source_id, r.ledger_records])).toEqual([['parliament_export_written_questions', 187956], ['nz_parliament_written_questions_recent', 2000]])
+    const rows = [
+      { source_id: 'parliament_export_written_questions', statistical_observations: null, statistical_catalogue_entries: null, last_success_at: '2026-09-20T10:00:00Z' },
+      { source_id: 'nz_parliament_written_questions_recent', statistical_observations: null, statistical_catalogue_entries: null, last_success_at: '2026-09-20T11:00:00Z' },
+    ]
+    const held = heldFor(p24, rows, new Map([['parliament_export_written_questions', true], ['nz_parliament_written_questions_recent', true]]))
+    expect(held.routes.map((r) => r.source_id)).toEqual(['parliament_export_written_questions', 'nz_parliament_written_questions_recent'])
+    // The count that timed out for real readers is not read, not summed, and not stood in for by a zero.
+    expect(held.routes.every((r) => r.ledger_records === null)).toBe(true)
+    expect(JSON.stringify(held)).not.toContain('187956')
     expect(JSON.stringify(held)).not.toContain('189956')
-    // A route that ran and holds nothing is not counted as holding anything.
-    const ranEmpty = heldFor(p24, [{ source_id: 'nz_parliament_written_questions_recent', live_records: 0, statistical_observations: null, statistical_catalogue_entries: null, last_success_at: '2026-09-20T11:00:00Z' }])
-    expect(ranEmpty).toMatchObject({ held: false, routes: [] })
+    // A route the probe answered no for holds nothing; a route it answered for at all is never undetermined.
+    const ranEmpty = heldFor(p24, rows, new Map([['parliament_export_written_questions', false], ['nz_parliament_written_questions_recent', false]]))
+    expect(ranEmpty).toMatchObject({ held: false, routes: [], undetermined: [] })
+  })
+  it('a ledger route nothing answered for is undetermined, never reported as empty', () => {
+    const p24 = RELEASE_COVERAGE.find((row) => row.product_id === 'P24')!
+    const rows = [{ source_id: 'parliament_export_written_questions', statistical_observations: null, statistical_catalogue_entries: null, last_success_at: '2026-09-20T10:00:00Z' }]
+    const unknown = heldFor(p24, rows)
+    expect(unknown).toMatchObject({ held: false, routes: [], undetermined: ['parliament_export_written_questions'] })
+    // Held and not-held are both claims; this is neither, so the panel must be able to tell the three apart.
+    expect(unknown.undetermined.length > 0 && !unknown.held).toBe(true)
+    // One answered route is enough for the product to read as held; the unanswered one is not called empty.
+    const partly = heldFor(p24, [...rows, { source_id: 'nz_parliament_written_questions_recent', statistical_observations: null, statistical_catalogue_entries: null, last_success_at: null }], new Map([['parliament_export_written_questions', true]]))
+    expect(partly).toMatchObject({ held: true, undetermined: ['nz_parliament_written_questions_recent'] })
+  })
+  it('probes only the ledger routes the store returned: statistics rows already carry exact figures', () => {
+    const ids = ledgerRouteIds([
+      { source_id: 'parliament_export_written_questions', statistical_observations: null, statistical_catalogue_entries: null, last_success_at: null },
+      { source_id: 'stats_tenancy_rental_bonds', statistical_observations: 0, statistical_catalogue_entries: 0, last_success_at: null },
+      { source_id: 'not_a_catalogue_route', statistical_observations: null, statistical_catalogue_entries: null, last_success_at: null },
+    ])
+    expect(ids).toEqual(['parliament_export_written_questions'])
+    // A source whose rights allow no release is not returned by the view, so it is never asked about.
+    expect(ledgerRouteIds([])).toEqual([])
+  })
+  it('the panel does not ask the store for the count that timed out, and says where it is counted instead', () => {
+    expect(RELEASE_COVERAGE_SELECT.split(',')).not.toContain('live_records')
+    expect(RELEASE_COVERAGE_SELECT.split(',')).toEqual(['source_id', 'statistical_observations', 'statistical_catalogue_entries', 'last_success_at'])
+    const words = routeWords({ source_id: 'parliament_export_written_questions', ledger_records: null, statistical_observations: 0, catalogue_entries: 0, holds_records: true })
+    expect(words).toBe(RECORDS_NOT_COUNTED_HERE)
+    expect(words).toMatch(/counted on the source’s own page/)
+    expect(words).not.toMatch(/\d/)
+    // Statistics figures are written by the loader and read from a summary row, so they stay exact.
+    expect(routeWords({ source_id: 'stats_tenancy_rental_bonds', ledger_records: null, statistical_observations: 57888, catalogue_entries: 4, holds_records: false })).toBe('57,888 observations · 4 catalogue entries')
   })
   it('says plainly what the 2026 election routes do not publish', () => {
     expect(NOT_PUBLISHED_FOR_2026.some((line) => /nominations/.test(line) && /unknown/.test(line))).toBe(true)

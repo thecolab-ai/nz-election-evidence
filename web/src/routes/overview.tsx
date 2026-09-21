@@ -4,10 +4,24 @@ import { Note, PageHeader, Section } from '@/components/page'
 import { ReleaseCoveragePanel } from '@/components/release-coverage'
 import { EmptyBlock, ErrorBlock, LoadingBlock } from '@/components/states'
 import { formatCount, formatDateTime, humanise, SCOPE_LABELS, SCOPE_ORDER, type ViewScope } from '@/lib/format'
-import { coverageFromSources, type CoverageSource } from '@/lib/coverage'
+import { coverageFromSources, type CoverageSource, type ScopeCoverage } from '@/lib/coverage'
 import { RIGHTS_NOTE } from '@/lib/format'
 import { useRowsQuery } from '@/lib/queries'
-import type { CoverageRow, ReleaseGateRow, RightsRow } from '@/lib/types'
+import type { ReleaseGateRow, RightsRow, SourceRow } from '@/lib/types'
+
+/**
+ * Every column this page's coverage read asks for, and no other. `live_records` is deliberately absent: it is a
+ * correlated `count(*)` over the record table for each source row, one source holds 187,956 records, and asking
+ * for it here made the first anonymous read of this page after a quiet period return HTTP 500 (`57014`, statement
+ * timeout) in 3.84 s against the live store. The same read without it answered in 0.17 s. The count is not guessed
+ * or cached in its place: a source's own page counts that one source, and the scope cards say so.
+ */
+export const OVERVIEW_COVERAGE_COLUMNS = ['view_scope', 'freshness_status', 'last_success_at'] as const satisfies readonly (keyof SourceRow)[]
+
+export const OVERVIEW_COVERAGE_SELECT = OVERVIEW_COVERAGE_COLUMNS.join(',')
+
+/** Said in place of a record count this page does not read. A blank is not a zero, and it is never rounded or guessed. */
+export const RECORDS_COUNTED_PER_SOURCE = 'Not counted here — each source’s own page counts its own records'
 
 const SCOPE_NOTES: Record<ViewScope, string> = {
   primary_2026: 'Sources about the 7 November 2026 General Election. This is the primary view.',
@@ -20,7 +34,7 @@ const SCOPE_NOTES: Record<ViewScope, string> = {
 
 const ELECTION_SCOPES: ViewScope[] = ['primary_2026', 'baseline_2023', 'finance_2025']
 
-function ScopeCard({ scope, row }: { scope: ViewScope; row: CoverageRow | undefined }) {
+function ScopeCard({ scope, row }: { scope: ViewScope; row: ScopeCoverage | undefined }) {
   const headingId = `scope-${scope}`
   return (
     <article aria-labelledby={headingId} data-testid={`scope-${scope}`} className="flex flex-col border border-border bg-paper">
@@ -38,10 +52,6 @@ function ScopeCard({ scope, row }: { scope: ViewScope; row: CoverageRow | undefi
             <dd className="num text-xl">{formatCount(row.sources)}</dd>
           </div>
           <div>
-            <dt className="eyebrow">Live records</dt>
-            <dd className="num text-xl">{formatCount(row.live_records)}</dd>
-          </div>
-          <div>
             <dt className="eyebrow">With a successful run</dt>
             <dd className="num">{formatCount(row.sources_with_a_successful_run)}</dd>
           </div>
@@ -52,6 +62,10 @@ function ScopeCard({ scope, row }: { scope: ViewScope; row: CoverageRow | undefi
           <div className="col-span-2">
             <dt className="eyebrow">Latest successful retrieval</dt>
             <dd>{formatDateTime(row.latest_successful_retrieval, 'no successful retrieval yet')}</dd>
+          </div>
+          <div className="col-span-2">
+            <dt className="eyebrow">Records held</dt>
+            <dd className="text-[13px] text-muted-foreground" data-testid="scope-records-not-counted">{RECORDS_COUNTED_PER_SOURCE}</dd>
           </div>
         </dl>
       ) : (
@@ -68,7 +82,7 @@ function ScopeCard({ scope, row }: { scope: ViewScope; row: CoverageRow | undefi
 
 export function OverviewPage() {
   // Derived from the rights-filtered sources view; the database publishes no cross-source aggregate.
-  const coverage = useRowsQuery<CoverageSource>({ view: 'sources', select: 'view_scope,freshness_status,last_success_at,live_records', key: ['overview-coverage'], limit: 200 })
+  const coverage = useRowsQuery<CoverageSource>({ view: 'sources', select: OVERVIEW_COVERAGE_SELECT, key: ['overview-coverage'], limit: 200 })
   const gates = useRowsQuery<ReleaseGateRow>({ view: 'release_gates', select: 'gate_key,state,evidence_reference,decided_at', key: ['overview'], limit: 20, build: (q) => q.order('gate_key') })
   const rights = useRowsQuery<Pick<RightsRow, 'rights_id' | 'review_status'>>({ view: 'rights_register', select: 'rights_id,review_status', key: ['overview'], limit: 200 })
 
@@ -93,6 +107,13 @@ export function OverviewPage() {
       </Section>
 
       <Section id="election-scopes" title="Election scopes" description="Three scopes, always kept apart.">
+        <div className="mb-3">
+          <Note testId="records-not-counted-note">
+            These cards count sources, not records. Counting the records of every source at once is the slowest query
+            this store serves and has timed out for real readers, so it is not asked for here. Each source’s own page
+            counts its own records. A figure this page does not read is unknown, not zero.
+          </Note>
+        </div>
         {coverage.isPending ? (
           <LoadingBlock label="Loading coverage" rows={4} />
         ) : coverage.isError ? (
