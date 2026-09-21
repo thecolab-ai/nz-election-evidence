@@ -410,6 +410,8 @@ export interface SurfaceStatusRow {
   owner_expires_on: string | null
   /** True while any field is shown on an owner decision, whatever releases the rows. */
   owner_fields_in_force: boolean | null
+  /** Which kinds of published figure rest on a current owner decision, by scope kind. Empty when none does. */
+  owner_figure_scopes: string[] | null
 }
 
 export interface DatasetCatalogueRow {

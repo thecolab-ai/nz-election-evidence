@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest'
 import { renderCell } from '@/routes/datasets'
 import { coverageCounts, heldFor, NOT_PUBLISHED_FOR_2026, RELEASE_COVERAGE } from '@/lib/release-coverage'
 import { AccountabilityFooter } from './footer'
-import { OwnerOverrideNotice, ownerBasis } from './owner-override-notice'
+import { figureWords, OwnerOverrideNotice, ownerBasis } from './owner-override-notice'
 import { PREVIEW_BANNER, PreviewBanner } from './shell'
 import { EmptyBlock, ErrorBlock } from './states'
 import { SummaryCard } from './summary-card'
@@ -88,7 +88,7 @@ describe('owner override: stated as what it is, never as a review or a publisher
   const gate = (patch: Partial<SurfaceStatusRow>): SurfaceStatusRow => ({
     gate_key: 'r10_public_surface_review', state: 'closed', evidence_reference: null, decided_at: null, public_rows_released: true,
     release_basis: 'owner_override', owner_authorization_id: 'OWNER-AUTH-2026-09-20-01', owner_decided_on: '2026-09-20', owner_expires_on: '2026-11-06',
-    owner_fields_in_force: true, ...patch,
+    owner_fields_in_force: true, owner_figure_scopes: [], ...patch,
   })
   const both = (patch: Partial<SurfaceStatusRow>) => [gate(patch), gate({ ...patch, gate_key: 'r8_accountable_legal_entity' })]
   it('names the decision, its dates, the reviews still outstanding (read from the gates) and the absence of any publisher approval', () => {
@@ -101,6 +101,21 @@ describe('owner override: stated as what it is, never as a review or a publisher
     const hrefs = Array.from(screen.getByTestId('owner-override-notice').querySelectorAll('a')).map((a) => a.getAttribute('href'))
     expect(hrefs).toContain('https://github.com/thecolab-ai/nz-election-evidence/blob/main/governance/owner-authorizations.json')
     expect(hrefs).toContain('https://github.com/thecolab-ai/nz-election-evidence/blob/main/REVIEW-REGISTER.md')
+  })
+  it('names the kinds of figure that rest on the decision, from the database, and never poll figures', () => {
+    render(<OwnerOverrideNotice status={both({ owner_figure_scopes: ['official_finance_figures', 'official_result_figures', 'statistical_facts'] })} />)
+    const text = screen.getByTestId('owner-override-notice').textContent ?? ''
+    expect(text).toContain('the vote counts, shares, seat numbers and list positions the official election-results publications printed')
+    expect(text).toContain('the donation, expense and loan totals the Electoral Commission prints on its own public index pages')
+    expect(text).toContain('the published figures of official statistics')
+    expect(text).toContain('Poll figures and sample sizes are not shown, and nothing is read from inside a finance return')
+    // A scope the database does not report is not claimed, and an unknown kind is not invented.
+    expect(figureWords(['statistical_facts'])).toEqual(['the published figures of official statistics'])
+    expect(figureWords(['something_new', null as unknown as string])).toEqual([])
+    expect(figureWords(null)).toEqual([])
+    const none = render(<OwnerOverrideNotice status={both({})} />).container
+    expect(none.querySelector('[data-testid="owner-notice-figures"]')).toBeNull()
+    expect(none.textContent).toContain('Poll figures and sample sizes are not shown')
   })
   it('says only what the gates say: one review on record leaves only the other named as outstanding', () => {
     render(<OwnerOverrideNotice status={[gate({ state: 'open' }), gate({ gate_key: 'r8_accountable_legal_entity' })]} />)

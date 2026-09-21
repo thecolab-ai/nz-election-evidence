@@ -1,13 +1,15 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { test } from "node:test";
-import { authorizationProblems, deployAuthorization, FORBIDDEN_FIELD, MAX_DAYS_IN_FORCE, type RegisteredSource, scopesInForce, STATISTICAL_FACT_FIELDS, type AuthorizationFile } from "./owner_authorization.ts";
+import { authorizationProblems, deployAuthorization, FIGURE_REGISTRIES, FINANCE_FIGURE_FIELDS, FORBIDDEN_FIELD, MAX_DAYS_IN_FORCE, type RegisteredSource, RESULT_FIGURE_FIELDS, scopesInForce, SOURCE_FIELD_EXCEPTIONS, STATISTICAL_FACT_FIELDS, type AuthorizationFile } from "./owner_authorization.ts";
 import { gate, gateWithOwnerOverride, registerRows, unparsedRegisterLines } from "./release_gate.ts";
 
 const root = new URL("../", import.meta.url);
 const HEADER = "| Date | Surface | Reviewed by | Red lines checked | Outcome | Notes |\n|---|---|---|---|---|---|\n";
 const row = (surface: string, by: string, outcome: string, date = "2026-09-20") => `| ${date} | \`${surface}\` — x | ${by} | R1–R10 | ${outcome} | x |\n`;
 const PENDING = HEADER + row("explorer-pages", "Not appointed", "**PENDING — NOT REVIEWED**") + row("evidence-store", "Not appointed", "**PENDING — NOT REVIEWED**");
+/** The quoted items of a SQL `in (...)` list or a single quoted literal, in the order the migration writes them. */
+const tokens = (sqlList: string) => sqlList.split(",").map((t) => t.trim().replace(/'/g, "")).filter((t) => t.length > 0);
 
 function fixture(patch: (file: AuthorizationFile) => void = () => {}): AuthorizationFile {
   const file: AuthorizationFile = {
@@ -152,8 +154,8 @@ test("an invalid file authorizes nothing: no expiry, too long, no source, wildca
   }
 });
 
-test("private denial: contact data, bodies, images, figures and publisher identifiers can never be owner-released", () => {
-  for (const field of ["email", "contact_email", "phone", "postal_address", "contact_details", "body", "release_text", "body_html", "source_passage", "description", "summary", "portrait_image", "votes", "vote_share", "list_rank", "seats_won", "safe_payload", "donor_name", "external_id", "external_record_id", "publisher_item_id", "twitter_handle"]) {
+test("private denial: contact data, bodies, images and figures can never be released by a source_fields decision", () => {
+  for (const field of ["email", "contact_email", "phone", "postal_address", "contact_details", "body", "release_text", "body_html", "source_passage", "description", "summary", "portrait_image", "votes", "vote_share", "list_rank", "seats_won", "safe_payload", "donor_name", "twitter_handle"]) {
     assert.ok(FORBIDDEN_FIELD.test(field), field);
     const file = fixture((f) => { (f.authorizations[0]!.scopes[2] as { fields: string[] }).fields = ["name_at_source", field]; });
     assert.match(authorizationProblems(file).join("\n"), /can never be released/, field);
@@ -161,6 +163,21 @@ test("private denial: contact data, bodies, images, figures and publisher identi
   }
   for (const field of ["name_at_source", "member_name", "party_label", "electorate_name_at_source", "representation", "title", "bill_number", "current_stage", "public_page_url", "candidacy_type", "identity_link_status", "relationship"]) {
     assert.equal(FORBIDDEN_FIELD.test(field), false, field);
+  }
+});
+
+test("the exception list is closed: these seven names match the rule without being the thing it protects", () => {
+  // Each still matches the pattern, and each is allowed only because it is named in the closed exception list.
+  for (const field of SOURCE_FIELD_EXCEPTIONS) {
+    assert.ok(FORBIDDEN_FIELD.test(field), `${field} still matches the forbidden pattern`);
+    const file = fixture((f) => { (f.authorizations[0]!.scopes[2] as { fields: string[] }).fields = ["name_at_source", field]; });
+    assert.deepEqual(authorizationProblems(file), [], field);
+  }
+  // Neighbours of the exceptions are NOT excepted: the list is names, not prefixes.
+  for (const field of ["external_id_hash", "publisher_item_id_hash", "source_date_text_raw", "body_text", "image_only", "contact_kind"]) {
+    assert.equal((SOURCE_FIELD_EXCEPTIONS as readonly string[]).includes(field), false, field);
+    const file = fixture((f) => { (f.authorizations[0]!.scopes[2] as { fields: string[] }).fields = ["name_at_source", field]; });
+    assert.match(authorizationProblems(file).join("\n"), /can never be released/, field);
   }
 });
 
@@ -221,14 +238,98 @@ test("statistical facts are for registered statistics sources only, beside the r
   assert.match(authorizationProblems(both, registry).join("\n"), /second statistical_facts decision/);
 });
 
-test("the database constraints of the unified migration and this tool agree on both field rules", async () => {
-  const sql = await readFile(new URL("supabase/migrations/20260921040100_unified_import.sql", root), "utf-8");
-  const forbidden = /owner_field_scope_forbidden\s+check \(scope_kind is distinct from 'source_fields' or field_token !~ '([^']+)'\)/.exec(sql);
+// Published figures: official election results and official finance totals, each its own scope ------------------------
+
+const RESULTS_SOURCE: RegisteredSource = { source_id: "fixture_results", rights_id: "RIGHTS-01", view_scope: "baseline_2023", registry_key: "election_2023_results" };
+const FINANCE_SOURCE: RegisteredSource = { source_id: "fixture_finance", rights_id: "RIGHTS-04", view_scope: "finance_2025", registry_key: "party_finance_returns" };
+const FIGURE_REGISTRY = [RESULTS_SOURCE, FINANCE_SOURCE, STATS_SOURCE, POLL_SOURCE, FIXTURE_SOURCE];
+const figures = (scope: "official_result_figures" | "official_finance_figures", patch: Partial<{ source_id: string; rights_id: string; fields: string[]; basis: string }> = {}) =>
+  fixture((f) => {
+    const base = scope === "official_result_figures"
+      ? { source_id: "fixture_results", rights_id: "RIGHTS-01", fields: ["votes", "value_status"] }
+      : { source_id: "fixture_finance", rights_id: "RIGHTS-04", fields: ["amount_nzd", "value_status"] };
+    f.authorizations[0]!.scopes.push({ scope, ...base, basis: "TEST FIXTURE: figures exactly as the official published table prints them, with the official link.", ...patch });
+  });
+
+test("a figure scope releases the numbers the descriptive scope cannot, and only from its closed list", () => {
+  for (const field of [...RESULT_FIGURE_FIELDS, ...FINANCE_FIGURE_FIELDS]) {
+    if ((SOURCE_FIELD_EXCEPTIONS as readonly string[]).includes(field)) continue;
+    const file = fixture((f) => { (f.authorizations[0]!.scopes[2] as { fields: string[] }).fields.push(field); });
+    if (FORBIDDEN_FIELD.test(field)) assert.match(authorizationProblems(file).join("\n"), /can never be released by a source_fields decision/, field);
+  }
+  assert.deepEqual(authorizationProblems(figures("official_result_figures"), FIGURE_REGISTRY), []);
+  assert.deepEqual(authorizationProblems(figures("official_finance_figures"), FIGURE_REGISTRY), []);
+  // Nothing read from inside a return document, and no field of another family's list.
+  for (const field of ["approved_total", "donor_name", "value_pct", "sample_size", "raw_value", "title", "*"]) {
+    assert.match(authorizationProblems(figures("official_finance_figures", { fields: ["amount_nzd", field] }), FIGURE_REGISTRY).join("\n"),
+      /is not an official finance figure column|is not a field name/, field);
+  }
+  for (const field of ["approved_total", "amount_nzd", "value_pct", "sample_size", "value", "title"]) {
+    assert.match(authorizationProblems(figures("official_result_figures", { fields: ["votes", field] }), FIGURE_REGISTRY).join("\n"),
+      /is not an official result figure column|is not a field name/, field);
+  }
+});
+
+test("a figure scope is for the official product that publishes the figure, and nothing else", () => {
+  for (const [scope, wrong] of [["official_result_figures", "fixture_finance"], ["official_finance_figures", "fixture_results"],
+                                ["official_result_figures", "fixture_polls"], ["official_finance_figures", "fixture_polls"],
+                                ["official_result_figures", "fixture_stats"]] as const) {
+    const rights = wrong === "fixture_finance" ? "RIGHTS-04" : wrong === "fixture_results" ? "RIGHTS-01" : wrong === "fixture_polls" ? "RIGHTS-07" : "RIGHTS-18";
+    const file = figures(scope, { source_id: wrong, rights_id: rights, fields: scope === "official_result_figures" ? ["votes"] : ["amount_nzd"] });
+    assert.match(authorizationProblems(file, FIGURE_REGISTRY).join("\n"), /can be released only for/, `${scope} ${wrong}`);
+    assert.deepEqual(scopesInForce(file, "2026-09-21", FIGURE_REGISTRY), [], "one bad scope puts the whole file out of force");
+  }
+  // The rights row still has to be the one that governs the source, and the source has to exist.
+  assert.match(authorizationProblems(figures("official_result_figures", { rights_id: "RIGHTS-02" }), FIGURE_REGISTRY).join("\n"), /is governed by RIGHTS-01, not RIGHTS-02/);
+  assert.match(authorizationProblems(figures("official_result_figures", { source_id: "fixture_unknown" }), FIGURE_REGISTRY).join("\n"), /is not a registered source/);
+  // A descriptive decision and a figure decision for one source is fine; two of a kind is not.
+  const both = figures("official_result_figures");
+  both.authorizations[0]!.scopes.push({ scope: "source_fields", source_id: "fixture_results", rights_id: "RIGHTS-01", fields: ["name_at_source"], basis: "TEST FIXTURE: party label exactly as the official results table prints it." });
+  assert.deepEqual(authorizationProblems(both, FIGURE_REGISTRY), []);
+  both.authorizations[0]!.scopes.push({ scope: "official_result_figures", source_id: "fixture_results", rights_id: "RIGHTS-01", fields: ["list_rank"], basis: "TEST FIXTURE: a second figure decision for the same source in one entry." });
+  assert.match(authorizationProblems(both, FIGURE_REGISTRY).join("\n"), /second official_result_figures decision/);
+});
+
+test("no poll figure is in any scope of the committed file: a pollster's numbers are that pollster's own product", async () => {
+  const doc = JSON.parse(await readFile(new URL("governance/owner-authorizations.json", root), "utf-8")) as AuthorizationFile;
+  for (const a of doc.authorizations) {
+    for (const s of a.scopes) {
+      if (s.scope === "pages_deploy" || s.scope === "public_rows") continue;
+      for (const field of ["value_pct", "sample_size"]) assert.ok(!s.fields.includes(field), `${s.source_id}: ${field}`);
+      if (/poll/.test(s.source_id)) assert.equal(s.scope, "source_fields", `${s.source_id}: a poll source may hold descriptive fields only`);
+    }
+  }
+});
+
+test("the database constraints and this tool agree on every field rule", async () => {
+  const unified = await readFile(new URL("supabase/migrations/20260921040100_unified_import.sql", root), "utf-8");
+  const stats = /owner_statistical_fact_tokens\s+check \(scope_kind is distinct from 'statistical_facts' or field_token in \(([^)]+)\)\)/.exec(unified);
+  assert.ok(stats, "closed list present");
+  assert.deepEqual(tokens(stats[1]), [...STATISTICAL_FACT_FIELDS]);
+
+  // The current forbidden-name rule and its closed exception list live in the values migration.
+  const values = await readFile(new URL("supabase/migrations/20260921060100_public_factual_values.sql", root), "utf-8");
+  const forbidden = /owner_field_scope_forbidden\s+check \(scope_kind is distinct from 'source_fields'\s+or field_token in \(([^)]+)\)\s+or field_token !~ '([^']+)'\)/.exec(values);
   assert.ok(forbidden, "the forbidden-name rule still binds every source_fields row");
-  assert.equal(forbidden[1], FORBIDDEN_FIELD.source);
-  const allowed = /owner_statistical_fact_tokens\s+check \(scope_kind is distinct from 'statistical_facts' or field_token in \(([^)]+)\)\)/.exec(sql);
-  assert.ok(allowed, "closed list present");
-  assert.deepEqual(allowed[1].split(",").map((t) => t.trim().replace(/'/g, "")), [...STATISTICAL_FACT_FIELDS]);
+  assert.deepEqual(tokens(forbidden[1]), [...SOURCE_FIELD_EXCEPTIONS]);
+  assert.equal(forbidden[2], FORBIDDEN_FIELD.source);
+
+  for (const [constraint, kind, expected] of [
+    ["owner_result_figure_tokens", "official_result_figures", RESULT_FIGURE_FIELDS],
+    ["owner_finance_figure_tokens", "official_finance_figures", FINANCE_FIGURE_FIELDS],
+  ] as const) {
+    const match = new RegExp(`${constraint}\\s+check \\(scope_kind is distinct from '${kind}' or field_token in \\(([^)]+)\\)\\)`).exec(values);
+    assert.ok(match, `${constraint} present`);
+    assert.deepEqual(tokens(match[1]), [...expected]);
+  }
+  // The registry allowlists are literals in two places (the guard and source_release) and here. All three agree.
+  for (const [kind, registries] of Object.entries(FIGURE_REGISTRIES)) {
+    const inView = new RegExp(`f\\.scope_kind <> '${kind}' or s\\.registry_key (?:= '([^']+)'|in \\(([^)]+)\\))`).exec(values);
+    assert.ok(inView, `${kind} re-checked where the tier is read`);
+    assert.deepEqual(tokens(inView[1] ?? inView[2] ?? ""), [...registries]);
+  }
+  assert.match(values, /v_registry_key is distinct from 'election_2023_results'/);
+  assert.match(values, /not in \('candidate_finance_returns', 'party_finance_returns'\)/);
 });
 
 test("every field decision in the committed file names a registered source under its own rights row", async () => {

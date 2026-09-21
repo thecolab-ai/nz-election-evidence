@@ -1053,6 +1053,573 @@
         "statistical figures of any source that is not registered as official statistics; unit records; qualifiers and standard errors",
         "any source whose rights row is refused, restricted or withheld: those stay invisible whatever this file says"
       ]
+    },
+    {
+      "authorization_id": "OWNER-AUTH-2026-09-21-01",
+      "status": "active",
+      "decided_on": "2026-09-21",
+      "expires_on": "2026-11-06",
+      "decided_by": "Adam Holt",
+      "decided_by_role": "repository owner and project maintainer",
+      "request_source": "Owner direction of 2026-09-21, relayed to this build by the release coordinator after the owner was told that imported public statistical figures and vote totals were being displayed as blank cells: \"Ok well we want all the data and links etc to show\". The message itself is not held in this repository. The owner gave a direction, not a field list: every field below was derived by this build from that direction by reading the loaded store column by column, and the owner has not confirmed the list field by field. Read it before relying on it, and revoke it if it says more than was meant.",
+      "statement": "The owner directs, at the owner's own risk and ahead of the independent reviews, that the public-safe factual values this project has already imported be shown to anonymous readers rather than blanked. This decision names, source by source and field by field: (1) the figures the official 2023 election results publications print - candidate and party votes, the published vote share, seat counts, list positions, the counted and informal tallies of each electorate summary, and the status that says whether a number was reported at all; (2) the donation, expense and loan totals the Electoral Commission itself prints on its own public finance index pages, and whether a linked return document is a scan; (3) the descriptive and provenance columns of the imported Parliament, election, finance and statistics sources - the publisher's own identifiers, dates as printed, file digests, routing keys, and for official statistics the qualifiers, quality measures and row locators that belong with a figure already shown. Each is shown with its publisher, its official link and a notice that reviews are pending. This decision adds field decisions only: it deploys nothing and releases no rows by itself (OWNER-AUTH-2026-09-20-01 does that, for as long as it is in force). It widens one limit OWNER-AUTH-2026-09-20-02 set, and says so: statistical qualifiers and standard errors are now shown, because a published figure without the qualifier printed beside it is the less honest of the two.",
+      "departs_from": [
+        "RED-LINES R10 as written: it says no new public surface or data product goes live before a legal-review entry names a reviewer, and allows no exceptions. None exists. The owner proceeds anyway; this is a departure from R10, not compliance with it.",
+        "RED-LINES R8 as written: it says nothing goes live without a named accountable person. Nobody has accepted that role. The owner proceeds anyway; this is a departure from R8, not compliance with it.",
+        "OWNER-AUTH-2026-09-20-02 listed statistical qualifiers and standard errors as never in its scope. This decision shows them. That entry is not edited and is not withdrawn; this one is wider, and the difference is stated here rather than hidden.",
+        "RED-LINES.md itself is not amended by this decision."
+      ],
+      "scopes": [
+        {
+          "scope": "source_fields",
+          "source_id": "baseline_2023_candidacies_export",
+          "rights_id": "RIGHTS-01",
+          "fields": [
+            "boundary_edition_title",
+            "external_id",
+            "external_record_id",
+            "identity_scheme",
+            "list_version",
+            "official_code",
+            "result_status",
+            "slug"
+          ],
+          "basis": "The official electorate code, the electorate's identifier in this store, the boundary edition it belongs to, the list version and the publisher's own result status, with the identifiers the capture carries for each row. Identifiers and official codes, with the official link; no new name and no figure."
+        },
+        {
+          "scope": "official_result_figures",
+          "source_id": "baseline_2023_candidacies_export",
+          "rights_id": "RIGHTS-01",
+          "fields": [
+            "list_rank",
+            "value_status",
+            "votes",
+            "votes_status"
+          ],
+          "basis": "Candidate votes, the list position and the status that says whether a number was reported at all, exactly as the verified 963-row capture of the official 2023 results states them, with the official link. A cell the official table reported no number for is shown as its status, never as zero. No total, average, ranking or trend is derived from them (R1)."
+        },
+        {
+          "scope": "source_fields",
+          "source_id": "election_2023_electorate_results_export",
+          "rights_id": "RIGHTS-01",
+          "fields": [
+            "external_id",
+            "external_record_id"
+          ],
+          "basis": "The publisher's own row identifiers for each electorate result and each party label it prints, so a figure can be traced to the row it was read from. Identifiers only, with the official link."
+        },
+        {
+          "scope": "official_result_figures",
+          "source_id": "election_2023_electorate_results_export",
+          "rights_id": "RIGHTS-01",
+          "fields": [
+            "candidate_informals",
+            "candidate_lines",
+            "candidate_votes_with_informals",
+            "party_informals",
+            "party_lines",
+            "party_votes_with_informals",
+            "this_route_votes",
+            "value_status",
+            "votes",
+            "votes_counted",
+            "votes_counted_pct"
+          ],
+          "basis": "Party votes per electorate, the votes counted and the percentage counted, the informal and line tallies of each electorate summary, and this project's own record of the figure each of its two import routes read, exactly as the official 2023 electorate result pages print them, with the official link. A cell the official table reported no number for is shown as its status, never as zero. No total, average, ranking or trend is derived from them (R1)."
+        },
+        {
+          "scope": "source_fields",
+          "source_id": "election_2023_nationwide_results_export",
+          "rights_id": "RIGHTS-01",
+          "fields": [
+            "denominator_note",
+            "external_id",
+            "external_record_id"
+          ],
+          "basis": "The publisher's own row identifiers, and the denominator note that says what the published share is a percentage of. Identifiers and the publisher's own note, with the official link."
+        },
+        {
+          "scope": "official_result_figures",
+          "source_id": "election_2023_nationwide_results_export",
+          "rights_id": "RIGHTS-01",
+          "fields": [
+            "electorate_seats",
+            "list_seats",
+            "party_vote_share",
+            "party_votes",
+            "total_seats",
+            "value_status"
+          ],
+          "basis": "Party votes, the party vote share, electorate and list seats and the nationwide totals, exactly as the official 2023 nationwide results table prints them, with the official link. The share carries the publisher's own denominator note. A cell the official table reported no number for is shown as its status, never as zero. No ranking, average or trend is derived from them (R1)."
+        },
+        {
+          "scope": "source_fields",
+          "source_id": "election_2026_boundary_map_links_export",
+          "rights_id": "RIGHTS-21",
+          "fields": [
+            "external_record_id"
+          ],
+          "basis": "The publisher's own identifier for each of the three official 2025 boundary summary maps, so a row can be traced to the map it came from."
+        },
+        {
+          "scope": "source_fields",
+          "source_id": "election_2026_official_page_status_export",
+          "rights_id": "RIGHTS-21",
+          "fields": [
+            "external_record_id"
+          ],
+          "basis": "The publisher's own identifier for the availability record of the official 2026 electorate finder page."
+        },
+        {
+          "scope": "source_fields",
+          "source_id": "finance_2023_candidate_returns_export",
+          "rights_id": "RIGHTS-02",
+          "fields": [
+            "basis",
+            "external_id",
+            "external_record_id",
+            "is_independent_label",
+            "metric"
+          ],
+          "basis": "The metric each Commission-published total is a total of, this project's stated basis for reading it, the identifiers of each return row and whether a party label is an independent label. Names of metrics and identifiers, with the official link."
+        },
+        {
+          "scope": "official_finance_figures",
+          "source_id": "finance_2023_candidate_returns_export",
+          "rights_id": "RIGHTS-02",
+          "fields": [
+            "amount_nzd",
+            "is_image_only",
+            "total_status",
+            "value_status"
+          ],
+          "basis": "The donation, expense and loan totals the Electoral Commission itself prints on its public 2023 candidate returns index page (the stored record states amounts_basis = commission_index_page_as_published), whether a total was read at all, and whether the linked return document is a scan. Nothing is read from inside a return: no donor, no address, no signature, no line of a return."
+        },
+        {
+          "scope": "source_fields",
+          "source_id": "finance_2025_party_aggregates_export",
+          "rights_id": "RIGHTS-04",
+          "fields": [
+            "external_id",
+            "external_record_id",
+            "is_independent_label"
+          ],
+          "basis": "The identifiers of each Commission-published aggregate row and whether a party label is an independent label, with the official link."
+        },
+        {
+          "scope": "official_finance_figures",
+          "source_id": "finance_2025_party_aggregates_export",
+          "rights_id": "RIGHTS-04",
+          "fields": [
+            "amount_nzd",
+            "value_status"
+          ],
+          "basis": "The party donation and loan totals the Electoral Commission itself prints on its public 2025 party finance index page, and the status of each. Nothing is read from inside a return: no donor, no address, no signature, no line of a return."
+        },
+        {
+          "scope": "source_fields",
+          "source_id": "finance_2025_party_returns_export",
+          "rights_id": "RIGHTS-04",
+          "fields": [
+            "external_id",
+            "external_record_id",
+            "is_independent_label"
+          ],
+          "basis": "The identifiers of each return row and whether a party label is an independent label, with the official link."
+        },
+        {
+          "scope": "official_finance_figures",
+          "source_id": "finance_2025_party_returns_export",
+          "rights_id": "RIGHTS-04",
+          "fields": [
+            "is_image_only",
+            "total_status"
+          ],
+          "basis": "Whether a total was read from the Commission's public index for this return, and whether the linked return document is a scan. Both are facts about the document, not figures read from inside it: no donor, no address, no signature, no amount from a return."
+        },
+        {
+          "scope": "source_fields",
+          "source_id": "parliament_export_bill_publications",
+          "rights_id": "RIGHTS-09",
+          "fields": [
+            "bill_ref",
+            "external_record_id",
+            "file_sha256",
+            "revision_ref",
+            "source_date_text"
+          ],
+          "basis": "The publisher's own identifiers for a bill, a published revision and the file it links to, the file's SHA-256 digest, and the publisher's date exactly as printed. Identifiers, a digest and a date; never bill text and no file is held (R6)."
+        },
+        {
+          "scope": "source_fields",
+          "source_id": "parliament_export_bill_register",
+          "rights_id": "RIGHTS-09",
+          "fields": [
+            "external_record_id",
+            "item_family",
+            "route_key",
+            "source_date_text"
+          ],
+          "basis": "The publisher's own identifier for each bill row, this project's routing key and item family for it, and the publisher's date exactly as printed. Identifiers and a date; never bill text (R6)."
+        },
+        {
+          "scope": "source_fields",
+          "source_id": "parliament_export_committee_business",
+          "rights_id": "RIGHTS-11",
+          "fields": [
+            "external_record_id",
+            "item_family",
+            "route_key",
+            "source_date_text"
+          ],
+          "basis": "The publisher's own identifier for each item of business, this project's routing key and item family for it, and the publisher's date exactly as printed. NOT the item title or label: petition items are titled with the name of the private person who petitioned (R7)."
+        },
+        {
+          "scope": "source_fields",
+          "source_id": "parliament_export_committee_report_files",
+          "rights_id": "RIGHTS-12",
+          "fields": [
+            "attachment_ref",
+            "external_record_id",
+            "file_sha256",
+            "parent_report_ref",
+            "source_date_text",
+            "text_extraction_status"
+          ],
+          "basis": "The publisher's own identifiers for a report file and its parent report, the file's SHA-256 digest, whether a text layer was found in it, and the publisher's date exactly as printed. A link to the publisher's own file; the file and its text are never held or shown (R6)."
+        },
+        {
+          "scope": "source_fields",
+          "source_id": "parliament_export_committee_reports",
+          "rights_id": "RIGHTS-12",
+          "fields": [
+            "attachment_ref",
+            "external_record_id",
+            "item_family",
+            "route_key",
+            "source_date_text"
+          ],
+          "basis": "The publisher's own identifier for each report, this project's routing key and item family for it, and the publisher's date exactly as printed. NOT the report title, label or subtitle: 247 of the 1,286 reports are petition reports whose titles name the private person who petitioned (R7)."
+        },
+        {
+          "scope": "source_fields",
+          "source_id": "parliament_export_current_bills_history",
+          "rights_id": "RIGHTS-09",
+          "fields": [
+            "external_record_id",
+            "item_family",
+            "route_key",
+            "source_date_text"
+          ],
+          "basis": "The publisher's own identifier for each bill row, this project's routing key and item family for it, and the publisher's date exactly as printed. Identifiers and a date; never bill text (R6)."
+        },
+        {
+          "scope": "source_fields",
+          "source_id": "parliament_export_member_terms",
+          "rights_id": "RIGHTS-13",
+          "fields": [
+            "external_id",
+            "external_record_id",
+            "from_id",
+            "from_label",
+            "identity_scheme",
+            "relationship",
+            "to_id",
+            "to_label"
+          ],
+          "basis": "The publisher's own identifier for each member term and the identity scheme it belongs to, and the member-to-party and member-to-seat relationships this store derives from the terms file. Office-holders in their public capacity (R7); no contact detail of anyone."
+        },
+        {
+          "scope": "source_fields",
+          "source_id": "parliament_export_minister_roles",
+          "rights_id": "RIGHTS-08",
+          "fields": [
+            "external_id",
+            "external_record_id",
+            "identity_scheme"
+          ],
+          "basis": "The publisher's own identifier for each ministerial role row and the identity scheme it belongs to. Office-holders in their public capacity (R7)."
+        },
+        {
+          "scope": "source_fields",
+          "source_id": "parliament_export_release_attributions",
+          "rights_id": "RIGHTS-08",
+          "fields": [
+            "content_kind",
+            "external_record_id",
+            "source_date_text"
+          ],
+          "basis": "The publisher's own identifier for each attribution, the kind of attribution it is (a minister or a portfolio), and the publisher's date exactly as printed. Never the release text or a summary of it (R6)."
+        },
+        {
+          "scope": "source_fields",
+          "source_id": "parliament_export_releases_history",
+          "rights_id": "RIGHTS-08",
+          "fields": [
+            "external_record_id",
+            "item_family",
+            "route_key",
+            "source_date_text"
+          ],
+          "basis": "The publisher's own identifier for each release, this project's routing key and item family for it, and the publisher's date exactly as printed. Never the release text or a summary of it (R6)."
+        },
+        {
+          "scope": "source_fields",
+          "source_id": "parliament_export_written_questions",
+          "rights_id": "RIGHTS-10",
+          "fields": [
+            "asker_member_ref",
+            "document_ref",
+            "external_record_id",
+            "item_family",
+            "portfolio_ref",
+            "route_key",
+            "source_date_text",
+            "status_ref"
+          ],
+          "basis": "The publisher's own identifiers for a question, its document, the portfolio and the answer status, this project's routing key and item family, and the publisher's date exactly as printed. Never the text of a question or a reply (R6)."
+        },
+        {
+          "scope": "source_fields",
+          "source_id": "party_policy_pages_2026_export",
+          "rights_id": "RIGHTS-14",
+          "fields": [
+            "external_id",
+            "external_record_id",
+            "is_independent_label",
+            "policy_class"
+          ],
+          "basis": "The publisher's own identifier for each policy page, whether a party label is an independent label, and the policy class, which for every one of these rows is 'unknown' on a recorded basis of 'none'. No model has classified any of them and none is presented as classified (R9)."
+        },
+        {
+          "scope": "source_fields",
+          "source_id": "party_vote_polls_2026_export",
+          "rights_id": "RIGHTS-07",
+          "fields": [
+            "external_record_id"
+          ],
+          "basis": "The publisher's own identifier for each poll row, so a poll can be traced to the page it was read from. No poll figure and no sample size is in this decision."
+        },
+        {
+          "scope": "source_fields",
+          "source_id": "stats_healthnz_data",
+          "rights_id": "RIGHTS-05",
+          "fields": [
+            "attributes",
+            "capture_count",
+            "catalogue_entries",
+            "coverage_note",
+            "datasets",
+            "observations_without_a_number",
+            "parse_status",
+            "qualifiers",
+            "releases",
+            "row_locator",
+            "series",
+            "source_file_sha256",
+            "upstream_status"
+          ],
+          "basis": "Descriptive and provenance columns of official statistics as Health New Zealand publishes them: the cell's own qualifiers and quality measures exactly as printed beside it, where in the publisher's own file it was read from, the parse and upstream status of the cell, the file's SHA-256 digest, size, capture count and the publisher's modified date as printed, the project's coverage note, and the counts of what this source holds. Aggregate official statistics only; no unit record and no person. A qualifier is published WITH the figure it qualifies: showing a number without its standard error or flag would be the less honest choice, and this decision widens the limit OWNER-AUTH-2026-09-20-02 set for that reason."
+        },
+        {
+          "scope": "source_fields",
+          "source_id": "stats_msd_benefits",
+          "rights_id": "RIGHTS-06",
+          "fields": [
+            "attributes",
+            "capture_count",
+            "catalogue_entries",
+            "coverage_note",
+            "datasets",
+            "file_sha256",
+            "observations_without_a_number",
+            "parse_status",
+            "qualifiers",
+            "releases",
+            "row_locator",
+            "series",
+            "source_file_sha256",
+            "upstream_status"
+          ],
+          "basis": "Descriptive and provenance columns of official statistics as the Ministry of Social Development publishes them: the cell's own qualifiers and quality measures exactly as printed beside it, where in the publisher's own file it was read from, the parse and upstream status of the cell, the file's SHA-256 digest, size, capture count and the publisher's modified date as printed, the project's coverage note, and the counts of what this source holds. Aggregate official statistics only; no unit record and no person. A qualifier is published WITH the figure it qualifies: showing a number without its standard error or flag would be the less honest choice, and this decision widens the limit OWNER-AUTH-2026-09-20-02 set for that reason."
+        },
+        {
+          "scope": "source_fields",
+          "source_id": "stats_nz_census_2013_meshblock",
+          "rights_id": "RIGHTS-22",
+          "fields": [
+            "capture_count",
+            "catalogue_entries",
+            "coverage_note",
+            "datasets",
+            "observations_without_a_number",
+            "parse_status",
+            "qualifiers",
+            "releases",
+            "row_locator",
+            "series",
+            "source_bytes",
+            "source_file_sha256",
+            "upstream_status"
+          ],
+          "basis": "Descriptive and provenance columns of official statistics as Stats NZ publishes them: the cell's own qualifiers and quality measures exactly as printed beside it, where in the publisher's own file it was read from, the parse and upstream status of the cell, the file's SHA-256 digest, size, capture count and the publisher's modified date as printed, the project's coverage note, and the counts of what this source holds. Aggregate official statistics only; no unit record and no person. A qualifier is published WITH the figure it qualifies: showing a number without its standard error or flag would be the less honest choice, and this decision widens the limit OWNER-AUTH-2026-09-20-02 set for that reason."
+        },
+        {
+          "scope": "source_fields",
+          "source_id": "stats_nz_census_2018_highlights",
+          "rights_id": "RIGHTS-16",
+          "fields": [
+            "capture_count",
+            "catalogue_entries",
+            "coverage_note",
+            "datasets",
+            "observations_without_a_number",
+            "parse_status",
+            "qualifiers",
+            "releases",
+            "row_locator",
+            "series",
+            "source_bytes",
+            "source_file_sha256",
+            "upstream_status"
+          ],
+          "basis": "Descriptive and provenance columns of official statistics as Stats NZ publishes them: the cell's own qualifiers and quality measures exactly as printed beside it, where in the publisher's own file it was read from, the parse and upstream status of the cell, the file's SHA-256 digest, size, capture count and the publisher's modified date as printed, the project's coverage note, and the counts of what this source holds. Aggregate official statistics only; no unit record and no person. A qualifier is published WITH the figure it qualifies: showing a number without its standard error or flag would be the less honest choice, and this decision widens the limit OWNER-AUTH-2026-09-20-02 set for that reason."
+        },
+        {
+          "scope": "source_fields",
+          "source_id": "stats_nz_census_2023",
+          "rights_id": "RIGHTS-17",
+          "fields": [
+            "attributes",
+            "capture_count",
+            "catalogue_entries",
+            "coverage_note",
+            "datasets",
+            "observations_without_a_number",
+            "parse_status",
+            "qualifiers",
+            "releases",
+            "row_locator",
+            "series",
+            "source_file_sha256",
+            "upstream_status"
+          ],
+          "basis": "Descriptive and provenance columns of official statistics as Stats NZ publishes them: the cell's own qualifiers and quality measures exactly as printed beside it, where in the publisher's own file it was read from, the parse and upstream status of the cell, the file's SHA-256 digest, size, capture count and the publisher's modified date as printed, the project's coverage note, and the counts of what this source holds. Aggregate official statistics only; no unit record and no person. A qualifier is published WITH the figure it qualifies: showing a number without its standard error or flag would be the less honest choice, and this decision widens the limit OWNER-AUTH-2026-09-20-02 set for that reason."
+        },
+        {
+          "scope": "source_fields",
+          "source_id": "stats_nz_csv_catalogue",
+          "rights_id": "RIGHTS-18",
+          "fields": [
+            "attributes",
+            "catalogue_entries",
+            "datasets",
+            "observations",
+            "observations_without_a_number",
+            "publisher_modified_text",
+            "releases",
+            "series"
+          ],
+          "basis": "Descriptive and provenance columns of official statistics as Stats NZ publishes them: the cell's own qualifiers and quality measures exactly as printed beside it, where in the publisher's own file it was read from, the parse and upstream status of the cell, the file's SHA-256 digest, size, capture count and the publisher's modified date as printed, the project's coverage note, and the counts of what this source holds. Aggregate official statistics only; no unit record and no person. A qualifier is published WITH the figure it qualifies: showing a number without its standard error or flag would be the less honest choice, and this decision widens the limit OWNER-AUTH-2026-09-20-02 set for that reason."
+        },
+        {
+          "scope": "source_fields",
+          "source_id": "stats_nz_release_series",
+          "rights_id": "RIGHTS-18",
+          "fields": [
+            "capture_count",
+            "catalogue_entries",
+            "coverage_note",
+            "datasets",
+            "observations_without_a_number",
+            "parse_status",
+            "qualifiers",
+            "releases",
+            "row_locator",
+            "series",
+            "source_bytes",
+            "source_file_sha256",
+            "upstream_status"
+          ],
+          "basis": "Descriptive and provenance columns of official statistics as Stats NZ publishes them: the cell's own qualifiers and quality measures exactly as printed beside it, where in the publisher's own file it was read from, the parse and upstream status of the cell, the file's SHA-256 digest, size, capture count and the publisher's modified date as printed, the project's coverage note, and the counts of what this source holds. Aggregate official statistics only; no unit record and no person. A qualifier is published WITH the figure it qualifies: showing a number without its standard error or flag would be the less honest choice, and this decision widens the limit OWNER-AUTH-2026-09-20-02 set for that reason."
+        },
+        {
+          "scope": "source_fields",
+          "source_id": "stats_nz_selected_series",
+          "rights_id": "RIGHTS-18",
+          "fields": [
+            "capture_count",
+            "catalogue_entries",
+            "coverage_note",
+            "datasets",
+            "observations_without_a_number",
+            "parse_status",
+            "qualifiers",
+            "releases",
+            "row_locator",
+            "series",
+            "source_file_sha256",
+            "upstream_status"
+          ],
+          "basis": "Descriptive and provenance columns of official statistics as Stats NZ publishes them: the cell's own qualifiers and quality measures exactly as printed beside it, where in the publisher's own file it was read from, the parse and upstream status of the cell, the file's SHA-256 digest, size, capture count and the publisher's modified date as printed, the project's coverage note, and the counts of what this source holds. Aggregate official statistics only; no unit record and no person. A qualifier is published WITH the figure it qualifies: showing a number without its standard error or flag would be the less honest choice, and this decision widens the limit OWNER-AUTH-2026-09-20-02 set for that reason."
+        },
+        {
+          "scope": "source_fields",
+          "source_id": "stats_rbnz_catalogue",
+          "rights_id": "RIGHTS-15",
+          "fields": [
+            "attributes",
+            "catalogue_entries",
+            "datasets",
+            "observations",
+            "observations_without_a_number",
+            "publisher_modified_text",
+            "releases",
+            "series"
+          ],
+          "basis": "Descriptive and provenance columns of official statistics as the Reserve Bank of New Zealand publishes them: the cell's own qualifiers and quality measures exactly as printed beside it, where in the publisher's own file it was read from, the parse and upstream status of the cell, the file's SHA-256 digest, size, capture count and the publisher's modified date as printed, the project's coverage note, and the counts of what this source holds. Aggregate official statistics only; no unit record and no person. A qualifier is published WITH the figure it qualifies: showing a number without its standard error or flag would be the less honest choice, and this decision widens the limit OWNER-AUTH-2026-09-20-02 set for that reason."
+        },
+        {
+          "scope": "source_fields",
+          "source_id": "stats_tenancy_rental_bonds",
+          "rights_id": "RIGHTS-19",
+          "fields": [
+            "attributes",
+            "capture_count",
+            "catalogue_entries",
+            "coverage_note",
+            "datasets",
+            "observations_without_a_number",
+            "parse_status",
+            "publisher_last_modified",
+            "qualifiers",
+            "releases",
+            "row_locator",
+            "series",
+            "source_file_sha256",
+            "upstream_status"
+          ],
+          "basis": "Descriptive and provenance columns of official statistics as Tenancy Services publishes them: the cell's own qualifiers and quality measures exactly as printed beside it, where in the publisher's own file it was read from, the parse and upstream status of the cell, the file's SHA-256 digest, size, capture count and the publisher's modified date as printed, the project's coverage note, and the counts of what this source holds. Aggregate official statistics only; no unit record and no person. A qualifier is published WITH the figure it qualifies: showing a number without its standard error or flag would be the less honest choice, and this decision widens the limit OWNER-AUTH-2026-09-20-02 set for that reason."
+        }
+      ],
+      "not_claimed": [
+        "No independent legal review has been carried out. Every REVIEW-REGISTER.md row stays PENDING with nobody appointed (R10).",
+        "Nobody has accepted the accountable-person role (R8). This decision does not name one.",
+        "No publisher has granted a licence or permission. Every rights-register row stays pending and link-only; none is marked approved by this decision. That an official body publishes a figure on a public page is not that body's permission to republish it.",
+        "No security sign-off exists for the evidence store.",
+        "The owner has not read this field list field by field. It was derived from the owner's direction by reading the loaded store, and it is recorded as that."
+      ],
+      "never_in_scope": [
+        "poll figures and sample sizes: a pollster's numbers are that pollster's own commercial product, the rights row covering the poll publishers (RIGHTS-07) is pending and link-only, and three of the twelve polls held carry no methodology disclosure on record. No scope in this project can carry them, and a reader is given the pollster, the sponsor, the fieldwork dates, the methodology status and the link to the pollster's own page instead",
+        "anything read from INSIDE a finance return: no donor, no postal address of a donor, no signature, no line and no amount of a return. The only money here is a total the Electoral Commission itself prints on its own public index page",
+        "question, reply, report, bill, release, policy-page or document text; summaries; copied source passages; files",
+        "contact details of anyone: email, phone, postal or street address, social handles",
+        "titles, labels and subtitles of select committee reports and items of business: petition titles name the private person who petitioned, and a field decision cannot tell a petition from a briefing",
+        "the working evidence of an identity proposal: it is a free-form record about a named person and is not bounded by anything a field decision can check",
+        "model output of any kind, and any classification that is not recorded as coming from the publisher (R9). No ranking, average, trend or league table of parties or candidates is derived from any figure shown here (R1)",
+        "canonical (merged) people or parties: names stay exactly as each source printed them and are never merged across sources",
+        "any source whose rights row is refused, restricted or withheld: those stay invisible whatever this file says"
+      ]
     }
   ]
 }
