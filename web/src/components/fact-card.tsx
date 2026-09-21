@@ -1,7 +1,7 @@
 import { CircleSlash, Clock, HelpCircle, Landmark } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { ExternalLink } from '@/components/page'
-import { ErrorBlock, LoadingBlock } from '@/components/states'
+import { ErrorBlock, LoadingBlock, NotLoadedBlock } from '@/components/states'
 import { formatDateTime, formatPublisherDate, NOT_STATED } from '@/lib/format'
 import type { Availability, Provenance } from '@/lib/electorate'
 import { cn } from '@/lib/utils'
@@ -126,20 +126,7 @@ export function AvailabilityBlock<Row>({
       </div>
     )
   }
-  if (availability.state === 'not_loaded') {
-    return (
-      <div role="status" data-testid="not-loaded" className="flex items-start gap-3 border border-dashed border-caution-foreground/50 bg-caution px-4 py-4 text-sm text-caution-foreground">
-        <CircleSlash aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
-        <div className="space-y-1">
-          <p className="font-medium">This part of the store is not on the deployment you are reading.</p>
-          <p>
-            The <code className="font-mono text-[12.5px]">{datasetName}</code> dataset answered that it does not exist here, so this card has nothing to
-            show and makes no claim either way. It may exist on another deployment, or not be loaded yet.
-          </p>
-        </div>
-      </div>
-    )
-  }
+  if (availability.state === 'not_loaded') return <NotLoadedBlock datasetName={datasetName} />
   if (availability.state === 'not_answerable') {
     return (
       <div role="status" data-testid="not-answerable" className="flex items-start gap-3 border border-dashed border-caution-foreground/50 bg-caution px-4 py-4 text-sm text-caution-foreground">

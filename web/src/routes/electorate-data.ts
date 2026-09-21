@@ -25,9 +25,14 @@ export const PARTY_RETURNS_SOURCE_ID = 'finance_2025_party_returns_export'
 export const CANDIDATE_DISCLOSURES_SOURCE_ID = 'finance_2023_candidate_return_disclosures_export'
 export const PARTY_DISCLOSURES_SOURCE_ID = 'finance_2025_party_return_disclosures_export'
 
-/** The return kinds `donation_disclosures.return_kind` uses, and the source each kind was read from. */
+/**
+ * The source each `donation_disclosures.return_kind` was read from. The two literals are the stored
+ * vocabulary (`20260921080100_donation_disclosures.sql`), not abbreviations of it: a party row matched
+ * against anything else falls through to the candidate export and would be shown with the wrong
+ * publisher's dates on the money card.
+ */
 export function disclosureSourceForKind(returnKind: string): string {
-  return returnKind === 'party_return' ? PARTY_DISCLOSURES_SOURCE_ID : CANDIDATE_DISCLOSURES_SOURCE_ID
+  return returnKind === 'party_annual_return' ? PARTY_DISCLOSURES_SOURCE_ID : CANDIDATE_DISCLOSURES_SOURCE_ID
 }
 
 const SOURCE_COLUMNS = 'source_id,title,publisher,official_url,last_success_at,latest_source_published_at,freshness_status,view_scope'

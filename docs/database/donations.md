@@ -3,8 +3,25 @@
 Branch `feat/official-donation-records`, commit `326776d`; proven in a combined load at `8a94a1f` on
 `feat/election-overnight-donation-proof` (§8.1). Local only: nothing pushed, nothing deployed, and the hosted
 database was not contacted. Everything below was run on an isolated, disposable stack of its own. **Loaded is not
-published:** all 22 rights rows are still `pending` / `link-only`, and an anonymous reader of the loaded store
-receives **0 donation rows** — measured, not assumed.
+published on that stack:** an anonymous reader of it receives **0 donation rows** — measured, not assumed
+(`proof-8a94a1f-combined/table-content.json`).
+
+Read that zero for what it is. It is **not** the pending rights rows protecting donors, and this document must not
+be quoted as if it were. That stack held `owner_authorizations: 0` and `owner_authorization_scopes: 0` — **no owner
+decision was ever synced into it**, so no field of any source was released to anyone. The rights rows are a separate
+question, and on their own they do *not* produce that zero: `evidence_private.source_release` (migration
+`20260920001400`, lines 380–407) returns `owner_fields` for a **pending** rights row, and pgTAP 127 proves an
+anonymous reader then reads the donor names that decision covers
+(`supabase/tests/127_donation_disclosures.test.sql:193`).
+
+So once `governance/owner-authorizations.json` (OWNER-AUTH-2026-09-21-03) is synced to a store holding these
+products, anonymous readers **will** see the donor names that decision names, with all 22 rights rows still
+`pending` / `link-only`. What that number becomes against the real corpus has **not been measured**: the only
+evidence is a one-row fixture. It must be measured by an anonymous readback taken after the import and the owner
+sync — count of anon-visible `donation_disclosures` rows, count with `donor_name_as_published not null`, and an
+assertion that no visible name matches a digit or the street-word pattern and that no `withheld_by_publisher` row
+carries a name — and that receipt filed beside the other hosted receipts. Until it exists, nothing here says
+donations are safely published.
 
 Until this change the store held **no donation at all**. It held the Commission's *index* of filed returns (P15,
 P17) and the totals the Commission prints on its own pages (P16, and the index-page totals of P15). Migration

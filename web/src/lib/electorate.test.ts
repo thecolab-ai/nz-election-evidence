@@ -5,6 +5,7 @@ import {
   BOUNDARY_NOT_COMPARABLE_NOTE,
   classify,
   classifyNamed,
+  electorateAddress,
   foldForSearch,
   isDeploymentTooSlow,
   isMissingDataset,
@@ -86,6 +87,48 @@ describe('resolving a shared address', () => {
     expect(resolveSlug(loaded, 'nowhere')).toBeNull()
     expect(resolveSlug(loaded, '')).toBeNull()
     expect(resolveSlug(loaded, '   ')).toBeNull()
+  })
+
+  /**
+   * The regression this suite exists for. `electorates.slug` is publisher content in the public
+   * projection — it is a lowercased form of the NAME — and no rights row or owner decision names a
+   * `slug` field, so a deployment that releases the electorate name still returns `slug: null`.
+   * Every journey address was built from that column, so the picker offered nothing and every
+   * electorate page answered "no electorate with this address".
+   */
+  const slugWithheld = [
+    { id: '1', slug: null, name: 'Ōtaki' },
+    { id: '2', slug: null, name: 'Fixture Electorate A' },
+  ]
+
+  it('addresses an electorate by the store’s own slug wherever the deployment releases one', () => {
+    expect(electorateAddress({ slug: 'te-tai-tokerau', name: 'Te Tai Tokerau' })).toBe('te-tai-tokerau')
+    // The store's slug wins even where it differs: this application never overrules the store.
+    expect(electorateAddress({ slug: 'legacy-address', name: 'Te Tai Tokerau' })).toBe('legacy-address')
+  })
+
+  it('falls back to the same fold of the name the store itself uses when the slug is withheld', () => {
+    expect(electorateAddress({ slug: null, name: 'Fixture Electorate A' })).toBe('fixture-electorate-a')
+    expect(electorateAddress({ slug: null, name: 'Ōtaki' })).toBe('ōtaki')
+    expect(electorateAddress({ slug: null, name: 'Te Tai Tokerau' })).toBe('te-tai-tokerau')
+  })
+
+  it('has no address at all when the name is withheld too, and invents nothing', () => {
+    expect(electorateAddress({ slug: null, name: null })).toBeNull()
+    expect(electorateAddress({ slug: null, name: '' })).toBeNull()
+    expect(resolveSlug([{ id: 'x', slug: null, name: null }], 'anything')).toBeNull()
+  })
+
+  it('resolves a shared link on a deployment whose slug column is blank', () => {
+    expect(resolveSlug(slugWithheld, 'fixture-electorate-a')?.id).toBe('2')
+    // And still macron-tolerantly, which is the reason the fold exists.
+    expect(resolveSlug(slugWithheld, 'otaki')?.id).toBe('1')
+    expect(resolveSlug(slugWithheld, 'nowhere')).toBeNull()
+  })
+
+  it('still refuses to guess between two names that fold to one address', () => {
+    const ambiguous = [{ id: 'a', slug: null, name: 'Tamaki' }, { id: 'b', slug: null, name: 'Tāmaki' }]
+    expect(resolveSlug(ambiguous, 'tamaki')).toBeNull()
   })
 })
 

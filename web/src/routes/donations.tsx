@@ -4,6 +4,8 @@ import { Pill } from '@/components/badges'
 import { DataTable, type CoreFeatures } from '@/components/data-table'
 import { FilterBar, SelectFilter, TextFilter } from '@/components/filters'
 import { ExternalLink, Note, PageHeader } from '@/components/page'
+import { NotLoadedBlock } from '@/components/states'
+import { isMissingDataset } from '@/lib/electorate'
 import { formatDate, formatMoney, humanise } from '@/lib/format'
 import { useListQuery } from '@/lib/queries'
 import { donationsSpec } from '@/lib/specs'
@@ -19,7 +21,9 @@ function Donor({ row }: { row: DonationDisclosureRow }) {
   if (row.donor_name_status === 'withheld_by_publisher') {
     return <Pill tone="muted">{row.donor_identity_kind === 'anonymous' ? 'Anonymous — no name is disclosed' : 'Protected from disclosure by law'}</Pill>
   }
-  return <Pill tone="caution">Named in the return; the name could not be separated from the address printed with it</Pill>
+  // `not_separable` covers every reason a name was refused, not the address alone: a cell carrying a
+  // digit or a street word is refused too, so the sentence names the cell rather than one cause of it.
+  return <Pill tone="caution">Named in the return; the name could not be separated from the other text printed in the same cell</Pill>
 }
 
 /** The dates the return itself states. An empty list is never shown as a date. */
@@ -79,6 +83,7 @@ export function DonationsPage() {
       return next
     },
   })
+  const datasetNotLoaded = query.isError && isMissingDataset(query.error)
   return (
     <>
       <PageHeader eyebrow="Civic model · Political finance" title="Donations disclosed in filed returns">
@@ -103,6 +108,13 @@ export function DonationsPage() {
           An annual return for an election year already includes them, so adding the two publications together would count the same money twice.
         </Note>
       </div>
+      {datasetNotLoaded ? (
+        // The nav item is part of the shell, so this page can be reached on a deployment that has not
+        // had the disclosure products imported. That is an absence, not a fault: the same honest state
+        // the electorate page's money card already shows, rather than a red alert with a PostgREST code.
+        <NotLoadedBlock datasetName="evidence_public.donation_disclosures" />
+      ) : (
+        <>
       <FilterBar
         hasActive={!!(search.kind || search.identity || search.year || search.q)}
         onClear={() => setSearch({ kind: undefined, identity: undefined, year: undefined, q: undefined, page: 1 })}
@@ -120,6 +132,8 @@ export function DonationsPage() {
         <SelectFilter name="year" label="Reporting year" value={search.year} onChange={(v) => setSearch(filterPatch('year', v), { replace: true })} options={donationsSpec.filters.year.values.map((v) => ({ value: v, label: v }))} anyLabel="Any year" />
       </FilterBar>
       <DataTable caption="Donations disclosed in filed returns" columns={columns} query={query} spec={donationsSpec} search={search} onSearchChange={setSearch} getRowId={(row) => `${row.official_url}#${row.disclosure_part}-${row.entry_index}`} />
+        </>
+      )}
     </>
   )
 }

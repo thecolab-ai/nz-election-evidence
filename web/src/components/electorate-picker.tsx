@@ -1,7 +1,7 @@
 import { useNavigate } from '@tanstack/react-router'
 import { Search } from 'lucide-react'
 import { useId, useMemo, useRef, useState } from 'react'
-import { matchElectorates, moveActiveIndex, type ElectorateChoice } from '@/lib/electorate'
+import { electorateAddress, matchElectorates, moveActiveIndex, type ElectorateChoice } from '@/lib/electorate'
 import { cn } from '@/lib/utils'
 
 /**
@@ -31,13 +31,16 @@ export function ElectoratePicker({
   const [active, setActive] = useState(-1)
   const inputRef = useRef<HTMLInputElement>(null)
 
-  const matches = useMemo(() => matchElectorates(electorates, query).filter((e) => e.slug), [electorates, query])
+  // An electorate is offered when this application can address it. That is the store's own slug where
+  // the deployment releases one, and the same fold of the name where it does not — see electorateAddress.
+  const matches = useMemo(() => matchElectorates(electorates, query).filter((e) => electorateAddress(e)), [electorates, query])
   const activeId = active >= 0 && active < matches.length ? `${baseId}-option-${active}` : undefined
 
   function choose(choice: ElectorateChoice | undefined): void {
-    if (!choice?.slug) return
+    const slug = choice ? electorateAddress(choice) : null
+    if (!slug) return
     setOpen(false)
-    void navigate({ to: '/electorate/$slug', params: { slug: choice.slug } })
+    void navigate({ to: '/electorate/$slug', params: { slug } })
   }
 
   function onKeyDown(event: React.KeyboardEvent<HTMLInputElement>): void {

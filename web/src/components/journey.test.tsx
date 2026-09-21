@@ -88,6 +88,35 @@ describe('the first action: choosing an electorate', () => {
     expect(screen.queryAllByRole('option')).toHaveLength(0)
   })
 
+  /**
+   * The regression the whole browser journey failed on. `electorates.slug` is released only where a
+   * rights row names a `slug` field, and none does, so a deployment that releases the electorate NAME
+   * hands the picker rows whose slug is null. Filtering and navigating on that column offered a reader
+   * nothing at all; the address is now the store's slug where there is one and the same fold of the
+   * name where there is not, so the page a reader shares is the same string either way.
+   */
+  it('still offers and opens an electorate whose slug the deployment does not release', async () => {
+    const rootRoute = createRootRoute({ component: Outlet })
+    const withheld = [{ id: 'a', slug: null, name: 'Fixture Electorate A (TEST FIXTURE)' }]
+    const indexRoute = createRoute({ getParentRoute: () => rootRoute, path: '/', component: () => <ElectoratePicker electorates={withheld} /> })
+    const electorateRoute = createRoute({ getParentRoute: () => rootRoute, path: '/electorate/$slug', component: () => <p data-testid="landed">an electorate page</p> })
+    const router = createRouter({ routeTree: rootRoute.addChildren([indexRoute, electorateRoute]), history: createMemoryHistory({ initialEntries: ['/'] }) })
+    render(<RouterProvider router={router as never} />)
+    const input = await screen.findByTestId('electorate-search')
+    fireEvent.change(input, { target: { value: 'fixture electorate a' } })
+    expect(screen.getAllByRole('option')).toHaveLength(1)
+    fireEvent.keyDown(input, { key: 'Enter' })
+    // Exactly the store's own expression: a RUN of characters outside [a-z0-9āēīōū] collapses to one dash.
+    await waitFor(() => expect(router.state.location.pathname).toBe('/electorate/fixture-electorate-a-test-fixture-'))
+  })
+
+  it('offers nothing at all when the name is withheld too, rather than an address it made up', () => {
+    render(<ElectoratePicker electorates={[{ id: 'a', slug: null, name: null }]} />)
+    fireEvent.focus(screen.getByTestId('electorate-search'))
+    expect(screen.queryAllByRole('option')).toHaveLength(0)
+    expect(screen.getByTestId('electorate-no-match')).toBeTruthy()
+  })
+
   it('closes on Escape without navigating anywhere', async () => {
     const { router, input } = await renderPickerReady()
     fireEvent.focus(input)

@@ -64,10 +64,27 @@ export function ElectoratePage() {
   return <ElectorateBody electorate={e} sources={sources.data ?? []} />
 }
 
+/**
+ * General or Māori, said only where this page actually holds it.
+ *
+ * Three different silences, and none of them may be printed as one of the other two. `unverified` is
+ * the store's own flag: a type was recorded from nothing official. An ABSENT value is not that flag —
+ * it means this deployment released no type for the row, either because the source stated none or
+ * because the publisher's rights do not release the field, and the page must not report a withheld
+ * value as a project finding of "unverified". Both say plainly that neither general nor Māori is
+ * stated here, which is the only claim this page is entitled to make.
+ */
+function electorateTypeLabel(electorateType: string | null | undefined): string {
+  if (electorateType === 'unverified') return 'not verified — neither general nor Māori is stated here'
+  if (!electorateType) return 'not verified here — no electorate type is released for this row, so neither general nor Māori is stated'
+  return humanise(electorateType)
+}
+
 function ElectorateBody({ electorate: e, sources }: { electorate: ElectorateVersionRow; sources: readonly SourceLike[] }) {
   const name = e.name ?? undefined
   const representation = useRepresentation(name)
   const memberIds = (representation.data ?? []).map((t) => t.person_identity_id)
+  const typeStated = !!e.electorate_type && e.electorate_type !== 'unverified'
 
   return (
     <>
@@ -82,10 +99,14 @@ function ElectorateBody({ electorate: e, sources }: { electorate: ElectorateVers
 
       <div className="mb-8 space-y-2">
         <Note tone="caution" testId="electorate-boundary-note">{BOUNDARY_NOT_COMPARABLE_NOTE}</Note>
-        {e.electorate_type === 'unverified' || e.boundary_edition_verified !== true ? (
+        {!typeStated || e.boundary_edition_verified !== true ? (
           <Note tone="caution" testId="electorate-type-unverified">
-            Whether this is a general or a Māori electorate has not been verified against an official source in this store, so this page does not state
-            it. The boundary edition itself is recorded as {e.boundary_edition_verified === true ? 'verified' : 'not verified'}.
+            {e.electorate_type === 'unverified'
+              ? 'Whether this is a general or a Māori electorate has not been verified against an official source in this store, so this page does not state it.'
+              : !e.electorate_type
+                ? 'Whether this is a general or a Māori electorate is not shown here: this deployment released no electorate type for this row — either the source stated none, or the type is not released for this source. The page states neither.'
+                : ''}{' '}
+            The boundary edition itself is recorded as {e.boundary_edition_verified === true ? 'verified' : 'not verified'}.
           </Note>
         ) : null}
         <Note testId="rights-note">{RIGHTS_NOTE}</Note>
@@ -94,7 +115,7 @@ function ElectorateBody({ electorate: e, sources }: { electorate: ElectorateVers
       <Section id="identity" title="What this page is about">
         <dl className="grid gap-x-8 gap-y-3 border-y border-border py-4 text-sm sm:grid-cols-2 lg:grid-cols-4">
           <div><dt className="eyebrow">Electorate</dt><dd className="mt-0.5">{e.name ?? NOT_SHOWN}</dd></div>
-          <div><dt className="eyebrow">Type</dt><dd className="mt-0.5" data-testid="electorate-type">{e.electorate_type === 'unverified' ? 'not verified — neither general nor Māori is stated here' : humanise(e.electorate_type)}</dd></div>
+          <div><dt className="eyebrow">Type</dt><dd className="mt-0.5" data-testid="electorate-type">{electorateTypeLabel(e.electorate_type)}</dd></div>
           <div><dt className="eyebrow">Official code at source</dt><dd className="num mt-0.5">{e.official_code ?? 'not recorded'}</dd></div>
           <div><dt className="eyebrow">Boundary edition</dt><dd className="mt-0.5">{e.boundary_edition_title ?? e.boundary_edition ?? 'not recorded'}</dd></div>
         </dl>
@@ -531,7 +552,7 @@ function DonationList({ rows }: { rows: readonly DonationDisclosureRow[] }) {
               ) : d.donor_name_status === 'withheld_by_publisher' ? (
                 <Pill tone="muted">{d.donor_identity_kind === 'anonymous' ? 'Anonymous — no name is disclosed' : 'Protected from disclosure by law'}</Pill>
               ) : (
-                <Pill tone="caution">Named in the return; the name could not be separated from the address printed with it</Pill>
+                <Pill tone="caution">Named in the return; the name could not be separated from the other text printed in the same cell</Pill>
               )}
             </span>
             <span className="num">{formatMoney(d.disclosed_amount_nzd, 'reported')}</span>

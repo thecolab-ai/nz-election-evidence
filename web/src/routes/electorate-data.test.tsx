@@ -42,7 +42,8 @@ vi.mock('@/lib/supabase', () => ({
 }))
 
 // Imported after the mock so the hooks build on it.
-const { useBoundaryMaps, useCandidacySources, useMemberActivity, usePartyPolicyPages } = await import('./electorate-data')
+const { CANDIDATE_DISCLOSURES_SOURCE_ID, PARTY_DISCLOSURES_SOURCE_ID, disclosureSourceForKind, useBoundaryMaps, useCandidacySources, useMemberActivity, usePartyPolicyPages } =
+  await import('./electorate-data')
 
 function wrapper({ children }: { children: ReactNode }) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } })
@@ -167,5 +168,27 @@ describe('which source a listed candidacy was really loaded from', () => {
     await waitFor(() => expect(result.current.ids).toEqual(['baseline_2023_candidacies_export']))
     expect(result.current.sourceFor(row('c-2', 'v-missing'))).toBeNull()
     expect(result.current.sourceFor(row('c-3', null))).toBeNull()
+  })
+})
+
+/**
+ * Which registered source a disclosed entry was read out of. A candidate's return and a party's return
+ * are two separate exports with two separate publisher dates and two separate retrieval dates, and the
+ * money card prints the source's dates beside the entry. The literals below are the stored vocabulary
+ * of `donation_disclosures.return_kind` (migration 20260921080100): a party row compared against any
+ * other spelling falls silently through to the candidate export and is shown with the wrong dates.
+ */
+describe('the source behind a disclosed donation', () => {
+  it('maps each stored return kind to the export it was read from', () => {
+    expect(disclosureSourceForKind('party_annual_return')).toBe(PARTY_DISCLOSURES_SOURCE_ID)
+    expect(disclosureSourceForKind('candidate_election_return')).toBe(CANDIDATE_DISCLOSURES_SOURCE_ID)
+    expect(PARTY_DISCLOSURES_SOURCE_ID).not.toBe(CANDIDATE_DISCLOSURES_SOURCE_ID)
+  })
+
+  it('does not answer with the party export for a spelling the store does not use', () => {
+    // `party_return` is the value this function used to compare against; it does not exist in the store.
+    for (const kind of ['party_return', 'party', '', 'something_else']) {
+      expect(disclosureSourceForKind(kind)).toBe(CANDIDATE_DISCLOSURES_SOURCE_ID)
+    }
   })
 })

@@ -60,15 +60,41 @@ export function matchElectorates<T extends ElectorateChoice>(electorates: readon
 }
 
 /**
+ * The address this application uses for one electorate, and the ONLY place an address is decided.
+ *
+ * The store keeps a `slug` of its own, and it is used whenever it is there. But that slug is a
+ * lowercased form of the electorate's NAME, so the public projection treats it as publisher content
+ * and releases it only where a rights row or an owner decision names a `slug` field. No register
+ * names one, so a deployment that releases the electorate NAME still hands this application rows
+ * whose `slug` is blank — and an address built from a blank slug leads nowhere, which is what took
+ * the whole journey down: a picker with no options and every electorate page reading "not loaded".
+ *
+ * Where the slug is absent the name is folded with the SAME expression the store folds it with, so
+ * the address a reader shares is the same string either way. This publishes nothing the page is not
+ * already showing: it is a URL form of a name printed at the top of that page. Where the name is
+ * withheld too there is no address, no option and no page, which is the honest result.
+ */
+export function electorateAddress<T extends { slug: string | null; name: string | null }>(electorate: T): string | null {
+  if (electorate.slug) return electorate.slug
+  if (!electorate.name) return null
+  // evidence_private.electorates.slug: regexp_replace(lower(name), '[^a-z0-9āēīōū]+', '-', 'g').
+  return electorate.name.toLowerCase().replace(/[^a-z0-9āēīōū]+/g, '-')
+}
+
+/**
  * The electorate a shared address is asking for, when the address does not match a slug exactly.
  * Fourteen of the loaded slugs carry a macron, and a link passed through a client that strips them
  * would otherwise lead nowhere. Only a UNIQUE fold match resolves: if two electorates fold to the
  * same key the address is genuinely ambiguous and the page says it found nothing rather than pick.
+ *
+ * It folds each row's own address (see `electorateAddress`), so a store that released the name but
+ * not the slug resolves the same link as one that released both. This compares one row's own text
+ * with the address bar; it never decides that two publishers' records describe the same thing.
  */
-export function resolveSlug<T extends { id: string; slug: string | null }>(electorates: readonly T[], wanted: string): T | null {
+export function resolveSlug<T extends { id: string; slug: string | null; name?: string | null }>(electorates: readonly T[], wanted: string): T | null {
   const key = foldForSearch(wanted)
   if (!key) return null
-  const matches = electorates.filter((e) => foldForSearch(e.slug ?? '') === key)
+  const matches = electorates.filter((e) => foldForSearch(electorateAddress({ slug: e.slug, name: e.name ?? null }) ?? '') === key)
   return matches.length === 1 ? (matches[0] as T) : null
 }
 
