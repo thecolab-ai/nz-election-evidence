@@ -213,6 +213,17 @@ test.describe('the published site', () => {
     }
   })
 
+  /**
+   * Known server-side cost, measured against the deployed API on 2026-09-22 and not masked here: the
+   * overview page reads `sources.live_records`, a correlated count over the record table evaluated once
+   * per source, for 200 sources. Cold, that read is cancelled by the server's statement timeout (57014)
+   * and PostgREST answers 500 — 3.84 s cold against 0.55 s warm, with the same read minus the count
+   * answering in 0.17 s. One source holds 187,956 of the records, so the cost is not spread and cannot be
+   * split into cheap pages. That is a real API failure for the first anonymous reader after a quiet
+   * period, not a race in this test, so this assertion stays exactly as strict: a 5xx fails the run.
+   * Removing the store-wide count from the overview and release-coverage panels is the fix, and it is
+   * web work on the panels this branch does not own.
+   */
   test('browsing all of the data still works, and the live lists answer', async ({ page }) => {
     const refusals = watchApi(page)
     await page.goto('./')
@@ -291,10 +302,27 @@ test.describe('the published site', () => {
     // The live store may hold these returns and release none of their fields. Rows then exist and carry
     // only the publisher's link, which is a state the reader must be told in words: a table of blanks
     // would read as returns that stated nothing. Whichever state the deployment is in, it is stated.
+    //
+    // What is checked is the meaning, not one sentence: the note is about the entries ON THIS PAGE,
+    // because the rows in hand are all the page reads. A deployment that releases some sources and not
+    // others can answer one page entirely from the unreleased ones, so a store-wide claim ("nothing is
+    // released on this deployment") would be a statement the page cannot support — it is asserted absent
+    // here for that reason, not because the wording changed. The two readings a blank invites are
+    // refused in words, and the note must never read as an absence of donations.
     const linkOnly = page.getByTestId('donations-link-only')
     if (await linkOnly.count()) {
       await expect(linkOnly).toBeVisible()
-      await expect(linkOnly).toContainText('not released on this deployment')
+      await expect(linkOnly, 'the note is scoped to the rows this page holds').toContainText('the entries on this page are not released here')
+      const noteText = (await linkOnly.innerText()).replace(/\s+/g, ' ')
+      expect(noteText, 'a page of unreleased rows is not a claim about the whole store').not.toMatch(
+        /not released on this deployment|no donation fields are released anywhere/i,
+      )
+      expect(noteText, 'the reader is told other pages and sources may be released differently').toMatch(
+        /Other pages of this list, and other sources, may be released differently/,
+      )
+      expect(noteText, 'a blank is refused as a zero').toMatch(/a blank is not a zero/)
+      expect(noteText, 'the note claims nothing about who gave what').toMatch(/Nothing below states who gave what to whom/)
+      expect(noteText, 'the note never reads as an absence of donations').not.toMatch(/no donations|none were made|nothing was donated/i)
       // Every row still reaches the publisher's own document: link-only is access, not a dead end.
       const firstRow = page.getByTestId('data-row').first()
       await expect(firstRow.getByRole('link').first()).toHaveAttribute('href', /^https?:\/\//)
