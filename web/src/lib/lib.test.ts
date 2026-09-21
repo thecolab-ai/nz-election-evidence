@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { bundleProblems, connectedProblems, cspTransportProblems } from '../../scripts/check-bundle.ts'
 import { buildCsp, supabaseOrigin } from '../../vite.config.ts'
 import { coverageFromSources } from './coverage'
+import { OVERVIEW_COVERAGE_COLUMNS, OVERVIEW_COVERAGE_SELECT, RECORDS_COUNTED_PER_SOURCE } from '@/routes/overview'
 import { isPublicBrowserKey, looksLikeServiceRoleKey, resolveConfig, routerBasePath } from './env'
 import { genericSortableColumns, isAcceptableGenericSortKey, isResultLikeName } from './generic-sort'
 import { CONFIDENCE_NOT_APPLICABLE, CONFIDENCE_NOT_REPORTED, formatAgreement, formatConfidence, formatMoney, formatStatValue, formatVotes, modelProvenance, NOT_HUMAN_REVIEWED } from './format'
@@ -116,15 +117,30 @@ describe('configuration and bundle safety', () => {
 describe('coverage is derived from the rights-filtered sources view', () => {
   it('counts per scope, never across scopes, and treats an absent success as none yet', () => {
     const rows = coverageFromSources([
-      { view_scope: 'current_parliament', freshness_status: 'fresh', last_success_at: '2026-09-20T01:00:00Z', live_records: 122 },
-      { view_scope: 'current_parliament', freshness_status: 'fresh', last_success_at: '2026-09-20T03:00:00Z', live_records: '93' },
-      { view_scope: 'primary_2026', freshness_status: 'unavailable', last_success_at: null, live_records: 0 },
+      { view_scope: 'current_parliament', freshness_status: 'fresh', last_success_at: '2026-09-20T01:00:00Z' },
+      { view_scope: 'current_parliament', freshness_status: 'fresh', last_success_at: '2026-09-20T03:00:00Z' },
+      { view_scope: 'primary_2026', freshness_status: 'unavailable', last_success_at: null },
     ])
     const parliament = rows.find((r) => r.view_scope === 'current_parliament')
-    expect(parliament).toMatchObject({ sources: 2, sources_with_a_successful_run: 2, sources_currently_unavailable: 0, live_records: 215, latest_successful_retrieval: '2026-09-20T03:00:00Z' })
+    expect(parliament).toEqual({ view_scope: 'current_parliament', sources: 2, sources_with_a_successful_run: 2, sources_currently_unavailable: 0, latest_successful_retrieval: '2026-09-20T03:00:00Z' })
     expect(rows.find((r) => r.view_scope === 'primary_2026')).toMatchObject({ sources: 1, sources_with_a_successful_run: 0, sources_currently_unavailable: 1, latest_successful_retrieval: null })
     expect(rows.find((r) => r.view_scope === 'baseline_2023')).toBeUndefined()
     expect(coverageFromSources([])).toEqual([])
+  })
+
+  it('does not carry a record count at all: the column that timed out for real readers is not read here', () => {
+    // The scope cards are derived from these columns and no others. `live_records` is a correlated count(*) over the
+    // record table per source row; asking for it made the first anonymous read of /overview return HTTP 500 (57014,
+    // statement timeout) in 3.84 s against the live store, against 0.17 s without it.
+    expect(OVERVIEW_COVERAGE_COLUMNS).toEqual(['view_scope', 'freshness_status', 'last_success_at'])
+    expect(OVERVIEW_COVERAGE_SELECT.split(',')).not.toContain('live_records')
+    const [row] = coverageFromSources([{ view_scope: 'primary_2026', freshness_status: 'fresh', last_success_at: '2026-09-20T01:00:00Z' }])
+    // Not a zero, not a null, not a rounded stand-in: the shape has no such field, so no card can print one.
+    expect(Object.keys(row!)).not.toContain('live_records')
+    // And the card says where the count is, rather than leaving a blank that reads as none.
+    expect(RECORDS_COUNTED_PER_SOURCE).toMatch(/Not counted here/)
+    expect(RECORDS_COUNTED_PER_SOURCE).toMatch(/source’s own page/)
+    expect(RECORDS_COUNTED_PER_SOURCE).not.toMatch(/\b0\b/)
   })
 })
 
