@@ -1,0 +1,70 @@
+name: Live Pages QA (read-only)
+# Drives the PUBLISHED GitHub Pages site with a real browser, on a GitHub-hosted runner, at a phone
+# viewport and a desktop one, and uploads the screenshots as a downloadable artefact.
+#
+# Why this exists next to "Evidence store and explorer": every browser job there runs against a
+# disposable database this workflow's own run created, with seeded fixtures. That proves the code
+# works. It cannot prove that the artefact actually served at the public address renders, because
+# nothing in it ever opens that address. This one opens it and nothing else.
+#
+# What it never does: sign in, write, seed, deploy, or hold any credential. It reads the site over
+# https exactly as a member of the public does; the only key involved is the public anon key already
+# baked into the deployed bundle. It reaches no hosted database directly and holds no secret, so it
+# cannot change anything it looks at. A failure here is a report about the live site, never a change
+# to it, and it gates no deployment.
+on:
+  # The intended trigger: run it by hand against the live site whenever a deployment needs checking.
+  # GitHub only offers workflow_dispatch for a workflow file that exists on the DEFAULT branch, so
+  # this becomes dispatchable (for any ref) once this file is merged to main - see the pull_request
+  # trigger below, which is how the suite proves itself before that.
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: Published site to read (must end with a slash)
+        required: false
+        default: https://thecolab-ai.github.io/nz-election-evidence/
+  # Narrow on purpose: only a change to the live-QA files themselves re-runs it. No other pull
+  # request is made to depend on the public internet or on the state of a live deployment.
+  pull_request:
+    paths:
+      - .github/workflows/live-qa.yml
+      - web/e2e-live/**
+      - web/playwright.live.config.ts
+      - tools/live_qa_workflow.test.ts
+
+permissions:
+  contents: read
+
+concurrency:
+  group: live-qa-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  live-journey:
+    name: Live journey against the published site (phone and desktop)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with: { node-version: "24", cache: npm, cache-dependency-path: web/package-lock.json }
+      - working-directory: web
+        run: npm ci --no-audit --no-fund
+      - working-directory: web
+        run: npx playwright install --with-deps chromium
+      - name: Read the published site - homepage, electorate selection, deep link, known unknowns, publisher links, browse all data
+        working-directory: web
+        env:
+          # A public address, not a configuration value. Defaulted here as well as in the config so
+          # the log always records which site the screenshots below came from.
+          LIVE_BASE_URL: ${{ inputs.base_url || 'https://thecolab-ai.github.io/nz-election-evidence/' }}
+        run: npm run e2e:live
+      # The screenshots are the point of the run, so they are uploaded whether it passed or failed:
+      # a reviewer needs to see the phone and desktop pages either way. If there are none, the run
+      # produced no proof, and saying so loudly is better than a green tick over an empty artefact.
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: always()
+        with: { name: live-journey-screenshots, path: web/test-results/live-screens, retention-days: 7, if-no-files-found: error }
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: failure()
+        with: { name: live-journey-traces, path: web/test-results/live-artifacts, retention-days: 7, if-no-files-found: warn }
