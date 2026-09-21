@@ -10,6 +10,7 @@ import { chmod, mkdir, writeFile } from "node:fs/promises";
 import { dirname, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { type ExportRow, letterHex, MAPPERS, MappingError, type ProductId, type SafeJson, utcIso, type WarehouseRow, withProvenanceKeys } from "./mapping.ts";
+import { donationCoverage, type DonationSourceSpec, DONATION_SOURCES, mapDonationRows } from "./donation_export.ts";
 import type { QueryRunner } from "./warehouse.ts";
 
 export const EXPORT_RECIPE_VERSION = "election-export-1";
@@ -295,6 +296,27 @@ export async function buildExport(run: QueryRunner, now: () => Date = () => new 
   const indexed = new Set(p17.map((row) => row.official_url));
   cross.push(check("p16_linked_returns_equal_p17_document_index", linked.size === indexed.size && [...linked].every((url) => indexed.has(url)), `${linked.size} linked from the aggregate table; ${indexed.size} in the document index`));
 
+  // P25: the disclosures INSIDE the return documents of P15 and P17. The two products are different layers of the
+  // same publication, so nothing here is added to anything there - a part total read from a return is checked
+  // AGAINST the Commission's own index-page total, never summed with it.
+  for (const spec of DONATION_SOURCES) {
+    const raw = (await run(OPERATIONAL_SELECT(spec.source_id))).map(asWarehouseRow);
+    const donations = mapDonationRows(raw, spec);
+    const product = donationExport(spec, donations, raw.length);
+    products.push(product);
+    const coverage = donationCoverage(donations.outcomes);
+    product.reconciliation.checks.push(
+      // A return document can have more than one version upstream (a later visual review of an image-only
+      // original is one). Every version is read; the count below is versions, and the documents behind them.
+      check("every_upstream_version_of_every_return_was_read", coverage.documents_offered === donations.versions_offered,
+        `${coverage.documents_offered} of ${donations.versions_offered} upstream versions read, covering ${donations.documents_offered} distinct return documents`),
+      check("coverage_of_the_return_corpus", true,
+        Object.entries(coverage).map(([name, value]) => `${name} ${value}`).join("; ")
+        + ". A document that is not the Commission's form, and a part whose entries do not sum to the form's own total, are counted here and produce no donor row."),
+    );
+    cross.push(donationAgreementCheck(spec, product.rows, latest(get("P15").rows), p16));
+  }
+
   // Civic links for 2026 that the warehouse really holds. It holds no current party register, no 2026
   // electorate list and no nominations: those stay missing (see the family README), they are not exported as empty.
   products.push(civicElectionStatus(await run(ELECTIONS_SELECT)), civicBoundaryLinks(await run(BOUNDARIES_SELECT)));
@@ -312,6 +334,56 @@ export async function buildExport(run: QueryRunner, now: () => Date = () => new 
     all_checks_ok: reconciliation.every((r) => r.checks.every((c) => c.ok)) && cross.every((c) => c.ok),
   };
   return { products: products.map((p) => ({ product: p.product, rows: p.rows })), manifest, fileBodies };
+}
+
+/** A disclosure product: many rows come out of each upstream return document, so the counts are its own. */
+function donationExport(spec: DonationSourceSpec, donations: { rows: ExportRow[] }, upstreamRows: number): ProductExport {
+  const rows = foldVersions(donations.rows);
+  const distinct = donations.rows.map((row) => ({ record_id: row.external_record_id, content_hash: row.upstream_content_hash }));
+  const reconciliation = reconcileCounts(spec.product, spec.source_id, upstreamRows, distinct, rows);
+  return { product: spec.product, rows, reconciliation };
+}
+
+/**
+ * The same money, published twice by the same publisher, must AGREE - and is never added.
+ *
+ * A candidate's Parts A + C + D, read from the return, is the same figure the Commission prints on its index page
+ * as that candidate's total donations. A party's Parts A + C + D + F + G is the party's published donation total.
+ * Where both are known they are compared; where the return document holds only some of its parts the comparison
+ * is reported as not available for that return, never as a disagreement and never as a smaller total.
+ */
+function donationAgreementCheck(spec: DonationSourceSpec, rows: VersionedExportRow[], p15: VersionedExportRow[], p16: VersionedExportRow[]): { name: string; ok: boolean; detail: string } {
+  const parts = latest(rows).filter((row) => row.record_kind === "donation_return_part");
+  const byDocument = new Map<string, VersionedExportRow[]>();
+  for (const row of parts) {
+    const document = row.external_record_id.split("#")[0];
+    byDocument.set(document, [...(byDocument.get(document) ?? []), row]);
+  }
+  const candidateTotal = new Map<string, number>();
+  for (const row of p15) {
+    if (row.payload.donations_as_published_status === "not_reported") continue;
+    candidateTotal.set(row.external_record_id, Number(row.payload.donations_as_published_nzd ?? 0));
+  }
+  const partyTotal = new Map<string, number>();
+  for (const row of p16) {
+    const sums = (row.payload.aggregates as { metric: string; amount_nzd?: number }[]).find((a) => a.metric === "party_donations_sum");
+    if (sums?.amount_nzd !== undefined) partyTotal.set(String(row.payload.party_name_as_published), sums.amount_nzd);
+  }
+  const DONATION_PARTS = { candidate_election_return: ["A", "C", "D"], party_annual_return: ["A", "C", "D", "F", "G"] };
+  let compared = 0, agree = 0, disagree = 0, incomplete = 0;
+  for (const [document, group] of byDocument) {
+    const kind = String(group[0].payload.return_kind) as keyof typeof DONATION_PARTS;
+    const wanted = DONATION_PARTS[kind];
+    const held = group.filter((row) => wanted.includes(String(row.payload.disclosure_part)) && row.payload.disclosed_total_status !== "not_reported");
+    const published = kind === "candidate_election_return" ? candidateTotal.get(document) : partyTotal.get(String(group[0].payload.party_name_as_published));
+    if (published === undefined) continue;
+    if (held.length !== wanted.length) { incomplete++; continue; }
+    compared++;
+    const read = held.reduce((a, row) => a + Number(row.payload.disclosed_total_nzd ?? 0), 0);
+    if (Math.round(read * 100) === Math.round(published * 100)) agree++; else disagree++;
+  }
+  return check(`${spec.product.toLowerCase()}_part_totals_agree_with_the_published_index_totals`, disagree === 0,
+    `${agree} of ${compared} returns whose parts are all present match the Commission's own published total exactly; ${disagree} disagree; ${incomplete} returns publish only some of their parts and are not compared. One fact published twice: reconciled, never added.`);
 }
 
 function civicRows(product: CivicProductId, sourceId: string, raw: { [column: string]: unknown }[], build: (row: { [column: string]: unknown }) => ExportRow | null): ProductExport {

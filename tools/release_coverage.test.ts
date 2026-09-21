@@ -9,12 +9,12 @@ import { coverageCounts, heldFor, RELEASE_COVERAGE } from "../web/src/lib/releas
 
 const root = new URL("../", import.meta.url);
 
-test("the explorer's coverage file is the generated one: 24 products, in catalogue order, with the catalogue's words", async () => {
+test("the explorer's coverage file is the generated one: 26 products, in catalogue order, with the catalogue's words", async () => {
   assert.equal(await readFile(new URL("web/src/lib/release-coverage.json", root), "utf-8"), await buildCoverageFile(), "run `node src/loaders/coverage_build.ts --write` in ingest/");
   const catalogue = JSON.parse(await readFile(new URL("catalogue/sources.json", root), "utf-8")) as { product_id: string; title: string; publisher: string; record_count: number }[];
   assert.deepEqual(RELEASE_COVERAGE.map((r) => [r.product_id, r.title, r.publisher, r.catalogue_record_count]), catalogue.map((p) => [p.product_id, p.title, p.publisher, p.record_count]));
-  assert.equal(coverageCounts().total, 24);
-  assert.equal(coverageCounts().with_backfill_route, 24, "every catalogue product has an explicit backfill route");
+  assert.equal(coverageCounts().total, 26);
+  assert.equal(coverageCounts().with_backfill_route, 26, "every catalogue product has an explicit backfill route");
 });
 
 test("a route shown to readers is a registered source that maps to that product, with a state that allows the claim", async () => {
@@ -27,7 +27,10 @@ test("a route shown to readers is a registered source that maps to that product,
       assert.ok(source, `${row.product_id}: ${id} is registered`);
       assert.ok((source.catalogue_products ?? []).some((p) => p.product_id === row.product_id), `${row.product_id}: ${id} maps to it`);
     }
-    for (const id of row.backfill_source_ids) assert.equal(SOURCE_ROUTES[id].state, "loaded_and_reconciled", id);
+    // A backfill route is shown as built or as proven, and never as anything weaker: a blocked or probe-only
+    // source is not a backfill route at all. Whether a built route becomes "loaded and reconciled" is decided by
+    // the committed manifest, never by this file (see grantedState).
+    for (const id of row.backfill_source_ids) assert.ok(["loaded_and_reconciled", "built_not_proven"].includes(SOURCE_ROUTES[id].state), `${id}: ${SOURCE_ROUTES[id].state}`);
     // A blocked, challenged or probe-only source is never shown as a refresh route.
     for (const id of row.refresh_source_ids) assert.ok(["working", "exercised_not_run_in_full"].includes(SOURCE_ROUTES[id].state) || STATS_REFRESH[id]?.state === "working_cli_only", id);
     if (row.refresh === "scheduled") assert.ok(row.refresh_source_ids.some((id) => config.sources.find((s) => s.source_id === id)!.enabled), `${row.product_id}: a scheduled refresh needs an enabled source`);

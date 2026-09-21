@@ -1,4 +1,4 @@
-// The one loader contract: registry merge, rights per actual source, route coverage of the 24 products, target
+// The one loader contract: registry merge, rights per actual source, route coverage of the 26 products, target
 // resolution, shared privacy and source-access rules, retries, statuses and exit codes. Offline: no database, no network.
 
 import assert from "node:assert/strict";
@@ -129,9 +129,9 @@ test("rights: the 2013 Census history has its own pending row, not the 2018 Cens
 
 // Route coverage ------------------------------------------------------------------------------------------------------------------
 
-test("coverage: all 24 catalogue products have an explicit backfill route and a truthful refresh state", () => {
+test("coverage: all 26 catalogue products have an explicit backfill route and a truthful refresh state", () => {
   const { file } = mergeRegistry(committed);
-  assert.equal(catalogue.length, 24);
+  assert.equal(catalogue.length, 26);
   const coverage = productCoverage(file, catalogue);
   assert.deepEqual(coverage.map((c) => c.product_id), catalogue.map((c) => c.product_id));
   for (const product of coverage) {
@@ -200,19 +200,19 @@ test("targets: all, a family, a product, a unit and a source id resolve to units
   const { families, problems } = await loaders();
   assert.deepEqual(problems, []);
   const all = resolveTargets(families, ["all"]);
-  assert.equal(all.length, 9 + 9 + 11 + 10);
+  assert.equal(all.length, 9 + 11 + 11 + 10);
   assert.deepEqual([...new Set(all.map((u) => u.family.family))], ["core", "election", "parliament", "statistics"]);
   assert.deepEqual(resolveTargets(families, ["statistics"]).length, 10);
   assert.deepEqual(resolveTargets(families, ["P10"]).map((u) => u.unit.unit), ["nz_parliament_mp_directory", "parliament_export_member_terms", "parliament_export_minister_roles"]);
   assert.deepEqual(resolveTargets(families, ["P22"]).map((u) => u.unit.unit), ["stats_nz_selected_series", "stats_nz_release_series"]);
-  assert.deepEqual(resolveTargets(families, ["P09", "P09", "election"]).length, 10, "a unit named twice runs once (the nine election units and the core probe that claims P09)");
+  assert.deepEqual(resolveTargets(families, ["P09", "P09", "election"]).length, 12, "a unit named twice runs once (the eleven election units and the core probe that claims P09)");
   assert.deepEqual(resolveTargets(families, ["nz_parliament_written_questions_recent"]).map((u) => u.unit.unit), ["parliament_export_written_questions"]);
   // The deliberate whole-Parliament walk names its unit too, but is never part of a plain refresh.
   const [questions] = resolveTargets(families, ["nz_parliament_written_questions_backfill"]);
   assert.equal(questions.unit.unit, "parliament_export_written_questions");
   assert.ok(!questions.unit.refresh_source_ids.includes("nz_parliament_written_questions_backfill"));
   assert.throws(() => resolveTargets(families, ["P99"]), (e: unknown) => e instanceof LoaderError && e.code === "target_unknown");
-  // Every one of the 24 products is reachable by its id.
+  // Every one of the 26 products is reachable by its id.
   for (const product of catalogue) assert.ok(resolveTargets(families, [product.product_id]).length >= 1, product.product_id);
 });
 

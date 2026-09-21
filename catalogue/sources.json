@@ -530,5 +530,55 @@
     "release_mode": "metadata-and-links-only",
     "rights_status": "pending-publisher-review",
     "known_limitations": "Snapshot count; independent replay-completion certification was unfinished"
+  },
+  {
+    "product_id": "P25",
+    "title": "2023 candidate returns: disclosures inside the filed returns",
+    "publisher": "Electoral Commission",
+    "domain": "Political finance",
+    "source_url": "https://elections.nz/democracy-in-nz/candidates/candidate-expenses-and-donations/",
+    "snapshot_at_utc": "2026-09-21T09:02:00Z",
+    "record_count": 1340,
+    "evidence_forms": [
+      {
+        "type": "official return part disclosure",
+        "count": 1277
+      },
+      {
+        "type": "official itemised donation entry",
+        "count": 63
+      }
+    ],
+    "observed_start_utc": "2026-09-19T17:51:54.739Z",
+    "observed_end_utc": "2026-09-19T18:11:42.663Z",
+    "coverage_window": "2023 general election candidate returns",
+    "release_mode": "metadata-and-links-only",
+    "rights_status": "pending-publisher-review",
+    "known_limitations": "171 of 492 returns are on the Commission's form and readable; 224 of the 492 are image-only. Entries are published only where they sum exactly to the form's own printed part total, which holds for 30 parts; every other part keeps its printed total and publishes no entry. No street address and no document text."
+  },
+  {
+    "product_id": "P26",
+    "title": "2025 party annual returns: disclosures inside the filed returns",
+    "publisher": "Electoral Commission",
+    "domain": "Political finance",
+    "source_url": "https://elections.nz/democracy-in-nz/political-parties-in-new-zealand/party-donations-and-loans-by-year/",
+    "snapshot_at_utc": "2026-09-21T09:02:00Z",
+    "record_count": 286,
+    "evidence_forms": [
+      {
+        "type": "official return part disclosure",
+        "count": 58
+      },
+      {
+        "type": "official itemised donation entry",
+        "count": 228
+      }
+    ],
+    "observed_start_utc": "2026-09-19T16:58:58.118Z",
+    "observed_end_utc": "2026-09-19T17:15:27.000Z",
+    "coverage_window": "2025 party annual returns",
+    "release_mode": "metadata-and-links-only",
+    "rights_status": "pending-publisher-review",
+    "known_limitations": "10 of 23 return versions are on the Commission's form and readable; one party files a spreadsheet-style schedule instead of the form and is not read. Entries are published only where they sum exactly to the form's own printed part total, which holds for 3 parts. No street address and no document text."
   }
 ]

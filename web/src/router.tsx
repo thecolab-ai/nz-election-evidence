@@ -3,12 +3,13 @@ import { PageHeader } from '@/components/page'
 import { Shell } from '@/components/shell'
 import { basePath } from '@/lib/env'
 import { parseGraphSearch, parseListSearch, type GraphSearch, type ListSearch, type ListSearchInput, type ListSpec } from '@/lib/search'
-import { candidaciesSpec, datasetRowsSpec, datasetsSpec, documentsSpec, financeSpec, operationsRouteSpec, identitiesSpec, parliamentSpec, recordsSpec, rightsSpec, sourcesSpec, statisticsRouteSpec } from '@/lib/specs'
+import { candidaciesSpec, datasetRowsSpec, datasetsSpec, documentsSpec, donationsSpec, financeSpec, operationsRouteSpec, identitiesSpec, parliamentSpec, recordsSpec, rightsSpec, sourcesSpec, statisticsRouteSpec } from '@/lib/specs'
 import { ConfiguredOnly, PublicGate } from '@/routes/access'
 import { DatasetDetailPage, DatasetsPage } from '@/routes/datasets'
 import { DocumentsPage } from '@/routes/documents'
 import { ElectionDetailPage, ElectionsPage } from '@/routes/elections'
 import { ElectorateVersionDetailPage, PartyIdentityDetailPage } from '@/routes/entity-detail'
+import { DonationsPage } from '@/routes/donations'
 import { FinancePage } from '@/routes/finance'
 import { GraphPage } from '@/routes/graph'
 import { IdentityDetailPage } from '@/routes/identity-detail'
@@ -63,6 +64,7 @@ const electionsRoute = createRoute({ getParentRoute: inspector, path: '/election
 const electionDetailRoute = createRoute({ getParentRoute: inspector, path: '/elections/$slug', validateSearch: listSearch(candidaciesSpec), component: ElectionDetailPage })
 const documentsRoute = createRoute({ getParentRoute: inspector, path: '/documents', validateSearch: listSearch(documentsSpec), component: DocumentsPage })
 const financeRoute = createRoute({ getParentRoute: inspector, path: '/finance', validateSearch: listSearch(financeSpec), component: FinancePage })
+const donationsRoute = createRoute({ getParentRoute: inspector, path: '/donations', validateSearch: listSearch(donationsSpec), component: DonationsPage })
 const statisticsRoute = createRoute({ getParentRoute: inspector, path: '/statistics', validateSearch: listSearch(statisticsRouteSpec), component: StatisticsPage })
 const rightsRoute = createRoute({ getParentRoute: inspector, path: '/rights', validateSearch: listSearch(rightsSpec), component: RightsPage })
 const operationsRoute = createRoute({ getParentRoute: inspector, path: '/operations', validateSearch: listSearch(operationsRouteSpec), component: OperationsPage })
@@ -85,6 +87,7 @@ const routeTree = rootRoute.addChildren([
     electionDetailRoute,
     documentsRoute,
     financeRoute,
+    donationsRoute,
     statisticsRoute,
     rightsRoute,
     operationsRoute,

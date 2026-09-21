@@ -321,6 +321,30 @@
       ],
       "refresh": "scheduled",
       "refresh_gap": null
+    },
+    {
+      "product_id": "P25",
+      "title": "2023 candidate returns: disclosures inside the filed returns",
+      "publisher": "Electoral Commission",
+      "catalogue_record_count": 1340,
+      "backfill_source_ids": [
+        "finance_2023_candidate_return_disclosures_export"
+      ],
+      "refresh_source_ids": [],
+      "refresh": "none",
+      "refresh_gap": "The Electoral Commission's index page challenges this host, and a return once filed does not change. Backfill only. The donations-over-$20,000 notices published separately during an election year are on a page that is challenged too, and are not collected."
+    },
+    {
+      "product_id": "P26",
+      "title": "2025 party annual returns: disclosures inside the filed returns",
+      "publisher": "Electoral Commission",
+      "catalogue_record_count": 286,
+      "backfill_source_ids": [
+        "finance_2025_party_return_disclosures_export"
+      ],
+      "refresh_source_ids": [],
+      "refresh": "none",
+      "refresh_gap": "The Electoral Commission's page challenges this host, and a return once filed does not change; an amended return is published as its own document. Backfill only. The donations-over-$20,000 notices published separately during an election year are on a page that is challenged too, and are not collected."
     }
   ],
   "not_published_for_2026": [

@@ -24,6 +24,7 @@ const NAV_GROUPS = [
       { to: '/parliament', label: 'Parliament' },
       { to: '/elections', label: 'Elections' },
       { to: '/finance', label: 'Finance' },
+      { to: '/donations', label: 'Donations' },
       { to: '/statistics', label: 'Statistics' },
       { to: '/graph', label: 'Relationships' },
     ],

@@ -18,7 +18,7 @@ Automation limit: a previously green CI status is **not a durable election-day m
 
 ## What is here
 
-- **24 dated source-product records**, mapped once each, totalling **351,710 distinct records in the 19 September 2026 snapshot**.
+- **26 dated source-product records**, mapped once each, totalling **353,336 distinct records** (351,710 in the 19 September 2026 snapshot, plus the 1,626 disclosures read from inside the filed Electoral Commission returns on 21 September 2026).
 - A separate **52-lane research roadmap**. It is a plan, **not a claim that 52 datasets are complete**.
 - Publisher links, observed timestamps, evidence types, counts, limitations and rights-review state.
 - A self-contained [interactive evidence atlas](atlas/index.html).

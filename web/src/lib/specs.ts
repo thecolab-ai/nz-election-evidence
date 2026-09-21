@@ -102,6 +102,25 @@ export const financeSpec = {
   },
 } as const satisfies ListSpec
 
+/**
+ * The disclosures inside filed returns. Sorting defaults to the largest amount in the most recent year, which is
+ * the order the Commission's own form prints them in; nothing is ranked across returns.
+ */
+export const donationsSpec = {
+  sortable: ['reporting_year', 'disclosed_amount_nzd', 'donor_name_as_published', 'party_name_as_published'],
+  defaultSort: [
+    { column: 'reporting_year', dir: 'desc' },
+    { column: 'disclosed_amount_nzd', dir: 'desc' },
+  ],
+  tiebreak: 'entry_index',
+  filters: {
+    kind: { kind: 'enum', values: ['donation', 'loan', 'expense'] },
+    identity: { kind: 'enum', values: ['named', 'anonymous', 'protected_from_disclosure', 'overseas', 'not_itemised'] },
+    year: { kind: 'enum', values: ['2023', '2025'] },
+    q: { kind: 'text' },
+  },
+} as const satisfies ListSpec
+
 export const statSeriesSpec = {
   sortable: ['dataset_title', 'title', 'series_key', 'unit', 'observations'],
   defaultSort: [

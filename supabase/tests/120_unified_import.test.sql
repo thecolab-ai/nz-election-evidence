@@ -15,8 +15,8 @@ select is(evidence_private.text_violation('Stephens 0212345678'), 'phone_like_va
 select is((select count(*)::int from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'evidence_private' and p.proname = 'text_violation'), 1, 'exactly one copy of the guard exists');
 
 -- One project_run, every family projector --------------------------------------------------------------------------------------
-select is((select array_agg(projector_key order by projector_key) from evidence_private.run_projectors), array['election_family', 'parliament_family'],
-  'both ledger families registered their projector; statistics has its own typed writer and registers none');
+select is((select array_agg(projector_key order by projector_key) from evidence_private.run_projectors), array['election_donations', 'election_family', 'parliament_family'],
+  'every ledger projection is registered, including the donation disclosures added beside the election family; statistics has its own typed writer and registers none');
 select is((select count(*)::int from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'evidence_private' and p.proname = 'project_run'), 1, 'exactly one project_run exists');
 select ok(not has_table_privilege('evidence_ingest', 'evidence_private.run_projectors', 'INSERT'), 'the worker cannot register a projector');
 

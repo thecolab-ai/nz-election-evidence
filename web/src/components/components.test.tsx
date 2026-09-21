@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest'
 import { renderCell } from '@/routes/datasets'
 import { coverageCounts, heldFor, NOT_PUBLISHED_FOR_2026, RELEASE_COVERAGE } from '@/lib/release-coverage'
 import { AccountabilityFooter } from './footer'
-import { figureWords, OwnerOverrideNotice, ownerBasis } from './owner-override-notice'
+import { figureWords, OwnerOverrideNotice, ownerBasis, showsDonationFacts } from './owner-override-notice'
 import { PREVIEW_BANNER, PreviewBanner } from './shell'
 import { EmptyBlock, ErrorBlock } from './states'
 import { SummaryCard } from './summary-card'
@@ -102,6 +102,18 @@ describe('owner override: stated as what it is, never as a review or a publisher
     expect(hrefs).toContain('https://github.com/thecolab-ai/nz-election-evidence/blob/main/governance/owner-authorizations.json')
     expect(hrefs).toContain('https://github.com/thecolab-ai/nz-election-evidence/blob/main/REVIEW-REGISTER.md')
   })
+  it('says what a donation row is, and what it can never hold, once donation facts rest on the decision', () => {
+    render(<OwnerOverrideNotice status={both({ owner_figure_scopes: ['published_donation_facts'] })} />)
+    const text = screen.getByTestId('owner-override-notice').textContent ?? ''
+    expect(text).toContain('the donations, loans and contributions each filed return discloses')
+    expect(text).toContain('Donations are shown as the filed return discloses them.')
+    expect(text).toContain('No street address, contact detail or signature is held anywhere in this store')
+    expect(text).toContain('an identity the law withholds stays withheld')
+    // The older sentence claimed no donation record existed. It must not appear once one does.
+    expect(text).not.toContain('this project has never collected a donation record')
+    expect(showsDonationFacts(['published_poll_figures'])).toBe(false)
+    expect(showsDonationFacts(null)).toBe(false)
+  })
   it('names the kinds of figure that rest on the decision, from the database, and never poll figures', () => {
     render(<OwnerOverrideNotice status={both({ owner_figure_scopes: ['official_finance_figures', 'official_result_figures', 'published_poll_figures', 'statistical_facts'] })} />)
     const text = screen.getByTestId('owner-override-notice').textContent ?? ''
@@ -110,6 +122,7 @@ describe('owner override: stated as what it is, never as a review or a publisher
     expect(text).toContain('the published figures of official statistics')
     expect(text).toContain('the party-vote percentages each pollster published, each shown beside whether that pollster disclosed a methodology')
     expect(text).toContain('Nothing is read from inside a finance return, and no donor is named anywhere')
+    expect(screen.getByTestId('owner-override-notice').querySelector('[data-testid="owner-notice-donations"]')).toBeNull()
     // A scope the database does not report is not claimed, and an unknown kind is not invented.
     expect(figureWords(['statistical_facts'])).toEqual(['the published figures of official statistics'])
     expect(figureWords(['something_new', null as unknown as string])).toEqual([])
@@ -148,11 +161,11 @@ describe('owner override: stated as what it is, never as a review or a publisher
 })
 
 describe('release coverage keeps routes and held data apart', () => {
-  it('every one of the 24 products has a backfill route; a route is never counted as held data', () => {
+  it('every one of the 26 products has a backfill route; a route is never counted as held data', () => {
     const counts = coverageCounts()
-    expect(counts.total).toBe(24)
-    expect(counts.with_backfill_route).toBe(24)
-    expect(counts.with_refresh_route + counts.without_refresh_route).toBe(24)
+    expect(counts.total).toBe(26)
+    expect(counts.with_backfill_route).toBe(26)
+    expect(counts.with_refresh_route + counts.without_refresh_route).toBe(26)
     for (const row of RELEASE_COVERAGE) {
       // A product without a working refresh route always says why.
       if (row.refresh !== 'scheduled' && row.refresh !== 'operator_run') expect(row.refresh_gap, row.product_id).toBeTruthy()

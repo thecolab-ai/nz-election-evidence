@@ -9,10 +9,10 @@
 //   node src/cli.ts import TARGET...                backfill: private artifact -> store (replay-safe, resumable)
 //   node src/cli.ts refresh TARGET... [--dry-run] [--backfill]   current-refresh route: fresh anonymous fetch -> store
 //   node src/cli.ts reconcile TARGET...             read-only: the store against the private inputs
-//   node src/cli.ts coverage                        routes of the 24 catalogue products, with their true state
+//   node src/cli.ts coverage                        routes of the 26 catalogue products, with their true state
 //   node src/cli.ts registry-sync [--dry-run]       upsert sources, rights mirror, schedules (always inactive)
 //
-// TARGET: all | a family (core, election, parliament, statistics) | a catalogue product (P01..P24) | a unit or source id.
+// TARGET: all | a family (core, election, parliament, statistics) | a catalogue product (P01..P26) | a unit or source id.
 // Older spellings still work: `run SOURCE` is `refresh SOURCE`, and `import SOURCE --dry-run` is `dry-run SOURCE`.
 // Flags: --receipt FILE  --receipt-dir DIR  --max-records N  --max-runtime-seconds N  --continue-on-error
 //
@@ -217,7 +217,7 @@ async function main(argv: string[]): Promise<number> {
     const catalogue = JSON.parse(await readFile(resolve(REPOSITORY_ROOT, "catalogue/sources.json"), "utf-8")) as { product_id: string; title: string; record_count: number }[];
     // What was DONE is read from the committed manifest, if there is one; without it no load is claimed.
     const evidence = await readFile(resolve(REPOSITORY_ROOT, MANIFEST_PATH), "utf-8").then((text) => JSON.parse(text) as ManifestEvidence, () => null);
-    await emit({ contract: "route coverage of the 24 catalogue products", load_evidence: evidence ? { manifest: MANIFEST_PATH, tested_source_commit: evidence.tested_source?.commit ?? null } : null, products: productCoverage(file, catalogue, evidence), statistics_refresh_routes: STATS_REFRESH, not_published_for_2026: UNPUBLISHED_2026 }, flag(args, "--receipt"));
+    await emit({ contract: "route coverage of the 26 catalogue products", load_evidence: evidence ? { manifest: MANIFEST_PATH, tested_source_commit: evidence.tested_source?.commit ?? null } : null, products: productCoverage(file, catalogue, evidence), statistics_refresh_routes: STATS_REFRESH, not_published_for_2026: UNPUBLISHED_2026 }, flag(args, "--receipt"));
     return EXIT.ok;
   }
 

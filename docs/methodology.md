@@ -21,4 +21,4 @@ Define the denominator before counting. Preserve source dates separately from ob
 
 ## Snapshot checks
 
-The validator enforces 24 unique products, 351,710 total records, evidence-form sums, JSON/CSV parity, 52 unique roadmap lanes, and exactly one roadmap mapping for each held product. These are integrity checks for this artefact, not certification of source-world completeness.
+The validator enforces 26 unique products, 353,336 total records, evidence-form sums, JSON/CSV parity, 52 unique roadmap lanes, and exactly one roadmap mapping for each held product. These are integrity checks for this artefact, not certification of source-world completeness.

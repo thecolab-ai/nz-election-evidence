@@ -2032,6 +2032,136 @@
         "canonical (merged) people or parties: names stay exactly as each source printed them",
         "any source whose rights row is refused, restricted or withheld: those stay invisible whatever this file says, figure and label together"
       ]
+    },
+    {
+      "authorization_id": "OWNER-AUTH-2026-09-21-03",
+      "status": "active",
+      "decided_on": "2026-09-21",
+      "expires_on": "2026-11-06",
+      "decided_by": "Adam Holt",
+      "decided_by_role": "repository owner and project maintainer",
+      "request_source": "The owner's direction of 2026-09-21, relayed by the release coordinator: add the officially disclosed donation records to the evidence store and show meaningful donor names, recipients, published amounts, the dates the source states, reporting periods and types, statuses, and the official links. The same direction sets the boundary this entry keeps: safe disclosed donor names are permitted, and residential or street addresses, signatures, contact details, private identifiers and bank details are not. The message itself is not held in this repository.",
+      "statement": "The owner directs that the donations a party or candidate DISCLOSED inside a filed Electoral Commission return be published, where this project can read them from the return honestly. That is a new kind of record for this store: until now it held the Commission's index of filed returns and the totals printed on the Commission's own pages, and no donation at all. This entry releases, for the two return-disclosure products only (P25, the 2023 candidate returns; P26, the 2025 party annual returns): the donor name the return gives, where it could be separated from the street address printed with it in the same cell and proved not to be one; the amount of each entry and the total the form prints for each part; and the descriptive fields that make those figures readable - the recipient, the part and its label, the reporting year, the dates the return states, the amendment flag, and the official link to the return. An identity the law withholds stays withheld: an anonymous donation and a donation protected from disclosure are published with no name and with the status that says why. An entry is published only where the entries of its part sum exactly to the total the Commission's own form prints for that part; every other part is published with its printed total, the number of entries it declares and the reason no entry of it is shown. No address, no signature, no contact detail and no document text is stored anywhere in this store, and the column that holds a donor name refuses any value carrying a digit or a street word.",
+      "departs_from": [
+        "RED-LINES R10 as written: no legal-review entry names a reviewer for publishing donor names. The owner proceeds anyway; this is a departure from R10, not compliance with it.",
+        "RED-LINES R8 as written: nobody has accepted the accountable-person role. The owner proceeds anyway; this is a departure from R8, not compliance with it."
+      ],
+      "scopes": [
+        {
+          "scope": "source_fields",
+          "source_id": "finance_2023_candidate_return_disclosures_export",
+          "rights_id": "RIGHTS-02",
+          "fields": [
+            "amendment_labelled",
+            "candidate_name_as_published",
+            "catalogue_page_sha256",
+            "catalogue_page_url",
+            "date_disclosure",
+            "disclosure_kind",
+            "disclosure_part",
+            "disclosure_reader_version",
+            "document_version_type",
+            "donation_dates",
+            "electorate_as_published",
+            "entries_disclosed",
+            "entry_index",
+            "itemisation_note",
+            "itemisation_status",
+            "original_document_digest",
+            "overlaps_election_year_notices",
+            "part_entries_disclosed",
+            "part_itemisation_status",
+            "part_label_as_published",
+            "party_name_as_published",
+            "reporting_year",
+            "return_kind"
+          ],
+          "basis": "Everything about a disclosure that is not the money or the donor: which part of the Commission's own form disclosed it, the label that part carries, the candidate, their electorate and their party as the return names them, the reporting year, the dates the return states, whether the document is an amendment, the official link and digest of the return and of the index page that lists it, how many entries the part declares, and the two status words that say how completely this project could read that part. Identifiers, labels, dates and status words, each with the official link beside it."
+        },
+        {
+          "scope": "published_donation_facts",
+          "source_id": "finance_2023_candidate_return_disclosures_export",
+          "rights_id": "RIGHTS-02",
+          "fields": [
+            "amounts_basis",
+            "disclosed_amount_nzd",
+            "disclosed_total_nzd",
+            "disclosed_total_status",
+            "donor_identity_kind",
+            "donor_name_as_published",
+            "donor_name_status",
+            "part_total_nzd"
+          ],
+          "basis": "The donation facts the filed return itself discloses: the donor name where the return names one, the two words that say whether a name was published, withheld by law or not separable, the amount of each entry, and the total the form prints for the part it sits in. A disclosure Parliament requires to be public, shown as the return states it. Nothing is totalled, averaged, ranked or compared across returns, and no entry is shown for a part whose entries do not sum exactly to the form's own printed total."
+        },
+        {
+          "scope": "source_fields",
+          "source_id": "finance_2025_party_return_disclosures_export",
+          "rights_id": "RIGHTS-04",
+          "fields": [
+            "amendment_labelled",
+            "candidate_name_as_published",
+            "catalogue_page_sha256",
+            "catalogue_page_url",
+            "date_disclosure",
+            "disclosure_kind",
+            "disclosure_part",
+            "disclosure_reader_version",
+            "document_version_type",
+            "donation_dates",
+            "electorate_as_published",
+            "entries_disclosed",
+            "entry_index",
+            "itemisation_note",
+            "itemisation_status",
+            "original_document_digest",
+            "overlaps_election_year_notices",
+            "part_entries_disclosed",
+            "part_itemisation_status",
+            "part_label_as_published",
+            "party_name_as_published",
+            "reporting_year",
+            "return_kind"
+          ],
+          "basis": "Everything about a disclosure that is not the money or the donor: which part of the Commission's own form disclosed it, the label that part carries, the party as the return names them, the reporting year, the dates the return states, whether the document is an amendment, the official link and digest of the return and of the index page that lists it, how many entries the part declares, and the two status words that say how completely this project could read that part. Identifiers, labels, dates and status words, each with the official link beside it."
+        },
+        {
+          "scope": "published_donation_facts",
+          "source_id": "finance_2025_party_return_disclosures_export",
+          "rights_id": "RIGHTS-04",
+          "fields": [
+            "amounts_basis",
+            "disclosed_amount_nzd",
+            "disclosed_total_nzd",
+            "disclosed_total_status",
+            "donor_identity_kind",
+            "donor_name_as_published",
+            "donor_name_status",
+            "part_total_nzd"
+          ],
+          "basis": "The donation facts the filed return itself discloses: the donor name where the return names one, the two words that say whether a name was published, withheld by law or not separable, the amount of each entry, and the total the form prints for the part it sits in. A disclosure Parliament requires to be public, shown as the return states it. Nothing is totalled, averaged, ranked or compared across returns, and no entry is shown for a part whose entries do not sum exactly to the form's own printed total."
+        }
+      ],
+      "never_in_scope": [
+        "a donor's residential or street address, or any part of one: no such column exists in this store, and the column that holds a donor name refuses any value carrying a digit or a street word",
+        "signatures, contact details, bank or account details, dates of birth and any other private identifier printed on a return",
+        "the identity behind an anonymous donation or a donation protected from disclosure: the law withholds it and so does this store",
+        "the text of a return document, a copy of the PDF, or any page capture of one",
+        "a donor total across returns, a ranking of donors, or any comparison this project computes rather than the publisher printing it",
+        "an entry of a part whose entries do not sum exactly to the total the Commission's own form prints for that part",
+        "any source whose rights row is refused, restricted or withheld: those stay invisible whatever this file says"
+      ],
+      "not_claimed": [
+        "No independent legal review has been carried out (R10). Every REVIEW-REGISTER.md row stays PENDING with no reviewer named. The specific questions a reviewer would be asked are open: whether republishing a name the Electoral Commission itself publishes carries any further obligation, and what a correction or removal process should be.",
+        "Nobody has accepted the accountable-person role (R8). This decision does not name one and does not stand in for one.",
+        "No publisher has granted a licence or permission. Both rights-register rows stay pending and link-only, and a recorded refusal or restriction by the publisher would hide these sources entirely.",
+        "No claim that a donor consented to this republication, or was asked.",
+        "No claim of completeness. Most returns in this corpus could not be read: 171 of 492 candidate returns and 10 of 23 party return versions are on the Commission's form and readable, and entries are published for 33 parts of them. Every other part says so in its own row.",
+        "No claim that a figure here is audited, correct, or the same as any figure published elsewhere. Where the Commission also prints a total for the same return, the two are compared and reported, never added together or replaced by one another.",
+        "No claim about any donor's motive, influence, or relationship with a party or candidate, and no link between a donor and any decision, policy or appointment.",
+        "No merging of people or organisations by name. Two entries naming the same words are two entries; nothing here asserts they are the same donor, and no donor total across returns is computed.",
+        "The donations-over-$20,000 notices the Electoral Commission publishes separately during an election year are NOT collected at all: that page answers this host with a challenge, which this project records and does not work around. Nothing here is a substitute for them, and no row here is added to one."
+      ]
     }
   ]
 }

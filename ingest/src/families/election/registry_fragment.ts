@@ -17,6 +17,10 @@ export const ELECTION_PINS: { [product in AnyProductId]: ProductPin } = {
   P15: { sha256: "sha256:e65bf3088d51a7efba09d1f3586a225c2bb6f4a0f9a8ab01aa64d765cf762734", rows: 492, records: 492, waves: 1 },
   P16: { sha256: "sha256:48b0ff941fa495ef46e5cb754149cd49b30fca5831d6e8a4097b64a0502295e9", rows: 14, records: 14, waves: 1 },
   P17: { sha256: "sha256:40905746969aeefa2c22b9c88c9d5fa7f0fe6060f8a3a5aca3f5fef8d7a3d9db", rows: 23, records: 17, waves: 2 },
+  // Cut from the export of 2026-09-21 (receipt: docs/database/receipts/2026-09-21-election-donations.export.json).
+  // One row per record: a part of a return, or an itemised entry of a part that reconciled. No history yet, so one wave.
+  P25: { sha256: "sha256:0937c821a00ede6fbf9ae863785af0d8bec59ad62684e234365548c27835b792", rows: 1340, records: 1340, waves: 1 },
+  P26: { sha256: "sha256:5c8588b8a3fa632a1926669add92bab252188e7181640284fb524d9f6268c4af", rows: 286, records: 286, waves: 1 },
   C26A: { sha256: "sha256:6e505871f3516204924bfe329af4bed0e4fcbbbde8b0eb02552e1a3142adbe0b", rows: 2, records: 1, waves: 2 },
   C26B: { sha256: "sha256:7645d31bc90a38baa602151c6ba1a9b1a534a672eacec889f33eaebe85a254a5", rows: 3, records: 3, waves: 1 },
 };
@@ -90,6 +94,21 @@ export const ELECTION_EXPORT_SOURCES: { product: AnyProductId; source: SourceCon
     "RIGHTS-04", "finance_2025", "complete_snapshot", "finance_party_return",
     "23 rows: 17 documents, 6 of them with a second version recording a bounded visual review of an image-only original.",
     [{ product_id: "P17", mapping_note: "17 documents, 23 versions. Official link, hash and status only; transcriptions are not imported." }]) },
+  // The disclosures INSIDE the returns that P15 and P17 index. Each is a separate publication of the same
+  // publisher, under the same rights row as the index it belongs to, and is compared with - never added to - the
+  // totals the Commission prints on its own pages.
+  { product: "P25", source: exportSource("P25", "finance_2023_candidate_return_disclosures_export", "candidate_return_disclosures",
+    "2023 candidate returns: the donations, loans and expenses disclosed inside them (reconciled upstream export)", EC,
+    "https://elections.nz/democracy-in-nz/candidates/candidate-expenses-and-donations/",
+    "RIGHTS-02", "baseline_2023", "complete_snapshot", "donation_return_part",
+    "One row per part of each return the Commission's form fills in, plus one row per itemised entry of a part whose entries sum exactly to the form's own printed total. Donor names as the return discloses them; no street address, no document text.",
+    [{ product_id: "P25", mapping_note: "Whole product. Read from the return documents P15 indexes; a part that does not reconcile keeps its printed total and publishes no entry." }]) },
+  { product: "P26", source: exportSource("P26", "finance_2025_party_return_disclosures_export", "party_return_disclosures",
+    "2025 party annual returns: the donations and loans disclosed inside them (reconciled upstream export)", EC,
+    "https://elections.nz/democracy-in-nz/political-parties-in-new-zealand/party-donations-and-loans-by-year/",
+    "RIGHTS-04", "finance_2025", "complete_snapshot", "donation_return_part",
+    "One row per part of each return the Commission's form fills in, plus one row per itemised entry of a part whose entries sum exactly to the form's own printed total. Donor names as the return discloses them; no street address, no document text.",
+    [{ product_id: "P26", mapping_note: "Whole product. Read from the return documents P17 indexes; a part that does not reconcile keeps its printed total and publishes no entry." }]) },
   { product: "C26A", source: exportSource("C26A", "election_2026_official_page_status_export", "election_2026_nominations",
     "2026 General Election: availability of the official electorate finder, as observed upstream", EC, "https://vote.nz/maps/find-your-electorate-2026",
     "RIGHTS-21", "primary_2026", "complete_snapshot", "election_2026_official_page_status",
@@ -108,4 +127,8 @@ export const ELECTION_REGISTRY_PRODUCTS: SourcesFile["registry_products"] = [
   { registry_key: "party_vote_polls", title: "Party-vote polls", domain: "Elections" },
   { registry_key: "candidate_finance_returns", title: "Candidate expense and donation returns", domain: "Political finance" },
   { registry_key: "election_2026_boundaries", title: "2026 General Election boundaries", domain: "Elections" },
+  // The disclosures inside the filed returns are their own registry products, so an owner decision about a donor
+  // fact names exactly these and can never reach the document indexes they were read from.
+  { registry_key: "candidate_return_disclosures", title: "Disclosures inside candidate returns", domain: "Political finance" },
+  { registry_key: "party_return_disclosures", title: "Disclosures inside party annual returns", domain: "Political finance" },
 ];

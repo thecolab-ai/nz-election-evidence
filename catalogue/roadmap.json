@@ -370,9 +370,11 @@
     "held_product_ids": [
       "P15",
       "P16",
-      "P17"
+      "P17",
+      "P25",
+      "P26"
     ],
-    "next_verification": "For a separate bounded next product, add OCR/page citations for the six image-only PDFs or select another reporting year; do not conflate donations, loans, amendments, or aggregate totals.",
+    "next_verification": "For a separate bounded next product, add OCR/page citations for the image-only PDFs, collect the immediate donations-over-$20,000 notices, or select another reporting year; do not conflate donations, loans, amendments, or aggregate totals, and never add an annual return to a notice for the same money.",
     "source_url": "https://elections.nz/"
   },
   {

@@ -62,6 +62,16 @@
       "domain": "Elections"
     },
     {
+      "registry_key": "candidate_return_disclosures",
+      "title": "Disclosures inside candidate returns",
+      "domain": "Political finance"
+    },
+    {
+      "registry_key": "party_return_disclosures",
+      "title": "Disclosures inside party annual returns",
+      "domain": "Political finance"
+    },
+    {
       "registry_key": "parliament_bill_publications",
       "title": "Bill publications (published revisions)",
       "domain": "Parliament and law"
@@ -734,6 +744,88 @@
         "expectedInput": {
           "sha256": "sha256:40905746969aeefa2c22b9c88c9d5fa7f0fe6060f8a3a5aca3f5fef8d7a3d9db",
           "rows": 23
+        },
+        "requiredValues": [
+          {
+            "field": "generic_importer_marker",
+            "equals": "never_present_use_the_election_family_importer"
+          }
+        ]
+      }
+    },
+    {
+      "source_id": "finance_2023_candidate_return_disclosures_export",
+      "registry_key": "candidate_return_disclosures",
+      "title": "2023 candidate returns: the donations, loans and expenses disclosed inside them (reconciled upstream export)",
+      "publisher": "Electoral Commission",
+      "official_url": "https://elections.nz/democracy-in-nz/candidates/candidate-expenses-and-donations/",
+      "adapter_kind": "export_import",
+      "adapter_name": "election_family_export",
+      "allowed_hosts": [],
+      "rights_id": "RIGHTS-02",
+      "view_scope": "baseline_2023",
+      "snapshot_semantics": "complete_snapshot",
+      "enabled": false,
+      "catalogue_products": [
+        {
+          "product_id": "P25",
+          "mapping_note": "Whole product. Read from the return documents P15 indexes; a part that does not reconcile keeps its printed total and publishes no entry."
+        }
+      ],
+      "export_contract": {
+        "fileEnv": "EVIDENCE_EXPORT_ELECTION_P25",
+        "recordKind": "donation_return_part",
+        "idField": "external_record_id",
+        "sourceUrlField": "official_url",
+        "observedAtField": "collected_at",
+        "originalHashField": "original_sha256",
+        "allowedFields": [],
+        "droppedFields": [],
+        "expectedRowsNote": "One row per part of each return the Commission's form fills in, plus one row per itemised entry of a part whose entries sum exactly to the form's own printed total. Donor names as the return discloses them; no street address, no document text.",
+        "expectedInput": {
+          "sha256": "sha256:0937c821a00ede6fbf9ae863785af0d8bec59ad62684e234365548c27835b792",
+          "rows": 1340
+        },
+        "requiredValues": [
+          {
+            "field": "generic_importer_marker",
+            "equals": "never_present_use_the_election_family_importer"
+          }
+        ]
+      }
+    },
+    {
+      "source_id": "finance_2025_party_return_disclosures_export",
+      "registry_key": "party_return_disclosures",
+      "title": "2025 party annual returns: the donations and loans disclosed inside them (reconciled upstream export)",
+      "publisher": "Electoral Commission",
+      "official_url": "https://elections.nz/democracy-in-nz/political-parties-in-new-zealand/party-donations-and-loans-by-year/",
+      "adapter_kind": "export_import",
+      "adapter_name": "election_family_export",
+      "allowed_hosts": [],
+      "rights_id": "RIGHTS-04",
+      "view_scope": "finance_2025",
+      "snapshot_semantics": "complete_snapshot",
+      "enabled": false,
+      "catalogue_products": [
+        {
+          "product_id": "P26",
+          "mapping_note": "Whole product. Read from the return documents P17 indexes; a part that does not reconcile keeps its printed total and publishes no entry."
+        }
+      ],
+      "export_contract": {
+        "fileEnv": "EVIDENCE_EXPORT_ELECTION_P26",
+        "recordKind": "donation_return_part",
+        "idField": "external_record_id",
+        "sourceUrlField": "official_url",
+        "observedAtField": "collected_at",
+        "originalHashField": "original_sha256",
+        "allowedFields": [],
+        "droppedFields": [],
+        "expectedRowsNote": "One row per part of each return the Commission's form fills in, plus one row per itemised entry of a part whose entries sum exactly to the form's own printed total. Donor names as the return discloses them; no street address, no document text.",
+        "expectedInput": {
+          "sha256": "sha256:5c8588b8a3fa632a1926669add92bab252188e7181640284fb524d9f6268c4af",
+          "rows": 286
         },
         "requiredValues": [
           {

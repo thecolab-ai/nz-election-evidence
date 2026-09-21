@@ -11,7 +11,7 @@ import { letterHex, publisherDate } from "../../../../supabase/functions/_shared
 
 export { letterHex, publisherDate };
 
-export type ProductId = "P08" | "P09" | "P13" | "P14" | "P15" | "P16" | "P17";
+export type ProductId = "P08" | "P09" | "P13" | "P14" | "P15" | "P16" | "P17" | "P25" | "P26";
 
 export type SafeJson = null | boolean | number | string | SafeJson[] | { [key: string]: SafeJson };
 

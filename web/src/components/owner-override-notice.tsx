@@ -44,6 +44,12 @@ const FIGURE_WORDS: Record<string, string> = {
   official_result_figures: 'the vote counts, shares, seat numbers and list positions the official election-results publications printed',
   official_finance_figures: 'the donation, expense and loan totals the Electoral Commission prints on its own public index pages',
   published_poll_figures: 'the party-vote percentages each pollster published, each shown beside whether that pollster disclosed a methodology',
+  published_donation_facts: 'the donations, loans and contributions each filed return discloses — the donor name where the return names one, the amount, and the dates the return states',
+}
+
+/** True while the database reports that donation facts read from inside a return rest on the owner's decision. */
+export function showsDonationFacts(scopes: readonly string[] | null | undefined): boolean {
+  return (scopes ?? []).includes('published_donation_facts')
 }
 
 export function figureWords(scopes: readonly string[] | null | undefined): string[] {
@@ -76,8 +82,19 @@ export function OwnerOverrideNotice({ status }: { status: readonly SurfaceStatus
           ) : null}
           No publisher has approved or licensed the fields shown on this decision. Names, parties, seats, titles
           {figures.length > 0 ? <span data-testid="owner-notice-figures">, and {figures.join(', ')},</span> : null} appear as each official
-          source published them, each with a link to that source, and each source’s page lists the fields shown for it. Nothing is read from
-          inside a finance return, and no donor is named anywhere: this project has never collected a donation record. Owner decision{' '}
+          source published them, each with a link to that source, and each source’s page lists the fields shown for it.{' '}
+          {showsDonationFacts(row.owner_figure_scopes) ? (
+            <span data-testid="owner-notice-donations">
+              Donations are shown as the filed return discloses them. No street address, contact detail or signature is held anywhere in this
+              store, an identity the law withholds stays withheld, and an entry is shown only where the entries of its part add up exactly to
+              the total the Commission’s own form prints.{' '}
+            </span>
+          ) : (
+            <span data-testid="owner-notice-no-donations">
+              Nothing is read from inside a finance return, and no donor is named anywhere: this project has never collected a donation record.{' '}
+            </span>
+          )}
+          Owner decision{' '}
           <span className="font-mono">{row.owner_authorization_id}</span> of {formatDate(row.owner_decided_on)}, in force until{' '}
           {formatDate(row.owner_expires_on)}.{' '}
           <ExternalLink href={`${REPO_BASE}governance/owner-authorizations.json`}>Read the decision and its limits</ExternalLink>{' '}
