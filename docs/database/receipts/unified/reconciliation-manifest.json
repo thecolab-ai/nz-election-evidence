@@ -1,10 +1,10 @@
 {
   "manifest_version": 2,
-  "date": "2026-09-20",
+  "date": "2026-09-21",
   "what_this_is": "Source-to-destination reconciliation of every import unit, from a combined load of the real private artifacts into an isolated, disposable local database built from the full migration union. Counts, digests and statuses only. Not a hosted load: nothing here was written to a hosted project.",
   "rights_note": "Loading changes nothing about rights: every rights row is pending and link-only. A loaded row is not a published row.",
   "tested_source": {
-    "commit": "2ecd1781a46d523cdd07c098b069a6c9f704d1ff",
+    "commit": "1e1184c001e275c999061d51401ded0e469f7eaa",
     "every_receipt_from_a_clean_checkout_of_it": true,
     "note": "The receipts pin the commit of the checkout that produced them. This manifest is evidence about that commit only; a later commit that changes source code is not covered by it."
   },
@@ -20,9 +20,9 @@
     },
     "first_pass": {
       "ledger_records": {
-        "seen": 182623,
-        "inserted": 182623,
-        "unchanged": 0,
+        "seen": 182223,
+        "inserted": 182023,
+        "unchanged": 200,
         "rejected": 0,
         "conflicts": 0,
         "tombstoned": 0
@@ -141,7 +141,7 @@
     },
     "contests": {
       "rows": 73,
-      "content_digest": "cb008ec7e5a4486e5af7725f13adabc9"
+      "content_digest": "9a8f7cd16647eafdcb75c0336d392e55"
     },
     "documents": {
       "rows": 198275,
@@ -165,11 +165,15 @@
     },
     "electorate_result_summaries": {
       "rows": 72,
-      "content_digest": "642a1b87a9d899178464a00d13851729"
+      "content_digest": "caadf75fa0eb4c54eab6236910e21839"
+    },
+    "electorate_version_attestations": {
+      "rows": 2286,
+      "content_digest": "463d82f799801eedfc4a64c03dafc2c0"
     },
     "electorate_versions": {
       "rows": 72,
-      "content_digest": "04acd95cfa28e6bc4bc5abe9d53f74f6"
+      "content_digest": "4b78075ac37032fb1382bb31813f0933"
     },
     "electorates": {
       "rows": 72,
@@ -209,7 +213,7 @@
     },
     "party_results": {
       "rows": 1224,
-      "content_digest": "831afa8d78e1ddbfcdc6f831702da27e"
+      "content_digest": "e9765531ac8af34166d1775ca2688a75"
     },
     "party_source_identities": {
       "rows": 133,
@@ -232,12 +236,12 @@
       "content_digest": "3e479c1d0ed29b4485ae1ee3e86da22c"
     },
     "public_columns": {
-      "rows": 1130,
-      "content_digest": "dd74ba6d9e89f811ef1bf4539fb27ae3"
+      "rows": 1133,
+      "content_digest": "4608ae0274493f2882a0024c6e18458a"
     },
     "public_lineage": {
-      "rows": 118,
-      "content_digest": "0101f51390514258b6795334e7491ba0"
+      "rows": 119,
+      "content_digest": "d0d57228c84e93af8d9de14679562cd3"
     },
     "public_row_rules": {
       "rows": 4,
@@ -353,35 +357,11 @@
       "everything_else": "every other column of every row is inside the digest (its JSON text), so equal digests mean equal content"
     },
     "units_compared": 39,
-    "units_with_a_different_reconciliation": [
-      "core/baseline_2023_candidacies_export",
-      "election/P09"
-    ],
-    "data_tables_compared": 84,
-    "data_tables_with_rows": 61,
+    "units_with_a_different_reconciliation": [],
+    "data_tables_compared": 85,
+    "data_tables_with_rows": 62,
     "data_tables_with_a_different_row_count": [],
-    "data_tables_with_different_content": [
-      {
-        "table": "contests",
-        "this_order": "cb008ec7e5a4486e5af7725f13adabc9",
-        "other_order": "9a8f7cd16647eafdcb75c0336d392e55"
-      },
-      {
-        "table": "electorate_result_summaries",
-        "this_order": "642a1b87a9d899178464a00d13851729",
-        "other_order": "caadf75fa0eb4c54eab6236910e21839"
-      },
-      {
-        "table": "electorate_versions",
-        "this_order": "04acd95cfa28e6bc4bc5abe9d53f74f6",
-        "other_order": "4b78075ac37032fb1382bb31813f0933"
-      },
-      {
-        "table": "party_results",
-        "this_order": "831afa8d78e1ddbfcdc6f831702da27e",
-        "other_order": "e9765531ac8af34166d1775ca2688a75"
-      }
-    ],
+    "data_tables_with_different_content": [],
     "columns_not_compared": {
       "app_memberships": {
         "id": "surrogate key (a random uuid or a sequence)",
@@ -621,7 +601,7 @@
       "source_leases",
       "source_observations"
     ],
-    "identical": false
+    "identical": true
   },
   "units": [
     {
@@ -726,9 +706,11 @@
           "candidate_results": 495,
           "identity_decisions": 346,
           "party_list_entries": 468,
+          "electorate_versions": 72,
           "candidacy_status_events": 963,
           "party_source_identities": 17,
-          "person_source_identities": 963
+          "person_source_identities": 963,
+          "electorate_version_attestations": 495
         }
       }
     },
@@ -1244,10 +1226,10 @@
         "typed_destination_rows": {
           "result_sets": 1,
           "party_results": 1224,
-          "electorate_versions": 72,
           "result_route_checks": 496,
           "party_source_identities": 17,
-          "electorate_result_summaries": 72
+          "electorate_result_summaries": 72,
+          "electorate_version_attestations": 1791
         }
       }
     },
@@ -3124,9 +3106,9 @@
         "resumed_runs": 1,
         "written": {
           "ledger_records": {
-            "seen": 167156,
-            "inserted": 167156,
-            "unchanged": 0,
+            "seen": 166756,
+            "inserted": 166556,
+            "unchanged": 200,
             "rejected": 0,
             "conflicts": 0,
             "tombstoned": 0

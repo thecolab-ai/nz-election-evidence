@@ -1,6 +1,6 @@
 # Unified data loaders: one contract for all 24 catalogue products
 
-> **Status: integrated, and verified on an isolated disposable local database at commit `2ecd178`** (section 5: two full loads in opposite family order, a killed and resumed load, and a row-by-row content comparison of the two stores). **Not hosted, not published, not reviewed, not security signed off.** Nothing here was pushed, merged, deployed or written to a hosted project, and no schedule is active. Every rights row is still **pending / link-only**, every `REVIEW-REGISTER.md` row is still **PENDING**, and the release gates are closed: a loaded row is not a published row. The figures are counts of what was read and stored on 20 September 2026 (UTC); they make no claim that a publisher's output is covered completely.
+> **Status: integrated, and verified on an isolated disposable local database at commit `1e1184c`** (section 5: two full loads in opposite family order, a killed and resumed load, and a row-by-row content comparison in which **all 85 tables are identical**). **Not hosted, not published, not reviewed, not security signed off.** Nothing here was pushed, merged, deployed or written to a hosted project, and no schedule is active. Every rights row is still **pending / link-only**, every `REVIEW-REGISTER.md` row is still **PENDING**, and the release gates are closed: a loaded row is not a published row. The figures are counts of what was read and stored on 20-21 September 2026 (UTC); they make no claim that a publisher's output is covered completely.
 
 The three import families were built on separate branches (election `b8fc629`, parliament `69de0d2`, statistics `b91595a`). This branch integrates them: one migration union, one registry, one CLI contract, shared orchestration, and the explorer wiring. The families' own documents stay the reference for their mappings: [election](../../ingest/src/families/election/README.md), [parliament](../../ingest/src/families/parliament/INTEGRATION.md), [statistics](statistics-import.md). Their "coordinator steps" are done here.
 
@@ -87,6 +87,27 @@ Each family keeps its typed destination and its own writer. The adapters in `ing
 
 The worker can neither alter nor disable a trigger (it owns nothing). `115_stats_table_boundary.test.sql` first loads two sources **as the worker role through the functions**, then sends 44 hostile statements as that same role (inserts, updates, deletes, truncate, trigger tampering) and asserts the SQLSTATE of each refusal; `loaders_integration.test.ts` repeats the core of it with the real bootstrapped login, which is a member of `evidence_ingest` and nothing more. **Limit, stated plainly:** the login is one principal. Anyone holding it can start a run legitimately and write rows that pass every rule; what the boundary guarantees is that every stored row belongs to a recorded, leased run of its own source and obeys the text, append-only and conflict rules, not that a particular process wrote it. The same `USING (true)` pattern remains on the *ledger families'* typed tables (election, parliament, core): those are projections rebuilt from the guarded ledger, a different risk that the review did not raise and this change did not touch; it should be looked at in the security review.
 
+**Which version a shared civic row cites (`20260921050100_electorate_version_authority.sql`).** An electorate version is
+shared: the 2023 candidacy roster and the 2023 electorate results both name the same electorate, and the single
+`evidence_version_id` pointer could only hold one of them, so whichever family was loaded first won it. That is a fact
+about how the coordinator drove the load, not about what a publisher said, and it was the last difference between two
+stores loaded in opposite order. It is not fixed by picking a winner more cleverly but by keeping the other assertion:
+
+- `electorate_version_attestations` records **every** version that asserts an electorate version, keyed by the
+  electorate and boundary edition rather than by a surrogate id, so an assertion survives an insert that conflicted.
+  Nothing is discarded and every source stays resolvable to its record and content hash (2,286 attestations over 72
+  electorate versions in the real load).
+- `evidence_version_id` is then chosen from those attestations by **publisher data alone**
+  (`authoritative_electorate_version`): the earliest date a publisher states, then the publisher's own source id, then
+  its record id, then the content hash. The same attestations give the same answer in any order, and the answer is
+  always one of the recorded assertions (both are asserted by pgTAP).
+- Attestations are captured by a `BEFORE INSERT` trigger, which sees the row a projection **proposes** even when that
+  insert goes on to conflict, so no projection function had to change and **no already-applied migration was edited** —
+  it is a new migration that backfills the attestation of every row it finds, so a store that already holds rows keeps
+  the pointer it has. The promotion is a **deferred** constraint trigger: a projection's own `insert … on conflict do
+  update` may not affect one row twice in a single command, and every write here is one autocommit statement, so
+  "deferred" means "as soon as this write commits".
+
 **Registry.** `sources.config.json` is now the merge of the core sources and the three fragments: 49 sources, 16 registry products, 8 schedules, config version 2. It is rebuilt by `node src/loaders/registry_build.ts --write` and held equal by test. A source id, schedule key or registry product claimed twice is **refused, not resolved**. Every source must sit under a rights row that lists its catalogue product, or under a written exception with its reason (two exist: the 2023 candidacy product stays on RIGHTS-01, and ministerial roles sit under the Government's row because they are read from the Government's pages). The 2013 Census history had been filed under the 2018 Census row; it now has its own pending row, RIGHTS-22.
 
 **Live adapters.** The parliament and election live adapters moved under `supabase/functions/_shared/adapters/` so that a scheduled run finds them in the function bundle (`deno check` passes). Statistics fetch sources stay CLI-only (their files exceed the function budget); a schedule that names one is refused.
@@ -143,7 +164,7 @@ Everything below was run on an **isolated, disposable local stack** built from t
 project id and its own ports, with exclusive ownership recorded beside it. The shared local stack and every hosted
 project were left alone; nothing was reset but this lane's own database.
 
-**The code under test is commit `2ecd178`.** Every command was run from a **fresh clone** of that commit, and every
+**The code under test is commit `1e1184c`.** Every command was run from a **fresh clone** of that commit, and every
 receipt carries the commit of the checkout that produced it together with whether that checkout was clean
 (`provenance.source_revision`). The manifest builder refuses a set of receipts that does not all come from one clean,
 stated commit — that refusal is exercised, not assumed. The committed manifest is
@@ -162,163 +183,197 @@ Each load went into a **freshly reset** database and covered **all 31 backfill u
 | Reconciled | 39 units, 282 checks, **0 failed** | 39 units, 282 checks, **0 failed** |
 | Interruption | none | the written-questions load was **killed** mid-run and resumed |
 
-Counts of the first pass, per population (never added across populations, section 1a):
+What the inputs hold, and what the first pass did with it, per population (never added across populations, section 1a):
 
-| Population | In the inputs | Seen | Inserted | Rejected | Conflicts |
-|---|---|---|---|---|---|
-| Ledger records | 203,311 | 203,423 | 203,423 | 0 | 0 |
-| Statistical observations | 1,273,423 | 1,273,423 | 1,273,423 | 0 | 0 |
-| Catalogue entry versions | 983 | 983 | 983 | 0 | 0 |
+| Population | In the inputs | Seen | Inserted | Unchanged | Rejected | Conflicts |
+|---|---|---|---|---|---|---|
+| Ledger records | 203,311 | 182,223 | 182,023 | 200 | 0 | 0 |
+| Statistical observations | 1,273,423 | 1,273,423 | 1,273,423 | 0 | 0 | 0 |
+| Catalogue entry versions | 983 | 983 | 983 | 0 | 0 | 0 |
 
-By family, first pass: core 963 ledger records (the pinned 2023 candidacy export); election 2,448; parliament 179,212
-(see the note on the killed load below); statistics 1,273,423 observations and 983 catalogue entry versions. The replay
-reported every row `unchanged` and inserted nothing in any population, in both orders, and the count invariants
-(`inserted + unchanged + rejected + conflicts = seen`, per unit and population) hold with **no violations**. All 31
-units pin the digest of the private input they read; the inputs state a collection window of 2026-09-12 to 2026-09-19.
+The ledger `seen` figure is **lower than the input** for one reason, and it is the interruption: the process that was
+killed wrote no receipt, so the surviving receipt of that unit covers the 166,756 records the **resumed** run was
+offered and not the 21,400 the killed run had already stored. What the store then holds is shown by that unit's
+reconcile receipt, not by adding receipts up. By family, first pass: core 963 ledger records (the pinned 2023 candidacy
+export), election 2,448, parliament 178,812, statistics 1,273,423 observations and 983 catalogue entry versions.
+
+Two counts that are close together and are **not** the same thing, and are kept apart everywhere:
+**`source_records` holds 203,311 rows** (one per distinct publisher item) while **`source_record_versions` holds 203,423
+rows** (one per distinct content of an item, so an item seen with two contents has two). All 31 units pin the digest of
+the private input they read; the inputs state a collection window of 2026-09-12 to 2026-09-19.
 
 ### The killed load, and what it proved
 
 The written-questions load (187,956 questions, the largest ledger unit) was killed with `SIGKILL` after it had stored
-20,800 records and 52 checkpoints. What the database held at that moment is the reason the shared `project_run` projects
-a whole resume chain: **20,800 ledger versions and 0 typed rows**, because a killed run never projects. Then:
+21,200 records and 53 checkpoints. What the database held at that moment is the reason the shared `project_run` projects
+a whole resume chain: **21,200 ledger versions and 0 typed rows**, because a killed run never projects. Then:
 
 1. Re-running immediately, while the dead worker's lease was still alive, answered `skipped_lease_held` (exit 2) and
    wrote nothing: a dead worker's lease is not stolen and no row is doubled.
-2. Once the lease lapsed, the same command **resumed from the checkpoint**: it was offered 167,156 records — exactly the
-   ones after the checkpoint, so nothing was sent twice — and finished `succeeded`, citing the killed run as the run it
-   resumed (`resumed_from_run_ids`, which the manifest lists under `resumed_after_a_hard_stop`).
-3. The store then held **187,956 ledger records, 187,956 versions and 187,956 typed `written_questions`**: 20,800 from
-   the killed run plus 167,156 from the resumed one, projected as one chain.
-
-Read the receipt counts of that unit with this in mind: the killed process wrote no receipt, so the surviving receipt
-covers the resumed portion (167,156) and not the 20,800 the killed run had already stored. The reconcile receipt, which
-reads the store against the export, is what shows the whole export present.
+2. Once the lease lapsed, the same command **resumed from the checkpoint** — offered 166,756 records, the ones after the
+   checkpoint — and finished `succeeded`, citing the killed run as the one it resumed (`resumed_from_run_ids`, which the
+   manifest lists under `resumed_after_a_hard_stop`). The killed run is left `abandoned(21,400)` on the ledger.
+3. The store then held **187,956 ledger records, 187,956 versions and 187,956 typed `written_questions`**, and that
+   unit's reconcile receipt puts the export's 187,956 distinct items and 187,956 distinct contents against exactly those
+   numbers.
 
 ### The two stores compared by content, not by counts
 
-`node src/loaders/content_digest.ts` digests every row of every table of `evidence_private` and the two stores are
+`node src/loaders/content_digest.ts` digests every row of every table of `evidence_private`, and the two stores are
 compared table by table (`order_independence` in the manifest). It compares what rows **refer to**, not the ids they
-refer with, because a surrogate key differs between two honest loads by construction: 84 tables were compared,
-**61 hold rows**, **2,362,003 rows in total**, and 112 reference columns were replaced by the content of the row they
-point at. One of those references had to be **discovered by measurement** (`source_records.current_version_id` has no
-declared foreign key: every value was verified to be an id of `source_record_versions`), and **no uuid column was left
-unresolved**. What is left out is named with its reason in the digest itself: 60 surrogate keys, 22 columns the database
-clock fills, 7 references to the run ledger, 3 columns that are always null, and one `jsonb` column that carries an
-identity's surrogate id inside its value. The run-ledger tables (`import_runs`, `fetch_log`, `run_checkpoints`, …) are
-counted and never compared: how many runs there were depends on how the load was driven. Both digests report themselves
-**complete** (the login reads every table and bypasses row-level security; the worker login cannot produce evidence
-here, and says so).
+refer with, because a surrogate key differs between two honest loads by construction: **85 tables compared, 62 hold
+rows, 2,364,293 rows in total**, and 113 reference columns replaced by the content of the row they point at. One of those
+references had to be **discovered by measurement** (`source_records.current_version_id` has no declared foreign key:
+every value was verified to be an id of `source_record_versions`), and **no uuid column was left unresolved**. What is
+left out is named with its reason in the digest itself: surrogate keys, columns the database clock fills, references to
+the run ledger, columns that are always null, and one `jsonb` column that carries an identity's surrogate id inside its
+value. The run-ledger tables (`import_runs`, `fetch_log`, `run_checkpoints`, …) are counted and never compared: how many
+runs there were depends on how the load was driven. Both digests report themselves **complete** (the login reads every
+table and bypasses row-level security; the worker login cannot produce evidence here, and says so).
 
-**Result: row counts are identical in all 84 tables, and 80 of the 84 are identical in content.** Four tables differ,
-and they all trace to **one column of 72 rows**:
+**Result: all 85 tables are identical — same row counts and same content — and no unit reconciles differently.**
 
-- `electorate_versions.evidence_version_id` records the version that **established** an electorate version. The row is
-  written by whichever family reaches it first and is then left in place (`on conflict … do update set name`), so it
-  names the source that was loaded first. Measured on both sides: loading core first, the 72 rows cite
-  `baseline_2023_candidacies_export`; loading election first, the same 72 rows cite
-  `election_2023_electorate_results_export`.
-- `contests.electorate_version_id` and, through it, `party_results` and `electorate_result_summaries` differ **only**
-  because they refer to those rows. Every other column of all four tables is identical, and no row count changes.
-- The same fact shows in two reconcile receipts: the lineage tally credits those 72 `electorate_versions` to
-  `core/baseline_2023_candidacies_export` in order A and to `election/P09` in order B. Both units reconciled in both
-  orders with every check passing.
+| What was compared | Result |
+|---|---|
+| Data tables, row counts | 85 of 85 equal |
+| Data tables, content digests | **85 of 85 equal** (`identical: true`) |
+| Units whose reconciliation differs | **0** of 39 |
+| Units whose replay inserted anything | **0** of 31 |
+| Count invariant violations | **0** |
 
-Nothing a publisher stated differs between the two orders: no vote, question, observation, document, release, bill,
-identity or catalogue entry. What differs is one recorded fact about this store's own history — which source got there
-first — and it is kept rather than flattened to a canonical choice, because flattening it would record something that
-did not happen.
+That includes the 72 `electorate_versions` and the 2,286 `electorate_version_attestations`: loading the roster first and
+loading the results first now leave byte-identical provenance, because the citation is chosen from the attestations by
+publisher data (section 2) instead of by whoever arrived first. Measured before the fix: the same 72 rows cited
+`baseline_2023_candidacies_export` when core was loaded first and `election_2023_electorate_results_export` when
+election was; measured after it: `baseline_2023_candidacies_export` both ways, with both sources' assertions kept.
 
-Two defects of exactly this kind were **found by this comparison and fixed** before the final run; both were stored
-values chosen by a random surrogate key:
+Three defects of one kind were **found by this comparison and fixed**; each was a stored value chosen by a random
+surrogate key, and none of them would have been visible from row counts:
 
-- the cross-route check compared a source's electorate party votes with a nationwide total picked by
+- the cross-route check compared a source's electorate party votes against a nationwide total picked by
   `order by result_set_id limit 1` (`da78f28`); it now prefers the source's own published total and otherwise takes the
   remaining totals in source order, naming the publisher of the figure it used;
 - the parliament identity projection chose `person_source_identities.first_version_id` with
-  `distinct on (…) order by …, version_id` (`2ecd178`); it now uses the earliest date the publisher states, then the
-  publisher's own record id. That column is identical in both orders now.
+  `distinct on (…) order by …, version_id` (`2ecd178`) — that one differed even between two loads in the *same* order;
+- the shared electorate version cited whichever family loaded first (`1e1184c`, section 2).
 
 ### Tests, on the committed code
 
 | Check | Result |
 |---|---|
-| `supabase test db` (pgTAP) | **544 tests pass** — on an empty database **and** on the fully loaded 2.36M-row store. A test that only passes on an empty store hides exactly the kind of defect found here, so both states are checked |
+| `supabase test db` (pgTAP) | **556 tests pass** — on an empty database **and** on the fully loaded 2.36M-row store. A test that only passes on an empty store hides exactly the kind of defect found here, so both states are checked |
 | `npm test` (ingest, Node 24) | **267 tests pass, 0 failed, 0 skipped**, with the database-backed integration tests required (`EVIDENCE_REQUIRE_INTEGRATION=1`). The one test that used to skip needs the private exports; it was run with them and passes |
 | `npm run check:deno` | passes: the Edge Function bundle type-checks with the family adapters in it |
 | `npm run typecheck` (ingest and web) | passes |
 | `npm test` (web, vitest) | 44 tests pass |
-| `npm run types:check` (web) | the committed generated database types match the migrations |
+| `npm run types:check` (web) | the committed generated database types match the migrations, including the new attestation projection |
 | `python3 scripts/validate.py` | 24 products, 351,710 records, 52 roadmap lanes, 22 rights rows |
 | `python3 -m unittest discover -s tests` | 20 tests pass |
 | `python3 scripts/red_lines.py --freeze-check` | no red-line breaches |
 
-Timings on this host, for the coordinator's planning: the statistics family takes about 7 minutes to import and 6 to
-replay; parliament about 4.5 minutes each way; election and core under a minute; `reconcile all` about 2.5 minutes; the
-content digest about 2 minutes (two refinement rounds over 2.36M rows).
+Timings on this host, for the coordinator's planning: statistics takes about 7 minutes to import and 6 to replay;
+parliament about 5 minutes each way; election and core under a minute; `reconcile all` about 2.5 minutes; the content
+digest about 2 minutes (two refinement rounds over 2.36M rows).
 
 ### What this does not show
 
 Nothing here was hosted, and the proof deliberately did **not** run the refresh routes: a refresh contacts publishers
-and would write new release vintages into the store, which would make the two orders incomparable. The refresh states
-in section 3 rest on the runs recorded in the family documents, not on this manifest, and the manifest records no
-refresh run. `--dry-run` on a refresh is not an offline operation: it fetches and parses and only skips the write.
+and would write new release vintages into the store, which would make the two orders incomparable. The refresh states in
+section 3 rest on the runs recorded in the family documents, not on this manifest, and the manifest records no refresh
+run. `--dry-run` on a refresh is not an offline operation: it fetches and parses and only skips the write.
 
-## 6. Hosted load: sequence for the coordinator (none of it has been run)
+## 6. Hosted load: exact steps for the coordinator (none of it has been run)
 
-Pre-condition: an independent readiness review of this branch. Credentials come from the operator's shell, a password file or a hidden prompt; no value appears below and none belongs on a command line. The private companion to this section (input locations, sizes, measured timings, batch economics) is an operator file kept beside the exports, outside the repository.
+**The hosted project is not empty and these steps do not assume it is.** It already has the base schema
+(`20260920000100` … `20260920001400`) applied and holds the rows of the initial connected release — about **1,188 ledger
+records** across the MP directory, the current-bills list, the releases feed and the pinned 2023 candidacy roster — with
+their projections, including `electorate_versions`. Everything below therefore **measures first and acts second**: it
+applies only the migrations that are missing, and the loads it runs are idempotent by design, so a source that is already
+loaded answers with `inserted: 0` rather than doubling anything.
+
+Credentials come from the operator's shell, a password file or a hidden prompt: no value appears below, none belongs on a
+command line, and the CLI never prints one. The private companion to this section (input locations, sizes, measured
+timings) is an operator file kept beside the exports, outside the repository.
 
 ```bash
-# 1. Migrations, as ADMINISTRATOR, once, in order (five new files after 20260920001400):
-#    20260921000100_import_shared  20260921010100_election_family  20260921020100_parliament_family
-#    20260921030100_stats_import   20260921040100_unified_import
-supabase db push --dry-run        # read it
+# 0. WHAT IS THERE ALREADY. Read this before anything else; it decides nothing but tells you what the next steps mean.
+supabase migration list --linked            # which of the five 20260921* migrations are missing (expect: all five)
+psql -v ON_ERROR_STOP=1 -c "select count(*) as ledger_records from evidence_private.source_records"   -c "select source_id, count(*) from evidence_private.source_records group by 1 order by 1"   -c "select count(*) as electorate_versions from evidence_private.electorate_versions"   -c "select count(*) as runs from evidence_private.import_runs"
+#    Write the numbers down: step 4 compares against them, and 1,188 records is the number to expect before any load.
+
+# 1. MIGRATIONS, as ADMINISTRATOR, once, in order. Five new files after 20260920001400:
+#      20260921000100_import_shared        20260921010100_election_family
+#      20260921020100_parliament_family    20260921030100_stats_import
+#      20260921040100_unified_import       20260921050100_electorate_version_authority
+supabase db push --dry-run                 # read it: it must list ONLY those files, and no base-schema file
 supabase db push
-#    Do this BEFORE any load and never during one: the last step rebuilds the public projections under exclusive
-#    locks, and a loader running at that moment will deadlock with it (seen here; the rebuild was the victim).
+#    Do this BEFORE any load and NEVER during one: the union's last steps rebuild the public projections under
+#    exclusive locks, and a loader running at that moment deadlocks with them (seen here; the rebuild was the victim).
+#    What these migrations do to rows that are ALREADY there:
+#      - 20260921050100 records, for every electorate version that exists, an attestation of the version it already
+#        cites, then settles each row on the authoritative citation. With one source per row that is the pointer it
+#        already has, so nothing moves. Check it did what it says:
+psql -c "select count(*) as attestations from evidence_private.electorate_version_attestations"      -c "select count(*) as citations_not_authoritative from evidence_private.electorate_versions ev
+          where ev.evidence_version_id is distinct from
+                evidence_private.authoritative_electorate_version(ev.electorate_id, ev.boundary_edition_id)"
+#        attestations must equal the electorate_versions that carry a citation, and the second number must be 0.
+#      - nothing else in the union touches an existing row: the statistics tables are new, the family projections only
+#        add typed rows for records their own run stored, and no base-schema file is edited.
 
-# 2. Registry, as the WORKER (EVIDENCE_INGEST_DB_URL set in the shell; a pooler in transaction mode is fine)
+# 2. REGISTRY, as the WORKER (EVIDENCE_INGEST_DB_URL in the shell; a pooler in transaction mode is fine here)
 cd ingest && npm ci
-node src/cli.ts validate                       # registry, rights rows, route coverage
-node src/cli.ts validate all                   # every private input re-hashed and checked; no database
-node src/cli.ts registry-sync                  # schedules arrive INACTIVE
+node src/cli.ts validate                   # the merged registry, rights rows and route coverage. No database
+node src/cli.ts validate all               # every private input re-hashed against its pin and checked row by row
+node src/cli.ts registry-sync              # upserts sources and the rights mirror; schedules arrive INACTIVE
+#    registry-sync is an upsert: the four sources already there keep their rows and gain the new columns.
 
-# 3. Backfill, smallest first. Each unit is its own lease and its own runs; any unit can be re-run at any time.
-node src/cli.ts import core election           --receipt-dir <private receipts>
-node src/cli.ts import parliament              --receipt-dir <private receipts>
-node src/cli.ts import statistics              --receipt-dir <private receipts>   # see the note on the 2013 history
-#    A stopped or killed unit: re-run the same command. While the dead worker's lease is alive the answer is
-#    skipped_lease_held (exit 2); once it lapses the run resumes from its checkpoint. Nothing is doubled.
+# 3. BACKFILL. Any unit may be run at any time and re-run after a failure; each is its own lease and its own runs.
+#    Smallest first, and the three sources that are already loaded come first so you see idempotency before volume:
+node src/cli.ts import core                --receipt-dir <private receipts>   # the 963-row roster: expect inserted 0
+node src/cli.ts import election            --receipt-dir <private receipts>
+node src/cli.ts import parliament          --receipt-dir <private receipts>
+node src/cli.ts import statistics          --receipt-dir <private receipts>   # see the note on the 2013 history below
+#    A unit that is already loaded reports seen = its rows and inserted = 0: that is the same code path as the replay in
+#    step 4, so it is proof rather than luck. A killed or stopped unit: re-run the same command. While the dead worker's
+#    lease is alive the answer is skipped_lease_held (exit 2); once it lapses the run resumes from its checkpoint.
 
-# 4. Prove it, on the hosted store, with the SAME artifacts and the same three steps as section 5
-node src/cli.ts import all                     --receipt-dir <private receipts/replay>    # must insert 0 in EVERY population
-node src/cli.ts reconcile all                  --receipt-dir <private receipts/reconcile> # exit 4 on any mismatch
-#    Then compare what the hosted store HOLDS with what the local proof held, by content and not by counts. The
-#    login must read every table of evidence_private and bypass row-level security, or the digest says it is
-#    incomplete and is not evidence (the worker login cannot be used for this):
-EVIDENCE_DIGEST_DB_URL=<administrator, hosted> node src/loaders/content_digest.ts --out <private>/hosted-content.json
-#    Every data table's content_digest must equal the one in the committed manifest's data_tables for the same
-#    commit. The run-ledger tables (import_runs, fetch_log, ...) are counted and never compared: how many runs there
-#    were depends on how the load was driven. A digest run writes nothing but its own temporary tables.
+# 4. PROVE IT on the hosted store, with the same three steps as section 5
+node src/cli.ts import all                 --receipt-dir <private receipts/replay>    # must insert 0 in EVERY population
+node src/cli.ts reconcile all              --receipt-dir <private receipts/reconcile> # exit 4 on any mismatch
+#    Then compare what the hosted store HOLDS against what the local proof held, by content and not by counts. The login
+#    must read every table of evidence_private and bypass row-level security, or the digest says it is incomplete and is
+#    not evidence (the worker login cannot be used for this, and reports complete: false):
+EVIDENCE_DIGEST_DB_URL=<administrator, hosted, a DIRECT connection>   node src/loaders/content_digest.ts --out <private>/hosted-content.json
+#    Compare its tables against data_tables in the committed manifest for the same commit. Expect:
+#      - every table that the hosted store loaded from the same artifacts to match the manifest's content_digest;
+#      - the run-ledger tables NOT to match, and they are not compared: the hosted store has the initial release's runs
+#        as well as yours, which is history of loading and not data;
+#      - a difference in any other table to be treated as a stop: read column_checksums, which names the column.
+#    The digest holds one repeatable-read snapshot open for the length of the read (about 2 minutes for 1.6M rows), so
+#    point it at a direct connection, never a transaction-mode pooler.
 
-# 5. Refresh routes that work (anonymous, paced; a blocked route answers blocked and is not contacted)
+# 5. REFRESH the routes that work (anonymous, paced; a blocked route answers blocked and is never contacted)
 node src/cli.ts refresh core parliament election
-node src/cli.ts refresh statistics             # operator-run: fetch, then load as its own release vintage
+node src/cli.ts refresh statistics         # operator-run: fetch, then load as its own release vintage
+#    Do this AFTER step 4, not before: a refresh writes new release vintages, so the content comparison above would no
+#    longer be against the same inputs. A refresh contacts publishers even with --dry-run.
 
-# 6. Owner decisions, as ADMINISTRATOR, only after the owner has read OWNER-AUTH-2026-09-20-02
-node tools/owner_authorization.ts              # must print "valid"
+# 6. OWNER DECISIONS, as ADMINISTRATOR, only after the owner has read OWNER-AUTH-2026-09-20-02 in full
+node tools/owner_authorization.ts          # must print "valid"
 psql -v ON_ERROR_STOP=1 -f scripts/db/sync_owner_authorizations.sql
+#    An entry is immutable once mirrored. This releases nothing by itself; the release gates stay closed.
 ```
 
-Before step 1, and again after step 4, run the database's own tests against the hosted schema if the project allows it
-(`supabase test db` needs a database the CLI can point at; `115_stats_table_boundary.test.sql` is the one that proves the
-statistics boundary holds there too, and every test rolls back). The suite passes on an empty store and on a fully
-loaded one, which is checked in section 5: a test that only passes on an empty database would hide exactly the defect
-the loaded store exposed here (the cross-route partner chosen by a random surrogate key).
+If the hosted project allows the CLI to point `supabase test db` at it, run the database's own tests before step 1 and
+again after step 4: `115_stats_table_boundary.test.sql` is the one that proves the statistics boundary holds there too,
+`116_electorate_version_authority.test.sql` the one that proves the citation rule does, and every test rolls back. The
+suite passes on an empty store and on a fully loaded one (section 5), so a failure there is about the hosted schema and
+not about the fixtures.
 
-Pooler note for step 4: the content digest holds one repeatable-read transaction open for the length of the read (about
-a minute and a half for 1.6M observations locally). Point it at a direct connection, not a transaction-mode pooler.
-
-Economy: the ledger families send 200 records a call and checkpoint after every page; statistics sends 5,000 observations a call and checkpoints after every call. The whole backfill is about 1,900 ledger calls and 260 statistics calls. The 2013 meshblock history is 69 percent of all observations and answers no catalogue product: leave it out of a first hosted load if storage is a concern (`import statistics` can be replaced by the nine other source ids).
+Economy: the ledger families send 200 records a call and checkpoint after every page; statistics sends 5,000
+observations a call and checkpoints after every call. The whole backfill is about 1,900 ledger calls and 260 statistics
+calls. The 2013 meshblock history is 69 percent of all observations and answers no catalogue product: leave it out of a
+first hosted load if storage is a concern (`import statistics` can be replaced by the nine other source ids).
 
 ## 7. Remaining real blockers
 
@@ -331,5 +386,5 @@ Economy: the ledger families send 200 records a call and checkpoint after every 
 7. **No unattended fact refresh for P11, P12, P19, P21** and the nine release files of P22: workbooks and ZIP archives need a person's mapping review or cannot be read by the text-only fetch client.
 8. **P10 dated terms are export-only** and will go stale; P15 returns are not linked to candidacies (that would be a name join); newly seen polls are not promoted to poll rows without a methodology check.
 9. ~~**The 2023 candidacy capture predates the 0600 rule**~~ — **closed after the proof.** That capture sat outside the repository but was readable by group and others, so the loader reported a finding on every run rather than refusing the input; the finding is preserved in that unit's receipts in the manifest, because it was true when the proof ran. It was deliberately left alone *during* the two loads so both orders read byte-identical inputs, and tightened immediately afterwards: the capture and its directory are now owner-only, as every other private input already was. A re-run will no longer report that finding.
-10. **One stored column depends on load order, by design**: `electorate_versions.evidence_version_id` names the source that first established an electorate version (section 5). It is a fact about this store's history, not about a publisher; a hosted load will name whichever family the coordinator runs first, and the three tables that refer to those rows inherit it. Nothing a publisher stated is affected.
+10. ~~**One stored column depends on load order**~~ — **closed in `1e1184c`.** `electorate_versions.evidence_version_id` used to name whichever family was loaded first. Every asserting version is now recorded and the citation is chosen from them by publisher data alone (section 2), so both load orders leave identical provenance and no source loses its lineage. This was the last difference between the two stores: all 85 tables now match.
 11. **The scheduled path was not exercised here**: the Edge Function was type-checked with the family adapters in its bundle, not deployed or invoked.
