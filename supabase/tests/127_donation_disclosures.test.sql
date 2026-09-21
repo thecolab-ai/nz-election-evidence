@@ -79,6 +79,11 @@ $$;
 select pg_temp.load('pgtap_dd_disclosures', 'ddfix');
 select pg_temp.load('pgtap_dd_shut', 'ddshut');
 
+-- The rows this test made, and nothing else. Every assertion below is scoped to these, so the file says the same
+-- thing on an empty store and on a store that already holds the real returns.
+create view pg_temp.fixture_records as
+  select id from evidence_private.source_records where source_id in ('pgtap_dd_disclosures', 'pgtap_dd_shut');
+
 -- 1. The payload guard: three names in, everything else still out -------------------------------------------------
 select is(evidence_private.payload_violation(jsonb_build_object('donor_name_as_published', 'FIXTURE Ari Templeton')), null,
   'the vetted donor name is accepted by the store');
@@ -100,30 +105,40 @@ select is(evidence_private.payload_violation(jsonb_build_object('donor_name_as_p
   'forbidden_field_name', 'a vetted name beside a forbidden one refuses the whole payload');
 
 -- 2. The column refuses what the reader should never have produced -------------------------------------------------
+-- Each update touches this test's own rows only: on a loaded store the unscoped form rewrote every real donor name
+-- in the table before the column could refuse it, which is not what any of these four assertions mean to say.
 select throws_ok(
-  $$update evidence_private.donation_disclosures set donor_name_as_published = 'FIXTURE Ari Templeton, 9 Willow Place' where donor_name_status = 'published'$$,
+  $$update evidence_private.donation_disclosures set donor_name_as_published = 'FIXTURE Ari Templeton, 9 Willow Place' where donor_name_status = 'published' and source_record_id in (select id from pg_temp.fixture_records)$$,
   '23514', null, 'a donor name holding a digit is refused by the column itself');
 select throws_ok(
-  $$update evidence_private.donation_disclosures set donor_name_as_published = 'FIXTURE Willow Place Sampleton' where donor_name_status = 'published'$$,
+  $$update evidence_private.donation_disclosures set donor_name_as_published = 'FIXTURE Willow Place Sampleton' where donor_name_status = 'published' and source_record_id in (select id from pg_temp.fixture_records)$$,
   '23514', null, 'a donor name holding a street word is refused by the column itself');
 select throws_ok(
-  $$update evidence_private.donation_disclosures set donor_name_as_published = 'FIXTURE Ari Templeton' where donor_name_status = 'withheld_by_publisher'$$,
+  $$update evidence_private.donation_disclosures set donor_name_as_published = 'FIXTURE Ari Templeton' where donor_name_status = 'withheld_by_publisher' and source_record_id in (select id from pg_temp.fixture_records)$$,
   '23514', null, 'an identity the law withholds cannot be given a name');
 select lives_ok(
-  $$update evidence_private.donation_disclosures set donor_name_as_published = 'FIXTURE Marama Kopu' where donor_name_status = 'published'$$,
+  $$update evidence_private.donation_disclosures set donor_name_as_published = 'FIXTURE Marama Kopu' where donor_name_status = 'published' and source_record_id in (select id from pg_temp.fixture_records)$$,
   'a plain name is accepted');
 
 -- 3. What the projection built ------------------------------------------------------------------------------------
-select is((select count(*) from evidence_private.donation_return_parts), 2::bigint, 'one part row per fixture return');
-select is((select count(*) from evidence_private.donation_disclosures), 4::bigint, 'two entries per fixture return');
+-- Every assertion below counts THIS TEST'S fixture rows, never "everything in the table". The two donation tables
+-- hold real loaded returns on any store that has run a combined import (1,335 parts and 291 entries at 8a94a1f), and
+-- a test that passes only on an empty store proves nothing about the store the projection actually runs against.
+select is((select count(*) from evidence_private.donation_return_parts where source_record_id in (select id from pg_temp.fixture_records)),
+  2::bigint, 'one part row per fixture return');
+select is((select count(*) from evidence_private.donation_disclosures where source_record_id in (select id from pg_temp.fixture_records)),
+  4::bigint, 'two entries per fixture return');
 select is((select count(*) from evidence_private.donation_disclosures d
-            join evidence_private.donation_return_parts p on p.id = d.return_part_id), 4::bigint,
+            join evidence_private.donation_return_parts p on p.id = d.return_part_id
+            where d.source_record_id in (select id from pg_temp.fixture_records)), 4::bigint,
   'every entry names the part it was disclosed under');
 select is((select donor_name_as_published from evidence_private.donation_disclosures
-            where donor_name_status = 'withheld_by_publisher' limit 1), null,
+            where donor_name_status = 'withheld_by_publisher'
+              and source_record_id in (select id from pg_temp.fixture_records) limit 1), null,
   'an anonymous entry holds no name at all');
 select is((select disclosed_amount_nzd from evidence_private.donation_disclosures
-            where donor_name_status = 'withheld_by_publisher' limit 1), 5000::numeric,
+            where donor_name_status = 'withheld_by_publisher'
+              and source_record_id in (select id from pg_temp.fixture_records) limit 1), 5000::numeric,
   'and its amount is published all the same: what the law withholds is the identity, not the money');
 
 -- 4. The owner decision ---------------------------------------------------------------------------------------------
