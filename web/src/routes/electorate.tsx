@@ -10,9 +10,11 @@ import {
   ACTIVITY_NOT_EFFECTIVENESS_NOTE,
   BOUNDARY_NOT_COMPARABLE_NOTE,
   classify,
+  classifyNamed,
   NOT_A_CANDIDATE_NOTE,
   PARTY_NOT_CANDIDATE_RECEIPT_NOTE,
   provenanceForSource,
+  provenanceSpanning,
   REPRESENTATION_MATCH_NOTE,
   type SourceLike,
 } from '@/lib/electorate'
@@ -20,7 +22,8 @@ import { formatCount, formatDate, formatDateTime, formatMoney, formatPlainDate, 
 import type { CandidacyRow, DonationDisclosureRow, ElectorateVersionRow, ServiceTermRow } from '@/lib/types'
 import {
   CANDIDACY_SOURCE_ID,
-  CANDIDATE_RETURNS_SOURCE_ID,
+  CANDIDATE_DISCLOSURES_SOURCE_ID,
+  disclosureSourceForKind,
   MEMBER_TERMS_SOURCE_ID,
   OFFICIAL_PAGE_SOURCE_ID,
   useBoundaryMaps,
@@ -198,7 +201,7 @@ function RepresentationCard({
   representation: ReturnType<typeof useRepresentation>
   sources: readonly SourceLike[]
 }) {
-  const availability = classify(representation)
+  const availability = classifyNamed(e.name, representation)
   const rows = representation.data ?? []
   const publishers = [...new Set(rows.map((r) => r.source_id))]
   return (
@@ -222,7 +225,11 @@ function RepresentationCard({
           availability={availability}
           loadingLabel="Loading member records"
           datasetName="evidence_public.service_terms"
-          noneHeld={`No loaded member record writes the electorate name “${e.name ?? ''}”.`}
+          noneHeld={
+            e.name
+              ? `No loaded member record writes the electorate name “${e.name}”.`
+              : 'This electorate version carries no name in this store, and the only thing that could connect a member record to it is the name the publisher writes. So there is nothing to correspond with, and none was looked for.'
+          }
           onRetry={() => void representation.refetch()}
         >
           {(terms) => (
@@ -269,15 +276,19 @@ function RepresentationRow({ term }: { term: ServiceTermRow }) {
 function ActivityCard({ memberIds, representationReady, sources }: { memberIds: readonly string[]; representationReady: boolean; sources: readonly SourceLike[] }) {
   const activity = useMemberActivity(memberIds)
   const availability = classify(activity)
+  // Bills and written questions are not one export. The strip names the sources of what is actually
+  // listed, and falls back to the written-questions register when nothing is listed at all.
+  const itemSources = (activity.data ?? []).map((item) => item.sourceId).filter((id): id is string => !!id)
   return (
     <FactCard
       testId="card-activity"
       eyebrow="Parliamentary record"
       title="Selected dated activity by the members named above"
       lede={<p>{ACTIVITY_NOT_EFFECTIVENESS_NOTE}</p>}
-      provenance={provenanceForSource(sources, 'parliament_export_written_questions', 'New Zealand Parliament')}
+      provenance={provenanceSpanning(sources, itemSources.length ? itemSources : ['parliament_export_written_questions'], 'New Zealand Parliament')}
       unknowns={[
         'Most of what a member does: this panel shows only bills and written questions that carry a recorded link to the member’s identity.',
+        'Exactly when each entry below was retrieved, where more than one register is listed: the dates above are the oldest of them, and every entry names the register it came from.',
         'Anything attributable only by name: a question printed “Hon Rachel Brooking” and a member record reading “Rachel Brooking” are two publishers’ texts, and this page will not join them.',
         'How anyone voted, and whether any of this achieved anything: neither is held here, and neither is inferred.',
       ]}
@@ -331,6 +342,7 @@ function ActivityRow({ item }: { item: ActivityItem }) {
         {item.headline}
         {item.detail ? ` · ${item.detail}` : ''}
         {item.memberNameAtSource ? ` · named at source as ${item.memberNameAtSource}` : ''}
+        {item.sourceId ? <> · recorded by <span className="font-mono text-[12px] text-foreground">{item.sourceId}</span></> : null}
         {item.officialUrl ? <> · <ExternalLink href={item.officialUrl}>open at the publisher</ExternalLink></> : null}
       </p>
     </li>
@@ -417,7 +429,11 @@ function CandidacyList({ rows, caption }: { rows: readonly CandidacyRow[]; capti
 function MoneyCard({ electorate: e, sources }: { electorate: ElectorateVersionRow; sources: readonly SourceLike[] }) {
   const donations = useDonationsAsPublished(e.name ?? undefined)
   const returns = useCandidateReturnLinkage()
-  const availability = classify(donations)
+  const availability = classifyNamed(e.name, donations)
+  // The entries come from the disclosures read out of the returns, and a party return and a candidate
+  // return are two different sources with two different dates. The strip names the ones actually shown.
+  const shownSources = (donations.data ?? []).map((d) => disclosureSourceForKind(d.return_kind))
+  const spansSources = new Set(shownSources).size > 1
   return (
     <FactCard
       testId="card-money"
@@ -435,9 +451,13 @@ function MoneyCard({ electorate: e, sources }: { electorate: ElectorateVersionRo
           </p>
         </>
       }
-      provenance={provenanceForSource(sources, CANDIDATE_RETURNS_SOURCE_ID, 'Electoral Commission')}
+      provenance={provenanceSpanning(sources, shownSources.length ? shownSources : [CANDIDATE_DISCLOSURES_SOURCE_ID], 'Electoral Commission')}
       unknowns={[
         'Which candidacy a filed return belongs to: this store records no link from a return to a candidacy.',
+        'Which boundary edition the electorate name printed on a return refers to: a return prints a name, not an edition, and the same name can describe a different area in a different year.',
+        ...(spansSources
+          ? ['Exactly when each entry below was retrieved: candidate returns and party returns are two separate sources, and the dates above are the older of the two, never the newer.']
+          : []),
         'Most donations: an entry is published only where the entries of its part add up exactly to the total the Commission’s own form prints, and many returns are scans that cannot be read at all.',
         'Donations the law withholds: an anonymous donation, or one protected from disclosure, keeps its amount and has no donor name here either.',
         'Donations over $20,000 published separately during an election year: this project does not collect them, and nothing here is added to them.',
@@ -447,7 +467,11 @@ function MoneyCard({ electorate: e, sources }: { electorate: ElectorateVersionRo
         availability={availability}
         loadingLabel="Loading disclosed donations"
         datasetName="evidence_public.donation_disclosures"
-        noneHeld={`No filed return loaded here prints the electorate name “${e.name ?? ''}” on its face.`}
+        noneHeld={
+          e.name
+            ? `No filed return loaded here prints the electorate name “${e.name}” on its face.`
+            : 'This electorate version carries no name in this store, and a return is matched here only by the name printed on its face. So no return was looked for.'
+        }
         onRetry={() => void donations.refetch()}
       >
         {(rows) => <DonationList rows={rows} />}

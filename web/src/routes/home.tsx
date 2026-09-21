@@ -3,7 +3,7 @@ import { ArrowRight, Database, FileText, Landmark, MapPin } from 'lucide-react'
 import { ElectoratePicker } from '@/components/electorate-picker'
 import { AvailabilityBlock, FactCard } from '@/components/fact-card'
 import { ExternalLink, Note, PageHeader, Section } from '@/components/page'
-import { ErrorBlock, LoadingBlock } from '@/components/states'
+import { EmptyBlock, ErrorBlock, LoadingBlock } from '@/components/states'
 import {
   BOUNDARY_NOT_COMPARABLE_NOTE,
   classify,
@@ -98,7 +98,16 @@ export function HomePage() {
       </Section>
 
       <Section id="the-2026-election" title="The 2026 election, as this store holds it">
-        {upcoming ? <UpcomingElectionCard election={upcoming} sources={sources.data ?? []} /> : elections.isPending ? <LoadingBlock label="Loading elections" rows={2} /> : null}
+        {upcoming ? (
+          <UpcomingElectionCard election={upcoming} sources={sources.data ?? []} />
+        ) : elections.isError ? (
+          <ErrorBlock error={elections.error} onRetry={() => void elections.refetch()} />
+        ) : elections.isPending ? (
+          <LoadingBlock label="Loading elections" rows={2} />
+        ) : (
+          // A heading with nothing under it reads as "there is nothing to say". Which silence this is matters.
+          <EmptyBlock message="No 2026 election has been loaded into this store, so this page states nothing about one. That is a gap in what has been retrieved, not a statement that no election is scheduled." />
+        )}
       </Section>
 
       <Section

@@ -157,6 +157,97 @@ Each of these is additive and read-only. None requires a change to what is alrea
 - `.github/workflows/explorer.yml` gained one command (`npm run e2e:journey`) and one always-on artifact upload
   (`journey-screenshots` from `web/test-results/screens`). Nothing else in CI changed; no required check was
   removed or weakened.
-- **R10 applies.** These are new public-facing surfaces. A `REVIEW-REGISTER.md` entry naming who reviewed them,
-  when, and against which red lines is required before they go live. This lane did not write one: the register is
-  a governance file and outside its scope.
+- **R10 applies.** These are new public-facing routes. A `REVIEW-REGISTER.md` entry is now recorded for them —
+  see §10 — and it is `PENDING — NOT REVIEWED`. No reviewer is appointed and no review has happened.
+
+## 9. Independent review of `4d32e84` (range `7160d4b..4d32e84`)
+
+Reviewed on 2026-09-21 in an isolated worktree at `4d32e84`, scope limited to `web/`, the journey documentation,
+the journey CI job and the governance register. No ingest, migration or SQL file was touched. The merge base with
+`origin/main` is `8d33ea6`, not `31bf278`; the review was done against the exact range above and not against main.
+
+### 9.1 Defects found and fixed
+
+1. **Every electorate page would have shown a skeleton that never resolved.** The composed reads
+   (`useMemberActivity`, `usePartyPolicyPages`, `useBoundaryMaps`) take two hops: find the rows, then fetch the
+   documents those rows point at. When the first hop honestly returns nothing, the second is switched off — and a
+   switched-off TanStack query reports `isPending` for ever. `compose` asked its parts, so `classify` answered
+   `loading` and the panel spun instead of saying it held nothing. This is not hypothetical: §4 measures **0**
+   identity-linked bills and **0** identity-linked written questions in the store, so the activity panel on every
+   electorate page, on the hosted deployment, would have sat on a loading skeleton. The same fault would have
+   silenced the party-policy panel on the homepage and the boundary-map list whenever either came back empty.
+   `compose` now derives pending from whether its own rows are settled. Regression tests:
+   `web/src/routes/electorate-data.test.tsx`, including one that pins the library behaviour that causes it.
+   The journey suite would also have caught it (`card-activity` asserts `none-held` when no row is listed): it had
+   never been run.
+2. **A panel filtered only on the electorate's name waited for a request that was never sent.** Where
+   `electorates.name` is null the representation and money reads are switched off, and both cards inherited the
+   same endless loading state. `classifyNamed` now reports the panel as holding nothing, and each card says why in a
+   sentence of its own rather than printing an empty name in quotation marks.
+3. **The money card named the wrong source.** Its provenance strip carried the publisher date and retrieval date
+   of `finance_2023_candidate_returns_export` — the register of *filed returns* — while listing entries read from
+   `finance_2023_candidate_return_disclosures_export` and `finance_2025_party_return_disclosures_export`. The two
+   dates a reader is given were therefore about material the card does not show. The strip now names the
+   disclosure sources actually listed, and where both kinds appear it carries the **older** publisher date and the
+   **older** retrieval date of the two, never the newer, with an explicit "what this card does not know" line
+   saying so (`provenanceSpanning`, unit-tested).
+4. **The activity card named one parliamentary export while listing several.** Bills and written questions come
+   from different registers. Each item now carries and prints the registry key of its own source, and the strip
+   spans the sources actually listed.
+5. **A heading with nothing under it.** When no `primary_2026` election row is loaded, the homepage's 2026 section
+   rendered an empty heading — and rendered the same nothing when the read failed. It now distinguishes loading,
+   failure and an honest empty store.
+
+### 9.2 Checked and found correct
+
+Folding is confined to searching and to this store's own slugs (`matchElectorates`, `resolveSlug`); no publisher's
+record is joined to another's by name anywhere. The representation card discloses its text correspondence above
+the rows, and activity refuses the same fallback. No sitting member is presented as a 2026 candidate. Candidacies
+are alphabetical; no figure is ranked, totalled or scored. The picker asks for a name and nothing else: no address
+field, no geolocation, no cookie and no stored value. Election slugs (`general-2023`, `general-2026`) and all
+eight source registry keys used for provenance exist in the catalogue. The route id the page reads
+(`/_released/electorate/$slug`) matches the tree, so both new routes sit behind the same release gate as the rest
+of the explorer.
+
+### 9.3 Verified in this worktree, with the installed dependency tree
+
+- `npx tsc --noEmit -p tsconfig.json` — clean.
+- `npm test` — **98 tests in 5 files** (86 before this review; 12 added, 3 of which fail against the unfixed code).
+- `npm run build` — clean. `npm run check:bundle` — no evidence, private names or privileged key material.
+- `python3 scripts/red_lines.py`, `python3 scripts/validate.py`, `python3 -m unittest discover -s tests` (20 tests),
+  `node --test tools/release_gate.test.ts` (8 tests), `node tools/owner_authorization.ts` — all pass.
+- `node tools/release_gate.ts --surface-id explorer-pages` — **closed**, "latest row is not approved".
+- `npx playwright test --config playwright.journey.config.ts --list` — 28 tests (14 × phone and desktop), two of
+  them added by this review: no panel on either page may be left in a loading state once the page has answered.
+
+**Still not run: the Playwright journey suite.** It needs a local Supabase stack and a browser, and this lane was
+instructed to start neither. Until the `web-e2e` job is green on a runner, the journey's browser coverage —
+including the mobile and desktop screenshots — is written, not proven.
+
+## 10. Governance: what the register row does and does not say
+
+`REVIEW-REGISTER.md` now carries a dated `PENDING — NOT REVIEWED` row for these routes. It names no reviewer,
+because none is appointed, and **no legal review of this work has taken place**.
+
+The row is filed under the existing stable surface id `explorer-pages`, deliberately:
+
+- `tools/owner_authorization.ts` restricts a `pages_deploy` scope to `DEPLOYABLE_SURFACES = ["explorer-pages"]`,
+  and `tools/release_gate.ts` will only answer about the four ids it knows. A new surface id for the journey would
+  therefore have **no** owner decision able to name it and **no** gate able to be asked about it — weaker, not
+  stronger. No new permission is invented here to make one possible.
+- The routes create no database object and expose nothing anonymously that the catalogue browser at `/datasets`
+  could not already show. Every field rests on an owner decision already in force
+  (`OWNER-AUTH-2026-09-20-01`, `-09-20-02`, `-09-21-01`, `-09-21-02`, `-09-21-03`), and nothing new is claimed.
+
+**Whether an additive owner decision is required is a judgement for the coordinator and the owner, not for this
+lane.** The case for treating the existing `pages_deploy` scope as sufficient is that the surface, the deployment
+target, the read path and the released fields are all unchanged. The case against is that the owner authorised
+deploying *an evidence explorer*, and what a general reader now meets first is an electorate page — a different
+product framing over the same values. If the owner wants that framing explicitly covered, the honest instrument is
+a new dated entry in `governance/owner-authorizations.json` carrying a `pages_deploy` scope for `explorer-pages`
+that describes the journey in its `statement`. This lane has not written one: an authorization is the owner's to
+give, and the overnight direction relayed to this build is recorded in the register row as what it is.
+
+The owner's overnight direction of 2026-09-21 21:15 Pacific/Auckland is quoted in the register row as a build and
+deploy instruction taken at the owner's own risk. It is a stated departure from R10 and R8, not compliance with
+them, and it is not a review.

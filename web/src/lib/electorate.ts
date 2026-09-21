@@ -107,7 +107,7 @@ export type Availability<Row> =
   | { state: 'not_answerable'; error: DataError }
   | { state: 'failed'; error: DataError }
 
-interface QueryLike<Row> {
+export interface QueryLike<Row> {
   isPending: boolean
   isError: boolean
   error: DataError | null
@@ -124,6 +124,15 @@ export function classify<Row>(query: QueryLike<Row>): Availability<Row> {
   if (query.isPending) return { state: 'loading' }
   const rows = query.data ?? []
   return rows.length === 0 ? { state: 'none_held' } : { state: 'ready', rows }
+}
+
+/**
+ * A panel whose only filter is a name, when the store records no name for this electorate version.
+ * The query cannot even be asked, so it is never sent: the panel reports that it holds nothing rather
+ * than waiting for a request that will never be made. The sentence the card shows says which it is.
+ */
+export function classifyNamed<Row>(name: string | null | undefined, query: QueryLike<Row>): Availability<Row> {
+  return name ? classify(query) : { state: 'none_held' }
 }
 
 // ---- Sentences this product must never get wrong ---------------------------------------------
@@ -180,5 +189,35 @@ export function provenanceForSource(sources: readonly SourceLike[], sourceId: st
     sourceDate: row?.latest_source_published_at ?? null,
     retrievedAt: row?.last_success_at ?? null,
     sourceId,
+  }
+}
+
+/** The earliest of the dates given, ignoring the ones that are not stated. Null when none is stated. */
+function earliest(values: ReadonlyArray<string | null | undefined>): string | null {
+  const stated = values.filter((v): v is string => !!v).sort()
+  return stated[0] ?? null
+}
+
+/**
+ * Provenance for a panel that shows rows from MORE THAN ONE registered source — disclosures read from
+ * two kinds of return, activity taken from several parliamentary exports.
+ *
+ * A single strip cannot carry several dates, so it carries the EARLIEST of them: the oldest publisher
+ * date and the oldest retrieval behind anything on the card. That is a lower bound, never a claim that
+ * the whole card is as fresh as its freshest part, and it is the one direction a reader is not misled
+ * by. There is no single "original" for several sources, so the link is dropped and each row keeps its
+ * own. A card doing this must say so in its `unknowns`.
+ */
+export function provenanceSpanning(sources: readonly SourceLike[], sourceIds: readonly string[], fallbackPublisher: string): Provenance {
+  const ids = [...new Set(sourceIds.filter((id): id is string => !!id))].sort()
+  if (ids.length <= 1) return provenanceForSource(sources, ids[0] ?? '', fallbackPublisher)
+  const rows = ids.map((id) => sources.find((s) => s.source_id === id)).filter((r): r is SourceLike => !!r)
+  const publishers = [...new Set(rows.map((r) => r.publisher).filter((p): p is string => !!p))]
+  return {
+    publisher: publishers.length === 1 ? (publishers[0] as string) : publishers.length === 0 ? fallbackPublisher : `${publishers.length} publishers, each named on its own entry`,
+    officialUrl: null,
+    sourceDate: earliest(rows.map((r) => r.latest_source_published_at)),
+    retrievedAt: earliest(rows.map((r) => r.last_success_at)),
+    sourceId: ids.join(' + '),
   }
 }

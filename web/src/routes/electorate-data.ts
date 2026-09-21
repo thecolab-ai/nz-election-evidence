@@ -17,6 +17,18 @@ export const BOUNDARY_MAPS_SOURCE_ID = 'election_2026_boundary_map_links_export'
 export const POLICY_SOURCE_ID = 'party_policy_pages_2026_export'
 export const CANDIDATE_RETURNS_SOURCE_ID = 'finance_2023_candidate_returns_export'
 export const PARTY_RETURNS_SOURCE_ID = 'finance_2025_party_returns_export'
+/**
+ * The disclosures read out of the filed returns are their OWN sources, separate from the registers of
+ * filed returns above. A card that shows disclosed entries has to name these, because the publisher's
+ * date and the retrieval date of the register of returns describe different material.
+ */
+export const CANDIDATE_DISCLOSURES_SOURCE_ID = 'finance_2023_candidate_return_disclosures_export'
+export const PARTY_DISCLOSURES_SOURCE_ID = 'finance_2025_party_return_disclosures_export'
+
+/** The return kinds `donation_disclosures.return_kind` uses, and the source each kind was read from. */
+export function disclosureSourceForKind(returnKind: string): string {
+  return returnKind === 'party_return' ? PARTY_DISCLOSURES_SOURCE_ID : CANDIDATE_DISCLOSURES_SOURCE_ID
+}
 
 const SOURCE_COLUMNS = 'source_id,title,publisher,official_url,last_success_at,latest_source_published_at,freshness_status,view_scope'
 
@@ -85,7 +97,13 @@ export interface ComposedQuery<Row> {
 function compose<Row>(parts: ReadonlyArray<{ isPending: boolean; isError: boolean; error: DataError | null; refetch: () => unknown }>, rows: Row[] | undefined): ComposedQuery<Row> {
   const failed = parts.find((p) => p.isError)
   return {
-    isPending: !failed && parts.some((p) => p.isPending),
+    // The PARTS cannot decide this. A query that is switched off — the second hop of a chain whose first
+    // hop came back with nothing to look up — never fetches and never succeeds, and the query library
+    // calls that state "pending" for ever. Asking the parts would leave a panel spinning on exactly the
+    // case this product most has to get right: a first hop that honestly found nothing. The composed
+    // read is pending until its own rows exist, and `rows` is undefined only while a part it actually
+    // needed is still unsettled.
+    isPending: !failed && rows === undefined,
     isError: !!failed,
     error: failed?.error ?? null,
     data: rows,
@@ -335,6 +353,8 @@ export interface ActivityItem {
   memberNameAtSource: string | null
   officialUrl: string | null
   title: string | null
+  /** The registry key of the source this item's document came from. Bills and questions are not one source. */
+  sourceId: string | null
 }
 
 /**
@@ -383,6 +403,7 @@ export function useMemberActivity(personIdentityIds: readonly string[]): Compose
           memberNameAtSource: b.member_name_at_source,
           officialUrl: byId.get(b.document_id)?.official_url ?? null,
           title: byId.get(b.document_id)?.title ?? null,
+          sourceId: byId.get(b.document_id)?.source_id ?? null,
         })),
         ...(questions.data ?? []).map((w): ActivityItem => ({
           documentId: w.document_id,
@@ -394,6 +415,7 @@ export function useMemberActivity(personIdentityIds: readonly string[]): Compose
           memberNameAtSource: w.asker_name_at_source,
           officialUrl: byId.get(w.document_id)?.official_url ?? null,
           title: byId.get(w.document_id)?.title ?? null,
+          sourceId: byId.get(w.document_id)?.source_id ?? null,
         })),
       ].sort((a, b) => (b.occurredAt ?? '').localeCompare(a.occurredAt ?? ''))
     : undefined

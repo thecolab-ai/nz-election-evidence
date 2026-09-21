@@ -4,6 +4,7 @@ import {
   ACTIVITY_NOT_EFFECTIVENESS_NOTE,
   BOUNDARY_NOT_COMPARABLE_NOTE,
   classify,
+  classifyNamed,
   foldForSearch,
   isDeploymentTooSlow,
   isMissingDataset,
@@ -13,6 +14,7 @@ import {
   NOT_A_CANDIDATE_NOTE,
   PARTY_NOT_CANDIDATE_RECEIPT_NOTE,
   provenanceForSource,
+  provenanceSpanning,
   REPRESENTATION_MATCH_NOTE,
   resolveSlug,
 } from './electorate'
@@ -128,6 +130,18 @@ describe('the four ways a panel can be silent', () => {
     // A failed query is never allowed to look like an answered one, even while it is also pending.
     expect(classify({ ...base, isPending: true, isError: true, error: error('57014') }).state).toBe('not_answerable')
   })
+
+  it('does not wait for a question it never asked, when the store records no name to ask it with', () => {
+    // A panel filtered only on the electorate's name cannot run at all when there is no name. The query
+    // is switched off, and a switched-off query reports itself as pending for ever; the panel must not.
+    const never = { isPending: true, isError: false, error: null, data: undefined }
+    expect(classifyNamed(null, never)).toEqual({ state: 'none_held' })
+    expect(classifyNamed(undefined, never)).toEqual({ state: 'none_held' })
+    expect(classifyNamed('', never)).toEqual({ state: 'none_held' })
+    // With a name, nothing changes: the query's own state is what the reader is told.
+    expect(classifyNamed('Ōtaki', never)).toEqual({ state: 'loading' })
+    expect(classifyNamed('Ōtaki', { ...never, isPending: false, data: [] })).toEqual({ state: 'none_held' })
+  })
 })
 
 describe('provenance', () => {
@@ -150,6 +164,42 @@ describe('provenance', () => {
     expect(p.sourceDate).toBeNull()
     expect(p.retrievedAt).toBeNull()
     expect(p.officialUrl).toBeNull()
+  })
+
+  describe('a card whose rows come from more than one source', () => {
+    const two = [
+      { source_id: 'candidate_disclosures', publisher: 'Electoral Commission', official_url: 'https://example.invalid/candidate', last_success_at: '2026-09-21T06:00:00Z', latest_source_published_at: '2026-08-01T00:00:00Z' },
+      { source_id: 'party_disclosures', publisher: 'Electoral Commission', official_url: 'https://example.invalid/party', last_success_at: '2026-09-10T06:00:00Z', latest_source_published_at: '2026-05-01T00:00:00Z' },
+    ]
+
+    it('never claims the whole card is as fresh as its freshest part', () => {
+      const p = provenanceSpanning(two, ['candidate_disclosures', 'party_disclosures'], 'Electoral Commission')
+      expect(p.publisher).toBe('Electoral Commission')
+      expect(p.retrievedAt).toBe('2026-09-10T06:00:00Z')
+      expect(p.sourceDate).toBe('2026-05-01T00:00:00Z')
+      // There is no single "the original" for two sources; each row carries its own link.
+      expect(p.officialUrl).toBeNull()
+      expect(p.sourceId).toBe('candidate_disclosures + party_disclosures')
+    })
+
+    it('is the ordinary one-source strip when only one source is actually shown', () => {
+      const p = provenanceSpanning(two, ['party_disclosures', 'party_disclosures'], 'Electoral Commission')
+      expect(p.sourceId).toBe('party_disclosures')
+      expect(p.officialUrl).toBe('https://example.invalid/party')
+      expect(p.retrievedAt).toBe('2026-09-10T06:00:00Z')
+    })
+
+    it('says how many publishers there are rather than picking one of them', () => {
+      const mixed = [two[0] as (typeof two)[number], { ...(two[1] as (typeof two)[number]), publisher: 'New Zealand Parliament' }]
+      expect(provenanceSpanning(mixed, ['candidate_disclosures', 'party_disclosures'], 'fallback').publisher).toBe('2 publishers, each named on its own entry')
+    })
+
+    it('claims no date at all for sources the store does not list', () => {
+      const p = provenanceSpanning(two, ['not_loaded_a', 'not_loaded_b'], 'Electoral Commission')
+      expect(p.publisher).toBe('Electoral Commission')
+      expect(p.sourceDate).toBeNull()
+      expect(p.retrievedAt).toBeNull()
+    })
   })
 })
 

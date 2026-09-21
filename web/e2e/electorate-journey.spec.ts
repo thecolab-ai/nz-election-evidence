@@ -79,6 +79,26 @@ test.describe('the electorate journey', () => {
     await shot(page, '03-electorate')
   })
 
+  test('no panel is left spinning once the page has answered', async ({ page }) => {
+    await page.goto(`/electorate/${SLUG}`)
+    await expect(page.getByRole('heading', { level: 1, name: ELECTORATE })).toBeVisible()
+    for (const card of ['card-2026', 'card-representation', 'card-activity', 'card-2023', 'card-money']) {
+      await expect(page.getByTestId(card)).toBeVisible()
+    }
+    // Every panel has to end in one of the honest states. A read taken in two hops — find the rows,
+    // then fetch the documents they point at — leaves a skeleton up for ever if it treats its switched-off
+    // second hop as "still loading", and that happens on exactly the electorates that hold nothing.
+    await expect(page.getByTestId('loading-state')).toHaveCount(0, { timeout: 20_000 })
+    await shot(page, '07-every-panel-settled')
+  })
+
+  test('the homepage leaves no panel spinning either', async ({ page }) => {
+    await page.goto('/')
+    await expect(page.getByTestId('electorate-search')).toBeVisible()
+    await expect(page.getByRole('heading', { level: 2, name: 'What each party published for 2026' })).toBeVisible()
+    await expect(page.getByTestId('loading-state')).toHaveCount(0, { timeout: 20_000 })
+  })
+
   test('the page states its boundary edition and refuses to carry a name across editions', async ({ page }) => {
     await page.goto(`/electorate/${SLUG}`)
     await expect(page.getByTestId('electorate-boundary-note')).toContainText('is not the same area')
