@@ -1,6 +1,6 @@
 # Donations disclosed inside filed Electoral Commission returns (P25, P26)
 
-Branch `feat/official-donation-records`, commit `cd99e0c`. Local only: nothing pushed, nothing deployed, and the
+Branch `feat/official-donation-records`, commit `326776d`. Local only: nothing pushed, nothing deployed, and the
 hosted database was not contacted. Everything below was run on an isolated, disposable stack of its own.
 
 Until this change the store held **no donation at all**. It held the Commission's *index* of filed returns (P15,
@@ -71,8 +71,9 @@ That rule is enforced three times over, in three places that cannot drift apart 
    stay refused outright, so a `donor_address` is refused twice over;
 3. the **column itself** carries a CHECK refusing any value holding a digit or a street word.
 
-There is no address column anywhere in either new table. Measured on the loaded store: **4,942 public text values,
-0 holding a digit, 0 holding a street word.**
+There is no address column anywhere in either new table. Measured on the loaded store, as `anon`, across every
+public text value of both datasets — donor names, party and candidate names, electorates and part labels:
+**2,039 values, 0 holding a digit, 0 holding a street word.**
 
 ### The arithmetic gate
 
@@ -200,9 +201,10 @@ All on an isolated, disposable stack; the hosted database was never contacted.
 | `npx vitest run` (web) | 46 pass |
 | `npm run types:check`, `vite build`, `tsc --noEmit` | pass |
 | the Donations page **rendered in a real browser** against the loaded store | 291 rows, 25 per page, all three notices present, 0 console errors |
+| every public text value of both datasets, as `anon` | 2,039 checked; 0 hold a digit, 0 hold a street word |
 | `scripts/validate.py`, `scripts/red_lines.py`, `pytest tests` | pass (26 products, 353,336 records; 20 python tests) |
 
-Every receipt pins the clean commit `cd99e0c` with `dirty: false`; the CLI was run from a clean checkout and the
+Every receipt pins the clean commit `326776d` with `dirty: false`; the CLI was run from a clean checkout and the
 stack from a clone of the same commit. Receipts:
 `receipts/2026-09-21-election-donations.export.json`, `receipts/2026-09-21-election-donations.load-proof.json`.
 
