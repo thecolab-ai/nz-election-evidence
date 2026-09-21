@@ -1,7 +1,7 @@
 import generated from './release-coverage.json' with { type: 'json' }
 
 /**
- * Coverage of the project's 24-product catalogue, in two parts that are kept apart on purpose.
+ * Coverage of the project's 26-product catalogue, in two parts that are kept apart on purpose.
  *
  *   ROUTES (static, generated)   which import routes exist for a product: a backfill from a verified private export,
  *                                and how the product is kept current. Generated from the ingestion route coverage

@@ -42,7 +42,7 @@ vi.mock('@/lib/supabase', () => ({
 }))
 
 // Imported after the mock so the hooks build on it.
-const { useBoundaryMaps, useMemberActivity, usePartyPolicyPages } = await import('./electorate-data')
+const { useBoundaryMaps, useCandidacySources, useMemberActivity, usePartyPolicyPages } = await import('./electorate-data')
 
 function wrapper({ children }: { children: ReactNode }) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } })
@@ -125,5 +125,47 @@ describe('what a composed read hands the page once it has answered', () => {
     await waitFor(() => expect(result.current.isError).toBe(true))
     expect(classify(result.current).state).toBe('not_loaded')
     expect(result.current.isPending).toBe(false)
+  })
+})
+
+/**
+ * A card lists candidacies; its provenance strip has to name where those rows came from. The public
+ * `candidacies` view carries no `source_id`, so the only alternative to resolving it is assuming it —
+ * and the 2026 card assumed the export that records whether the Commission has published a nomination
+ * list at all. That is the right source for the card's CLAIM and the wrong one for any row, so the
+ * moment a 2026 candidacy loaded, every name would have been attributed to a source it did not come
+ * from. These fix the source to the rows' own record versions.
+ */
+describe('which source a listed candidacy was really loaded from', () => {
+  const row = (id: string, versionId: string | null) => ({ id, evidence_version_id: versionId }) as never
+
+  it('asks nothing and claims nothing when no candidacy is listed', async () => {
+    const { result } = renderHook(() => useCandidacySources([]), { wrapper })
+    await waitFor(() => expect(result.current.ids).toEqual([]))
+    expect(asked).not.toContain('evidence_public.record_versions')
+    expect(result.current.sourceFor(row('c-1', 'v-1'))).toBeNull()
+  })
+
+  it('names each row’s own source, and spans them when the rows came from more than one', async () => {
+    answers['evidence_public.record_versions'] = {
+      rows: [
+        { id: 'v-1', source_id: 'baseline_2023_candidacies_export' },
+        { id: 'v-2', source_id: 'election_2026_nomination_fixture_export' },
+      ],
+    }
+    const { result } = renderHook(() => useCandidacySources([row('c-1', 'v-1'), row('c-2', 'v-2')]), { wrapper })
+    await waitFor(() => expect(result.current.ids.length).toBe(2))
+    // Sorted and distinct, so a strip spanning them is stable.
+    expect(result.current.ids).toEqual(['baseline_2023_candidacies_export', 'election_2026_nomination_fixture_export'])
+    expect(result.current.sourceFor(row('c-1', 'v-1'))).toBe('baseline_2023_candidacies_export')
+    expect(result.current.sourceFor(row('c-2', 'v-2'))).toBe('election_2026_nomination_fixture_export')
+  })
+
+  it('leaves a row whose version did not resolve without a source, rather than lending it another row’s', async () => {
+    answers['evidence_public.record_versions'] = { rows: [{ id: 'v-1', source_id: 'baseline_2023_candidacies_export' }] }
+    const { result } = renderHook(() => useCandidacySources([row('c-1', 'v-1'), row('c-2', 'v-missing')]), { wrapper })
+    await waitFor(() => expect(result.current.ids).toEqual(['baseline_2023_candidacies_export']))
+    expect(result.current.sourceFor(row('c-2', 'v-missing'))).toBeNull()
+    expect(result.current.sourceFor(row('c-3', null))).toBeNull()
   })
 })

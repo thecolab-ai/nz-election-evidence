@@ -28,6 +28,7 @@ import {
   OFFICIAL_PAGE_SOURCE_ID,
   useBoundaryMaps,
   useCandidacies,
+  useCandidacySources,
   useCandidateReturnLinkage,
   useDonationsAsPublished,
   useElectorateBySlug,
@@ -123,6 +124,13 @@ function StandingIn2026Card({ electorate: e, sources }: { electorate: Electorate
   const candidacies = useCandidacies(e.id, 'general-2026')
   const maps = useBoundaryMaps()
   const availability = classify(candidacies)
+  // What this card states about 2026 comes from the official page status export: that the Commission has
+  // published no nomination list yet. Any candidacy row listed below would come from somewhere else
+  // entirely, so the strip may not go on naming the page-status export alone once there are rows. The
+  // sources are resolved from the rows themselves and never assumed; with nothing listed, this is empty
+  // and the strip is exactly the page-status export it has always been.
+  const candidacySources = useCandidacySources(candidacies.data ?? [])
+  const spansSources = candidacySources.ids.some((id) => id !== OFFICIAL_PAGE_SOURCE_ID)
   return (
     <FactCard
       testId="card-2026"
@@ -135,11 +143,14 @@ function StandingIn2026Card({ electorate: e, sources }: { electorate: Electorate
         </>
       }
       tone="caution"
-      provenance={provenanceForSource(sources, OFFICIAL_PAGE_SOURCE_ID, 'Electoral Commission')}
+      provenance={provenanceSpanning(sources, [OFFICIAL_PAGE_SOURCE_ID, ...candidacySources.ids], 'Electoral Commission')}
       unknowns={[
         'Everyone standing: no 2026 nomination or announcement has been loaded for any electorate.',
         'Which 2026 electorate covers this area: the 2026 boundaries are a different edition and no 2026 electorate has been loaded here, so this page cannot carry a name across.',
         'Whether the sitting member is standing again: this store holds nothing that says either way.',
+        ...(spansSources
+          ? ['Exactly when each name below was retrieved: the check of the Commission’s official page and whatever recorded a name are separate sources, and the dates above are the oldest of them, never the newest. Every name names the source it was recorded by.']
+          : []),
       ]}
     >
       <AvailabilityBlock
@@ -149,7 +160,7 @@ function StandingIn2026Card({ electorate: e, sources }: { electorate: Electorate
         noneHeld="No candidate has been recorded for this electorate for the 2026 election."
         onRetry={() => void candidacies.refetch()}
       >
-        {(rows) => <CandidacyList rows={rows} caption="Candidates recorded for 2026" />}
+        {(rows) => <CandidacyList rows={rows} caption="Candidates recorded for 2026" sourceFor={candidacySources.sourceFor} />}
       </AvailabilityBlock>
 
       <div className="mt-5 border-t border-border pt-4">
@@ -358,6 +369,10 @@ function Result2023Card({ electorate: e, sources }: { electorate: ElectorateVers
   const summary = useResultSummary(contestId)
   const summaryRow = (summary.data ?? [])[0]
   const availability = classify(candidacies)
+  // The same rule as the 2026 card: the strip names the sources the listed rows were really loaded
+  // from, resolved through each row's own record version. The declared roster export is the fallback
+  // for the strip only while nothing has resolved, never a claim about a row.
+  const candidacySources = useCandidacySources(rows)
   return (
     <FactCard
       testId="card-2023"
@@ -369,10 +384,13 @@ function Result2023Card({ electorate: e, sources }: { electorate: ElectorateVers
           a baseline or a comparison for 2026.
         </p>
       }
-      provenance={provenanceForSource(sources, CANDIDACY_SOURCE_ID, 'Electoral Commission')}
+      provenance={provenanceSpanning(sources, candidacySources.ids.length ? candidacySources.ids : [CANDIDACY_SOURCE_ID], 'Electoral Commission')}
       unknowns={[
         'What any of it implies about 2026: nothing here is carried forward, and the boundaries differ.',
         'Who each candidate is beyond the name the Commission printed: candidate identities are unresolved in this store.',
+        ...(candidacySources.ids.length > 1
+          ? ['Exactly when each name below was retrieved, where more than one source is listed: the dates above are the oldest of them, and every name names the source it was recorded by.']
+          : []),
         summaryRow ? 'Nothing: the completeness figures below are the Commission’s own.' : 'How complete the count was: no result summary has been loaded for this contest.',
       ]}
     >
@@ -385,7 +403,7 @@ function Result2023Card({ electorate: e, sources }: { electorate: ElectorateVers
       >
         {(list) => (
           <>
-            <CandidacyList rows={list} caption="Candidates in this electorate in 2023" />
+            <CandidacyList rows={list} caption="Candidates in this electorate in 2023" sourceFor={candidacySources.sourceFor} />
             {summaryRow ? (
               <dl className="mt-4 grid gap-x-8 gap-y-3 border-t border-border pt-3 text-[13.5px] sm:grid-cols-2 lg:grid-cols-4" data-testid="result-summary">
                 <div><dt className="eyebrow">Candidate votes incl. informal</dt><dd className="num mt-0.5">{formatCount(summaryRow.candidate_votes_with_informals)}</dd></div>
@@ -401,8 +419,15 @@ function Result2023Card({ electorate: e, sources }: { electorate: ElectorateVers
   )
 }
 
-/** Alphabetical by the name the source printed. Votes are shown as reported and never order the list. */
-function CandidacyList({ rows, caption }: { rows: readonly CandidacyRow[]; caption: string }) {
+/**
+ * Alphabetical by the name the source printed. Votes are shown as reported and never order the list.
+ *
+ * `sourceFor` answers which registered source ONE listed name was loaded from, resolved from that
+ * row's own record version. A card's strip can only ever carry one set of dates, so each name also
+ * states its own source, the way each parliamentary item does. A name whose source has not resolved
+ * says that, rather than borrowing the card's.
+ */
+function CandidacyList({ rows, caption, sourceFor }: { rows: readonly CandidacyRow[]; caption: string; sourceFor: (row: CandidacyRow) => string | null }) {
   return (
     <>
       <p className="sr-only">{caption}. Listed alphabetically; the order carries no meaning.</p>
@@ -412,6 +437,9 @@ function CandidacyList({ rows, caption }: { rows: readonly CandidacyRow[]; capti
             <span className="min-w-0">
               <span className="font-medium"><EntityLink kind="person_identity" id={c.person_identity_id}>{c.candidate_name ?? NOT_SHOWN}</EntityLink></span>
               <span className="ml-2 text-[13px] text-muted-foreground"><EntityLink kind="party_identity" id={c.party_identity_id}>{c.party_label ?? NOT_SHOWN}</EntityLink></span>
+              <span className="ml-2 text-[13px] text-muted-foreground" data-testid="candidacy-source">
+                {sourceFor(c) ? <>recorded by <span className="font-mono text-[12px] text-foreground">{sourceFor(c)}</span></> : 'source not resolved here'}
+              </span>
             </span>
             <span className="flex flex-wrap items-center gap-2 text-[13px]">
               <CandidacyStatusBadge status={c.current_status} />

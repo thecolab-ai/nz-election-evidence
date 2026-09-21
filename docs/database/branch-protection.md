@@ -17,7 +17,7 @@ Require these to pass before merging, with "require branches to be up to date":
 | `TypeScript tooling - ingestion, release gate, receipts (typecheck and unit tests)` | `explorer.yml` | Adapters, fetch guard, export contract, release-gate logic, workflow invariants, Deno check |
 | `Migrations and role tests on a disposable database` | `explorer.yml` | All migrations from scratch, pgTAP (rights lineage, field-aware release, adversarial input, role allow/deny), generated-type drift, ingestion integration tests under the scoped login with skips forbidden |
 | `Explorer typecheck, unit tests and Pages build` | `explorer.yml` | Type contract against generated types, unit tests, build and bundle safety |
-| `Explorer browser tests - anonymous browsing, private and write denial, release gate, Pages routing` | `explorer.yml` | Anonymous boundary, mixed-rights fixtures, every public dataset walked for withheld content, Pages routing |
+| `Explorer browser tests - anonymous browsing, private and write denial, release gate, Pages routing, electorate journey (phone and desktop)` | `explorer.yml` | Anonymous boundary, mixed-rights fixtures, every public dataset walked for withheld content, Pages routing, and the electorate journey walked at phone and desktop widths with its screenshots uploaded |
 | `offline-validation` | `validate.yml` | The original catalogue validation |
 | `red-lines` | `red-lines.yml` | The original red-line enforcement |
 

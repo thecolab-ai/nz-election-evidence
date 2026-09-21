@@ -78,7 +78,7 @@ Read [methodology](docs/methodology.md), the [data dictionary](docs/data-diction
 
 ## Repository map
 
-- `catalogue/sources.{json,csv}` — the 24-product dated catalogue
+- `catalogue/sources.{json,csv}` — the 26-product dated catalogue
 - `catalogue/roadmap.{json,csv}` — the separate 52-lane research roadmap
 - `catalogue/rights-register.{json,csv}` — per-publisher review queue
 - `catalogue/schema.json` — machine-readable catalogue contract

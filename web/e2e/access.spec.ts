@@ -311,7 +311,7 @@ test.describe('owner override: a separate, stated decision, never a review and n
       await expect(page.getByTestId('coverage-missing-note')).toContainText('of the 26 catalogue products')
       const heldProducts = await page.locator('[data-testid^="coverage-P"][data-held="yes"]').count()
       const missingProducts = await page.locator('[data-testid^="coverage-P"][data-held="no"]').count()
-      expect(heldProducts + missingProducts).toBe(24)
+      expect(heldProducts + missingProducts).toBe(26)
       await expect(page.getByTestId('coverage-missing-note')).toContainText(`This store holds ${heldProducts} of the 26 catalogue products; ${missingProducts} are not in it.`)
       await expect(page.getByTestId('coverage-2026-unpublished')).toContainText('nominations')
       await expect(page.getByTestId('release-gates')).not.toContainText('Open')

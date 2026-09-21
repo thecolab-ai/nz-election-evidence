@@ -266,6 +266,41 @@ export function useCandidacies(electorateVersionId: string | undefined, election
   })
 }
 
+/**
+ * Which registered source each of these candidacy rows was actually loaded from.
+ *
+ * The public `candidacies` view carries no `source_id`, so a card that lists candidacies cannot name
+ * their source from the rows alone — it can only assume one. This resolves the question instead of
+ * assuming it, through the `evidence_version_id` every candidacy already carries: the record version
+ * it came from names its own source. Nothing is joined by name and no source is invented; where a
+ * version does not resolve, the id is simply absent and the caller says what it does not know.
+ *
+ * `ids` holds the distinct sources in a stable order, and `sourceFor` names the one behind a single
+ * row. Both are empty while the lookup is unsettled: a caller must not read that as "no source", only
+ * as "none resolved yet", and must fall back to what it can state without them.
+ */
+export interface CandidacyProvenance {
+  ids: string[]
+  sourceFor: (row: CandidacyRow) => string | null
+}
+
+export function useCandidacySources(rows: readonly CandidacyRow[]): CandidacyProvenance {
+  const versionIds = [...new Set(rows.map((r) => r.evidence_version_id).filter((id): id is string => !!id))].sort()
+  const versions = useRowsQuery<{ id: string; source_id: string | null }>({
+    view: 'record_versions',
+    select: 'id,source_id',
+    key: ['candidacy-record-versions', versionIds.join(',')],
+    limit: 100,
+    enabled: versionIds.length > 0,
+    build: (q) => q.in('id', versionIds),
+  })
+  const byVersionId = new Map((versions.data ?? []).map((v) => [v.id, v.source_id]))
+  return {
+    ids: [...new Set((versions.data ?? []).map((v) => v.source_id).filter((id): id is string => !!id))].sort(),
+    sourceFor: (row) => (row.evidence_version_id ? (byVersionId.get(row.evidence_version_id) ?? null) : null),
+  }
+}
+
 export interface ResultSummaryRow {
   contest_id: string
   candidate_votes_with_informals: number | null
