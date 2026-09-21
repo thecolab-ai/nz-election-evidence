@@ -1,0 +1,120 @@
+{
+  "note": "Shared vectors for evidence_private.text_violation (SQL) and _shared/text_guard.ts (TypeScript). Both must agree on every line.",
+  "vectors": [
+    {
+      "text": "A plain title about housing",
+      "expect": null,
+      "why": "ordinary text"
+    },
+    {
+      "text": "Telecommunications (Interception) Bill 0a021234567b-not-a-token",
+      "expect": "phone_like_value",
+      "why": "a 12-character hex-looking run is shorter than an identifier token: still refused (the known limit of the rule)"
+    },
+    {
+      "text": "call the office on 021 555 1234",
+      "expect": "phone_like_value",
+      "why": "a phone number beside a phone word"
+    },
+    {
+      "text": "ph 04 817 9999",
+      "expect": "phone_like_value",
+      "why": "landline beside ph"
+    },
+    {
+      "text": "Stephens, Pat d0212345678eaaaa",
+      "expect": null,
+      "why": "16-character hex token beside 'ph' is an identifier, not a number"
+    },
+    {
+      "text": "graph of results 9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
+      "expect": null,
+      "why": "SHA-256 digest beside 'ph'"
+    },
+    {
+      "text": "telephone exchange 6f1e0212345678ab-4c1d-4e2a-9b3c-021234567890",
+      "expect": null,
+      "why": "not a well-formed UUID and no bounded phone run"
+    },
+    {
+      "text": "Select committee call for submissions 3b0212345-6789-4abc-8def-0212345678ab",
+      "expect": "phone_like_value",
+      "why": "a malformed UUID (nine characters in its first group) is not an identifier token, so the digit run inside it is still seen"
+    },
+    {
+      "text": "Select committee call for submissions 3b021234-5678-4abc-8def-0212345678ab and 027 123 4567",
+      "expect": "phone_like_value",
+      "why": "a real number beside an identifier is still refused"
+    },
+    {
+      "text": "sha256:9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08 tel 09 123 4567",
+      "expect": "phone_like_value",
+      "why": "a real number beside a digest is still refused"
+    },
+    {
+      "text": "file-0212345678abcdef Stephens",
+      "expect": null,
+      "why": "release key: 16-hex token after a dash"
+    },
+    {
+      "text": "ghijklmnopabcdefghijklmnopabcdef Stephens",
+      "expect": null,
+      "why": "letter-encoded digest (election family) holds no digit run"
+    },
+    {
+      "text": "Stephens 0212345678",
+      "expect": "phone_like_value",
+      "why": "a bare 10-digit run beside 'ph' is a phone number: shorter than an identifier token"
+    },
+    {
+      "text": "reach me: someone@example.org",
+      "expect": "email_like_value",
+      "why": "email"
+    },
+    {
+      "text": "see /var/lib/someone/file.txt",
+      "expect": "filesystem_location_value",
+      "why": "disk location"
+    },
+    {
+      "text": "password: hunter2",
+      "expect": "credential_like_value",
+      "why": "credential assignment"
+    },
+    {
+      "text": "postgres://user:pw@localhost/x",
+      "expect": "credential_like_value",
+      "why": "credentials in a URL"
+    },
+    {
+      "text": "bad\u0007bell",
+      "expect": "control_characters",
+      "why": "control character"
+    },
+    {
+      "text": "token:\u00a0x",
+      "expect": "credential_like_value",
+      "why": "a no-break space is whitespace in the database too"
+    },
+    {
+      "text": "token:\u00a0",
+      "expect": null,
+      "why": "nothing but a no-break space after the colon is not an assignment"
+    },
+    {
+      "text": "x\u00a0/srv/a",
+      "expect": "filesystem_location_value",
+      "why": "a disk location after a no-break space"
+    },
+    {
+      "text": "tel 0212345678-1234-1234-1234-123456789012",
+      "expect": "phone_like_value",
+      "why": "a UUID-shaped tail glued to a phone number is not a whole-token UUID, so the number is still seen"
+    },
+    {
+      "text": "telephone exchange record 3b021234-5678-4abc-8def-0212345678ab",
+      "expect": null,
+      "why": "a whole-token UUID holding phone-shaped runs is an identifier"
+    }
+  ]
+}

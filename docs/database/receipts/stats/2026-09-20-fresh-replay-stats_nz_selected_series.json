@@ -1,0 +1,116 @@
+{
+  "receipt_note": "Statistics family, 2026-09-20 (UTC). Read-only upstream export or fresh anonymous fetch, loaded into an isolated disposable local database. Nothing hosted was written. Counts, hashes, statuses and publisher URLs only.",
+  "receipts": [
+    {
+      "receipt_version": 1,
+      "source_id": "stats_nz_selected_series",
+      "products": [
+        "P22"
+      ],
+      "dry_run": false,
+      "status": "succeeded",
+      "error_class": null,
+      "error_detail": null,
+      "run_id": "aef2e8c0-1b88-42eb-82fc-109947c91bf2",
+      "resumed_from_run_id": null,
+      "loader_version": "1.0.0",
+      "artifact": {
+        "digest": "sha256:99a7d7ac0940e5f867dfbc96275e9e8c3a2b2d2d707ecaeab8b2a36a4dacf216",
+        "producer": {
+          "route": "fresh_fetch",
+          "exporter_version": "1.0.0",
+          "recipe_sha256": "e379643d5e5e31eb8c7b9b6a248f6f35c21bb9998be2b2b7f090c5390600b7af"
+        },
+        "collected_from": "2026-09-20T09:36:55.177Z",
+        "collected_to": "2026-09-20T09:37:05.440Z",
+        "files": 4,
+        "counts": {
+          "routes": 1,
+          "datasets": 1,
+          "releases": 1,
+          "series": 237,
+          "geographies": 1,
+          "observations": 59983,
+          "catalogue_entries": 0,
+          "observations_by_status": {
+            "missing": 91,
+            "reported": 59892
+          },
+          "observations_by_dataset": {
+            "food_price_index_selected_price_indexes_csv": 59983
+          }
+        }
+      },
+      "source_to_artifact": [
+        {
+          "what": "publisher file data rows -> observations",
+          "upstream_rows": 59983,
+          "artifact_rows": 59983,
+          "difference": 0,
+          "explanation": "every expected value cell of the publisher file became exactly one observation"
+        }
+      ],
+      "artifact_to_destination": [
+        {
+          "what": "observations of food_price_index_selected_price_indexes_csv @ file-25f165bd89edde99: artifact -> store",
+          "upstream_rows": 59983,
+          "artifact_rows": 59983,
+          "difference": 0,
+          "explanation": "every artifact row is stored exactly once"
+        },
+        {
+          "what": "withheld, confidential, missing or not-applicable rows that carry a number",
+          "upstream_rows": 0,
+          "artifact_rows": 0,
+          "difference": 0,
+          "explanation": "none: a value the publisher did not print is stored as null with its status, never as zero"
+        }
+      ],
+      "totals": {
+        "meta": {
+          "routes": 1,
+          "datasets": 1,
+          "releases": 1,
+          "series_inserted": 0,
+          "geographies_inserted": 0,
+          "catalogue_entries_seen": 0,
+          "catalogue_entries_written": 0
+        },
+        "observations": {
+          "seen": 59983,
+          "inserted": 0,
+          "unchanged": 59983,
+          "conflicts": 0
+        },
+        "batches": 12
+      },
+      "replay_wrote_nothing": true,
+      "destination": {
+        "series": 241,
+        "datasets": 2,
+        "releases": 3,
+        "geographies": 1,
+        "observations": 115411,
+        "content_digest": "a30942c4052e6f931c7765e9ffe81ee5",
+        "observations_by_status": {
+          "missing": 179,
+          "reported": 115232
+        },
+        "observations_by_release": {
+          "food_price_index_selected_price_indexes_csv @ 2026-06": 55284,
+          "food_price_index_selected_price_indexes_csv @ file-25f165bd89edde99": 59983,
+          "national_population_estimates_release_broad_age_graph_csv @ 2026-06-30": 144
+        },
+        "catalogue_entry_versions": 0,
+        "catalogue_entries_current": 0,
+        "withheld_rows_carrying_a_number": 0
+      },
+      "findings": [
+        "The file was chosen from 2 'Selected price indexes' CSV link(s) on the listing by month_and_year_in_link_text.",
+        "Series definitions keep the publisher's wording (UNITS verbatim, Series_title_1..5 joined, Group and Subject as dimensions). The backfilled definitions of the same series keys were normalised upstream (for example unit wording), so a definition can differ for the same key; the loader refuses a conflicting series definition rather than overwriting it, which surfaces it for a person.",
+        "The backfill holds only the upstream collector's selection of series groups from this publisher file; a fresh fetch reads every row of the file.",
+        "1190 observations in 1 series group(s) whose publisher group text does not name New Zealand carry no geography (the area is part of the series title): CPI Monthly Rents (Broad Regions)"
+      ]
+    }
+  ]
+}

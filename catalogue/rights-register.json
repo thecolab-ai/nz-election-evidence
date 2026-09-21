@@ -314,5 +314,18 @@
     "excluded_assets": "original PDFs, copied articles, full policy text, page captures and personal addresses",
     "attribution": "Publisher name and primary source URL",
     "reviewed_on": ""
+  },
+  {
+    "rights_id": "RIGHTS-22",
+    "publisher": "Stats NZ",
+    "source_url": "https://www3.stats.govt.nz/meshblock/2013/csv/2013_mb_dataset_Total_New_Zealand_CSV.zip",
+    "product_ids": [],
+    "review_status": "pending",
+    "default_release": "link-only",
+    "licence_or_terms_url": "",
+    "verified_permissions": "Not verified; release restricted to catalogue metadata and source links pending rights review",
+    "excluded_assets": "original PDFs, copied articles, full policy text, page captures and personal addresses",
+    "attribution": "Publisher name and primary source URL",
+    "reviewed_on": ""
   }
 ]

@@ -1,0 +1,48 @@
+{
+  "receipt_note": "Statistics family, 2026-09-20 (UTC). Read-only upstream export or fresh anonymous fetch, loaded into an isolated disposable local database. Nothing hosted was written. Counts, hashes, statuses and publisher URLs only.",
+  "receipts": [
+    {
+      "source_id": "stats_tenancy_rental_bonds",
+      "counts": {
+        "routes": 1,
+        "datasets": 1,
+        "releases": 1,
+        "series": 8,
+        "geographies": 18,
+        "observations": 57888,
+        "catalogue_entries": 4,
+        "observations_by_status": {
+          "reported": 57888
+        },
+        "observations_by_dataset": {
+          "tenancy.rental_bonds.detailed_monthly_region": 57888
+        }
+      },
+      "reconciliation": [
+        {
+          "what": "operational fact records (current version of each record id) -> observations",
+          "upstream_rows": 57888,
+          "artifact_rows": 57888,
+          "difference": 0,
+          "explanation": "every current fact record became exactly one observation"
+        },
+        {
+          "what": "operational catalogue records (distinct record ids) -> catalogue entries (distinct entry keys)",
+          "upstream_rows": 4,
+          "artifact_rows": 4,
+          "difference": 0,
+          "explanation": "one entry key per upstream record id"
+        },
+        {
+          "what": "operational catalogue stored versions -> catalogue entry versions",
+          "upstream_rows": 4,
+          "artifact_rows": 4,
+          "difference": 0,
+          "explanation": "every stored version differs in allowlisted content"
+        }
+      ],
+      "findings": [],
+      "files": 4
+    }
+  ]
+}

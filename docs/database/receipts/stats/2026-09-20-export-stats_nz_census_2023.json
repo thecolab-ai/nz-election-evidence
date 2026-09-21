@@ -1,0 +1,46 @@
+{
+  "receipt_note": "Statistics family, 2026-09-20 (UTC). Read-only upstream export or fresh anonymous fetch, loaded into an isolated disposable local database. Nothing hosted was written. Counts, hashes, statuses and publisher URLs only.",
+  "receipts": [
+    {
+      "source_id": "stats_nz_census_2023",
+      "counts": {
+        "routes": 2,
+        "datasets": 2,
+        "releases": 2,
+        "series": 815,
+        "geographies": 188,
+        "observations": 37689,
+        "catalogue_entries": 757,
+        "observations_by_status": {
+          "confidential": 150,
+          "flag_marker": 27,
+          "missing": 50,
+          "not_applicable": 3,
+          "reported": 37459
+        },
+        "observations_by_dataset": {
+          "statsnz.census.2023.electoral_populations": 658,
+          "statsnz.census.2023.population_ethnicity_age_maori_descent_dwellings": 37031
+        }
+      },
+      "reconciliation": [
+        {
+          "what": "operational fact records (current version of each record id) -> observations",
+          "upstream_rows": 37689,
+          "artifact_rows": 37689,
+          "difference": 0,
+          "explanation": "every current fact record became exactly one observation"
+        },
+        {
+          "what": "dedicated census product finder rows -> product catalogue entries",
+          "upstream_rows": 757,
+          "artifact_rows": 757,
+          "difference": 0,
+          "explanation": "one entry per product (757 products); an index of products, never observations"
+        }
+      ],
+      "findings": [],
+      "files": 3
+    }
+  ]
+}

@@ -1,0 +1,99 @@
+{
+  "receipt_note": "Statistics family, 2026-09-20 (UTC). Read-only upstream export or fresh anonymous fetch, loaded into an isolated disposable local database. Nothing hosted was written. Counts, hashes, statuses and publisher URLs only.",
+  "receipts": [
+    {
+      "receipt_version": 1,
+      "source_id": "stats_rbnz_catalogue",
+      "products": [
+        "P18"
+      ],
+      "dry_run": false,
+      "status": "succeeded",
+      "error_class": null,
+      "error_detail": null,
+      "run_id": "47ca4f99-53ce-4a23-9fad-75fdf4214dec",
+      "resumed_from_run_id": null,
+      "loader_version": "1.0.0",
+      "artifact": {
+        "digest": "sha256:0c0c156e4eaa8c74c3fd13d0234249dc808bccab95bf632f7cf75d74f1c35ffc",
+        "producer": {
+          "route": "fresh_fetch",
+          "exporter_version": "1.0.0",
+          "recipe_sha256": "9f2162ca8d90e960f4ea8742fa77bc9f8c1b04257ab8fc9e314a3fc5fab22ed1"
+        },
+        "collected_from": "2026-09-20T09:07:29.908Z",
+        "collected_to": "2026-09-20T09:07:29.908Z",
+        "files": 1,
+        "counts": {
+          "routes": 0,
+          "datasets": 0,
+          "releases": 0,
+          "series": 0,
+          "geographies": 0,
+          "observations": 0,
+          "catalogue_entries": 18,
+          "observations_by_status": {},
+          "observations_by_dataset": {}
+        }
+      },
+      "source_to_artifact": [
+        {
+          "what": "catalogue API results -> catalogue entries",
+          "upstream_rows": 18,
+          "artifact_rows": 18,
+          "difference": 0,
+          "explanation": "every result of the answer became exactly one catalogue entry"
+        }
+      ],
+      "artifact_to_destination": [
+        {
+          "what": "catalogue entry versions: artifact -> store",
+          "upstream_rows": 18,
+          "artifact_rows": 36,
+          "difference": 18,
+          "explanation": "the store also holds versions from earlier loads of this source; none of this artifact's versions is missing"
+        },
+        {
+          "what": "withheld, confidential, missing or not-applicable rows that carry a number",
+          "upstream_rows": 0,
+          "artifact_rows": 0,
+          "difference": 0,
+          "explanation": "none: a value the publisher did not print is stored as null with its status, never as zero"
+        }
+      ],
+      "totals": {
+        "meta": {
+          "routes": 0,
+          "datasets": 0,
+          "releases": 0,
+          "series_inserted": 0,
+          "geographies_inserted": 0,
+          "catalogue_entries_seen": 18,
+          "catalogue_entries_written": 18
+        },
+        "observations": {
+          "seen": 0,
+          "inserted": 0,
+          "unchanged": 0,
+          "conflicts": 0
+        },
+        "batches": 0
+      },
+      "replay_wrote_nothing": false,
+      "destination": {
+        "series": 0,
+        "datasets": 0,
+        "releases": 0,
+        "geographies": 0,
+        "observations": 0,
+        "content_digest": "d41d8cd98f00b204e9800998ecf8427e",
+        "observations_by_status": {},
+        "observations_by_release": {},
+        "catalogue_entry_versions": 36,
+        "catalogue_entries_current": 36,
+        "withheld_rows_carrying_a_number": 0
+      },
+      "findings": []
+    }
+  ]
+}

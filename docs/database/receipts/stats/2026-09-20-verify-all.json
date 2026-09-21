@@ -1,0 +1,75 @@
+{
+  "receipt_note": "Statistics family, 2026-09-20 (UTC). Read-only upstream export or fresh anonymous fetch, loaded into an isolated disposable local database. Nothing hosted was written. Counts, hashes, statuses and publisher URLs only.",
+  "receipts": [
+    {
+      "source_id": "stats_healthnz_data",
+      "artifact_digest": "sha256:3c5f32d306e5429b02cd4352cb4e74d7148fe564f9cfb8a6c8cfc45835bebab6",
+      "observations": 44,
+      "meta_rows": 116,
+      "verified": true
+    },
+    {
+      "source_id": "stats_msd_benefits",
+      "artifact_digest": "sha256:2331ecff8f70a4f0e18a788465fe44289d8faf1ee067645503c04bc595cc76cd",
+      "observations": 903,
+      "meta_rows": 74,
+      "verified": true
+    },
+    {
+      "source_id": "stats_rbnz_catalogue",
+      "artifact_digest": "sha256:a080e5f9738950f0d672b2a4b8fc93922847b1376a117528f7edef57b7d8f52a",
+      "observations": 0,
+      "meta_rows": 18,
+      "verified": true
+    },
+    {
+      "source_id": "stats_nz_census_2018_highlights",
+      "artifact_digest": "sha256:344cf1ac62e198aec0d36e307f55b85b35cff0dbd786d7034f3963e983bf9e10",
+      "observations": 4966,
+      "meta_rows": 4970,
+      "verified": true
+    },
+    {
+      "source_id": "stats_nz_census_2013_meshblock",
+      "artifact_digest": "sha256:9c83d59e177dc0db9b4db04fdb0b21bec1c72a1206b91cad28cfe657bcaf647b",
+      "observations": 882180,
+      "meta_rows": 49019,
+      "verified": true
+    },
+    {
+      "source_id": "stats_nz_csv_catalogue",
+      "artifact_digest": "sha256:1b99528e906d20ffc776eda2d040d92e3a8a02ee6b2704502a3d25639452aea3",
+      "observations": 0,
+      "meta_rows": 128,
+      "verified": true
+    },
+    {
+      "source_id": "stats_nz_census_2023",
+      "artifact_digest": "sha256:73d0698295f05ad5534da065f152cf52e28a20fe525a0a3ce94d653ca8706ffc",
+      "observations": 37689,
+      "meta_rows": 1766,
+      "verified": true
+    },
+    {
+      "source_id": "stats_nz_selected_series",
+      "artifact_digest": "sha256:2b6e0acbd4f81e9413659a33bcffebecfddff7441fc1fbea060a3a20e053be2a",
+      "observations": 55428,
+      "meta_rows": 225,
+      "verified": true
+    },
+    {
+      "source_id": "stats_nz_release_series",
+      "artifact_digest": "sha256:98620b7700e706fcf7f16b656c2eabfff2f5f0029056690d43fae84b360280fd",
+      "observations": 234325,
+      "meta_rows": 3390,
+      "verified": true
+    },
+    {
+      "source_id": "stats_tenancy_rental_bonds",
+      "artifact_digest": "sha256:a69665803312b1e7024a336ea9fcfae128d1c6b0b156806f37e524825ea2ad0f",
+      "observations": 57888,
+      "meta_rows": 33,
+      "verified": true
+    }
+  ]
+}

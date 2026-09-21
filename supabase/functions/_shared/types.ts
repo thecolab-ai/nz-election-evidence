@@ -85,6 +85,14 @@ export interface SourceConfig {
   snapshot_semantics: SnapshotSemantics;
   enabled: boolean;
   blocked_reason?: string;
+  /**
+   * WHY a live source is not schedule-enabled, as a closed value the loaders act on (blocked_reason stays the words for
+   * a reader). Absent on an enabled source and on a probe.
+   *   publisher_blocked        the publisher refused or challenged this client; the route is never contacted
+   *   pending_person_decision  the route works, and waits on a recorded decision by a person; never contacted meanwhile
+   *   cli_only                 a working route that is run deliberately from the CLI and never scheduled
+   */
+  disabled_because?: "publisher_blocked" | "pending_person_decision" | "cli_only";
   catalogue_products?: { product_id: string; mapping_note: string }[];
   adapter_options?: { [key: string]: Json };
   /**

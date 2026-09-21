@@ -20,12 +20,101 @@ export const DEPLOYABLE_SURFACES = ["explorer-pages"] as const;
 export const ROW_RELEASE_SURFACES = ["evidence-store"] as const;
 
 /**
- * Field names an owner decision can never release, whatever the file says: contact data (R7), bodies and copied
- * text (R6), images, and the figures that need their own R1 look. Kept equal to the database constraint
- * (owner_field_scope_forbidden in the migration) by a test.
+ * Field names a `source_fields` decision can never release, whatever the file says: contact data (R7), bodies
+ * and copied text (R6), images, and figures, which belong to a figure scope and nowhere else. Kept equal to the
+ * database constraint (owner_field_scope_forbidden in the migration) by a test.
  */
 export const FORBIDDEN_FIELD =
   /(email|e_mail|phone|mobile|fax|address|postal|contact|twitter|facebook|instagram|linkedin|handle|body|content|html|text|passage|description|summary|excerpt|transcript|portrait|image|photo|donor|birth|gender|ethnic|vote|share|rank|seats|score|confidence|value|pct|percent|total|amount|sample|payload|external_id|external_record_id|publisher_item_id)/;
+
+/**
+ * The CLOSED list of column and payload-key names the rule above matches without being the thing it protects:
+ * publisher-assigned public identifiers, a date as the publisher printed it, a kind label ('minister' or
+ * 'portfolio'), a vote TYPE ('party' or 'candidate'), a sentence about what was entered from a return, and four
+ * status words. Every one was read on a loaded store
+ * before it was listed. Names, not prefixes. Kept equal to the same list in owner_field_scope_forbidden (tested).
+ */
+export const SOURCE_FIELD_EXCEPTIONS = [
+  "external_id", "external_record_id", "publisher_item_id", "source_date_text",
+  "content_kind", "text_extraction_status", "publisher_modified_text",
+  "vote_type", "candidate_votes_evidence", "list_rank_evidence", "text_layer_status",
+  "transcription_scope", "published_at_text",
+] as const;
+
+/**
+ * The ONLY fields a statistical_facts scope can name: the number as stored, the number where it cannot be held exactly,
+ * the cell as the publisher printed it, and the status that says whether there is a number at all. A closed list, for
+ * sources registered as official statistics only. Votes, poll figures, seats and money are not statistical facts here
+ * and stay outside every owner scope. Kept equal to the database constraint owner_statistical_fact_tokens (tested).
+ */
+export const STATISTICAL_FACT_FIELDS = ["value", "value_double", "raw_value", "value_status"] as const;
+
+/**
+ * The published figures of an official ELECTION RESULTS product: the counts, shares and seat numbers the official
+ * table prints, the status that says whether a number was reported at all, and the two informal/line tallies each
+ * electorate summary carries. A closed list. `approved_total` is deliberately absent everywhere: it would be a
+ * number read from inside a return document. Kept equal to owner_result_figure_tokens (tested).
+ */
+export const RESULT_FIGURE_FIELDS = [
+  "candidate_informals", "candidate_lines", "candidate_total", "candidate_votes", "candidate_votes_with_informals",
+  "electorate_seats", "list_rank", "list_seats", "party_informals", "party_lines", "party_total", "party_vote_share",
+  "party_votes", "party_votes_with_informals", "this_route_votes", "total_seats", "value_status", "vote_percent",
+  "vote_share", "votes", "votes_counted", "votes_counted_pct", "votes_status",
+] as const;
+
+/**
+ * The published totals of an official FINANCE RETURNS product: the amounts the Electoral Commission prints on its
+ * own public index pages (per candidate and per party, and the list that carries a party's totals with their filing
+ * dates), the recorded basis for reading them, the status of each, whether a total was read at all, and whether the
+ * return document is a scan. Nothing read from INSIDE a return: no donor, no postal address, no signature, no
+ * approved total. Kept equal to owner_finance_figure_tokens (tested).
+ */
+export const FINANCE_FIGURE_FIELDS = [
+  "aggregates", "amount_nzd", "amounts_basis", "donations_as_published_nzd", "expenses_as_published_nzd",
+  "is_image_only", "loans_as_published_nzd", "total_status", "value_status",
+] as const;
+
+/**
+ * The published numbers of a poll, and the payload key that carries them. A closed list, for a source registered
+ * as the party-vote poll product only. `methodology_status` is NOT here: it is link metadata for every source at
+ * every tier, so the label that says whether a methodology was disclosed always travels with the figure.
+ * Kept equal to owner_poll_figure_tokens (tested).
+ */
+export const POLL_FIGURE_FIELDS = ["value_pct", "value_status", "sample_size", "disclosure_sample_size", "results"] as const;
+
+/**
+ * The registry products whose sources may carry a figure scope at all. Kept equal to the literal lists in
+ * the migration (owner_scope_guard and evidence_private.source_release), which are checked both when a decision
+ * is recorded and every time a release tier is read. Widening this is a migration, never a file edit.
+ */
+export const FIGURE_REGISTRIES: Record<"official_result_figures" | "official_finance_figures" | "published_poll_figures", readonly string[]> = {
+  official_result_figures: ["election_2023_results"],
+  official_finance_figures: ["candidate_finance_returns", "party_finance_returns"],
+  published_poll_figures: ["party_vote_polls"],
+};
+
+/** Field scopes, by kind: the closed list of tokens each may name. `source_fields` is the pattern rule instead. */
+export const FIGURE_SCOPE_FIELDS: Record<string, readonly string[]> = {
+  statistical_facts: STATISTICAL_FACT_FIELDS,
+  official_result_figures: RESULT_FIGURE_FIELDS,
+  official_finance_figures: FINANCE_FIGURE_FIELDS,
+  published_poll_figures: POLL_FIGURE_FIELDS,
+};
+
+const FIGURE_SCOPE_LABEL: Record<string, string> = {
+  statistical_facts: "a statistical fact",
+  official_result_figures: "an official result figure",
+  official_finance_figures: "an official finance figure",
+  published_poll_figures: "a published poll figure",
+};
+
+/** What the validator needs to know about a registered source to check a field decision against it. */
+export interface RegisteredSource { source_id: string; rights_id?: string; view_scope: string; registry_key?: string }
+
+/** Every scope kind that names fields of one source. */
+export const FIELD_SCOPES = ["source_fields", "statistical_facts", "official_result_figures", "official_finance_figures", "published_poll_figures"] as const;
+type FieldScopeKind = (typeof FIELD_SCOPES)[number];
+const isFieldScope = (value: unknown): value is FieldScopeKind => (FIELD_SCOPES as readonly string[]).includes(String(value));
 
 const FIELD_SHAPE = /^[a-z][a-z0-9_]{1,62}$/;
 const ID_SHAPE = /^OWNER-AUTH-\d{4}-\d{2}-\d{2}-\d{2}$/;
@@ -36,7 +125,7 @@ const RIGHTS_ID = /^RIGHTS-[0-9]{2,}$/;
 export type Scope =
   | { scope: "pages_deploy"; surface_id: string }
   | { scope: "public_rows"; surface_id: string }
-  | { scope: "source_fields"; source_id: string; rights_id: string; fields: string[]; basis: string };
+  | { scope: FieldScopeKind; source_id: string; rights_id: string; fields: string[]; basis: string };
 
 export interface Authorization {
   authorization_id: string;
@@ -71,7 +160,7 @@ const days = (from: string, to: string) => Math.round((Date.parse(to + "T00:00:0
 const MISREPRESENTS = /\b(legal(ly)? review(ed)? (complete|passed|done)|reviewed and approved|publisher[- ]approved|licen[cs]ed by|licen[cs]e granted|permission granted|rights (approved|cleared)|R10 (approved|complete|satisfied)|R8 (approved|complete|satisfied))\b/i;
 
 /** Every problem with the file. An empty list means it is usable; anything else means NO authorization is in force. */
-export function authorizationProblems(doc: unknown): string[] {
+export function authorizationProblems(doc: unknown, registry?: RegisteredSource[]): string[] {
   const problems: string[] = [];
   if (!doc || typeof doc !== "object") return ["not a JSON object"];
   const file = doc as Partial<AuthorizationFile>;
@@ -120,18 +209,21 @@ export function authorizationProblems(doc: unknown): string[] {
       problems.push(`${at}: scopes must be a non-empty list`);
       continue;
     }
-    const sources = new Set<string>();
+    // One set of source ids per scope kind: a source may hold a descriptive decision and a figure decision, and
+    // neither may be recorded twice in one authorization.
+    const seenBySource = new Map<string, Set<string>>(FIELD_SCOPES.map((kind) => [kind, new Set<string>()]));
     for (const [j, rawScope] of a.scopes.entries()) {
       const s = rawScope as Partial<Scope> & { [key: string]: unknown };
       const where = `${at}.scopes[${j}]`;
       if (s.scope === "pages_deploy") {
         if (!(DEPLOYABLE_SURFACES as readonly string[]).includes(String(s.surface_id))) problems.push(`${where}: pages_deploy applies to ${DEPLOYABLE_SURFACES.join(", ")} only`);
-      } else if (s.scope === "public_rows") {
-        if (!(ROW_RELEASE_SURFACES as readonly string[]).includes(String(s.surface_id))) problems.push(`${where}: public_rows applies to ${ROW_RELEASE_SURFACES.join(", ")} only`);
-      } else if (s.scope === "source_fields") {
+      } else if (isFieldScope(s.scope)) {
+        const kind = s.scope;
+        const closed = FIGURE_SCOPE_FIELDS[kind];
+        const seen = seenBySource.get(kind) as Set<string>;
         if (typeof s.source_id !== "string" || !SOURCE_ID.test(s.source_id)) problems.push(`${where}: source_id is missing; a field decision is always for ONE source`);
-        else if (sources.has(s.source_id)) problems.push(`${where}: second field decision for ${s.source_id} in one authorization`);
-        else sources.add(s.source_id);
+        else if (seen.has(s.source_id)) problems.push(`${where}: second ${kind} decision for ${s.source_id} in one authorization`);
+        else seen.add(s.source_id);
         if (typeof s.rights_id !== "string" || !RIGHTS_ID.test(s.rights_id)) problems.push(`${where}: rights_id must name the (still pending) rights row this decision sits beside`);
         if (!text(s.basis, 40)) problems.push(`${where}: basis is missing`);
         else if (MISREPRESENTS.test(String(s.basis))) problems.push(`${where}: basis presents the owner decision as a licence or approval`);
@@ -139,10 +231,28 @@ export function authorizationProblems(doc: unknown): string[] {
         else {
           for (const field of s.fields) {
             if (typeof field !== "string" || !FIELD_SHAPE.test(field)) problems.push(`${where}: '${String(field)}' is not a field name (no wildcards or patterns)`);
-            else if (FORBIDDEN_FIELD.test(field)) problems.push(`${where}: '${field}' can never be released by an owner decision (contact data, bodies, images, figures, publisher identifiers)`);
+            else if (closed && !closed.includes(field)) problems.push(`${where}: '${field}' is not ${FIGURE_SCOPE_LABEL[kind]} column (${closed.join(", ")}); descriptive fields belong in a source_fields scope`);
+            else if (!closed && !(SOURCE_FIELD_EXCEPTIONS as readonly string[]).includes(field) && FORBIDDEN_FIELD.test(field)) {
+              problems.push(`${where}: '${field}' can never be released by a source_fields decision (contact data, bodies, images, figures); a figure belongs in a figure scope`);
+            }
           }
           if (new Set(s.fields).size !== s.fields.length) problems.push(`${where}: duplicate field`);
         }
+        // With the source registry at hand the decision is checked against the source it names.
+        if (registry && typeof s.source_id === "string") {
+          const source = registry.find((entry) => entry.source_id === s.source_id);
+          if (!source) problems.push(`${where}: ${s.source_id} is not a registered source`);
+          else {
+            if (source.rights_id !== s.rights_id) problems.push(`${where}: ${s.source_id} is governed by ${source.rights_id ?? "no rights row"}, not ${String(s.rights_id)}`);
+            if (kind === "statistical_facts" && (source.view_scope !== "statistics" || source.registry_key !== "statistics")) problems.push(`${where}: ${s.source_id} is not a statistics source; statistical facts can be released for official statistics only`);
+            const registries = FIGURE_REGISTRIES[kind as keyof typeof FIGURE_REGISTRIES];
+            if (registries && !registries.includes(source.registry_key ?? "")) {
+              problems.push(`${where}: ${s.source_id} is registered as ${source.registry_key ?? "no registry product"}; ${kind} can be released only for ${registries.join(", ")}`);
+            }
+          }
+        }
+      } else if (s.scope === "public_rows") {
+        if (!(ROW_RELEASE_SURFACES as readonly string[]).includes(String(s.surface_id))) problems.push(`${where}: public_rows applies to ${ROW_RELEASE_SURFACES.join(", ")} only`);
       } else {
         problems.push(`${where}: unknown scope '${String(s.scope)}'`);
       }
@@ -157,8 +267,8 @@ export interface InForce {
 }
 
 /** Scopes in force on `today` (ISO date, UTC). A file with ANY problem has none in force. */
-export function scopesInForce(doc: unknown, today: string): InForce[] {
-  if (!isDate(today) || authorizationProblems(doc).length) return [];
+export function scopesInForce(doc: unknown, today: string, registry?: RegisteredSource[]): InForce[] {
+  if (!isDate(today) || authorizationProblems(doc, registry).length) return [];
   return (doc as AuthorizationFile).authorizations
     .filter((a) => a.status === "active" && a.decided_on <= today && today <= a.expires_on)
     .flatMap((authorization) => authorization.scopes.map((scope) => ({ authorization, scope })));
@@ -182,15 +292,18 @@ export async function readAuthorizationFile(root: string): Promise<unknown> {
 async function main(): Promise<number> {
   const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
   const doc = await readAuthorizationFile(root);
-  const problems = authorizationProblems(doc);
+  const registry = (JSON.parse(await readFile(resolve(root, "supabase/functions/_shared/sources.config.json"), "utf-8")) as { sources: RegisteredSource[] }).sources;
+  const problems = authorizationProblems(doc, registry);
   if (problems.length) {
     for (const problem of problems) console.error(`owner-authorizations: ${problem}`);
     return 1;
   }
-  const inForce = scopesInForce(doc, todayUtc());
+  const inForce = scopesInForce(doc, todayUtc(), registry);
   console.log(`owner-authorizations: valid; ${inForce.length} scope(s) in force today. These are owner decisions, not reviews and not publisher licences.`);
   for (const { authorization, scope } of inForce) {
-    const target = scope.scope === "source_fields" ? `${scope.source_id} (${scope.fields.length} fields, beside pending ${scope.rights_id})` : scope.surface_id;
+    const target = scope.scope === "pages_deploy" || scope.scope === "public_rows"
+      ? scope.surface_id
+      : `${scope.source_id} (${scope.fields.length} fields, beside pending ${scope.rights_id})`;
     console.log(`  ${authorization.authorization_id}  ${scope.scope}  ${target}  until ${authorization.expires_on}`);
   }
   return 0;

@@ -1,0 +1,36 @@
+{
+  "receipt_note": "Statistics family, 2026-09-20 (UTC). Read-only upstream export or fresh anonymous fetch, loaded into an isolated disposable local database. Nothing hosted was written. Counts, hashes, statuses and publisher URLs only.",
+  "receipts": [
+    {
+      "source_id": "stats_nz_selected_series",
+      "counts": {
+        "routes": 2,
+        "datasets": 2,
+        "releases": 2,
+        "series": 218,
+        "geographies": 1,
+        "observations": 55428,
+        "catalogue_entries": 0,
+        "observations_by_status": {
+          "missing": 88,
+          "reported": 55340
+        },
+        "observations_by_dataset": {
+          "food_price_index_selected_price_indexes_csv": 55284,
+          "national_population_estimates_release_broad_age_graph_csv": 144
+        }
+      },
+      "reconciliation": [
+        {
+          "what": "operational fact records (current version of each record id) -> observations",
+          "upstream_rows": 55428,
+          "artifact_rows": 55428,
+          "difference": 0,
+          "explanation": "every current fact record became exactly one observation"
+        }
+      ],
+      "findings": [],
+      "files": 4
+    }
+  ]
+}

@@ -1,0 +1,1197 @@
+{
+  "receipt_version": 1,
+  "receipt_note": "Election family, 2026-09-20 (UTC). Upstream store read read-only; destination was a disposable, isolated local database, never a hosted or shared one. Counts, hashes, statuses and check outcomes only: no payloads, no locations.",
+  "step": "export -> destination tables, checked after the first load and again after the replay",
+  "after_first_load": {
+    "receipt_version": 1,
+    "command": "reconcile",
+    "all_ok": true,
+    "products": [
+      {
+        "product": "P08",
+        "source_id": "election_2023_nationwide_results_export",
+        "checks": [
+          {
+            "name": "source_records",
+            "expected": 18,
+            "actual": 18,
+            "ok": true
+          },
+          {
+            "name": "record_versions",
+            "expected": 18,
+            "actual": 18,
+            "ok": true
+          },
+          {
+            "name": "tombstoned_records",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "rejected_records",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "election_party_totals",
+            "expected": 17,
+            "actual": 17,
+            "ok": true
+          },
+          {
+            "name": "election_party_totals_votes_sum",
+            "expected": 2851211,
+            "actual": 2851211,
+            "ok": true
+          },
+          {
+            "name": "election_party_totals_with_seats",
+            "expected": 6,
+            "actual": 6,
+            "ok": true
+          },
+          {
+            "name": "election_result_totals",
+            "expected": 1,
+            "actual": 1,
+            "ok": true
+          },
+          {
+            "name": "election_result_totals_votes",
+            "expected": 2851211,
+            "actual": 2851211,
+            "ok": true
+          },
+          {
+            "name": "records_not_at_their_latest_version",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          }
+        ],
+        "ok": true
+      },
+      {
+        "product": "P09",
+        "source_id": "election_2023_electorate_results_export",
+        "checks": [
+          {
+            "name": "source_records",
+            "expected": 1791,
+            "actual": 1791,
+            "ok": true
+          },
+          {
+            "name": "record_versions",
+            "expected": 1791,
+            "actual": 1791,
+            "ok": true
+          },
+          {
+            "name": "tombstoned_records",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "rejected_records",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "party_results",
+            "expected": 1224,
+            "actual": 1224,
+            "ok": true
+          },
+          {
+            "name": "party_results_votes_sum",
+            "expected": 2851211,
+            "actual": 2851211,
+            "ok": true
+          },
+          {
+            "name": "electorate_result_summaries",
+            "expected": 72,
+            "actual": 72,
+            "ok": true
+          },
+          {
+            "name": "candidate_route_checks",
+            "expected": 495,
+            "actual": 495,
+            "ok": true
+          },
+          {
+            "name": "candidate_route_checks_votes_sum",
+            "expected": 2742677,
+            "actual": 2742677,
+            "ok": true
+          },
+          {
+            "name": "candidate_results_written_by_this_source",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "records_not_at_their_latest_version",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          }
+        ],
+        "ok": true
+      },
+      {
+        "product": "P13",
+        "source_id": "party_policy_pages_2026_export",
+        "checks": [
+          {
+            "name": "source_records",
+            "expected": 17,
+            "actual": 17,
+            "ok": true
+          },
+          {
+            "name": "record_versions",
+            "expected": 75,
+            "actual": 75,
+            "ok": true
+          },
+          {
+            "name": "tombstoned_records",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "rejected_records",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "documents",
+            "expected": 17,
+            "actual": 17,
+            "ok": true
+          },
+          {
+            "name": "policy_sources",
+            "expected": 17,
+            "actual": 17,
+            "ok": true
+          },
+          {
+            "name": "policy_sources_unknown_class_no_basis",
+            "expected": 17,
+            "actual": 17,
+            "ok": true
+          },
+          {
+            "name": "policy_sources_with_a_class",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "records_not_at_their_latest_version",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          }
+        ],
+        "ok": true
+      },
+      {
+        "product": "P14",
+        "source_id": "party_vote_polls_2026_export",
+        "checks": [
+          {
+            "name": "source_records",
+            "expected": 12,
+            "actual": 12,
+            "ok": true
+          },
+          {
+            "name": "record_versions",
+            "expected": 30,
+            "actual": 30,
+            "ok": true
+          },
+          {
+            "name": "tombstoned_records",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "rejected_records",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "documents",
+            "expected": 12,
+            "actual": 12,
+            "ok": true
+          },
+          {
+            "name": "polls",
+            "expected": 12,
+            "actual": 12,
+            "ok": true
+          },
+          {
+            "name": "polls_methodology_verified",
+            "expected": 9,
+            "actual": 9,
+            "ok": true
+          },
+          {
+            "name": "polls_methodology_unresolved",
+            "expected": 3,
+            "actual": 3,
+            "ok": true
+          },
+          {
+            "name": "poll_results",
+            "expected": 144,
+            "actual": 144,
+            "ok": true
+          },
+          {
+            "name": "poll_results_reported",
+            "expected": 100,
+            "actual": 100,
+            "ok": true
+          },
+          {
+            "name": "poll_results_not_reported",
+            "expected": 44,
+            "actual": 44,
+            "ok": true
+          },
+          {
+            "name": "records_not_at_their_latest_version",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          }
+        ],
+        "ok": true
+      },
+      {
+        "product": "P15",
+        "source_id": "finance_2023_candidate_returns_export",
+        "checks": [
+          {
+            "name": "source_records",
+            "expected": 492,
+            "actual": 492,
+            "ok": true
+          },
+          {
+            "name": "record_versions",
+            "expected": 492,
+            "actual": 492,
+            "ok": true
+          },
+          {
+            "name": "tombstoned_records",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "rejected_records",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "documents",
+            "expected": 492,
+            "actual": 492,
+            "ok": true
+          },
+          {
+            "name": "finance_return_references",
+            "expected": 492,
+            "actual": 492,
+            "ok": true
+          },
+          {
+            "name": "finance_return_references_image_only",
+            "expected": 224,
+            "actual": 224,
+            "ok": true
+          },
+          {
+            "name": "finance_return_references_linked_to_a_candidacy",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "published_aggregates",
+            "expected": 1476,
+            "actual": 1476,
+            "ok": true
+          },
+          {
+            "name": "published_aggregates_reported",
+            "expected": 533,
+            "actual": 533,
+            "ok": true
+          },
+          {
+            "name": "published_aggregates_reported_nil",
+            "expected": 937,
+            "actual": 937,
+            "ok": true
+          },
+          {
+            "name": "published_aggregates_not_reported",
+            "expected": 6,
+            "actual": 6,
+            "ok": true
+          },
+          {
+            "name": "records_not_at_their_latest_version",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          }
+        ],
+        "ok": true
+      },
+      {
+        "product": "P16",
+        "source_id": "finance_2025_party_aggregates_export",
+        "checks": [
+          {
+            "name": "source_records",
+            "expected": 14,
+            "actual": 14,
+            "ok": true
+          },
+          {
+            "name": "record_versions",
+            "expected": 14,
+            "actual": 14,
+            "ok": true
+          },
+          {
+            "name": "tombstoned_records",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "rejected_records",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "published_aggregates",
+            "expected": 28,
+            "actual": 28,
+            "ok": true
+          },
+          {
+            "name": "published_aggregates_reported",
+            "expected": 14,
+            "actual": 14,
+            "ok": true
+          },
+          {
+            "name": "published_aggregates_reported_nil",
+            "expected": 14,
+            "actual": 14,
+            "ok": true
+          },
+          {
+            "name": "published_aggregates_not_reported",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "documents",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "records_not_at_their_latest_version",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          }
+        ],
+        "ok": true
+      },
+      {
+        "product": "P17",
+        "source_id": "finance_2025_party_returns_export",
+        "checks": [
+          {
+            "name": "source_records",
+            "expected": 17,
+            "actual": 17,
+            "ok": true
+          },
+          {
+            "name": "record_versions",
+            "expected": 23,
+            "actual": 23,
+            "ok": true
+          },
+          {
+            "name": "tombstoned_records",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "rejected_records",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "documents",
+            "expected": 17,
+            "actual": 17,
+            "ok": true
+          },
+          {
+            "name": "finance_return_references",
+            "expected": 17,
+            "actual": 17,
+            "ok": true
+          },
+          {
+            "name": "finance_return_references_image_only",
+            "expected": 6,
+            "actual": 6,
+            "ok": true
+          },
+          {
+            "name": "records_not_at_their_latest_version",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          }
+        ],
+        "ok": true
+      },
+      {
+        "product": "C26A",
+        "source_id": "election_2026_official_page_status_export",
+        "checks": [
+          {
+            "name": "source_records",
+            "expected": 1,
+            "actual": 1,
+            "ok": true
+          },
+          {
+            "name": "record_versions",
+            "expected": 2,
+            "actual": 2,
+            "ok": true
+          },
+          {
+            "name": "tombstoned_records",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "rejected_records",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "election_official_page_status",
+            "expected": 1,
+            "actual": 1,
+            "ok": true
+          },
+          {
+            "name": "official_page_unavailable",
+            "expected": 1,
+            "actual": 1,
+            "ok": true
+          },
+          {
+            "name": "records_not_at_their_latest_version",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          }
+        ],
+        "ok": true
+      },
+      {
+        "product": "C26B",
+        "source_id": "election_2026_boundary_map_links_export",
+        "checks": [
+          {
+            "name": "source_records",
+            "expected": 3,
+            "actual": 3,
+            "ok": true
+          },
+          {
+            "name": "record_versions",
+            "expected": 3,
+            "actual": 3,
+            "ok": true
+          },
+          {
+            "name": "tombstoned_records",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "rejected_records",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "documents",
+            "expected": 3,
+            "actual": 3,
+            "ok": true
+          },
+          {
+            "name": "boundary_map_links",
+            "expected": 3,
+            "actual": 3,
+            "ok": true
+          },
+          {
+            "name": "records_not_at_their_latest_version",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          }
+        ],
+        "ok": true
+      }
+    ],
+    "cross_route": {
+      "candidate_votes_same_fact:agrees": 495,
+      "party_votes_sum_to_nationwide_total:agrees": 1
+    }
+  },
+  "after_replay": {
+    "receipt_version": 1,
+    "command": "reconcile",
+    "all_ok": true,
+    "products": [
+      {
+        "product": "P08",
+        "source_id": "election_2023_nationwide_results_export",
+        "checks": [
+          {
+            "name": "source_records",
+            "expected": 18,
+            "actual": 18,
+            "ok": true
+          },
+          {
+            "name": "record_versions",
+            "expected": 18,
+            "actual": 18,
+            "ok": true
+          },
+          {
+            "name": "tombstoned_records",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "rejected_records",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "election_party_totals",
+            "expected": 17,
+            "actual": 17,
+            "ok": true
+          },
+          {
+            "name": "election_party_totals_votes_sum",
+            "expected": 2851211,
+            "actual": 2851211,
+            "ok": true
+          },
+          {
+            "name": "election_party_totals_with_seats",
+            "expected": 6,
+            "actual": 6,
+            "ok": true
+          },
+          {
+            "name": "election_result_totals",
+            "expected": 1,
+            "actual": 1,
+            "ok": true
+          },
+          {
+            "name": "election_result_totals_votes",
+            "expected": 2851211,
+            "actual": 2851211,
+            "ok": true
+          },
+          {
+            "name": "records_not_at_their_latest_version",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          }
+        ],
+        "ok": true
+      },
+      {
+        "product": "P09",
+        "source_id": "election_2023_electorate_results_export",
+        "checks": [
+          {
+            "name": "source_records",
+            "expected": 1791,
+            "actual": 1791,
+            "ok": true
+          },
+          {
+            "name": "record_versions",
+            "expected": 1791,
+            "actual": 1791,
+            "ok": true
+          },
+          {
+            "name": "tombstoned_records",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "rejected_records",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "party_results",
+            "expected": 1224,
+            "actual": 1224,
+            "ok": true
+          },
+          {
+            "name": "party_results_votes_sum",
+            "expected": 2851211,
+            "actual": 2851211,
+            "ok": true
+          },
+          {
+            "name": "electorate_result_summaries",
+            "expected": 72,
+            "actual": 72,
+            "ok": true
+          },
+          {
+            "name": "candidate_route_checks",
+            "expected": 495,
+            "actual": 495,
+            "ok": true
+          },
+          {
+            "name": "candidate_route_checks_votes_sum",
+            "expected": 2742677,
+            "actual": 2742677,
+            "ok": true
+          },
+          {
+            "name": "candidate_results_written_by_this_source",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "records_not_at_their_latest_version",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          }
+        ],
+        "ok": true
+      },
+      {
+        "product": "P13",
+        "source_id": "party_policy_pages_2026_export",
+        "checks": [
+          {
+            "name": "source_records",
+            "expected": 17,
+            "actual": 17,
+            "ok": true
+          },
+          {
+            "name": "record_versions",
+            "expected": 75,
+            "actual": 75,
+            "ok": true
+          },
+          {
+            "name": "tombstoned_records",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "rejected_records",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "documents",
+            "expected": 17,
+            "actual": 17,
+            "ok": true
+          },
+          {
+            "name": "policy_sources",
+            "expected": 17,
+            "actual": 17,
+            "ok": true
+          },
+          {
+            "name": "policy_sources_unknown_class_no_basis",
+            "expected": 17,
+            "actual": 17,
+            "ok": true
+          },
+          {
+            "name": "policy_sources_with_a_class",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "records_not_at_their_latest_version",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          }
+        ],
+        "ok": true
+      },
+      {
+        "product": "P14",
+        "source_id": "party_vote_polls_2026_export",
+        "checks": [
+          {
+            "name": "source_records",
+            "expected": 12,
+            "actual": 12,
+            "ok": true
+          },
+          {
+            "name": "record_versions",
+            "expected": 30,
+            "actual": 30,
+            "ok": true
+          },
+          {
+            "name": "tombstoned_records",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "rejected_records",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "documents",
+            "expected": 12,
+            "actual": 12,
+            "ok": true
+          },
+          {
+            "name": "polls",
+            "expected": 12,
+            "actual": 12,
+            "ok": true
+          },
+          {
+            "name": "polls_methodology_verified",
+            "expected": 9,
+            "actual": 9,
+            "ok": true
+          },
+          {
+            "name": "polls_methodology_unresolved",
+            "expected": 3,
+            "actual": 3,
+            "ok": true
+          },
+          {
+            "name": "poll_results",
+            "expected": 144,
+            "actual": 144,
+            "ok": true
+          },
+          {
+            "name": "poll_results_reported",
+            "expected": 100,
+            "actual": 100,
+            "ok": true
+          },
+          {
+            "name": "poll_results_not_reported",
+            "expected": 44,
+            "actual": 44,
+            "ok": true
+          },
+          {
+            "name": "records_not_at_their_latest_version",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          }
+        ],
+        "ok": true
+      },
+      {
+        "product": "P15",
+        "source_id": "finance_2023_candidate_returns_export",
+        "checks": [
+          {
+            "name": "source_records",
+            "expected": 492,
+            "actual": 492,
+            "ok": true
+          },
+          {
+            "name": "record_versions",
+            "expected": 492,
+            "actual": 492,
+            "ok": true
+          },
+          {
+            "name": "tombstoned_records",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "rejected_records",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "documents",
+            "expected": 492,
+            "actual": 492,
+            "ok": true
+          },
+          {
+            "name": "finance_return_references",
+            "expected": 492,
+            "actual": 492,
+            "ok": true
+          },
+          {
+            "name": "finance_return_references_image_only",
+            "expected": 224,
+            "actual": 224,
+            "ok": true
+          },
+          {
+            "name": "finance_return_references_linked_to_a_candidacy",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "published_aggregates",
+            "expected": 1476,
+            "actual": 1476,
+            "ok": true
+          },
+          {
+            "name": "published_aggregates_reported",
+            "expected": 533,
+            "actual": 533,
+            "ok": true
+          },
+          {
+            "name": "published_aggregates_reported_nil",
+            "expected": 937,
+            "actual": 937,
+            "ok": true
+          },
+          {
+            "name": "published_aggregates_not_reported",
+            "expected": 6,
+            "actual": 6,
+            "ok": true
+          },
+          {
+            "name": "records_not_at_their_latest_version",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          }
+        ],
+        "ok": true
+      },
+      {
+        "product": "P16",
+        "source_id": "finance_2025_party_aggregates_export",
+        "checks": [
+          {
+            "name": "source_records",
+            "expected": 14,
+            "actual": 14,
+            "ok": true
+          },
+          {
+            "name": "record_versions",
+            "expected": 14,
+            "actual": 14,
+            "ok": true
+          },
+          {
+            "name": "tombstoned_records",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "rejected_records",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "published_aggregates",
+            "expected": 28,
+            "actual": 28,
+            "ok": true
+          },
+          {
+            "name": "published_aggregates_reported",
+            "expected": 14,
+            "actual": 14,
+            "ok": true
+          },
+          {
+            "name": "published_aggregates_reported_nil",
+            "expected": 14,
+            "actual": 14,
+            "ok": true
+          },
+          {
+            "name": "published_aggregates_not_reported",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "documents",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "records_not_at_their_latest_version",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          }
+        ],
+        "ok": true
+      },
+      {
+        "product": "P17",
+        "source_id": "finance_2025_party_returns_export",
+        "checks": [
+          {
+            "name": "source_records",
+            "expected": 17,
+            "actual": 17,
+            "ok": true
+          },
+          {
+            "name": "record_versions",
+            "expected": 23,
+            "actual": 23,
+            "ok": true
+          },
+          {
+            "name": "tombstoned_records",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "rejected_records",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "documents",
+            "expected": 17,
+            "actual": 17,
+            "ok": true
+          },
+          {
+            "name": "finance_return_references",
+            "expected": 17,
+            "actual": 17,
+            "ok": true
+          },
+          {
+            "name": "finance_return_references_image_only",
+            "expected": 6,
+            "actual": 6,
+            "ok": true
+          },
+          {
+            "name": "records_not_at_their_latest_version",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          }
+        ],
+        "ok": true
+      },
+      {
+        "product": "C26A",
+        "source_id": "election_2026_official_page_status_export",
+        "checks": [
+          {
+            "name": "source_records",
+            "expected": 1,
+            "actual": 1,
+            "ok": true
+          },
+          {
+            "name": "record_versions",
+            "expected": 2,
+            "actual": 2,
+            "ok": true
+          },
+          {
+            "name": "tombstoned_records",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "rejected_records",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "election_official_page_status",
+            "expected": 1,
+            "actual": 1,
+            "ok": true
+          },
+          {
+            "name": "official_page_unavailable",
+            "expected": 1,
+            "actual": 1,
+            "ok": true
+          },
+          {
+            "name": "records_not_at_their_latest_version",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          }
+        ],
+        "ok": true
+      },
+      {
+        "product": "C26B",
+        "source_id": "election_2026_boundary_map_links_export",
+        "checks": [
+          {
+            "name": "source_records",
+            "expected": 3,
+            "actual": 3,
+            "ok": true
+          },
+          {
+            "name": "record_versions",
+            "expected": 3,
+            "actual": 3,
+            "ok": true
+          },
+          {
+            "name": "tombstoned_records",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "rejected_records",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "documents",
+            "expected": 3,
+            "actual": 3,
+            "ok": true
+          },
+          {
+            "name": "boundary_map_links",
+            "expected": 3,
+            "actual": 3,
+            "ok": true
+          },
+          {
+            "name": "records_not_at_their_latest_version",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          }
+        ],
+        "ok": true
+      }
+    ],
+    "cross_route": {
+      "candidate_votes_same_fact:agrees": 495,
+      "party_votes_sum_to_nationwide_total:agrees": 1
+    }
+  }
+}

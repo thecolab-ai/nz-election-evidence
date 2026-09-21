@@ -1,0 +1,12 @@
+{
+  "help": "TEST FIXTURE. SYNTHETIC hand-written sample in the layout of a CKAN package_search answer. Invented packages; not publisher data and never loaded as evidence.",
+  "success": true,
+  "result": {
+    "count": 3,
+    "results": [
+      { "name": "fixture-interest-rates", "title": "Fixture interest rates", "metadata_modified": "2020-01-02T03:04:05.000001", "num_resources": 3, "author_email": "never-read", "resources": [{}, {}, {}] },
+      { "name": "fixture-exchange-rates", "title": "Fixture exchange rates", "metadata_modified": "2021-02-03T04:05:06.000002", "resources": [{}, {}] },
+      { "name": "fixture_untitled", "title": "", "metadata_modified": null, "num_resources": 0 }
+    ]
+  }
+}

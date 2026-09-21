@@ -1,0 +1,70 @@
+{
+  "receipt_note": "Statistics family, 2026-09-20 (UTC). Read-only upstream export or fresh anonymous fetch, loaded into an isolated disposable local database. Nothing hosted was written. Counts, hashes, statuses and publisher URLs only.",
+  "receipts": [
+    {
+      "source_id": "stats_tenancy_rental_bonds",
+      "status": "ok",
+      "artifact_root_suffix": "fresh",
+      "counts": {
+        "routes": 1,
+        "datasets": 1,
+        "releases": 1,
+        "series": 8,
+        "geographies": 18,
+        "observations": 57888,
+        "catalogue_entries": 4,
+        "observations_by_status": {
+          "reported": 57888
+        },
+        "observations_by_dataset": {
+          "tenancy.rental_bonds.detailed_monthly_region": 57888
+        }
+      },
+      "reconciliation": [
+        {
+          "what": "publisher file data rows x 8 measure cells -> observations",
+          "upstream_rows": 57888,
+          "artifact_rows": 57888,
+          "difference": 0,
+          "explanation": "every expected value cell of the publisher file became exactly one observation"
+        },
+        {
+          "what": "listed .csv, .zip and .xlsx links on the publisher's host -> catalogue entries",
+          "upstream_rows": 4,
+          "artifact_rows": 4,
+          "difference": 0,
+          "explanation": "every listed link that matches this source's rule became exactly one catalogue entry"
+        }
+      ],
+      "findings": [
+        "The file starts with a UTF-8 byte order mark, which the decoder drops; the file hash was computed with the mark put back, so it is the hash of the publisher's bytes."
+      ],
+      "fetches": [
+        {
+          "url": "https://www.tenancy.govt.nz/robots.txt",
+          "outcome": "ok",
+          "http_status": 200,
+          "bytes": 303,
+          "body_sha256": "sha256:f87ab94cd7b4067dd8e8e513faf4e42df67efdc6086da0d75f4f287412fb4eb9",
+          "retrieved_at": "2026-09-20T09:36:49.129Z"
+        },
+        {
+          "url": "https://www.tenancy.govt.nz/about-tenancy-services/data-and-statistics/rental-bond-data/",
+          "outcome": "ok",
+          "http_status": 200,
+          "bytes": 94695,
+          "body_sha256": "sha256:7686ef80083330dac2fe494055f6f1ef16f01555332acec4bb5610c5abe33ee0",
+          "retrieved_at": "2026-09-20T09:36:49.114Z"
+        },
+        {
+          "url": "https://www.tenancy.govt.nz/assets/Uploads/Tenancy/Rental-bond-data/detailed-monthly-region-tenancy-september.csv?m=2716211950f40025edcad8109cff4d746b6bfcde",
+          "outcome": "ok",
+          "http_status": 200,
+          "bytes": 477249,
+          "body_sha256": "sha256:8ae9fad18f05a83c517e8c899d491d6c3ca1c72981d01a12fc1713169097196e",
+          "retrieved_at": "2026-09-20T09:36:52.278Z"
+        }
+      ]
+    }
+  ]
+}

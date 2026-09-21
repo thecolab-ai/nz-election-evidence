@@ -1,0 +1,37 @@
+{
+  "receipt_note": "Statistics family, 2026-09-20 (UTC). Read-only upstream export or fresh anonymous fetch, loaded into an isolated disposable local database. Nothing hosted was written. Counts, hashes, statuses and publisher URLs only.",
+  "receipts": [
+    {
+      "source_id": "stats_rbnz_catalogue",
+      "counts": {
+        "routes": 0,
+        "datasets": 0,
+        "releases": 0,
+        "series": 0,
+        "geographies": 0,
+        "observations": 0,
+        "catalogue_entries": 18,
+        "observations_by_status": {},
+        "observations_by_dataset": {}
+      },
+      "reconciliation": [
+        {
+          "what": "operational catalogue records (distinct record ids) -> catalogue entries (distinct entry keys)",
+          "upstream_rows": 18,
+          "artifact_rows": 18,
+          "difference": 0,
+          "explanation": "one entry key per upstream record id"
+        },
+        {
+          "what": "operational catalogue stored versions -> catalogue entry versions",
+          "upstream_rows": 18,
+          "artifact_rows": 18,
+          "difference": 0,
+          "explanation": "every stored version differs in allowlisted content"
+        }
+      ],
+      "findings": [],
+      "files": 1
+    }
+  ]
+}

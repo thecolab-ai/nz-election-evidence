@@ -1,0 +1,34 @@
+{
+  "receipt_note": "Statistics family, 2026-09-20 (UTC). Read-only upstream export or fresh anonymous fetch, loaded into an isolated disposable local database. Nothing hosted was written. Counts, hashes, statuses and publisher URLs only.",
+  "receipts": [
+    {
+      "source_id": "stats_nz_census_2013_meshblock",
+      "counts": {
+        "routes": 1,
+        "datasets": 1,
+        "releases": 1,
+        "series": 6,
+        "geographies": 49010,
+        "observations": 882180,
+        "catalogue_entries": 0,
+        "observations_by_status": {
+          "reported": 882180
+        },
+        "observations_by_dataset": {
+          "statsnz.census.2013.meshblock.selected_totals": 882180
+        }
+      },
+      "reconciliation": [
+        {
+          "what": "dedicated census observations of statsnz.census.2013.meshblock.selected_totals -> observations",
+          "upstream_rows": 882180,
+          "artifact_rows": 882180,
+          "difference": 0,
+          "explanation": "every upstream observation became exactly one observation"
+        }
+      ],
+      "findings": [],
+      "files": 46
+    }
+  ]
+}

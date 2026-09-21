@@ -1,0 +1,57 @@
+{
+  "receipt_note": "Statistics family, 2026-09-20 (UTC). Read-only upstream export or fresh anonymous fetch, loaded into an isolated disposable local database. Nothing hosted was written. Counts, hashes, statuses and publisher URLs only.",
+  "receipts": [
+    {
+      "source_id": "stats_rbnz_catalogue",
+      "status": "ok",
+      "artifact_root_suffix": "fresh",
+      "counts": {
+        "routes": 0,
+        "datasets": 0,
+        "releases": 0,
+        "series": 0,
+        "geographies": 0,
+        "observations": 0,
+        "catalogue_entries": 18,
+        "observations_by_status": {},
+        "observations_by_dataset": {}
+      },
+      "reconciliation": [
+        {
+          "what": "catalogue API results -> catalogue entries",
+          "upstream_rows": 18,
+          "artifact_rows": 18,
+          "difference": 0,
+          "explanation": "every result of the answer became exactly one catalogue entry"
+        }
+      ],
+      "findings": [],
+      "fetches": [
+        {
+          "url": "https://catalogue.data.govt.nz/robots.txt",
+          "outcome": "ok",
+          "http_status": 200,
+          "bytes": 659,
+          "body_sha256": "sha256:99fab2111cff5e5988c5c25c98ae7e4bf53f4793e689aaf9479ac8c13a7ac271",
+          "retrieved_at": "2026-09-20T09:07:29.929Z"
+        },
+        {
+          "url": "https://catalogue.data.govt.nz/api/3/action/package_search?fq=organization%3Areserve-bank-of-new-zealand&rows=100",
+          "outcome": "robots_advisory_disallowed",
+          "http_status": null,
+          "bytes": null,
+          "body_sha256": null,
+          "retrieved_at": "2026-09-20T09:07:30.078Z"
+        },
+        {
+          "url": "https://catalogue.data.govt.nz/api/3/action/package_search?fq=organization%3Areserve-bank-of-new-zealand&rows=100",
+          "outcome": "ok",
+          "http_status": 200,
+          "bytes": 123963,
+          "body_sha256": "sha256:7b5cb026997a6439afcf17db7d6e975f4d7e60267493c0136690d55467823c61",
+          "retrieved_at": "2026-09-20T09:07:29.908Z"
+        }
+      ]
+    }
+  ]
+}

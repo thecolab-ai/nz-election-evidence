@@ -1,0 +1,106 @@
+{
+  "receipt_note": "Statistics family, 2026-09-20 (UTC). Read-only upstream export or fresh anonymous fetch, loaded into an isolated disposable local database. Nothing hosted was written. Counts, hashes, statuses and publisher URLs only.",
+  "receipts": [
+    {
+      "receipt_version": 1,
+      "source_id": "stats_nz_csv_catalogue",
+      "products": [
+        "P20"
+      ],
+      "dry_run": false,
+      "status": "succeeded",
+      "error_class": null,
+      "error_detail": null,
+      "run_id": "f477bce5-8d5e-4b03-b198-38be4ff8c9f3",
+      "resumed_from_run_id": null,
+      "loader_version": "1.0.0",
+      "artifact": {
+        "digest": "sha256:1b99528e906d20ffc776eda2d040d92e3a8a02ee6b2704502a3d25639452aea3",
+        "producer": {
+          "route": "warehouse_export",
+          "exporter_version": "1.0.0",
+          "recipe_sha256": "532307ebd2add43ec2b4ebab7d1073d1551fbc4c4278cce5ad66a8a4857ebd92"
+        },
+        "collected_from": "2026-09-15T19:03:49.000Z",
+        "collected_to": "2026-09-18T01:08:53.000Z",
+        "files": 1,
+        "counts": {
+          "routes": 0,
+          "datasets": 0,
+          "releases": 0,
+          "series": 0,
+          "geographies": 0,
+          "observations": 0,
+          "catalogue_entries": 128,
+          "observations_by_status": {},
+          "observations_by_dataset": {}
+        }
+      },
+      "source_to_artifact": [
+        {
+          "what": "operational catalogue records (distinct record ids) -> catalogue entries (distinct entry keys)",
+          "upstream_rows": 128,
+          "artifact_rows": 128,
+          "difference": 0,
+          "explanation": "one entry key per upstream record id"
+        },
+        {
+          "what": "operational catalogue stored versions -> catalogue entry versions",
+          "upstream_rows": 374,
+          "artifact_rows": 128,
+          "difference": -246,
+          "explanation": "246 stored versions were re-collections whose allowlisted content is identical to another version of the same record; they are folded into that version's first/last observed times and observation count"
+        }
+      ],
+      "artifact_to_destination": [
+        {
+          "what": "catalogue entry versions: artifact -> store",
+          "upstream_rows": 128,
+          "artifact_rows": 128,
+          "difference": 0,
+          "explanation": "every artifact version is stored exactly once"
+        },
+        {
+          "what": "withheld, confidential, missing or not-applicable rows that carry a number",
+          "upstream_rows": 0,
+          "artifact_rows": 0,
+          "difference": 0,
+          "explanation": "none: a value the publisher did not print is stored as null with its status, never as zero"
+        }
+      ],
+      "totals": {
+        "meta": {
+          "routes": 0,
+          "datasets": 0,
+          "releases": 0,
+          "series_inserted": 0,
+          "geographies_inserted": 0,
+          "catalogue_entries_seen": 128,
+          "catalogue_entries_written": 0
+        },
+        "observations": {
+          "seen": 0,
+          "inserted": 0,
+          "unchanged": 0,
+          "conflicts": 0
+        },
+        "batches": 0
+      },
+      "replay_wrote_nothing": true,
+      "destination": {
+        "series": 0,
+        "datasets": 0,
+        "releases": 0,
+        "geographies": 0,
+        "observations": 0,
+        "content_digest": "d41d8cd98f00b204e9800998ecf8427e",
+        "observations_by_status": {},
+        "observations_by_release": {},
+        "catalogue_entry_versions": 128,
+        "catalogue_entries_current": 128,
+        "withheld_rows_carrying_a_number": 0
+      },
+      "findings": []
+    }
+  ]
+}

@@ -1,5 +1,5 @@
 {
-  "config_version": 1,
+  "config_version": 2,
   "registry_products": [
     {
       "registry_key": "parliament_members",
@@ -40,6 +40,47 @@
       "registry_key": "party_finance_returns",
       "title": "Party donations, loans and annual returns",
       "domain": "Political finance"
+    },
+    {
+      "registry_key": "party_policy_pages",
+      "title": "Registered-party policy pages",
+      "domain": "Elections"
+    },
+    {
+      "registry_key": "party_vote_polls",
+      "title": "Party-vote polls",
+      "domain": "Elections"
+    },
+    {
+      "registry_key": "candidate_finance_returns",
+      "title": "Candidate expense and donation returns",
+      "domain": "Political finance"
+    },
+    {
+      "registry_key": "election_2026_boundaries",
+      "title": "2026 General Election boundaries",
+      "domain": "Elections"
+    },
+    {
+      "registry_key": "parliament_bill_publications",
+      "title": "Bill publications (published revisions)",
+      "domain": "Parliament and law"
+    },
+    {
+      "registry_key": "parliament_committee_business",
+      "title": "Business before select committees",
+      "domain": "Parliament and law"
+    },
+    {
+      "registry_key": "parliament_committee_reports",
+      "title": "Select committee reports",
+      "domain": "Parliament and law"
+    },
+    {
+      "registry_key": "statistics",
+      "title": "Official statistics and statistical catalogues",
+      "domain": "Statistics",
+      "notes": "Typed observations with unit, period, geography edition, release vintage and value status; catalogue entries kept apart from observations."
     }
   ],
   "sources": [
@@ -414,6 +455,2393 @@
           }
         ]
       }
+    },
+    {
+      "source_id": "election_2023_nationwide_results_export",
+      "registry_key": "election_2023_results",
+      "title": "2023 General Election nationwide party-vote table (reconciled upstream export)",
+      "publisher": "Electoral Commission",
+      "official_url": "https://www.electionresults.govt.nz/electionresults_2023/",
+      "adapter_kind": "export_import",
+      "adapter_name": "election_family_export",
+      "allowed_hosts": [],
+      "rights_id": "RIGHTS-01",
+      "view_scope": "baseline_2023",
+      "snapshot_semantics": "complete_snapshot",
+      "enabled": false,
+      "catalogue_products": [
+        {
+          "product_id": "P08",
+          "mapping_note": "Whole product: 17 party lines + 1 published total line = 18."
+        }
+      ],
+      "export_contract": {
+        "fileEnv": "EVIDENCE_EXPORT_ELECTION_P08",
+        "recordKind": "election_nationwide_party_result",
+        "idField": "external_record_id",
+        "sourceUrlField": "official_url",
+        "observedAtField": "collected_at",
+        "originalHashField": "original_sha256",
+        "allowedFields": [],
+        "droppedFields": [],
+        "expectedRowsNote": "18 rows: 17 party lines and the published total line. The 17 lines sum to the published 2,851,211.",
+        "expectedInput": {
+          "sha256": "sha256:ff23c5d34f59b40c1a7fbaadef49c250e243401e817663fb224e355667c7f398",
+          "rows": 18
+        },
+        "requiredValues": [
+          {
+            "field": "generic_importer_marker",
+            "equals": "never_present_use_the_election_family_importer"
+          }
+        ]
+      }
+    },
+    {
+      "source_id": "election_2023_electorate_results_export",
+      "registry_key": "election_2023_results",
+      "title": "2023 General Election results by electorate (reconciled upstream export)",
+      "publisher": "Electoral Commission",
+      "official_url": "https://electionresults.govt.nz/electionresults_2023/",
+      "adapter_kind": "export_import",
+      "adapter_name": "election_family_export",
+      "allowed_hosts": [],
+      "rights_id": "RIGHTS-01",
+      "view_scope": "baseline_2023",
+      "snapshot_semantics": "complete_snapshot",
+      "enabled": false,
+      "catalogue_products": [
+        {
+          "product_id": "P09",
+          "mapping_note": "Whole product. The 495 candidate lines are the same facts as the P04 candidacy votes and are tied to them by identifier; party lines add up to the P08 total. Reconciled, never added."
+        }
+      ],
+      "export_contract": {
+        "fileEnv": "EVIDENCE_EXPORT_ELECTION_P09",
+        "recordKind": "election_electorate_vote",
+        "idField": "external_record_id",
+        "sourceUrlField": "official_url",
+        "observedAtField": "collected_at",
+        "originalHashField": "original_sha256",
+        "allowedFields": [],
+        "droppedFields": [],
+        "expectedRowsNote": "1,791 rows: 1,224 party-vote lines, 495 candidate-vote lines, 72 electorate summaries.",
+        "expectedInput": {
+          "sha256": "sha256:d6019eb56f4178f106ed5343c277657cbde200df09aa234914bb060028ff0b3d",
+          "rows": 1791
+        },
+        "requiredValues": [
+          {
+            "field": "generic_importer_marker",
+            "equals": "never_present_use_the_election_family_importer"
+          }
+        ]
+      }
+    },
+    {
+      "source_id": "party_policy_pages_2026_export",
+      "registry_key": "party_policy_pages",
+      "title": "Registered-party policy pages, 2026 (links, hashes and history; reconciled upstream export)",
+      "publisher": "Registered New Zealand political parties",
+      "official_url": "https://elections.nz/democracy-in-nz/political-parties-in-new-zealand/register-of-political-parties/",
+      "adapter_kind": "export_import",
+      "adapter_name": "election_family_export",
+      "allowed_hosts": [],
+      "rights_id": "RIGHTS-14",
+      "view_scope": "primary_2026",
+      "snapshot_semantics": "complete_snapshot",
+      "enabled": false,
+      "catalogue_products": [
+        {
+          "product_id": "P13",
+          "mapping_note": "17 pages, 75 observed versions. Page text is not imported. Upstream labels are kept as unreviewed upstream labels; no policy class is assigned."
+        }
+      ],
+      "export_contract": {
+        "fileEnv": "EVIDENCE_EXPORT_ELECTION_P13",
+        "recordKind": "party_policy_page",
+        "idField": "external_record_id",
+        "sourceUrlField": "official_url",
+        "observedAtField": "collected_at",
+        "originalHashField": "original_sha256",
+        "allowedFields": [],
+        "droppedFields": [],
+        "expectedRowsNote": "75 rows: 17 policy pages with their full observed history (up to 7 versions each).",
+        "expectedInput": {
+          "sha256": "sha256:0311a18df4849c5e9d57c732b6268500f57ba29ca31223287470bace02a6aac1",
+          "rows": 75
+        },
+        "requiredValues": [
+          {
+            "field": "generic_importer_marker",
+            "equals": "never_present_use_the_election_family_importer"
+          }
+        ]
+      }
+    },
+    {
+      "source_id": "party_vote_polls_2026_export",
+      "registry_key": "party_vote_polls",
+      "title": "Party-vote polls, 90 days to 19 September 2026 (reconciled upstream export)",
+      "publisher": "Multiple poll publishers",
+      "official_url": "https://en.wikipedia.org/wiki/Opinion_polling_for_the_2026_New_Zealand_general_election",
+      "adapter_kind": "export_import",
+      "adapter_name": "election_family_export",
+      "allowed_hosts": [],
+      "rights_id": "RIGHTS-07",
+      "view_scope": "primary_2026",
+      "snapshot_semantics": "rolling_window",
+      "enabled": false,
+      "catalogue_products": [
+        {
+          "product_id": "P14",
+          "mapping_note": "12 polls, 30 observed versions. Blank cells stay not reported. Source order kept; no ranking or average is derived."
+        }
+      ],
+      "export_contract": {
+        "fileEnv": "EVIDENCE_EXPORT_ELECTION_P14",
+        "recordKind": "party_vote_poll",
+        "idField": "external_record_id",
+        "sourceUrlField": "official_url",
+        "observedAtField": "collected_at",
+        "originalHashField": "original_sha256",
+        "allowedFields": [],
+        "droppedFields": [],
+        "expectedRowsNote": "30 rows: 12 polls with their observed history. 9 with verified methodology disclosure, 3 unresolved.",
+        "expectedInput": {
+          "sha256": "sha256:cf8ceeab7c429e7a9c26546b5175dc9cf0c9df5184c6b05be2b3b8cdd4a4467c",
+          "rows": 30
+        },
+        "requiredValues": [
+          {
+            "field": "generic_importer_marker",
+            "equals": "never_present_use_the_election_family_importer"
+          }
+        ]
+      }
+    },
+    {
+      "source_id": "finance_2023_candidate_returns_export",
+      "registry_key": "candidate_finance_returns",
+      "title": "2023 candidate expense and donation returns: document index (reconciled upstream export)",
+      "publisher": "Electoral Commission",
+      "official_url": "https://elections.nz/democracy-in-nz/candidates/candidate-expenses-and-donations/",
+      "adapter_kind": "export_import",
+      "adapter_name": "election_family_export",
+      "allowed_hosts": [],
+      "rights_id": "RIGHTS-02",
+      "view_scope": "baseline_2023",
+      "snapshot_semantics": "complete_snapshot",
+      "enabled": false,
+      "catalogue_products": [
+        {
+          "product_id": "P15",
+          "mapping_note": "Whole product. No document text, no PDF, nothing read from inside a return."
+        }
+      ],
+      "export_contract": {
+        "fileEnv": "EVIDENCE_EXPORT_ELECTION_P15",
+        "recordKind": "finance_candidate_return",
+        "idField": "external_record_id",
+        "sourceUrlField": "official_url",
+        "observedAtField": "collected_at",
+        "originalHashField": "original_sha256",
+        "allowedFields": [],
+        "droppedFields": [],
+        "expectedRowsNote": "492 document records: 268 with a text layer, 224 image-only. Official link, document hash and the totals the Commission's index page prints.",
+        "expectedInput": {
+          "sha256": "sha256:e65bf3088d51a7efba09d1f3586a225c2bb6f4a0f9a8ab01aa64d765cf762734",
+          "rows": 492
+        },
+        "requiredValues": [
+          {
+            "field": "generic_importer_marker",
+            "equals": "never_present_use_the_election_family_importer"
+          }
+        ]
+      }
+    },
+    {
+      "source_id": "finance_2025_party_aggregates_export",
+      "registry_key": "party_finance_returns",
+      "title": "2025 party donations and loans: Commission-published totals (reconciled upstream export)",
+      "publisher": "Electoral Commission",
+      "official_url": "https://elections.nz/democracy-in-nz/political-parties-in-new-zealand/party-donations-and-loans-by-year/",
+      "adapter_kind": "export_import",
+      "adapter_name": "election_family_export",
+      "allowed_hosts": [],
+      "rights_id": "RIGHTS-04",
+      "view_scope": "finance_2025",
+      "snapshot_semantics": "complete_snapshot",
+      "enabled": false,
+      "catalogue_products": [
+        {
+          "product_id": "P16",
+          "mapping_note": "Whole product. Totals as published by the Commission; no donor-level data exists in this route."
+        }
+      ],
+      "export_contract": {
+        "fileEnv": "EVIDENCE_EXPORT_ELECTION_P16",
+        "recordKind": "finance_party_aggregate",
+        "idField": "external_record_id",
+        "sourceUrlField": "official_url",
+        "observedAtField": "collected_at",
+        "originalHashField": "original_sha256",
+        "allowedFields": [],
+        "droppedFields": [],
+        "expectedRowsNote": "14 party rows, 28 published totals (donations and loans). Published summaries only, never recomputed.",
+        "expectedInput": {
+          "sha256": "sha256:48b0ff941fa495ef46e5cb754149cd49b30fca5831d6e8a4097b64a0502295e9",
+          "rows": 14
+        },
+        "requiredValues": [
+          {
+            "field": "generic_importer_marker",
+            "equals": "never_present_use_the_election_family_importer"
+          }
+        ]
+      }
+    },
+    {
+      "source_id": "finance_2025_party_returns_export",
+      "registry_key": "party_finance_returns",
+      "title": "2025 party annual returns: document index (reconciled upstream export)",
+      "publisher": "Electoral Commission",
+      "official_url": "https://elections.nz/democracy-in-nz/political-parties-in-new-zealand/party-donations-and-loans-by-year/",
+      "adapter_kind": "export_import",
+      "adapter_name": "election_family_export",
+      "allowed_hosts": [],
+      "rights_id": "RIGHTS-04",
+      "view_scope": "finance_2025",
+      "snapshot_semantics": "complete_snapshot",
+      "enabled": false,
+      "catalogue_products": [
+        {
+          "product_id": "P17",
+          "mapping_note": "17 documents, 23 versions. Official link, hash and status only; transcriptions are not imported."
+        }
+      ],
+      "export_contract": {
+        "fileEnv": "EVIDENCE_EXPORT_ELECTION_P17",
+        "recordKind": "finance_party_return",
+        "idField": "external_record_id",
+        "sourceUrlField": "official_url",
+        "observedAtField": "collected_at",
+        "originalHashField": "original_sha256",
+        "allowedFields": [],
+        "droppedFields": [],
+        "expectedRowsNote": "23 rows: 17 documents, 6 of them with a second version recording a bounded visual review of an image-only original.",
+        "expectedInput": {
+          "sha256": "sha256:40905746969aeefa2c22b9c88c9d5fa7f0fe6060f8a3a5aca3f5fef8d7a3d9db",
+          "rows": 23
+        },
+        "requiredValues": [
+          {
+            "field": "generic_importer_marker",
+            "equals": "never_present_use_the_election_family_importer"
+          }
+        ]
+      }
+    },
+    {
+      "source_id": "election_2026_official_page_status_export",
+      "registry_key": "election_2026_nominations",
+      "title": "2026 General Election: availability of the official electorate finder, as observed upstream",
+      "publisher": "Electoral Commission",
+      "official_url": "https://vote.nz/maps/find-your-electorate-2026",
+      "adapter_kind": "export_import",
+      "adapter_name": "election_family_export",
+      "allowed_hosts": [],
+      "rights_id": "RIGHTS-21",
+      "view_scope": "primary_2026",
+      "snapshot_semantics": "complete_snapshot",
+      "enabled": false,
+      "catalogue_products": [],
+      "export_contract": {
+        "fileEnv": "EVIDENCE_EXPORT_ELECTION_C26A",
+        "recordKind": "election_2026_official_page_status",
+        "idField": "external_record_id",
+        "sourceUrlField": "official_url",
+        "observedAtField": "collected_at",
+        "originalHashField": "original_sha256",
+        "allowedFields": [],
+        "droppedFields": [],
+        "expectedRowsNote": "1 record, 2 observed versions (identified, then unavailable). Candidate details: unknown. This is an availability record, not a nominations list.",
+        "expectedInput": {
+          "sha256": "sha256:6e505871f3516204924bfe329af4bed0e4fcbbbde8b0eb02552e1a3142adbe0b",
+          "rows": 2
+        },
+        "requiredValues": [
+          {
+            "field": "generic_importer_marker",
+            "equals": "never_present_use_the_election_family_importer"
+          }
+        ]
+      }
+    },
+    {
+      "source_id": "election_2026_boundary_map_links_export",
+      "registry_key": "election_2026_boundaries",
+      "title": "2025 boundary review: official summary map links for the 2026 General Election",
+      "publisher": "Electoral Commission",
+      "official_url": "https://vote.nz/maps/find-your-electorate-2026",
+      "adapter_kind": "export_import",
+      "adapter_name": "election_family_export",
+      "allowed_hosts": [],
+      "rights_id": "RIGHTS-21",
+      "view_scope": "primary_2026",
+      "snapshot_semantics": "complete_snapshot",
+      "enabled": false,
+      "catalogue_products": [],
+      "export_contract": {
+        "fileEnv": "EVIDENCE_EXPORT_ELECTION_C26B",
+        "recordKind": "election_2026_boundary_map_link",
+        "idField": "external_record_id",
+        "sourceUrlField": "official_url",
+        "observedAtField": "collected_at",
+        "originalHashField": "original_sha256",
+        "allowedFields": [],
+        "droppedFields": [],
+        "expectedRowsNote": "3 official map documents (links and hashes). Not an electorate list: 2026 electorate names are not in the warehouse.",
+        "expectedInput": {
+          "sha256": "sha256:7645d31bc90a38baa602151c6ba1a9b1a534a672eacec889f33eaebe85a254a5",
+          "rows": 3
+        },
+        "requiredValues": [
+          {
+            "field": "generic_importer_marker",
+            "equals": "never_present_use_the_election_family_importer"
+          }
+        ]
+      }
+    },
+    {
+      "source_id": "party_vote_polls_index",
+      "registry_key": "party_vote_polls",
+      "title": "Party-vote polls: public index table (change signal)",
+      "publisher": "Multiple poll publishers",
+      "official_url": "https://storage.googleapis.com/asapop-website-oceania-20230809/_widgets/tables/nz.html",
+      "adapter_kind": "live_fetch",
+      "adapter_name": "election_poll_index",
+      "allowed_hosts": [
+        "storage.googleapis.com"
+      ],
+      "rights_id": "RIGHTS-07",
+      "view_scope": "primary_2026",
+      "expected_cadence_seconds": 86400,
+      "snapshot_semantics": "rolling_window",
+      "enabled": true,
+      "catalogue_products": [
+        {
+          "product_id": "P14",
+          "mapping_note": "Fresh index rows as a change signal. An aggregator index, not a primary publisher: rows carry methodology status unresolved and create no poll row."
+        }
+      ],
+      "adapter_options": {
+        "incremental_window_days": 120
+      },
+      "access_basis": "public_page",
+      "min_interval_ms": 5000,
+      "access_note": "A public, unauthenticated page. It is a third-party index of polls; each poll's own publisher page remains the official link."
+    },
+    {
+      "source_id": "party_policy_pages_2026_monitor",
+      "registry_key": "party_policy_pages",
+      "title": "Registered-party policy pages, 2026: page hash and title checks",
+      "publisher": "Registered New Zealand political parties",
+      "official_url": "https://www.act.org.nz/policies",
+      "adapter_kind": "live_fetch",
+      "adapter_name": "election_policy_page_monitor",
+      "allowed_hosts": [
+        "allianceparty.nz",
+        "animaljustice.org.nz",
+        "nzloyal.com",
+        "nzofp.co.nz",
+        "palfree.nz",
+        "tetaitokerauparty.org.nz",
+        "womensrightsparty.nz",
+        "www.act.org.nz",
+        "www.alcp.org.nz",
+        "www.conservatives.nz",
+        "www.greens.org.nz",
+        "www.labour.org.nz",
+        "www.maoriparty.org.nz",
+        "www.national.org.nz",
+        "www.nzfirst.nz",
+        "www.opportunity.org.nz",
+        "www.vision.org.nz"
+      ],
+      "rights_id": "RIGHTS-14",
+      "view_scope": "primary_2026",
+      "expected_cadence_seconds": 86400,
+      "snapshot_semantics": "complete_snapshot",
+      "enabled": true,
+      "catalogue_products": [
+        {
+          "product_id": "P13",
+          "mapping_note": "Fresh hash and title of the same 17 official pages. Detects change; stores no page text and assigns no class."
+        }
+      ],
+      "adapter_options": {
+        "pages": [
+          {
+            "party_name": "ACT New Zealand",
+            "url": "https://www.act.org.nz/policies"
+          },
+          {
+            "party_name": "Alliance Party of Aotearoa New Zealand",
+            "url": "https://allianceparty.nz/what-we-stand-for/"
+          },
+          {
+            "party_name": "Animal Justice Party Aotearoa New Zealand",
+            "url": "https://animaljustice.org.nz/election-2026/election-manifesto/"
+          },
+          {
+            "party_name": "Aotearoa Legalise Cannabis Party",
+            "url": "https://www.alcp.org.nz/policy"
+          },
+          {
+            "party_name": "Conservative Party NZ",
+            "url": "https://www.conservatives.nz/policy"
+          },
+          {
+            "party_name": "Free Palestine",
+            "url": "https://palfree.nz/"
+          },
+          {
+            "party_name": "Green Party of Aotearoa New Zealand",
+            "url": "https://www.greens.org.nz/manifesto_2026"
+          },
+          {
+            "party_name": "New Zealand First Party",
+            "url": "https://www.nzfirst.nz/policy"
+          },
+          {
+            "party_name": "New Zealand Labour Party",
+            "url": "https://www.labour.org.nz/our-policies/"
+          },
+          {
+            "party_name": "New Zealand Loyal",
+            "url": "https://nzloyal.com/policy/"
+          },
+          {
+            "party_name": "New Zealand National Party",
+            "url": "https://www.national.org.nz/policies"
+          },
+          {
+            "party_name": "NZ Outdoors & Freedom Party",
+            "url": "https://nzofp.co.nz/policies"
+          },
+          {
+            "party_name": "Opportunity Party",
+            "url": "https://www.opportunity.org.nz/policy"
+          },
+          {
+            "party_name": "Te Pāti Māori",
+            "url": "https://www.maoriparty.org.nz/policy"
+          },
+          {
+            "party_name": "Te Tai Tokerau Party",
+            "url": "https://tetaitokerauparty.org.nz/our-policies/"
+          },
+          {
+            "party_name": "Vision New Zealand",
+            "url": "https://www.vision.org.nz/visionpolicies"
+          },
+          {
+            "party_name": "Women’s Rights Party",
+            "url": "https://womensrightsparty.nz/our-priorities/"
+          }
+        ]
+      },
+      "access_basis": "public_page",
+      "min_interval_ms": 5000,
+      "access_note": "Seventeen public party pages, one request each per run. The list is the reconciled 19 September 2026 denominator; it is not re-derived from the party register, which is unavailable to this host."
+    },
+    {
+      "source_id": "ec_2023_candidate_returns_index",
+      "registry_key": "candidate_finance_returns",
+      "title": "2023 candidate returns index (availability probe)",
+      "publisher": "Electoral Commission",
+      "official_url": "https://elections.nz/democracy-in-nz/historical-events/2023-general-election/candidate-expenses-donations-and-loans",
+      "adapter_kind": "live_fetch",
+      "adapter_name": "availability_probe",
+      "allowed_hosts": [
+        "elections.nz"
+      ],
+      "rights_id": "RIGHTS-02",
+      "view_scope": "baseline_2023",
+      "expected_cadence_seconds": 86400,
+      "snapshot_semantics": "complete_snapshot",
+      "enabled": false,
+      "blocked_reason": "The publisher answered this build host with a bot challenge on 2026-09-20 (one attempt, not worked around). The 492 document records arrive through the reconciled export instead. Nothing here implies a count.",
+      "catalogue_products": [
+        {
+          "product_id": "P15",
+          "mapping_note": "Probe only."
+        }
+      ],
+      "access_basis": "public_page",
+      "min_interval_ms": 5000
+    },
+    {
+      "source_id": "ec_2026_electorate_finder",
+      "registry_key": "election_2026_boundaries",
+      "title": "2026 electorate finder (availability probe)",
+      "publisher": "Electoral Commission",
+      "official_url": "https://vote.nz/maps/find-your-electorate-2026",
+      "adapter_kind": "live_fetch",
+      "adapter_name": "availability_probe",
+      "allowed_hosts": [
+        "vote.nz"
+      ],
+      "rights_id": "RIGHTS-21",
+      "view_scope": "primary_2026",
+      "expected_cadence_seconds": 86400,
+      "snapshot_semantics": "complete_snapshot",
+      "enabled": false,
+      "blocked_reason": "The publisher answered this build host with a bot challenge on 2026-09-20 (one attempt, not worked around). No 2026 electorate list has been loaded from any route: the number and names of 2026 electorates are unknown here, not zero.",
+      "catalogue_products": [],
+      "access_basis": "public_page",
+      "min_interval_ms": 5000
+    },
+    {
+      "source_id": "parliament_export_releases_history",
+      "registry_key": "government_releases",
+      "title": "Beehive releases since 29 November 2023 (reviewed upstream export; titles, publisher dates and links, never release text)",
+      "publisher": "New Zealand Government / Beehive",
+      "official_url": "https://www.beehive.govt.nz/releases",
+      "adapter_kind": "export_import",
+      "adapter_name": "parliament_family_export",
+      "allowed_hosts": [],
+      "rights_id": "RIGHTS-08",
+      "view_scope": "general",
+      "snapshot_semantics": "rolling_window",
+      "enabled": false,
+      "catalogue_products": [
+        {
+          "product_id": "P01",
+          "mapping_note": "The 4,735-release product: 4,745 collected observations of 4,735 releases dated from 29 November 2023. Titles, publisher dates, links, page digests; no release text. The releases feed is another route to the newest of the same items and is reconciled by link, not added."
+        }
+      ],
+      "export_contract": {
+        "fileEnv": "EVIDENCE_EXPORT_PARLIAMENT_RELEASES_HISTORY",
+        "manifestEnv": "EVIDENCE_EXPORT_PARLIAMENT_RELEASES_HISTORY_MANIFEST",
+        "manifestChecksumPath": [
+          "export",
+          "sha256"
+        ],
+        "manifestRowsPath": [
+          "export",
+          "rows"
+        ],
+        "recordKind": "release",
+        "idField": "see_family_contract",
+        "sourceUrlField": "see_family_contract",
+        "observedAtField": "observed_at",
+        "originalHashField": "upstream_content_hash",
+        "allowedFields": [
+          {
+            "from": "url",
+            "to": "url",
+            "type": "string"
+          },
+          {
+            "from": "title",
+            "to": "title",
+            "type": "string"
+          },
+          {
+            "from": "published_at",
+            "to": "published_at",
+            "type": "string"
+          },
+          {
+            "from": "page_sha256",
+            "to": "page_sha256",
+            "type": "string"
+          },
+          {
+            "from": "page_bytes",
+            "to": "page_bytes",
+            "type": "integer"
+          },
+          {
+            "from": "release_text_chars",
+            "to": "release_text_chars",
+            "type": "integer"
+          },
+          {
+            "from": "capture_mode",
+            "to": "capture_mode",
+            "type": "string"
+          }
+        ],
+        "droppedFields": [
+          {
+            "field": "body_text",
+            "reason": "release text is not exported; length only (R6)"
+          },
+          {
+            "field": "raw_path",
+            "reason": "stored-copy location; never exported"
+          },
+          {
+            "field": "capture_scope",
+            "reason": "upstream paging bookkeeping"
+          },
+          {
+            "field": "index_page_last",
+            "reason": "upstream paging bookkeeping"
+          },
+          {
+            "field": "archive_complete",
+            "reason": "upstream bookkeeping"
+          },
+          {
+            "field": "raw_record_json",
+            "reason": "upstream copy of the publisher response; never exported"
+          },
+          {
+            "field": "run_id",
+            "reason": "upstream operational identifier"
+          },
+          {
+            "field": "loaded_at",
+            "reason": "upstream load time; not evidence about the source"
+          }
+        ],
+        "expectedRowsNote": "4745 observations of 4735 publisher items; pinned by checksum",
+        "expectedInput": {
+          "sha256": "sha256:1b338436e8c5d804f44e349158c68b1f1eb01cfdb7bda02fdf5e5cedf94862d1",
+          "rows": 4745
+        }
+      }
+    },
+    {
+      "source_id": "parliament_export_release_attributions",
+      "registry_key": "government_releases",
+      "title": "Beehive items with the ministers and portfolios the publisher names on them, July to September 2026 (reviewed upstream export; names and links)",
+      "publisher": "New Zealand Government / Beehive",
+      "official_url": "https://www.beehive.govt.nz/releases",
+      "adapter_kind": "export_import",
+      "adapter_name": "parliament_family_export",
+      "allowed_hosts": [],
+      "rights_id": "RIGHTS-08",
+      "view_scope": "general",
+      "snapshot_semantics": "rolling_window",
+      "enabled": false,
+      "catalogue_products": [
+        {
+          "product_id": "P01",
+          "mapping_note": "Ministers and portfolios the publisher names on 530 items collected 12 September 2026 (536 observations). Not a count of releases: 525 of the items are also in the 4,735-release product."
+        }
+      ],
+      "export_contract": {
+        "fileEnv": "EVIDENCE_EXPORT_PARLIAMENT_RELEASE_ATTRIBUTIONS",
+        "manifestEnv": "EVIDENCE_EXPORT_PARLIAMENT_RELEASE_ATTRIBUTIONS_MANIFEST",
+        "manifestChecksumPath": [
+          "export",
+          "sha256"
+        ],
+        "manifestRowsPath": [
+          "export",
+          "rows"
+        ],
+        "recordKind": "release_attribution",
+        "idField": "see_family_contract",
+        "sourceUrlField": "see_family_contract",
+        "observedAtField": "observed_at",
+        "originalHashField": "upstream_content_hash",
+        "allowedFields": [
+          {
+            "from": "url",
+            "to": "url",
+            "type": "string"
+          },
+          {
+            "from": "title",
+            "to": "title",
+            "type": "string"
+          },
+          {
+            "from": "content_kind",
+            "to": "content_kind",
+            "type": "string"
+          },
+          {
+            "from": "publisher_item_id",
+            "to": "publisher_item_id",
+            "type": "string"
+          },
+          {
+            "from": "source_last_modified",
+            "to": "source_last_modified",
+            "type": "string"
+          },
+          {
+            "from": "published_at_text",
+            "to": "published_at_text",
+            "type": "string"
+          }
+        ],
+        "droppedFields": [
+          {
+            "field": "exact_text",
+            "reason": "item text is not exported (R6)"
+          },
+          {
+            "field": "raw_path",
+            "reason": "stored-copy location; never exported"
+          },
+          {
+            "field": "capture_json",
+            "reason": "upstream capture bookkeeping"
+          },
+          {
+            "field": "text_hash",
+            "reason": "not needed; the upstream content digest is carried"
+          },
+          {
+            "field": "etag",
+            "reason": "transport detail"
+          },
+          {
+            "field": "html_bytes",
+            "reason": "transport detail"
+          }
+        ],
+        "expectedRowsNote": "536 observations of 530 publisher items; pinned by checksum",
+        "expectedInput": {
+          "sha256": "sha256:9c7e89182e2391a64df18c07526ab07ac22c5436f4fd007197b8d65495d3fc2b",
+          "rows": 536
+        }
+      }
+    },
+    {
+      "source_id": "parliament_export_bill_publications",
+      "registry_key": "parliament_bill_publications",
+      "title": "Bill publications for bills current in the 54th Parliament (reviewed upstream export; revision metadata and official links, never bill text)",
+      "publisher": "New Zealand Parliament / New Zealand Legislation",
+      "official_url": "https://www.legislation.govt.nz/",
+      "adapter_kind": "export_import",
+      "adapter_name": "parliament_family_export",
+      "allowed_hosts": [],
+      "rights_id": "RIGHTS-09",
+      "view_scope": "current_parliament",
+      "snapshot_semantics": "rolling_window",
+      "enabled": false,
+      "catalogue_products": [
+        {
+          "product_id": "P02",
+          "mapping_note": "The 201-record product: 115 published revisions and 86 per-bill revision sets, for bills current in the 54th Parliament on 19 September 2026. Links, publisher dates, sizes and digests; no bill text. The catalogue notes four known retrieval gaps upstream; they are not filled here."
+        }
+      ],
+      "export_contract": {
+        "fileEnv": "EVIDENCE_EXPORT_PARLIAMENT_BILL_PUBLICATIONS",
+        "manifestEnv": "EVIDENCE_EXPORT_PARLIAMENT_BILL_PUBLICATIONS_MANIFEST",
+        "manifestChecksumPath": [
+          "export",
+          "sha256"
+        ],
+        "manifestRowsPath": [
+          "export",
+          "rows"
+        ],
+        "recordKind": "bill_publication",
+        "idField": "see_family_contract",
+        "sourceUrlField": "see_family_contract",
+        "observedAtField": "observed_at",
+        "originalHashField": "upstream_content_hash",
+        "allowedFields": [
+          {
+            "from": "upstream_kind",
+            "to": "upstream_kind",
+            "type": "string"
+          },
+          {
+            "from": "bill_ref",
+            "to": "bill_ref",
+            "type": "string"
+          },
+          {
+            "from": "bill_number",
+            "to": "bill_number",
+            "type": "string"
+          },
+          {
+            "from": "title",
+            "to": "title",
+            "type": "string"
+          },
+          {
+            "from": "parliament_number",
+            "to": "parliament_number",
+            "type": "integer"
+          },
+          {
+            "from": "revision_ref",
+            "to": "revision_ref",
+            "type": "string"
+          },
+          {
+            "from": "version_token",
+            "to": "version_token",
+            "type": "string"
+          },
+          {
+            "from": "pdf_url",
+            "to": "pdf_url",
+            "type": "string"
+          },
+          {
+            "from": "version_index_url",
+            "to": "version_index_url",
+            "type": "string"
+          },
+          {
+            "from": "file_sha256",
+            "to": "file_sha256",
+            "type": "string"
+          },
+          {
+            "from": "file_bytes",
+            "to": "file_bytes",
+            "type": "integer"
+          },
+          {
+            "from": "extracted_text_sha256",
+            "to": "extracted_text_sha256",
+            "type": "string"
+          },
+          {
+            "from": "extracted_text_chars",
+            "to": "extracted_text_chars",
+            "type": "integer"
+          },
+          {
+            "from": "current_stage",
+            "to": "current_stage",
+            "type": "string"
+          },
+          {
+            "from": "status_label",
+            "to": "status_label",
+            "type": "string"
+          },
+          {
+            "from": "legislation_url",
+            "to": "legislation_url",
+            "type": "string"
+          },
+          {
+            "from": "publication_revision_count",
+            "to": "publication_revision_count",
+            "type": "integer"
+          }
+        ],
+        "droppedFields": [
+          {
+            "field": "text_content",
+            "reason": "bill text is not exported; digest and length only (R6)"
+          },
+          {
+            "field": "pdf_path",
+            "reason": "stored-copy location; never exported"
+          },
+          {
+            "field": "text_path",
+            "reason": "stored-copy location; never exported"
+          },
+          {
+            "field": "html_path",
+            "reason": "stored-copy location; never exported"
+          },
+          {
+            "field": "version_index_path",
+            "reason": "stored-copy location; never exported"
+          },
+          {
+            "field": "detail_archive_path",
+            "reason": "stored-copy location; never exported"
+          },
+          {
+            "field": "publication_revision_ids",
+            "reason": "each revision is its own record; the set keeps the count"
+          },
+          {
+            "field": "raw_record_json",
+            "reason": "upstream copy of the publisher response; never exported"
+          },
+          {
+            "field": "run_id",
+            "reason": "upstream operational identifier"
+          },
+          {
+            "field": "loaded_at",
+            "reason": "upstream load time; not evidence about the source"
+          }
+        ],
+        "expectedRowsNote": "201 observations of 201 publisher items; pinned by checksum",
+        "expectedInput": {
+          "sha256": "sha256:f66f967769819eaa0295fd9005f5e25d9115f6c92263cc8fa5c2efe3b70e7019",
+          "rows": 201
+        }
+      }
+    },
+    {
+      "source_id": "parliament_export_current_bills_history",
+      "registry_key": "parliament_bills",
+      "title": "Current bills index, earlier observations 15-19 September 2026 (reviewed upstream export; metadata only)",
+      "publisher": "New Zealand Parliament",
+      "official_url": "https://bills.parliament.nz/",
+      "adapter_kind": "export_import",
+      "adapter_name": "parliament_family_export",
+      "allowed_hosts": [],
+      "rights_id": "RIGHTS-09",
+      "view_scope": "current_parliament",
+      "snapshot_semantics": "rolling_window",
+      "enabled": false,
+      "catalogue_products": [
+        {
+          "product_id": "P03",
+          "mapping_note": "Earlier observations of the current bills index, 15 to 19 September 2026: 582 observations of 101 bills. Same record shape as the live current-bills source, which stays the current route; this source adds the history before it and never writes to it."
+        }
+      ],
+      "export_contract": {
+        "fileEnv": "EVIDENCE_EXPORT_PARLIAMENT_CURRENT_BILLS_HISTORY",
+        "manifestEnv": "EVIDENCE_EXPORT_PARLIAMENT_CURRENT_BILLS_HISTORY_MANIFEST",
+        "manifestChecksumPath": [
+          "export",
+          "sha256"
+        ],
+        "manifestRowsPath": [
+          "export",
+          "rows"
+        ],
+        "recordKind": "bill",
+        "idField": "see_family_contract",
+        "sourceUrlField": "see_family_contract",
+        "observedAtField": "observed_at",
+        "originalHashField": "upstream_content_hash",
+        "allowedFields": [
+          {
+            "from": "id",
+            "to": "id",
+            "type": "string"
+          },
+          {
+            "from": "title",
+            "to": "title",
+            "type": "string"
+          },
+          {
+            "from": "bill_number",
+            "to": "bill_number",
+            "type": "string"
+          },
+          {
+            "from": "bill_type",
+            "to": "bill_type",
+            "type": "string"
+          },
+          {
+            "from": "current_stage",
+            "to": "current_stage",
+            "type": "string"
+          },
+          {
+            "from": "parliament_number",
+            "to": "parliament_number",
+            "type": "integer"
+          },
+          {
+            "from": "last_activity",
+            "to": "last_activity",
+            "type": "string"
+          },
+          {
+            "from": "member_name",
+            "to": "member_name",
+            "type": "string"
+          },
+          {
+            "from": "party_label",
+            "to": "party_label",
+            "type": "string"
+          }
+        ],
+        "droppedFields": [
+          {
+            "field": "result_set_scope",
+            "reason": "upstream paging bookkeeping"
+          },
+          {
+            "field": "fact_type",
+            "reason": "upstream label; the two upstream kinds of the same bill are one record here"
+          },
+          {
+            "field": "raw_record_json",
+            "reason": "upstream copy of the publisher response; never exported"
+          },
+          {
+            "field": "run_id",
+            "reason": "upstream operational identifier"
+          },
+          {
+            "field": "loaded_at",
+            "reason": "upstream load time; not evidence about the source"
+          }
+        ],
+        "expectedRowsNote": "582 observations of 101 publisher items; pinned by checksum",
+        "expectedInput": {
+          "sha256": "sha256:0c60ca170d07bf3854912c7bcacde12ad9b2251c23fe8e0775fa83bfadbf9689",
+          "rows": 582
+        }
+      }
+    },
+    {
+      "source_id": "parliament_export_bill_register",
+      "registry_key": "parliament_bills",
+      "title": "Parliament bill register with dated stages, 43rd to 54th Parliaments (reviewed upstream export; metadata only)",
+      "publisher": "New Zealand Parliament",
+      "official_url": "https://bills.parliament.nz/",
+      "adapter_kind": "export_import",
+      "adapter_name": "parliament_family_export",
+      "allowed_hosts": [],
+      "rights_id": "RIGHTS-09",
+      "view_scope": "current_parliament",
+      "snapshot_semantics": "rolling_window",
+      "enabled": false,
+      "catalogue_products": [
+        {
+          "product_id": "P03",
+          "mapping_note": "Coverage beyond the current index: 3,533 bills of the 43rd to 54th Parliaments as collected 12 September 2026, with the publisher's dated stages. The bills in the current index are among them and are reconciled by publisher bill id, not added."
+        }
+      ],
+      "export_contract": {
+        "fileEnv": "EVIDENCE_EXPORT_PARLIAMENT_BILL_REGISTER",
+        "manifestEnv": "EVIDENCE_EXPORT_PARLIAMENT_BILL_REGISTER_MANIFEST",
+        "manifestChecksumPath": [
+          "export",
+          "sha256"
+        ],
+        "manifestRowsPath": [
+          "export",
+          "rows"
+        ],
+        "recordKind": "bill_register_entry",
+        "idField": "see_family_contract",
+        "sourceUrlField": "see_family_contract",
+        "observedAtField": "observed_at",
+        "originalHashField": "upstream_content_hash",
+        "allowedFields": [
+          {
+            "from": "id",
+            "to": "id",
+            "type": "string"
+          },
+          {
+            "from": "title",
+            "to": "title",
+            "type": "string"
+          },
+          {
+            "from": "bill_number",
+            "to": "bill_number",
+            "type": "string"
+          },
+          {
+            "from": "bill_type",
+            "to": "bill_type",
+            "type": "string"
+          },
+          {
+            "from": "status_label",
+            "to": "status_label",
+            "type": "string"
+          },
+          {
+            "from": "current_stage",
+            "to": "current_stage",
+            "type": "string"
+          },
+          {
+            "from": "parliament_number",
+            "to": "parliament_number",
+            "type": "integer"
+          },
+          {
+            "from": "introduced_date",
+            "to": "introduced_date",
+            "type": "string"
+          },
+          {
+            "from": "last_updated_date",
+            "to": "last_updated_date",
+            "type": "string"
+          },
+          {
+            "from": "select_committee",
+            "to": "select_committee",
+            "type": "string"
+          },
+          {
+            "from": "legislation_url",
+            "to": "legislation_url",
+            "type": "string"
+          }
+        ],
+        "droppedFields": [
+          {
+            "field": "description",
+            "reason": "publisher summary text is not exported (R6)"
+          },
+          {
+            "field": "raw_detail_json",
+            "reason": "upstream copy of the publisher response; never exported"
+          },
+          {
+            "field": "normalised_json",
+            "reason": "upstream working copy; never exported"
+          },
+          {
+            "field": "source_file",
+            "reason": "stored-copy location; never exported"
+          },
+          {
+            "field": "raw_member_json",
+            "reason": "upstream copy; never exported"
+          },
+          {
+            "field": "raw_stage_json",
+            "reason": "upstream copy; never exported"
+          },
+          {
+            "field": "member_id",
+            "reason": "not needed for a link-only record"
+          }
+        ],
+        "expectedRowsNote": "3533 observations of 3533 publisher items; pinned by checksum",
+        "expectedInput": {
+          "sha256": "sha256:fe42a774222bb9ce5d5e3782891b3482dd44d75df75086ba2e79f9070917659b",
+          "rows": 3533
+        }
+      }
+    },
+    {
+      "source_id": "parliament_export_committee_business",
+      "registry_key": "parliament_committee_business",
+      "title": "Business before select committees, 54th Parliament (reviewed upstream export; metadata and links)",
+      "publisher": "New Zealand Parliament",
+      "official_url": "https://selectcommittees.parliament.nz/",
+      "adapter_kind": "export_import",
+      "adapter_name": "parliament_family_export",
+      "allowed_hosts": [],
+      "rights_id": "RIGHTS-11",
+      "view_scope": "current_parliament",
+      "snapshot_semantics": "rolling_window",
+      "enabled": false,
+      "catalogue_products": [
+        {
+          "product_id": "P05",
+          "mapping_note": "The 123-item product: 124 observations of 123 items of business before committees, collected 19 September 2026."
+        }
+      ],
+      "export_contract": {
+        "fileEnv": "EVIDENCE_EXPORT_PARLIAMENT_COMMITTEE_BUSINESS",
+        "manifestEnv": "EVIDENCE_EXPORT_PARLIAMENT_COMMITTEE_BUSINESS_MANIFEST",
+        "manifestChecksumPath": [
+          "export",
+          "sha256"
+        ],
+        "manifestRowsPath": [
+          "export",
+          "rows"
+        ],
+        "recordKind": "committee_business_item",
+        "idField": "see_family_contract",
+        "sourceUrlField": "see_family_contract",
+        "observedAtField": "observed_at",
+        "originalHashField": "upstream_content_hash",
+        "allowedFields": [
+          {
+            "from": "id",
+            "to": "id",
+            "type": "string"
+          },
+          {
+            "from": "title",
+            "to": "title",
+            "type": "string"
+          },
+          {
+            "from": "subtitle",
+            "to": "subtitle",
+            "type": "string"
+          },
+          {
+            "from": "document_type",
+            "to": "document_type",
+            "type": "string"
+          },
+          {
+            "from": "item_type",
+            "to": "item_type",
+            "type": "string"
+          },
+          {
+            "from": "select_committee",
+            "to": "select_committee",
+            "type": "string"
+          },
+          {
+            "from": "parliament_number",
+            "to": "parliament_number",
+            "type": "integer"
+          },
+          {
+            "from": "publication_date",
+            "to": "publication_date",
+            "type": "string"
+          },
+          {
+            "from": "last_modified",
+            "to": "last_modified",
+            "type": "string"
+          },
+          {
+            "from": "attachment_ref",
+            "to": "attachment_ref",
+            "type": "string"
+          },
+          {
+            "from": "public_page_url",
+            "to": "public_page_url",
+            "type": "string"
+          }
+        ],
+        "droppedFields": [
+          {
+            "field": "result_set_scope",
+            "reason": "upstream paging bookkeeping"
+          },
+          {
+            "field": "raw_record_json",
+            "reason": "upstream copy of the publisher response; never exported"
+          },
+          {
+            "field": "run_id",
+            "reason": "upstream operational identifier"
+          },
+          {
+            "field": "loaded_at",
+            "reason": "upstream load time; not evidence about the source"
+          }
+        ],
+        "expectedRowsNote": "124 observations of 123 publisher items; pinned by checksum",
+        "expectedInput": {
+          "sha256": "sha256:111e2131ec104bf7f4bc8c38a9fa51058e0fe2a0d3f65cb037cc89cab945f1a3",
+          "rows": 124
+        }
+      }
+    },
+    {
+      "source_id": "parliament_export_committee_report_files",
+      "registry_key": "parliament_committee_reports",
+      "title": "Select committee report files, 54th Parliament (reviewed upstream export; file metadata and official download links, never report text)",
+      "publisher": "New Zealand Parliament",
+      "official_url": "https://selectcommittees.parliament.nz/",
+      "adapter_kind": "export_import",
+      "adapter_name": "parliament_family_export",
+      "allowed_hosts": [],
+      "rights_id": "RIGHTS-12",
+      "view_scope": "current_parliament",
+      "snapshot_semantics": "rolling_window",
+      "enabled": false,
+      "catalogue_products": [
+        {
+          "product_id": "P06",
+          "mapping_note": "The 1,285 report files: official download link, size, digest, publisher date, and the report each belongs to. Report text is not imported. A file is not a second report: P06 and P07 are never added."
+        }
+      ],
+      "export_contract": {
+        "fileEnv": "EVIDENCE_EXPORT_PARLIAMENT_COMMITTEE_REPORT_FILES",
+        "manifestEnv": "EVIDENCE_EXPORT_PARLIAMENT_COMMITTEE_REPORT_FILES_MANIFEST",
+        "manifestChecksumPath": [
+          "export",
+          "sha256"
+        ],
+        "manifestRowsPath": [
+          "export",
+          "rows"
+        ],
+        "recordKind": "committee_report_file",
+        "idField": "see_family_contract",
+        "sourceUrlField": "see_family_contract",
+        "observedAtField": "observed_at",
+        "originalHashField": "upstream_content_hash",
+        "allowedFields": [
+          {
+            "from": "attachment_ref",
+            "to": "attachment_ref",
+            "type": "string"
+          },
+          {
+            "from": "parent_report_ref",
+            "to": "parent_report_ref",
+            "type": "string"
+          },
+          {
+            "from": "title",
+            "to": "title",
+            "type": "string"
+          },
+          {
+            "from": "select_committee",
+            "to": "select_committee",
+            "type": "string"
+          },
+          {
+            "from": "publication_date",
+            "to": "publication_date",
+            "type": "string"
+          },
+          {
+            "from": "download_url",
+            "to": "download_url",
+            "type": "string"
+          },
+          {
+            "from": "media_type",
+            "to": "media_type",
+            "type": "string"
+          },
+          {
+            "from": "file_sha256",
+            "to": "file_sha256",
+            "type": "string"
+          },
+          {
+            "from": "file_bytes",
+            "to": "file_bytes",
+            "type": "integer"
+          },
+          {
+            "from": "text_extraction",
+            "to": "text_extraction",
+            "type": "string"
+          },
+          {
+            "from": "extracted_text_sha256",
+            "to": "extracted_text_sha256",
+            "type": "string"
+          },
+          {
+            "from": "extracted_text_chars",
+            "to": "extracted_text_chars",
+            "type": "integer"
+          }
+        ],
+        "droppedFields": [
+          {
+            "field": "extracted_text",
+            "reason": "report text is not exported; digest and length only (R6)"
+          },
+          {
+            "field": "content_disposition",
+            "reason": "file name not exported"
+          },
+          {
+            "field": "raw_path",
+            "reason": "stored-copy location; never exported"
+          },
+          {
+            "field": "text_path",
+            "reason": "stored-copy location; never exported"
+          },
+          {
+            "field": "provenance",
+            "reason": "upstream capture bookkeeping; the file digest and the collection time are carried instead"
+          },
+          {
+            "field": "text_extraction_error",
+            "reason": "operational free text"
+          },
+          {
+            "field": "raw_record_json",
+            "reason": "upstream copy of the publisher response; never exported"
+          },
+          {
+            "field": "run_id",
+            "reason": "upstream operational identifier"
+          },
+          {
+            "field": "loaded_at",
+            "reason": "upstream load time; not evidence about the source"
+          }
+        ],
+        "expectedRowsNote": "1285 observations of 1285 publisher items; pinned by checksum",
+        "expectedInput": {
+          "sha256": "sha256:b2067a1e7084e5dfef1eb0580598d01e13cdb434b26aae923c1dabbca2502105",
+          "rows": 1285
+        }
+      }
+    },
+    {
+      "source_id": "parliament_export_committee_reports",
+      "registry_key": "parliament_committee_reports",
+      "title": "Select committee report index, 54th Parliament (reviewed upstream export; metadata and links)",
+      "publisher": "New Zealand Parliament",
+      "official_url": "https://selectcommittees.parliament.nz/",
+      "adapter_kind": "export_import",
+      "adapter_name": "parliament_family_export",
+      "allowed_hosts": [],
+      "rights_id": "RIGHTS-12",
+      "view_scope": "current_parliament",
+      "snapshot_semantics": "rolling_window",
+      "enabled": false,
+      "catalogue_products": [
+        {
+          "product_id": "P07",
+          "mapping_note": "The 1,286-report index of the 54th Parliament: 1,536 observations of 1,286 reports, collected 19 September 2026."
+        }
+      ],
+      "export_contract": {
+        "fileEnv": "EVIDENCE_EXPORT_PARLIAMENT_COMMITTEE_REPORTS",
+        "manifestEnv": "EVIDENCE_EXPORT_PARLIAMENT_COMMITTEE_REPORTS_MANIFEST",
+        "manifestChecksumPath": [
+          "export",
+          "sha256"
+        ],
+        "manifestRowsPath": [
+          "export",
+          "rows"
+        ],
+        "recordKind": "committee_report",
+        "idField": "see_family_contract",
+        "sourceUrlField": "see_family_contract",
+        "observedAtField": "observed_at",
+        "originalHashField": "upstream_content_hash",
+        "allowedFields": [
+          {
+            "from": "id",
+            "to": "id",
+            "type": "string"
+          },
+          {
+            "from": "title",
+            "to": "title",
+            "type": "string"
+          },
+          {
+            "from": "subtitle",
+            "to": "subtitle",
+            "type": "string"
+          },
+          {
+            "from": "item_type",
+            "to": "item_type",
+            "type": "string"
+          },
+          {
+            "from": "document_type",
+            "to": "document_type",
+            "type": "string"
+          },
+          {
+            "from": "select_committee",
+            "to": "select_committee",
+            "type": "string"
+          },
+          {
+            "from": "parliament_number",
+            "to": "parliament_number",
+            "type": "integer"
+          },
+          {
+            "from": "publication_date",
+            "to": "publication_date",
+            "type": "string"
+          },
+          {
+            "from": "last_modified",
+            "to": "last_modified",
+            "type": "string"
+          },
+          {
+            "from": "attachment_ref",
+            "to": "attachment_ref",
+            "type": "string"
+          },
+          {
+            "from": "status_label",
+            "to": "status_label",
+            "type": "string"
+          }
+        ],
+        "droppedFields": [
+          {
+            "field": "attachmentName",
+            "reason": "file name not exported"
+          },
+          {
+            "field": "result_set_scope",
+            "reason": "upstream paging bookkeeping"
+          },
+          {
+            "field": "raw_record_json",
+            "reason": "upstream copy of the publisher response; never exported"
+          },
+          {
+            "field": "run_id",
+            "reason": "upstream operational identifier"
+          },
+          {
+            "field": "loaded_at",
+            "reason": "upstream load time; not evidence about the source"
+          }
+        ],
+        "expectedRowsNote": "1536 observations of 1286 publisher items; pinned by checksum",
+        "expectedInput": {
+          "sha256": "sha256:d7364cfeacb95b78b482e11c1a414995d245a198d07686107bf7f84fd5f360d4",
+          "rows": 1536
+        }
+      }
+    },
+    {
+      "source_id": "parliament_export_member_terms",
+      "registry_key": "parliament_members",
+      "title": "Members' current terms with the start dates stated in Parliament's open-data file (reviewed upstream export)",
+      "publisher": "New Zealand Parliament",
+      "official_url": "https://catalogue.data.govt.nz/dataset/f0f878d5-e2da-477d-85a0-4d2006f8b558",
+      "adapter_kind": "export_import",
+      "adapter_name": "parliament_family_export",
+      "allowed_hosts": [],
+      "rights_id": "RIGHTS-13",
+      "view_scope": "current_parliament",
+      "snapshot_semantics": "rolling_window",
+      "enabled": false,
+      "catalogue_products": [
+        {
+          "product_id": "P10",
+          "mapping_note": "Coverage beyond the directory: 122 members' current terms. 115 carry the start date Parliament's open-data member-terms file states; 7 came from a file that states none and stay undated. No date is inferred. The live directory stays the current route and is not written to."
+        }
+      ],
+      "export_contract": {
+        "fileEnv": "EVIDENCE_EXPORT_PARLIAMENT_MEMBER_TERMS",
+        "manifestEnv": "EVIDENCE_EXPORT_PARLIAMENT_MEMBER_TERMS_MANIFEST",
+        "manifestChecksumPath": [
+          "export",
+          "sha256"
+        ],
+        "manifestRowsPath": [
+          "export",
+          "rows"
+        ],
+        "recordKind": "member_service_term",
+        "idField": "see_family_contract",
+        "sourceUrlField": "see_family_contract",
+        "observedAtField": "observed_at",
+        "originalHashField": "upstream_content_hash",
+        "allowedFields": [
+          {
+            "from": "mandate_id",
+            "to": "mandate_id",
+            "type": "string"
+          },
+          {
+            "from": "person_ref",
+            "to": "person_ref",
+            "type": "string"
+          },
+          {
+            "from": "person_name",
+            "to": "person_name",
+            "type": "string"
+          },
+          {
+            "from": "party_name",
+            "to": "party_name",
+            "type": "string"
+          },
+          {
+            "from": "electorate_name",
+            "to": "electorate_name",
+            "type": "string"
+          },
+          {
+            "from": "representation_type",
+            "to": "representation_type",
+            "type": "string"
+          },
+          {
+            "from": "valid_from",
+            "to": "valid_from",
+            "type": "string"
+          },
+          {
+            "from": "valid_to",
+            "to": "valid_to",
+            "type": "string"
+          },
+          {
+            "from": "source_url",
+            "to": "source_url",
+            "type": "string"
+          }
+        ],
+        "droppedFields": [
+          {
+            "field": "source_record_json",
+            "reason": "upstream copy of the file row (carries contact columns); never exported"
+          },
+          {
+            "field": "observation_at",
+            "reason": "collection time is carried as observed_at"
+          }
+        ],
+        "expectedRowsNote": "122 observations of 122 publisher items; pinned by checksum",
+        "expectedInput": {
+          "sha256": "sha256:e90382148a92e69e5f432f7919b44d1a3f2fec1ee84777b5fd5b81662c3087b9",
+          "rows": 122
+        }
+      }
+    },
+    {
+      "source_id": "parliament_export_minister_roles",
+      "registry_key": "parliament_members",
+      "title": "Ministerial roles as listed on official minister pages when read on 12 September 2026 (reviewed upstream export; no appointment dates are stated)",
+      "publisher": "New Zealand Government / Beehive",
+      "official_url": "https://www.beehive.govt.nz/ministers",
+      "adapter_kind": "export_import",
+      "adapter_name": "parliament_family_export",
+      "allowed_hosts": [],
+      "rights_id": "RIGHTS-08",
+      "view_scope": "current_parliament",
+      "snapshot_semantics": "rolling_window",
+      "enabled": false,
+      "catalogue_products": [
+        {
+          "product_id": "P10",
+          "mapping_note": "111 ministerial roles as listed on official minister pages read 12 September 2026. The pages state no appointment dates, so none are stored."
+        }
+      ],
+      "export_contract": {
+        "fileEnv": "EVIDENCE_EXPORT_PARLIAMENT_MINISTER_ROLES",
+        "manifestEnv": "EVIDENCE_EXPORT_PARLIAMENT_MINISTER_ROLES_MANIFEST",
+        "manifestChecksumPath": [
+          "export",
+          "sha256"
+        ],
+        "manifestRowsPath": [
+          "export",
+          "rows"
+        ],
+        "recordKind": "minister_role",
+        "idField": "see_family_contract",
+        "sourceUrlField": "see_family_contract",
+        "observedAtField": "observed_at",
+        "originalHashField": "upstream_content_hash",
+        "allowedFields": [
+          {
+            "from": "role_id",
+            "to": "role_id",
+            "type": "string"
+          },
+          {
+            "from": "person_ref",
+            "to": "person_ref",
+            "type": "string"
+          },
+          {
+            "from": "person_name",
+            "to": "person_name",
+            "type": "string"
+          },
+          {
+            "from": "role_type",
+            "to": "role_type",
+            "type": "string"
+          },
+          {
+            "from": "role_name",
+            "to": "role_name",
+            "type": "string"
+          },
+          {
+            "from": "portfolio_name",
+            "to": "portfolio_name",
+            "type": "string"
+          },
+          {
+            "from": "valid_from",
+            "to": "valid_from",
+            "type": "string"
+          },
+          {
+            "from": "valid_to",
+            "to": "valid_to",
+            "type": "string"
+          },
+          {
+            "from": "source_url",
+            "to": "source_url",
+            "type": "string"
+          }
+        ],
+        "droppedFields": [
+          {
+            "field": "source_record_json",
+            "reason": "upstream copy; never exported"
+          }
+        ],
+        "expectedRowsNote": "111 observations of 111 publisher items; pinned by checksum",
+        "expectedInput": {
+          "sha256": "sha256:424862f00119794f125b351577cd4d88effb91d25b1a1da4718a1f041a3720ae",
+          "rows": 111
+        }
+      }
+    },
+    {
+      "source_id": "parliament_export_written_questions",
+      "registry_key": "parliament_written_questions",
+      "title": "Written parliamentary questions, 54th Parliament (reviewed upstream export; identifiers, people, official metadata and links)",
+      "publisher": "New Zealand Parliament",
+      "official_url": "https://questions.parliament.nz/",
+      "adapter_kind": "export_import",
+      "adapter_name": "parliament_family_export",
+      "allowed_hosts": [],
+      "rights_id": "RIGHTS-10",
+      "view_scope": "current_parliament",
+      "snapshot_semantics": "rolling_window",
+      "enabled": false,
+      "catalogue_products": [
+        {
+          "product_id": "P24",
+          "mapping_note": "The 187,956-question product: 225,322 collected observations of 187,956 written questions of the 54th Parliament, collected 19 September 2026. Identifiers, people, portfolios, publisher dates, links, and a digest and length of each text; no question or reply text. The source states no answer date and no lodgement date, so neither is stored."
+        }
+      ],
+      "export_contract": {
+        "fileEnv": "EVIDENCE_EXPORT_PARLIAMENT_WRITTEN_QUESTIONS",
+        "manifestEnv": "EVIDENCE_EXPORT_PARLIAMENT_WRITTEN_QUESTIONS_MANIFEST",
+        "manifestChecksumPath": [
+          "export",
+          "sha256"
+        ],
+        "manifestRowsPath": [
+          "export",
+          "rows"
+        ],
+        "recordKind": "written_question",
+        "idField": "see_family_contract",
+        "sourceUrlField": "see_family_contract",
+        "observedAtField": "observed_at",
+        "originalHashField": "upstream_content_hash",
+        "allowedFields": [
+          {
+            "from": "id",
+            "to": "id",
+            "type": "string"
+          },
+          {
+            "from": "title",
+            "to": "title",
+            "type": "string"
+          },
+          {
+            "from": "question_number",
+            "to": "question_number",
+            "type": "integer"
+          },
+          {
+            "from": "question_year",
+            "to": "question_year",
+            "type": "integer"
+          },
+          {
+            "from": "parliament_number",
+            "to": "parliament_number",
+            "type": "integer"
+          },
+          {
+            "from": "document_ref",
+            "to": "document_ref",
+            "type": "string"
+          },
+          {
+            "from": "question_released_date",
+            "to": "question_released_date",
+            "type": "string"
+          },
+          {
+            "from": "last_modified",
+            "to": "last_modified",
+            "type": "string"
+          },
+          {
+            "from": "member_ref",
+            "to": "member_ref",
+            "type": "string"
+          },
+          {
+            "from": "minister_name",
+            "to": "minister_name",
+            "type": "string"
+          },
+          {
+            "from": "ministerial_title",
+            "to": "ministerial_title",
+            "type": "string"
+          },
+          {
+            "from": "portfolio_ref",
+            "to": "portfolio_ref",
+            "type": "string"
+          },
+          {
+            "from": "role_ref",
+            "to": "role_ref",
+            "type": "string"
+          },
+          {
+            "from": "status_ref",
+            "to": "status_ref",
+            "type": "integer"
+          },
+          {
+            "from": "attachment_ref",
+            "to": "attachment_ref",
+            "type": "string"
+          },
+          {
+            "from": "attachment_bytes",
+            "to": "attachment_bytes",
+            "type": "integer"
+          },
+          {
+            "from": "question_text_sha256",
+            "to": "question_text_sha256",
+            "type": "string"
+          },
+          {
+            "from": "question_text_chars",
+            "to": "question_text_chars",
+            "type": "integer"
+          },
+          {
+            "from": "reply_text_sha256",
+            "to": "reply_text_sha256",
+            "type": "string"
+          },
+          {
+            "from": "reply_text_chars",
+            "to": "reply_text_chars",
+            "type": "integer"
+          }
+        ],
+        "droppedFields": [
+          {
+            "field": "questionText",
+            "reason": "question text is not exported; digest and length only (R6)"
+          },
+          {
+            "field": "replyText",
+            "reason": "reply text is not exported; digest and length only (R6)"
+          },
+          {
+            "field": "attachmentName",
+            "reason": "file name not exported"
+          },
+          {
+            "field": "result_set_scope",
+            "reason": "upstream paging bookkeeping; changes between collections without the question changing"
+          },
+          {
+            "field": "raw_record_json",
+            "reason": "upstream copy of the publisher response; never exported"
+          },
+          {
+            "field": "run_id",
+            "reason": "upstream operational identifier"
+          },
+          {
+            "field": "loaded_at",
+            "reason": "upstream load time; not evidence about the source"
+          }
+        ],
+        "expectedRowsNote": "225322 observations of 187956 publisher items; pinned by checksum",
+        "expectedInput": {
+          "sha256": "sha256:de133b68ee7e3ff89a7a3dd49d112da0d33b491afe0407733ec9b26726233c19",
+          "rows": 225322
+        }
+      }
+    },
+    {
+      "registry_key": "parliament_written_questions",
+      "publisher": "New Zealand Parliament",
+      "official_url": "https://questions.parliament.nz/",
+      "adapter_kind": "live_fetch",
+      "adapter_name": "nz_parliament_written_questions",
+      "allowed_hosts": [
+        "questions.parliament.nz"
+      ],
+      "rights_id": "RIGHTS-10",
+      "view_scope": "current_parliament",
+      "snapshot_semantics": "append_only_feed",
+      "access_basis": "public_undocumented_endpoint",
+      "min_interval_ms": 3000,
+      "access_note": "The search endpoint the publisher's own public website calls, without any sign-in. It is undocumented and has no published terms of use of its own. Under the owner's collection policy of 2026-09-20 that is a reported signal, not a veto. Requests are anonymous and carry no Origin, Referer, cookie or token. No permission from the publisher is claimed. Question and reply text is read in memory only to take a digest and a length, and is never stored.",
+      "source_id": "nz_parliament_written_questions_recent",
+      "title": "Written questions, newest two months (metadata only)",
+      "expected_cadence_seconds": 86400,
+      "enabled": true,
+      "adapter_options": {
+        "mode": "incremental",
+        "incremental_months": 2,
+        "parliament": 54
+      },
+      "catalogue_products": [
+        {
+          "product_id": "P24",
+          "mapping_note": "Live incremental route: re-reads the newest two months of release dates, because replies are added to existing questions later. Identifiers, people, official metadata, text digests and links; no question or reply text. A different route to the same publisher items as the export source; never added to it."
+        }
+      ]
+    },
+    {
+      "registry_key": "parliament_written_questions",
+      "publisher": "New Zealand Parliament",
+      "official_url": "https://questions.parliament.nz/",
+      "adapter_kind": "live_fetch",
+      "adapter_name": "nz_parliament_written_questions",
+      "allowed_hosts": [
+        "questions.parliament.nz"
+      ],
+      "rights_id": "RIGHTS-10",
+      "view_scope": "current_parliament",
+      "snapshot_semantics": "append_only_feed",
+      "access_basis": "public_undocumented_endpoint",
+      "min_interval_ms": 3000,
+      "access_note": "The search endpoint the publisher's own public website calls, without any sign-in. It is undocumented and has no published terms of use of its own. Under the owner's collection policy of 2026-09-20 that is a reported signal, not a veto. Requests are anonymous and carry no Origin, Referer, cookie or token. No permission from the publisher is claimed. Question and reply text is read in memory only to take a digest and a length, and is never stored.",
+      "source_id": "nz_parliament_written_questions_backfill",
+      "title": "Written questions, 54th Parliament from its start (metadata only)",
+      "enabled": false,
+      "disabled_because": "cli_only",
+      "blocked_reason": "Backfill route: about 1,900 paced requests. Run deliberately from the CLI and resumed from its checkpoint; never scheduled.",
+      "adapter_options": {
+        "mode": "backfill",
+        "backfill_from": "2023-11-01",
+        "parliament": 54
+      },
+      "catalogue_products": [
+        {
+          "product_id": "P24",
+          "mapping_note": "Live backfill route: every month of release dates from November 2023 to now, month by month. The publisher counted 187,956 questions for the 54th Parliament on 2026-09-20. No question or reply text."
+        }
+      ]
+    },
+    {
+      "source_id": "nz_parliament_committee_reports",
+      "registry_key": "parliament_committee_reports",
+      "title": "Select committee reports index, 54th Parliament (metadata only)",
+      "publisher": "New Zealand Parliament",
+      "official_url": "https://selectcommittees.parliament.nz/",
+      "adapter_kind": "live_fetch",
+      "adapter_name": "nz_parliament_committee_reports",
+      "allowed_hosts": [
+        "selectcommittees.parliament.nz"
+      ],
+      "rights_id": "RIGHTS-12",
+      "view_scope": "current_parliament",
+      "expected_cadence_seconds": 86400,
+      "snapshot_semantics": "complete_snapshot",
+      "enabled": true,
+      "adapter_options": {
+        "parliament": 54
+      },
+      "access_basis": "public_undocumented_endpoint",
+      "min_interval_ms": 3000,
+      "access_note": "The search endpoint the publisher's own public website calls, without any sign-in. It is undocumented and has no published terms of use of its own. Under the owner's collection policy of 2026-09-20 that is a reported signal, not a veto. Requests are anonymous and carry no Origin, Referer, cookie or token. No permission from the publisher is claimed. No report text and no attachment is requested.",
+      "catalogue_products": [
+        {
+          "product_id": "P07",
+          "mapping_note": "Live route to the reports index: backfill and refresh are the same complete walk (1,286 reports counted by the publisher on 2026-09-20). Titles, committee, dates, identifiers and links only."
+        }
+      ]
+    },
+    {
+      "source_id": "nz_parliament_committee_business",
+      "registry_key": "parliament_committee_business",
+      "title": "Business currently before select committees (metadata only)",
+      "publisher": "New Zealand Parliament",
+      "official_url": "https://selectcommittees.parliament.nz/",
+      "adapter_kind": "live_fetch",
+      "adapter_name": "nz_parliament_committee_business",
+      "allowed_hosts": [
+        "selectcommittees.parliament.nz"
+      ],
+      "rights_id": "RIGHTS-11",
+      "view_scope": "current_parliament",
+      "expected_cadence_seconds": 21600,
+      "snapshot_semantics": "complete_snapshot",
+      "enabled": true,
+      "adapter_options": {
+        "parliament": 54
+      },
+      "access_basis": "public_undocumented_endpoint",
+      "min_interval_ms": 3000,
+      "access_note": "The search endpoint the publisher's own public website calls, without any sign-in. It is undocumented and has no published terms of use of its own. Under the owner's collection policy of 2026-09-20 that is a reported signal, not a veto. Requests are anonymous and carry no Origin, Referer, cookie or token. No permission from the publisher is claimed. The public page address per item type has not been checked by a person; see LIVE-NOTES.md.",
+      "catalogue_products": [
+        {
+          "product_id": "P05",
+          "mapping_note": "Live route to the current index of business before committees (123 items counted by the publisher on 2026-09-20). A complete walk is a true snapshot: an item that is reported back leaves the list."
+        }
+      ]
+    },
+    {
+      "source_id": "nz_parliament_bill_publications",
+      "registry_key": "parliament_bill_publications",
+      "title": "Published revisions of current bills (metadata only)",
+      "publisher": "New Zealand Parliament / New Zealand Legislation",
+      "official_url": "https://bills.parliament.nz/",
+      "adapter_kind": "live_fetch",
+      "adapter_name": "nz_parliament_bill_publications",
+      "allowed_hosts": [
+        "bills.parliament.nz",
+        "www.legislation.govt.nz"
+      ],
+      "rights_id": "RIGHTS-09",
+      "view_scope": "current_parliament",
+      "expected_cadence_seconds": 86400,
+      "snapshot_semantics": "rolling_window",
+      "enabled": false,
+      "disabled_because": "pending_person_decision",
+      "blocked_reason": "Works from the CLI, but waits on a person's decision: the legislation website's robots.txt disallows the versions index path (recorded as an advisory), and the way the index address is derived was checked on three bills only. See LIVE-NOTES.md.",
+      "access_basis": "public_undocumented_endpoint",
+      "min_interval_ms": 3000,
+      "access_note": "The search endpoint the publisher's own public website calls, without any sign-in. It is undocumented and has no published terms of use of its own. Under the owner's collection policy of 2026-09-20 that is a reported signal, not a veto. Requests are anonymous and carry no Origin, Referer, cookie or token. No permission from the publisher is claimed. On the legislation website only a bill's public versions index page is read; no PDF and no bill text is ever requested.",
+      "catalogue_products": [
+        {
+          "product_id": "P02",
+          "mapping_note": "Live route: per current bill, the revisions its versions index lists (revision id, version date, official PDF link) and one set record per bill. When an index cannot be read the set says so and gives no count."
+        }
+      ]
+    },
+    {
+      "source_id": "nz_government_releases_listing",
+      "registry_key": "government_releases",
+      "title": "Government releases archive listing (link and title only)",
+      "publisher": "New Zealand Government / Beehive",
+      "official_url": "https://www.beehive.govt.nz/releases",
+      "adapter_kind": "live_fetch",
+      "adapter_name": "nz_government_releases_listing",
+      "allowed_hosts": [
+        "www.beehive.govt.nz"
+      ],
+      "rights_id": "RIGHTS-08",
+      "view_scope": "general",
+      "snapshot_semantics": "append_only_feed",
+      "enabled": false,
+      "disabled_because": "publisher_blocked",
+      "blocked_reason": "On 2026-09-20 the listing answered this project's automated client with a firewall challenge (one attempt, not retried, not worked around). The listing markup has therefore never been observed and the parser is unverified. The releases feed stays the live route.",
+      "access_basis": "public_page",
+      "min_interval_ms": 5000,
+      "access_note": "Public listing pages only; a release page is never requested and no release text is stored. A challenge is final.",
+      "catalogue_products": [
+        {
+          "product_id": "P01",
+          "mapping_note": "Backfill route through the public paginated listing. Blocked at the time of writing; nothing has been collected through it."
+        }
+      ]
+    },
+    {
+      "source_id": "stats_healthnz_data",
+      "registry_key": "statistics",
+      "title": "Health New Zealand data: primary care enrolment facts and data catalogue",
+      "publisher": "Health New Zealand | Te Whatu Ora",
+      "official_url": "https://www.tewhatuora.govt.nz/for-health-professionals/data-and-statistics/",
+      "rights_id": "RIGHTS-05",
+      "view_scope": "statistics",
+      "enabled": false,
+      "catalogue_products": [
+        {
+          "product_id": "P11",
+          "mapping_note": "All 93 catalogue records: 44 facts (one workbook, one quarter) as observations, 26 links and 23 file listings as catalogue entries."
+        }
+      ],
+      "adapter_kind": "live_fetch",
+      "adapter_name": "stats_family_fetch",
+      "allowed_hosts": [
+        "www.healthnz.govt.nz",
+        "www.tewhatuora.govt.nz"
+      ],
+      "access_basis": "public_page",
+      "snapshot_semantics": "append_only_feed",
+      "min_interval_ms": 2000,
+      "expected_cadence_seconds": 2592000,
+      "disabled_because": "cli_only",
+      "blocked_reason": "Runs from the statistics family CLI only (fetch, then load): the publisher files are larger than the Edge Function budget, so this source is never schedule-enabled.",
+      "access_note": "The listing page is fetched fresh. Facts come from a workbook whose cell mapping was reviewed by hand for one quarter; a new quarter needs that review again, so no fact is parsed unattended."
+    },
+    {
+      "source_id": "stats_msd_benefits",
+      "registry_key": "statistics",
+      "title": "MSD quarterly national benefit tables and statistics catalogue",
+      "publisher": "Ministry of Social Development",
+      "official_url": "https://www.msd.govt.nz/about-msd-and-our-work/publications-resources/statistics/",
+      "rights_id": "RIGHTS-06",
+      "view_scope": "statistics",
+      "enabled": false,
+      "catalogue_products": [
+        {
+          "product_id": "P12",
+          "mapping_note": "903 facts (43 reviewed national series of one quarterly workbook) as observations; 26 catalogue records as catalogue entries (27 stored versions)."
+        }
+      ],
+      "adapter_kind": "live_fetch",
+      "adapter_name": "stats_family_fetch",
+      "allowed_hosts": [
+        "www.msd.govt.nz"
+      ],
+      "access_basis": "public_page",
+      "snapshot_semantics": "append_only_feed",
+      "min_interval_ms": 2000,
+      "expected_cadence_seconds": 2592000,
+      "disabled_because": "cli_only",
+      "blocked_reason": "Runs from the statistics family CLI only (fetch, then load): the publisher files are larger than the Edge Function budget, so this source is never schedule-enabled.",
+      "access_note": "The statistics index is fetched fresh. Facts come from a quarterly workbook normalised against reviewed cells; the next quarter's workbook needs that review, so no fact is parsed unattended."
+    },
+    {
+      "source_id": "stats_rbnz_catalogue",
+      "registry_key": "statistics",
+      "title": "Reserve Bank of New Zealand datasets listed on the government data catalogue",
+      "publisher": "Reserve Bank of New Zealand",
+      "official_url": "https://www.rbnz.govt.nz/statistics",
+      "rights_id": "RIGHTS-15",
+      "view_scope": "statistics",
+      "enabled": false,
+      "catalogue_products": [
+        {
+          "product_id": "P18",
+          "mapping_note": "18 catalogue records. Catalogue only: no time-series observation is imported or implied."
+        }
+      ],
+      "adapter_kind": "live_fetch",
+      "adapter_name": "stats_family_fetch",
+      "allowed_hosts": [
+        "catalogue.data.govt.nz",
+        "www.rbnz.govt.nz"
+      ],
+      "access_basis": "documented_api",
+      "snapshot_semantics": "append_only_feed",
+      "min_interval_ms": 2000,
+      "expected_cadence_seconds": 604800,
+      "disabled_because": "cli_only",
+      "blocked_reason": "Runs from the statistics family CLI only (fetch, then load): the publisher files are larger than the Edge Function budget, so this source is never schedule-enabled.",
+      "access_note": "The public catalogue API result set is fetched fresh and replaces nothing: entries are versioned by content."
+    },
+    {
+      "source_id": "stats_nz_census_2018_highlights",
+      "registry_key": "statistics",
+      "title": "2018 Census totals by topic: national highlights",
+      "publisher": "Stats NZ",
+      "official_url": "https://www.stats.govt.nz/2018-census/",
+      "rights_id": "RIGHTS-16",
+      "view_scope": "statistics",
+      "enabled": false,
+      "catalogue_products": [
+        {
+          "product_id": "P19",
+          "mapping_note": "The catalogue counts 877 operational records (6 of the file's CSV members). The dedicated census route holds all 4,966 observations of the SAME file (same SHA-256) and contains those 877 exactly; it is the one imported. 877 is a subset of 4,966, not an addition to it."
+        }
+      ],
+      "adapter_kind": "export_import",
+      "adapter_name": "stats_family_artifact",
+      "allowed_hosts": [],
+      "snapshot_semantics": "append_only_feed",
+      "blocked_reason": "No incremental route: A closed historical release published as a ZIP archive. The shared fetch client returns text only, so the archive cannot be re-read here; the file is static and is re-verified by its recorded SHA-256 upstream.",
+      "export_contract": {
+        "fileEnv": "EVIDENCE_EXPORT_STATS_DIR",
+        "recordKind": "stat_artifact_row",
+        "idField": "content_hash",
+        "sourceUrlField": "source_url",
+        "observedAtField": "retrieved_at",
+        "allowedFields": [],
+        "droppedFields": [],
+        "expectedRowsNote": "Row counts are pinned per artifact by its manifest (file hashes and row counts) and reconciled upstream -> artifact -> store in the load receipt."
+      }
+    },
+    {
+      "source_id": "stats_nz_census_2013_meshblock",
+      "registry_key": "statistics",
+      "title": "2013 Census meshblock dataset: selected totals for 2001, 2006 and 2013 on 2013 boundaries",
+      "publisher": "Stats NZ",
+      "official_url": "https://www3.stats.govt.nz/meshblock/2013/csv/2013_mb_dataset_Total_New_Zealand_CSV.zip",
+      "rights_id": "RIGHTS-22",
+      "view_scope": "statistics",
+      "enabled": false,
+      "catalogue_products": [],
+      "adapter_kind": "export_import",
+      "adapter_name": "stats_family_artifact",
+      "allowed_hosts": [],
+      "snapshot_semantics": "append_only_feed",
+      "blocked_reason": "No incremental route: A closed historical release published as a ZIP archive; see the 2018 note. It answers no product of the 24-product catalogue and is loaded as history, labelled as such.",
+      "export_contract": {
+        "fileEnv": "EVIDENCE_EXPORT_STATS_DIR",
+        "recordKind": "stat_artifact_row",
+        "idField": "content_hash",
+        "sourceUrlField": "source_url",
+        "observedAtField": "retrieved_at",
+        "allowedFields": [],
+        "droppedFields": [],
+        "expectedRowsNote": "Row counts are pinned per artifact by its manifest (file hashes and row counts) and reconciled upstream -> artifact -> store in the load receipt."
+      }
+    },
+    {
+      "source_id": "stats_nz_csv_catalogue",
+      "registry_key": "statistics",
+      "title": "Stats NZ CSV files for download: file listing",
+      "publisher": "Stats NZ",
+      "official_url": "https://www.stats.govt.nz/large-datasets/csv-files-for-download/",
+      "rights_id": "RIGHTS-18",
+      "view_scope": "statistics",
+      "enabled": false,
+      "catalogue_products": [
+        {
+          "product_id": "P20",
+          "mapping_note": "128 file listings as catalogue entries (374 stored versions across 6 collection runs). Listing metadata only: no fact is asserted from a listing."
+        }
+      ],
+      "adapter_kind": "live_fetch",
+      "adapter_name": "stats_family_fetch",
+      "allowed_hosts": [
+        "www.stats.govt.nz"
+      ],
+      "access_basis": "public_page",
+      "snapshot_semantics": "append_only_feed",
+      "min_interval_ms": 2000,
+      "expected_cadence_seconds": 86400,
+      "disabled_because": "cli_only",
+      "blocked_reason": "Runs from the statistics family CLI only (fetch, then load): the publisher files are larger than the Edge Function budget, so this source is never schedule-enabled.",
+      "access_note": "The listing page is fetched fresh and every CSV/ZIP link on it becomes a catalogue entry version."
+    },
+    {
+      "source_id": "stats_nz_census_2023",
+      "registry_key": "statistics",
+      "title": "2023 Census selected products: population, dwelling and electoral population counts",
+      "publisher": "Stats NZ",
+      "official_url": "https://www.stats.govt.nz/2023-census/",
+      "rights_id": "RIGHTS-17",
+      "view_scope": "statistics",
+      "enabled": false,
+      "catalogue_products": [
+        {
+          "product_id": "P21",
+          "mapping_note": "All 37,689 operational facts (two workbooks) as observations. The 757-row product finder is loaded beside them as catalogue entries; it is an index of products, not observations, and is not part of the 37,689."
+        }
+      ],
+      "adapter_kind": "export_import",
+      "adapter_name": "stats_family_artifact",
+      "allowed_hosts": [],
+      "snapshot_semantics": "append_only_feed",
+      "blocked_reason": "No incremental route: Both inputs are workbooks (a binary format the shared text-only fetch client cannot read) whose table layouts were mapped by hand. The publisher's observation API answers 401 without a subscription key and is not used.",
+      "export_contract": {
+        "fileEnv": "EVIDENCE_EXPORT_STATS_DIR",
+        "recordKind": "stat_artifact_row",
+        "idField": "content_hash",
+        "sourceUrlField": "source_url",
+        "observedAtField": "retrieved_at",
+        "allowedFields": [],
+        "droppedFields": [],
+        "expectedRowsNote": "Row counts are pinned per artifact by its manifest (file hashes and row counts) and reconciled upstream -> artifact -> store in the load receipt."
+      }
+    },
+    {
+      "source_id": "stats_nz_selected_series",
+      "registry_key": "statistics",
+      "title": "Stats NZ selected price indexes and national population estimates",
+      "publisher": "Stats NZ",
+      "official_url": "https://www.stats.govt.nz/large-datasets/csv-files-for-download/",
+      "rights_id": "RIGHTS-18",
+      "view_scope": "statistics",
+      "enabled": false,
+      "catalogue_products": [
+        {
+          "product_id": "P22",
+          "mapping_note": "All 55,428 operational facts: selected price indexes (55,284) and national population by broad age group (144)."
+        }
+      ],
+      "adapter_kind": "live_fetch",
+      "adapter_name": "stats_family_fetch",
+      "allowed_hosts": [
+        "www.stats.govt.nz"
+      ],
+      "access_basis": "public_page",
+      "snapshot_semantics": "append_only_feed",
+      "min_interval_ms": 2000,
+      "expected_cadence_seconds": 2592000,
+      "disabled_because": "cli_only",
+      "blocked_reason": "Runs from the statistics family CLI only (fetch, then load): the publisher files are larger than the Edge Function budget, so this source is never schedule-enabled.",
+      "access_note": "The newest 'Selected price indexes' CSV linked from the listing page is fetched fresh and loaded as its own release vintage."
+    },
+    {
+      "source_id": "stats_nz_release_series",
+      "registry_key": "statistics",
+      "title": "Stats NZ release CSV files: prices, GDP, government finance, employment, migration, population, income and housing costs",
+      "publisher": "Stats NZ",
+      "official_url": "https://www.stats.govt.nz/large-datasets/csv-files-for-download/",
+      "rights_id": "RIGHTS-18",
+      "view_scope": "statistics",
+      "enabled": false,
+      "catalogue_products": [
+        {
+          "product_id": "P22",
+          "mapping_note": "Nine further release files held only by the dedicated series route (234,325 observations). Different files and vintages from the 55,428 above: loaded as separate datasets and releases, never summed with them."
+        }
+      ],
+      "adapter_kind": "export_import",
+      "adapter_name": "stats_family_artifact",
+      "allowed_hosts": [],
+      "snapshot_semantics": "append_only_feed",
+      "blocked_reason": "No incremental route: Each file is one named release; a later release is a different file. New releases are found by the listing source and need a column mapping check before load.",
+      "export_contract": {
+        "fileEnv": "EVIDENCE_EXPORT_STATS_DIR",
+        "recordKind": "stat_artifact_row",
+        "idField": "content_hash",
+        "sourceUrlField": "source_url",
+        "observedAtField": "retrieved_at",
+        "allowedFields": [],
+        "droppedFields": [],
+        "expectedRowsNote": "Row counts are pinned per artifact by its manifest (file hashes and row counts) and reconciled upstream -> artifact -> store in the load receipt."
+      }
+    },
+    {
+      "source_id": "stats_tenancy_rental_bonds",
+      "registry_key": "statistics",
+      "title": "Tenancy Services rental bond data: detailed monthly regional measures",
+      "publisher": "Ministry of Business, Innovation and Employment / Tenancy Services",
+      "official_url": "https://www.tenancy.govt.nz/rent-bond-and-bills/market-rent/",
+      "rights_id": "RIGHTS-19",
+      "view_scope": "statistics",
+      "enabled": false,
+      "catalogue_products": [
+        {
+          "product_id": "P23",
+          "mapping_note": "All 57,892 records: 57,888 facts (one regional monthly file, 1993-02 to 2026-07) as observations and 4 links as catalogue entries."
+        }
+      ],
+      "adapter_kind": "live_fetch",
+      "adapter_name": "stats_family_fetch",
+      "allowed_hosts": [
+        "www.tenancy.govt.nz"
+      ],
+      "access_basis": "public_page",
+      "snapshot_semantics": "append_only_feed",
+      "min_interval_ms": 2000,
+      "expected_cadence_seconds": 2592000,
+      "disabled_because": "cli_only",
+      "blocked_reason": "Runs from the statistics family CLI only (fetch, then load): the publisher files are larger than the Edge Function budget, so this source is never schedule-enabled.",
+      "access_note": "The regional monthly CSV linked from the rental bond data page is fetched fresh and loaded as its own release vintage."
     }
   ],
   "schedules": [
@@ -440,6 +2868,46 @@
       "function_slug": "ingest-run",
       "max_runtime_seconds": 45,
       "max_records": 100
+    },
+    {
+      "schedule_key": "party_vote_polls_index_daily",
+      "source_id": "party_vote_polls_index",
+      "cron_expr": "17 19 * * *",
+      "function_slug": "ingest-run",
+      "max_runtime_seconds": 120,
+      "max_records": 500
+    },
+    {
+      "schedule_key": "party_policy_pages_2026_monitor_daily",
+      "source_id": "party_policy_pages_2026_monitor",
+      "cron_expr": "43 18 * * *",
+      "function_slug": "ingest-run",
+      "max_runtime_seconds": 140,
+      "max_records": 100
+    },
+    {
+      "schedule_key": "written-questions-recent-20-minutely",
+      "source_id": "nz_parliament_written_questions_recent",
+      "cron_expr": "10,30,50 * * * *",
+      "function_slug": "ingest-run",
+      "max_runtime_seconds": 130,
+      "max_records": 2000
+    },
+    {
+      "schedule_key": "committee-reports-daily",
+      "source_id": "nz_parliament_committee_reports",
+      "cron_expr": "25 16 * * *",
+      "function_slug": "ingest-run",
+      "max_runtime_seconds": 140,
+      "max_records": 2000
+    },
+    {
+      "schedule_key": "committee-business-6-hourly",
+      "source_id": "nz_parliament_committee_business",
+      "cron_expr": "5 */6 * * *",
+      "function_slug": "ingest-run",
+      "max_runtime_seconds": 60,
+      "max_records": 500
     }
   ]
 }

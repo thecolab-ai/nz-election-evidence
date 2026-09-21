@@ -1,0 +1,317 @@
+{
+  "receipt_note": "Real anonymous retrieval of 17 public party pages on 2026-09-20 (UTC): 16 retrieved, 1 answered with a challenge and is recorded as unavailable (one attempt, not worked around).",
+  "receipt_version": 1,
+  "command": "fetch",
+  "source_id": "party_policy_pages_2026_monitor",
+  "mode": "backfill",
+  "dry_run": false,
+  "status": "succeeded",
+  "complete_snapshot": true,
+  "error_class": null,
+  "manifest_hash": "sha256:c7ae071c906bf9b487b2a3004a45ac46168ede3c2b7a8a0b599b6adfb7a9b39c",
+  "input_digest": null,
+  "run_id": "c773c38d-a90c-4d8a-8437-9f484d2bad26",
+  "totals": {
+    "seen": 17,
+    "versions_inserted": 17,
+    "observations_inserted": 17,
+    "unchanged": 0,
+    "rejected": 0
+  },
+  "tombstoned": 0,
+  "pages": 17,
+  "projection": {
+    "shared": {
+      "documents": 0,
+      "mp_directory": 0,
+      "baseline_candidacies": 0
+    },
+    "election_family": {
+      "facts": {
+        "official_page_status": 0,
+        "published_aggregates": 0
+      },
+      "documents": {},
+      "nationwide": 0,
+      "electorates": {
+        "summaries": 0,
+        "party_lines": 0,
+        "candidate_route_checks": 0
+      }
+    }
+  },
+  "fetches": [
+    {
+      "url": "https://www.act.org.nz/robots.txt",
+      "outcome": "ok",
+      "http_status": 200,
+      "bytes": 67,
+      "body_sha256": "sha256:07fe91cce1d1321e237dd2958f0fb6fda0bf980bdfedf15907d064436bb5d1bd",
+      "retrieved_at": "2026-09-20T09:22:20.881Z"
+    },
+    {
+      "url": "https://www.act.org.nz/policies",
+      "outcome": "ok",
+      "http_status": 200,
+      "bytes": 247638,
+      "body_sha256": "sha256:b1f135b8fb1042993163f6cfe2e01b19f7109e139cc92c310927b777d028f84d",
+      "retrieved_at": "2026-09-20T09:22:20.827Z"
+    },
+    {
+      "url": "https://allianceparty.nz/robots.txt",
+      "outcome": "ok",
+      "http_status": 200,
+      "bytes": 1009,
+      "body_sha256": "sha256:4e65b1234aa5c6d17d7c681b632ff3938ee32a806eb9d9a29a0d3e8592b9b6e9",
+      "retrieved_at": "2026-09-20T09:22:26.070Z"
+    },
+    {
+      "url": "https://allianceparty.nz/what-we-stand-for/",
+      "outcome": "ok",
+      "http_status": 200,
+      "bytes": 80820,
+      "body_sha256": "sha256:87ffcef18377a5772a45126dcebefd47fa717a1a1a7e014d217cbced662622d0",
+      "retrieved_at": "2026-09-20T09:22:26.042Z"
+    },
+    {
+      "url": "https://animaljustice.org.nz/robots.txt",
+      "outcome": "ok",
+      "http_status": 200,
+      "bytes": 121,
+      "body_sha256": "sha256:c2273d4bbab1017adce3e4b51d914adf838d1e76ec806a3529165532a99fccd3",
+      "retrieved_at": "2026-09-20T09:22:31.531Z"
+    },
+    {
+      "url": "https://animaljustice.org.nz/election-2026/election-manifesto/",
+      "outcome": "ok",
+      "http_status": 200,
+      "bytes": 89694,
+      "body_sha256": "sha256:b6f878d9b2923a4d65a455ae411b5dfaa3f726880351e9072be3566830225ae3",
+      "retrieved_at": "2026-09-20T09:22:31.518Z"
+    },
+    {
+      "url": "https://www.alcp.org.nz/robots.txt",
+      "outcome": "ok",
+      "http_status": 200,
+      "bytes": 1506,
+      "body_sha256": "sha256:dbde570e58b7239432e874d2b4f71f1e09dba05c0a6a94267edd991844db4bf7",
+      "retrieved_at": "2026-09-20T09:22:37.836Z"
+    },
+    {
+      "url": "https://www.alcp.org.nz/policy",
+      "outcome": "ok",
+      "http_status": 200,
+      "bytes": 166758,
+      "body_sha256": "sha256:ae18d73eef0a2b2b51813dc65674b28a1111773dfd6a6193d1437aa0b1bc9a6c",
+      "retrieved_at": "2026-09-20T09:22:37.742Z"
+    },
+    {
+      "url": "https://www.conservatives.nz/robots.txt",
+      "outcome": "ok",
+      "http_status": 200,
+      "bytes": 494,
+      "body_sha256": "sha256:f5354ae0ad4949577d16fa0da1b6e530b04f503a7a2d5a9f8b30dd82e4b63e47",
+      "retrieved_at": "2026-09-20T09:22:43.785Z"
+    },
+    {
+      "url": "https://www.conservatives.nz/policy",
+      "outcome": "ok",
+      "http_status": 200,
+      "bytes": 1204805,
+      "body_sha256": "sha256:28f7a38fa123793128fea6f3d43f1dc080fae0ca1796721ee86aa0ca3ea37fb4",
+      "retrieved_at": "2026-09-20T09:22:43.717Z"
+    },
+    {
+      "url": "https://palfree.nz/robots.txt",
+      "outcome": "ok",
+      "http_status": 404,
+      "bytes": 0,
+      "body_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "retrieved_at": "2026-09-20T09:22:49.337Z"
+    },
+    {
+      "url": "https://palfree.nz/",
+      "outcome": "ok",
+      "http_status": 200,
+      "bytes": 24189,
+      "body_sha256": "sha256:c68eee7bc4f72bff19314681d708bca9e6ae5acc783f9f4f4a7377fc84a9a900",
+      "retrieved_at": "2026-09-20T09:22:49.327Z"
+    },
+    {
+      "url": "https://www.greens.org.nz/robots.txt",
+      "outcome": "ok",
+      "http_status": 200,
+      "bytes": 156,
+      "body_sha256": "sha256:9b69d1ba6a09961bbc8a752c0d7fcc362cec1884d9e03580ce2deb0b9fc2194f",
+      "retrieved_at": "2026-09-20T09:22:54.503Z"
+    },
+    {
+      "url": "https://www.greens.org.nz/manifesto_2026",
+      "outcome": "ok",
+      "http_status": 200,
+      "bytes": 229999,
+      "body_sha256": "sha256:94e7678857610e6d7e45cf0bc2c3383654feba94db9d7c8930765ab07860ec6e",
+      "retrieved_at": "2026-09-20T09:22:54.468Z"
+    },
+    {
+      "url": "https://www.nzfirst.nz/robots.txt",
+      "outcome": "ok",
+      "http_status": 200,
+      "bytes": 153,
+      "body_sha256": "sha256:3d9bd9f069f74760729723d1c316fc1384df1f4b20444f24561232ccebfeb8ad",
+      "retrieved_at": "2026-09-20T09:23:01.671Z"
+    },
+    {
+      "url": "https://www.nzfirst.nz/policy",
+      "outcome": "ok",
+      "http_status": 200,
+      "bytes": 46574,
+      "body_sha256": "sha256:1c42f379a438424c8226b1872c4376cb0186403f4d4467dabfa62260559ee2a3",
+      "retrieved_at": "2026-09-20T09:23:01.658Z"
+    },
+    {
+      "url": "https://www.labour.org.nz/robots.txt",
+      "outcome": "ok",
+      "http_status": 200,
+      "bytes": 55,
+      "body_sha256": "sha256:0292103e766faf233947f1000406e54131042b99badf2e0f228743af94fc2780",
+      "retrieved_at": "2026-09-20T09:23:07.040Z"
+    },
+    {
+      "url": "https://www.labour.org.nz/our-policies/",
+      "outcome": "ok",
+      "http_status": 200,
+      "bytes": 671940,
+      "body_sha256": "sha256:1aaa57b0424fe13d68e5618b2201ededd3320a03538355e3aec72deede07fe29",
+      "retrieved_at": "2026-09-20T09:23:07.008Z"
+    },
+    {
+      "url": "https://nzloyal.com/robots.txt",
+      "outcome": "ok",
+      "http_status": 200,
+      "bytes": 439,
+      "body_sha256": "sha256:16878ee38571bf554f62ca2ecae8f81f3d15a17c0ecb1850d2f436e43c8998cc",
+      "retrieved_at": "2026-09-20T09:23:12.951Z"
+    },
+    {
+      "url": "https://nzloyal.com/policy/",
+      "outcome": "challenge",
+      "http_status": 403,
+      "bytes": 5810,
+      "body_sha256": "sha256:4c320fd42dee1ecea5beb3cb8a5113ef37422e09427e5b1d32f61d8558d3127c",
+      "retrieved_at": "2026-09-20T09:23:12.748Z"
+    },
+    {
+      "url": "https://www.national.org.nz/robots.txt",
+      "outcome": "ok",
+      "http_status": 200,
+      "bytes": 29,
+      "body_sha256": "sha256:a94fd70100b56205ac525e1c15a636b8762ec4f403899eae1820f1ffe9d674d0",
+      "retrieved_at": "2026-09-20T09:23:18.005Z"
+    },
+    {
+      "url": "https://www.national.org.nz/policies",
+      "outcome": "ok",
+      "http_status": 200,
+      "bytes": 149911,
+      "body_sha256": "sha256:2a28bfe70cbdabc4f6cdf598bc5f9d9920ae790411c950f458ea8a3cd926c5a7",
+      "retrieved_at": "2026-09-20T09:23:17.997Z"
+    },
+    {
+      "url": "https://nzofp.co.nz/robots.txt",
+      "outcome": "ok",
+      "http_status": 200,
+      "bytes": 371,
+      "body_sha256": "sha256:aefca3b47a845d487f824ab9390103f7a4d2f5361d9faff02f18758a09d32570",
+      "retrieved_at": "2026-09-20T09:23:23.448Z"
+    },
+    {
+      "url": "https://nzofp.co.nz/policies",
+      "outcome": "ok",
+      "http_status": 200,
+      "bytes": 50939,
+      "body_sha256": "sha256:d156ccb5646a8fb452f066540cac306d2a74592efa656059d672875b4e4275c9",
+      "retrieved_at": "2026-09-20T09:23:23.163Z"
+    },
+    {
+      "url": "https://www.opportunity.org.nz/robots.txt",
+      "outcome": "ok",
+      "http_status": 200,
+      "bytes": 161,
+      "body_sha256": "sha256:52bbc6c92cda5cdafc36761c830e692baf72f036e5ebf74d277ca3a10827505c",
+      "retrieved_at": "2026-09-20T09:23:34.269Z"
+    },
+    {
+      "url": "https://www.opportunity.org.nz/policy",
+      "outcome": "ok",
+      "http_status": 200,
+      "bytes": 59609,
+      "body_sha256": "sha256:ee5fa4de510a2e02d420adea5217def13267e227cc3240686380bbd5a02ecb46",
+      "retrieved_at": "2026-09-20T09:23:34.255Z"
+    },
+    {
+      "url": "https://www.maoriparty.org.nz/robots.txt",
+      "outcome": "ok",
+      "http_status": 200,
+      "bytes": 160,
+      "body_sha256": "sha256:7822e892c56ead0f50e168dd31ed9373ab1eaf9d4f0e2ddf32c5cca11302f318",
+      "retrieved_at": "2026-09-20T09:23:39.655Z"
+    },
+    {
+      "url": "https://www.maoriparty.org.nz/policy",
+      "outcome": "ok",
+      "http_status": 200,
+      "bytes": 107138,
+      "body_sha256": "sha256:1f5cbf29cd6e4e5ab79a721a05848b23168e18bbf85c7c2cc3bd5fcc1ae81bae",
+      "retrieved_at": "2026-09-20T09:23:39.616Z"
+    },
+    {
+      "url": "https://tetaitokerauparty.org.nz/robots.txt",
+      "outcome": "ok",
+      "http_status": 200,
+      "bytes": 513,
+      "body_sha256": "sha256:f24fd82327f2ba14c78da4430346b0a477a607ba5a2b8fab8f6974c68e539bdb",
+      "retrieved_at": "2026-09-20T09:23:46.523Z"
+    },
+    {
+      "url": "https://tetaitokerauparty.org.nz/our-policies/",
+      "outcome": "ok",
+      "http_status": 200,
+      "bytes": 305681,
+      "body_sha256": "sha256:63dbc82e7104d4868f04dba295cb6b382df1cc15b4ddd28c766cb004229a1a0e",
+      "retrieved_at": "2026-09-20T09:23:46.326Z"
+    },
+    {
+      "url": "https://www.vision.org.nz/robots.txt",
+      "outcome": "ok",
+      "http_status": 200,
+      "bytes": 70,
+      "body_sha256": "sha256:784de8ab24a130ce5e756e1759e68d00bcebe85875969e46a1352cd4fd5814ac",
+      "retrieved_at": "2026-09-20T09:23:52.549Z"
+    },
+    {
+      "url": "https://www.vision.org.nz/visionpolicies",
+      "outcome": "ok",
+      "http_status": 200,
+      "bytes": 680059,
+      "body_sha256": "sha256:158d502ab07b16b1c444755ea52ba7d75b18fe3d88a328b0476f9b7361084ac5",
+      "retrieved_at": "2026-09-20T09:23:52.387Z"
+    },
+    {
+      "url": "https://womensrightsparty.nz/robots.txt",
+      "outcome": "ok",
+      "http_status": 200,
+      "bytes": 116,
+      "body_sha256": "sha256:8dc658c46754377b40ed889e8e6a31f683e819436568fb19303c2ae732859057",
+      "retrieved_at": "2026-09-20T09:23:57.751Z"
+    },
+    {
+      "url": "https://womensrightsparty.nz/our-priorities/",
+      "outcome": "ok",
+      "http_status": 200,
+      "bytes": 135511,
+      "body_sha256": "sha256:df3633a8e9bb4501ddd592ac61ec97208b2b60131a561c6e7e59f8a1d822c1c4",
+      "retrieved_at": "2026-09-20T09:23:57.737Z"
+    }
+  ]
+}

@@ -1,0 +1,68 @@
+{
+  "parliament_export_bill_publications": {
+    "sha256": "sha256:f66f967769819eaa0295fd9005f5e25d9115f6c92263cc8fa5c2efe3b70e7019",
+    "bytes": 170506,
+    "rows": 201,
+    "distinct_records": 201
+  },
+  "parliament_export_bill_register": {
+    "sha256": "sha256:fe42a774222bb9ce5d5e3782891b3482dd44d75df75086ba2e79f9070917659b",
+    "bytes": 3134282,
+    "rows": 3533,
+    "distinct_records": 3533
+  },
+  "parliament_export_committee_business": {
+    "sha256": "sha256:111e2131ec104bf7f4bc8c38a9fa51058e0fe2a0d3f65cb037cc89cab945f1a3",
+    "bytes": 74534,
+    "rows": 124,
+    "distinct_records": 123
+  },
+  "parliament_export_committee_report_files": {
+    "sha256": "sha256:b2067a1e7084e5dfef1eb0580598d01e13cdb434b26aae923c1dabbca2502105",
+    "bytes": 1083610,
+    "rows": 1285,
+    "distinct_records": 1285
+  },
+  "parliament_export_committee_reports": {
+    "sha256": "sha256:d7364cfeacb95b78b482e11c1a414995d245a198d07686107bf7f84fd5f360d4",
+    "bytes": 902694,
+    "rows": 1536,
+    "distinct_records": 1286
+  },
+  "parliament_export_current_bills_history": {
+    "sha256": "sha256:0c60ca170d07bf3854912c7bcacde12ad9b2251c23fe8e0775fa83bfadbf9689",
+    "bytes": 247223,
+    "rows": 582,
+    "distinct_records": 101
+  },
+  "parliament_export_member_terms": {
+    "sha256": "sha256:e90382148a92e69e5f432f7919b44d1a3f2fec1ee84777b5fd5b81662c3087b9",
+    "bytes": 64522,
+    "rows": 122,
+    "distinct_records": 122
+  },
+  "parliament_export_minister_roles": {
+    "sha256": "sha256:424862f00119794f125b351577cd4d88effb91d25b1a1da4718a1f041a3720ae",
+    "bytes": 53224,
+    "rows": 111,
+    "distinct_records": 111
+  },
+  "parliament_export_release_attributions": {
+    "sha256": "sha256:9c7e89182e2391a64df18c07526ab07ac22c5436f4fd007197b8d65495d3fc2b",
+    "bytes": 405159,
+    "rows": 536,
+    "distinct_records": 530
+  },
+  "parliament_export_releases_history": {
+    "sha256": "sha256:1b338436e8c5d804f44e349158c68b1f1eb01cfdb7bda02fdf5e5cedf94862d1",
+    "bytes": 2305396,
+    "rows": 4745,
+    "distinct_records": 4735
+  },
+  "parliament_export_written_questions": {
+    "sha256": "sha256:de133b68ee7e3ff89a7a3dd49d112da0d33b491afe0407733ec9b26726233c19",
+    "bytes": 212185161,
+    "rows": 225322,
+    "distinct_records": 187956
+  }
+}

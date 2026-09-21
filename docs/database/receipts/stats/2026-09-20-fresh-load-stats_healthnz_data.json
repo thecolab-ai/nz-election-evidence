@@ -1,0 +1,105 @@
+{
+  "receipt_note": "Statistics family, 2026-09-20 (UTC). Read-only upstream export or fresh anonymous fetch, loaded into an isolated disposable local database. Nothing hosted was written. Counts, hashes, statuses and publisher URLs only.",
+  "receipts": [
+    {
+      "receipt_version": 1,
+      "source_id": "stats_healthnz_data",
+      "products": [
+        "P11"
+      ],
+      "dry_run": false,
+      "status": "succeeded",
+      "error_class": null,
+      "error_detail": null,
+      "run_id": "2a07269e-f494-46df-86db-e992f989747f",
+      "resumed_from_run_id": null,
+      "loader_version": "1.0.0",
+      "artifact": {
+        "digest": "sha256:63fc58ab2dc3b9d0f7f6c538ab8cb3ebc332066e8acdf3f2dffeb9ca465cff69",
+        "producer": {
+          "route": "fresh_fetch",
+          "exporter_version": "1.0.0",
+          "recipe_sha256": "f939582e0977d32d5f5bdaca2f703f764609194f8e422ded01d24aec6be9c4a8"
+        },
+        "collected_from": "2026-09-20T09:07:40.434Z",
+        "collected_to": "2026-09-20T09:07:40.434Z",
+        "files": 1,
+        "counts": {
+          "routes": 0,
+          "datasets": 0,
+          "releases": 0,
+          "series": 0,
+          "geographies": 0,
+          "observations": 0,
+          "catalogue_entries": 26,
+          "observations_by_status": {},
+          "observations_by_dataset": {}
+        }
+      },
+      "source_to_artifact": [
+        {
+          "what": "same-host links under the index page's own path -> catalogue entries",
+          "upstream_rows": 26,
+          "artifact_rows": 26,
+          "difference": 0,
+          "explanation": "every listed link that matches this source's rule became exactly one catalogue entry"
+        }
+      ],
+      "artifact_to_destination": [
+        {
+          "what": "catalogue entry versions: artifact -> store",
+          "upstream_rows": 26,
+          "artifact_rows": 75,
+          "difference": 49,
+          "explanation": "the store also holds versions from earlier loads of this source; none of this artifact's versions is missing"
+        },
+        {
+          "what": "withheld, confidential, missing or not-applicable rows that carry a number",
+          "upstream_rows": 0,
+          "artifact_rows": 0,
+          "difference": 0,
+          "explanation": "none: a value the publisher did not print is stored as null with its status, never as zero"
+        }
+      ],
+      "totals": {
+        "meta": {
+          "routes": 0,
+          "datasets": 0,
+          "releases": 0,
+          "series_inserted": 0,
+          "geographies_inserted": 0,
+          "catalogue_entries_seen": 26,
+          "catalogue_entries_written": 26
+        },
+        "observations": {
+          "seen": 0,
+          "inserted": 0,
+          "unchanged": 0,
+          "conflicts": 0
+        },
+        "batches": 0
+      },
+      "replay_wrote_nothing": false,
+      "destination": {
+        "series": 44,
+        "datasets": 1,
+        "releases": 1,
+        "geographies": 20,
+        "observations": 44,
+        "content_digest": "e6d5b6bc32f48e0a443d4dd43fd22454",
+        "observations_by_status": {
+          "reported": 44
+        },
+        "observations_by_release": {
+          "healthnz.primary_care.pho_enrolment_availability @ file-520cca019dde6d71": 44
+        },
+        "catalogue_entry_versions": 75,
+        "catalogue_entries_current": 75,
+        "withheld_rows_carrying_a_number": 0
+      },
+      "findings": [
+        "The listing page is fetched fresh. Facts come from a workbook whose cell mapping was reviewed by hand for one quarter; a new quarter needs that review again, so no fact is parsed unattended."
+      ]
+    }
+  ]
+}

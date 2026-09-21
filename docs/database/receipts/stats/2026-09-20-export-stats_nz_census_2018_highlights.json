@@ -1,0 +1,41 @@
+{
+  "receipt_note": "Statistics family, 2026-09-20 (UTC). Read-only upstream export or fresh anonymous fetch, loaded into an isolated disposable local database. Nothing hosted was written. Counts, hashes, statuses and publisher URLs only.",
+  "receipts": [
+    {
+      "source_id": "stats_nz_census_2018_highlights",
+      "counts": {
+        "routes": 1,
+        "datasets": 1,
+        "releases": 1,
+        "series": 4966,
+        "geographies": 1,
+        "observations": 4966,
+        "catalogue_entries": 0,
+        "observations_by_status": {
+          "reported": 4966
+        },
+        "observations_by_dataset": {
+          "statsnz.census.2018.national_highlights": 4966
+        }
+      },
+      "reconciliation": [
+        {
+          "what": "dedicated census observations of statsnz.census.2018.national_highlights -> observations",
+          "upstream_rows": 4966,
+          "artifact_rows": 4966,
+          "difference": 0,
+          "explanation": "every upstream observation became exactly one observation"
+        },
+        {
+          "what": "overlapping operational route (1754 stored rows, 877 record ids) -> observations",
+          "upstream_rows": 877,
+          "artifact_rows": 0,
+          "difference": -877,
+          "explanation": "not imported: Same publisher file by SHA-256; every operational row is present in the dedicated route with the same member, row, measure and value. Importing both would count the same publisher cells twice."
+        }
+      ],
+      "findings": [],
+      "files": 2
+    }
+  ]
+}

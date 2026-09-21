@@ -31,17 +31,35 @@ const columns = helper.columns([
   helper.accessor('freshness_status', { header: 'Freshness', cell: ({ getValue }) => <FreshnessBadge status={getValue()} /> }),
   helper.accessor('last_success_at', { header: 'Last retrieved', cell: ({ getValue }) => formatDateTime(getValue(), 'never retrieved') }),
   helper.accessor('latest_source_published_at', { header: 'Latest publisher date', cell: ({ getValue }) => formatDateTime(getValue(), NOT_STATED) }),
-  helper.accessor('live_records', { header: 'Live records', cell: ({ getValue }) => <span className="num">{formatCount(getValue())}</span> }),
-  helper.accessor('rights_review_status', { header: 'Rights', cell: ({ row }) => <><RightsBadge status={row.original.rights_review_status} /><span className="mt-1 block text-xs text-muted-foreground" data-testid="release-tier">{RELEASE_TIER_LABELS[row.original.public_release_tier] ?? row.original.public_release_tier}</span></> }),
+  helper.accessor('live_records', { header: 'Held in this store', cell: ({ row }) => <HeldCell source={row.original} /> }),
+  helper.accessor('rights_review_status', { header: 'Rights', cell: ({ row }) => <><RightsBadge status={row.original.rights_review_status} /><span className="mt-1 block text-xs text-muted-foreground" data-testid="release-tier">{RELEASE_TIER_LABELS[row.original.public_release_tier] ?? row.original.public_release_tier}</span>{(row.original.owner_authorized_fields ?? []).length > 0 ? <span className="block text-xs text-muted-foreground" data-testid="owner-fields-count">{row.original.owner_authorized_fields.length} fields shown on the owner’s decision, not on a publisher approval</span> : null}</> }),
   helper.accessor('enabled', { header: 'Enabled', cell: ({ getValue }) => (getValue() ? <Pill>Enabled</Pill> : <Pill tone="muted">Not enabled</Pill>) }),
 ])
+
+/**
+ * What the store holds for one source. A statistics source writes typed observations rather than ledger records, so its
+ * record count is 0 by design: its observations and catalogue entries are shown instead. Observations the publisher
+ * printed no number for are counted apart and are never zeros.
+ */
+export function HeldCell({ source }: { source: Pick<SourceRow, 'live_records' | 'statistical_observations' | 'statistical_observations_without_a_number' | 'statistical_catalogue_entries'> }) {
+  if (source.statistical_observations === null || source.statistical_observations === undefined) return <span className="num" data-testid="held-records">{formatCount(source.live_records)} records</span>
+  const withheld = Number(source.statistical_observations_without_a_number ?? 0)
+  const entries = Number(source.statistical_catalogue_entries ?? 0)
+  return (
+    <span data-testid="held-statistics">
+      <span className="num">{formatCount(source.statistical_observations)}</span> observations
+      {entries > 0 ? <span className="block text-xs text-muted-foreground"><span className="num">{formatCount(entries)}</span> catalogue entries</span> : null}
+      {withheld > 0 ? <span className="block text-xs text-muted-foreground"><span className="num">{formatCount(withheld)}</span> with no number printed by the publisher</span> : null}
+    </span>
+  )
+}
 
 export const RELEASE_TIER_LABELS: Record<string, string> = {
   link_only: 'Links and metadata only',
   fields: 'Approved fields shown',
 }
 
-const SELECT = 'source_id,title,publisher,view_scope,freshness_status,last_success_at,latest_source_published_at,live_records,rights_review_status,public_release_tier,enabled'
+const SELECT = 'source_id,title,publisher,view_scope,freshness_status,last_success_at,latest_source_published_at,live_records,statistical_observations,statistical_observations_without_a_number,statistical_catalogue_entries,rights_review_status,public_release_tier,owner_authorized_fields,enabled'
 
 export function SourcesPage() {
   const search = route.useSearch()

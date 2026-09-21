@@ -1,0 +1,8 @@
+# TEST FIXTURE: SYNTHETIC hand-written rows in the column layout of the publisher's "detailed monthly, by region" CSV.
+# Invented location names and numbers; not publisher data. The test helper removes these two lines.
+TimeFrame,location_id,location,LodgedBonds,ActiveBonds,ClosedBonds,MedianRent,GeometricMeanRent,UpperQuartileRent,LowerQuartileRent,LogStdDevWeeklyRent
+1/07/2031,-99,ALL,1500,52000,1200,590,564,700,485,0.3833
+1/07/2031,2,Fixture North Region,"5,592",17000,420,640,620,750,520,0.3667
+1/07/2031,12,Fixture's Bay Region,,387,27,,,,,
+1/02/2031,-1,NA,9,30,6,300,290,320,280,0.2
+,2,Fixture North Region,1,2,3,4,5,6,7,8

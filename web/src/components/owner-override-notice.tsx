@@ -36,6 +36,21 @@ const GATE_WORDS: Record<string, string> = {
 }
 
 /**
+ * Which kinds of published figure rest on the owner's decision, in the reader's words. Read from the database
+ * (`surface_status.owner_figure_scopes`), never assumed here: revoking one kind changes this line by itself.
+ */
+const FIGURE_WORDS: Record<string, string> = {
+  statistical_facts: 'the published figures of official statistics',
+  official_result_figures: 'the vote counts, shares, seat numbers and list positions the official election-results publications printed',
+  official_finance_figures: 'the donation, expense and loan totals the Electoral Commission prints on its own public index pages',
+  published_poll_figures: 'the party-vote percentages each pollster published, each shown beside whether that pollster disclosed a methodology',
+}
+
+export function figureWords(scopes: readonly string[] | null | undefined): string[] {
+  return (scopes ?? []).map((kind) => FIGURE_WORDS[kind]).filter((words): words is string => !!words)
+}
+
+/**
  * Shown on every page while the DATABASE reports that rows or fields rest on the owner's decision. It states what
  * that decision is and, as plainly, what it is not. Which reviews are outstanding is read from the gate states.
  */
@@ -44,6 +59,7 @@ export function OwnerOverrideNotice({ status }: { status: readonly SurfaceStatus
   if (!basis) return null
   const { row, rowsOnOwnerDecision, gatesNotOpen } = basis
   const outstanding = gatesNotOpen.map((key) => GATE_WORDS[key] ?? key)
+  const figures = figureWords(row.owner_figure_scopes)
   return (
     <div role="note" aria-label="Basis of publication" data-testid="owner-override-notice" className="border-b border-caution-foreground/30 bg-caution text-caution-foreground">
       <div className="mx-auto flex max-w-[92rem] items-start gap-2 px-5 py-2.5 text-[13px] lg:px-8">
@@ -58,8 +74,10 @@ export function OwnerOverrideNotice({ status }: { status: readonly SurfaceStatus
               does not open or replace {outstanding.length > 1 ? 'them' : 'it'}.{' '}
             </span>
           ) : null}
-          No publisher has approved or licensed the fields shown on this decision: names, parties, seats and titles appear as each official
-          source published them, each with a link to that source, and each source’s page lists them. Owner decision{' '}
+          No publisher has approved or licensed the fields shown on this decision. Names, parties, seats, titles
+          {figures.length > 0 ? <span data-testid="owner-notice-figures">, and {figures.join(', ')},</span> : null} appear as each official
+          source published them, each with a link to that source, and each source’s page lists the fields shown for it. Nothing is read from
+          inside a finance return, and no donor is named anywhere: this project has never collected a donation record. Owner decision{' '}
           <span className="font-mono">{row.owner_authorization_id}</span> of {formatDate(row.owner_decided_on)}, in force until{' '}
           {formatDate(row.owner_expires_on)}.{' '}
           <ExternalLink href={`${REPO_BASE}governance/owner-authorizations.json`}>Read the decision and its limits</ExternalLink>{' '}

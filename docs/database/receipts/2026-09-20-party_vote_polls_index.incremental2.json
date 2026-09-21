@@ -1,0 +1,61 @@
+{
+  "receipt_note": "Second, incremental retrieval the same day: rows inside the window re-observed, no new version.",
+  "receipt_version": 1,
+  "command": "fetch",
+  "source_id": "party_vote_polls_index",
+  "mode": "incremental",
+  "dry_run": false,
+  "status": "succeeded",
+  "complete_snapshot": false,
+  "error_class": null,
+  "manifest_hash": "sha256:fcf894c751d5c7afe2153ad4bb29ac90e98188db30b109bc75750820bcac1913",
+  "input_digest": null,
+  "run_id": "8cc526ca-34c0-4d87-9940-640827a11244",
+  "totals": {
+    "seen": 18,
+    "versions_inserted": 0,
+    "observations_inserted": 18,
+    "unchanged": 18,
+    "rejected": 0
+  },
+  "tombstoned": 0,
+  "pages": 1,
+  "projection": {
+    "shared": {
+      "documents": 0,
+      "mp_directory": 0,
+      "baseline_candidacies": 0
+    },
+    "election_family": {
+      "facts": {
+        "official_page_status": 0,
+        "published_aggregates": 0
+      },
+      "documents": {},
+      "nationwide": 0,
+      "electorates": {
+        "summaries": 0,
+        "party_lines": 0,
+        "candidate_route_checks": 0
+      }
+    }
+  },
+  "fetches": [
+    {
+      "url": "https://storage.googleapis.com/robots.txt",
+      "outcome": "ok",
+      "http_status": 404,
+      "bytes": 133,
+      "body_sha256": "sha256:881aa5538ac02efb941f6cbef4e784f5e4a4a0c70611cc6b7e7e461f21c65f97",
+      "retrieved_at": "2026-09-20T09:24:04.444Z"
+    },
+    {
+      "url": "https://storage.googleapis.com/asapop-website-oceania-20230809/_widgets/tables/nz.html",
+      "outcome": "ok",
+      "http_status": 200,
+      "bytes": 22890,
+      "body_sha256": "sha256:02efbd1dd5465926a3245b16f4ca7b95a758436a5f863d18c9ab10a80d518db5",
+      "retrieved_at": "2026-09-20T09:24:04.439Z"
+    }
+  ]
+}

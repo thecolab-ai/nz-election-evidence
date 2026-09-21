@@ -1,0 +1,123 @@
+{
+  "receipt_note": "Statistics family, 2026-09-20 (UTC). Read-only upstream export or fresh anonymous fetch, loaded into an isolated disposable local database. Nothing hosted was written. Counts, hashes, statuses and publisher URLs only.",
+  "receipts": [
+    {
+      "receipt_version": 1,
+      "source_id": "stats_tenancy_rental_bonds",
+      "products": [
+        "P23"
+      ],
+      "dry_run": false,
+      "status": "succeeded",
+      "error_class": null,
+      "error_detail": null,
+      "run_id": "b4135aac-1093-4f7a-a9d4-69286e7b9c6a",
+      "resumed_from_run_id": null,
+      "loader_version": "1.0.0",
+      "artifact": {
+        "digest": "sha256:61ceb8723046f6d09e730640cb97f7bb21bbd9f58407d68e9843368e8a6e994f",
+        "producer": {
+          "route": "fresh_fetch",
+          "exporter_version": "1.0.0",
+          "recipe_sha256": "9ed8f14d8fe0d0daf262d5e989cbb5a6326a3b375f4f8df7e9e813f0f1eae421"
+        },
+        "collected_from": "2026-09-20T09:36:49.114Z",
+        "collected_to": "2026-09-20T09:36:52.278Z",
+        "files": 4,
+        "counts": {
+          "routes": 1,
+          "datasets": 1,
+          "releases": 1,
+          "series": 8,
+          "geographies": 18,
+          "observations": 57888,
+          "catalogue_entries": 4,
+          "observations_by_status": {
+            "reported": 57888
+          },
+          "observations_by_dataset": {
+            "tenancy.rental_bonds.detailed_monthly_region": 57888
+          }
+        }
+      },
+      "source_to_artifact": [
+        {
+          "what": "publisher file data rows x 8 measure cells -> observations",
+          "upstream_rows": 57888,
+          "artifact_rows": 57888,
+          "difference": 0,
+          "explanation": "every expected value cell of the publisher file became exactly one observation"
+        },
+        {
+          "what": "listed .csv, .zip and .xlsx links on the publisher's host -> catalogue entries",
+          "upstream_rows": 4,
+          "artifact_rows": 4,
+          "difference": 0,
+          "explanation": "every listed link that matches this source's rule became exactly one catalogue entry"
+        }
+      ],
+      "artifact_to_destination": [
+        {
+          "what": "observations of tenancy.rental_bonds.detailed_monthly_region @ file-444341b2963bb280: artifact -> store",
+          "upstream_rows": 57888,
+          "artifact_rows": 57888,
+          "difference": 0,
+          "explanation": "every artifact row is stored exactly once"
+        },
+        {
+          "what": "catalogue entry versions: artifact -> store",
+          "upstream_rows": 4,
+          "artifact_rows": 8,
+          "difference": 4,
+          "explanation": "the store also holds versions from earlier loads of this source; none of this artifact's versions is missing"
+        },
+        {
+          "what": "withheld, confidential, missing or not-applicable rows that carry a number",
+          "upstream_rows": 0,
+          "artifact_rows": 0,
+          "difference": 0,
+          "explanation": "none: a value the publisher did not print is stored as null with its status, never as zero"
+        }
+      ],
+      "totals": {
+        "meta": {
+          "routes": 1,
+          "datasets": 1,
+          "releases": 1,
+          "series_inserted": 0,
+          "geographies_inserted": 0,
+          "catalogue_entries_seen": 4,
+          "catalogue_entries_written": 0
+        },
+        "observations": {
+          "seen": 57888,
+          "inserted": 0,
+          "unchanged": 57888,
+          "conflicts": 0
+        },
+        "batches": 12
+      },
+      "replay_wrote_nothing": true,
+      "destination": {
+        "series": 8,
+        "datasets": 1,
+        "releases": 1,
+        "geographies": 18,
+        "observations": 57888,
+        "content_digest": "13ff4480edcde745886f5b8640eae5ab",
+        "observations_by_status": {
+          "reported": 57888
+        },
+        "observations_by_release": {
+          "tenancy.rental_bonds.detailed_monthly_region @ file-444341b2963bb280": 57888
+        },
+        "catalogue_entry_versions": 8,
+        "catalogue_entries_current": 8,
+        "withheld_rows_carrying_a_number": 0
+      },
+      "findings": [
+        "The file starts with a UTF-8 byte order mark, which the decoder drops; the file hash was computed with the mark put back, so it is the hash of the publisher's bytes."
+      ]
+    }
+  ]
+}

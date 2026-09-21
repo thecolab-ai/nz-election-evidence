@@ -1,0 +1,104 @@
+{
+  "receipt_note": "Statistics family, 2026-09-20 (UTC). Read-only upstream export or fresh anonymous fetch, loaded into an isolated disposable local database. Nothing hosted was written. Counts, hashes, statuses and publisher URLs only.",
+  "receipts": [
+    {
+      "source_id": "stats_nz_release_series",
+      "counts": {
+        "routes": 9,
+        "datasets": 9,
+        "releases": 9,
+        "series": 3363,
+        "geographies": 0,
+        "observations": 234325,
+        "catalogue_entries": 0,
+        "observations_by_status": {
+          "confidential": 2277,
+          "missing": 156,
+          "provisional": 4058,
+          "reported": 227804,
+          "suppressed": 30
+        },
+        "observations_by_dataset": {
+          "statsnz.file.008b71864fd7ac8d": 2847,
+          "statsnz.file.04ab16f5bf250403": 97959,
+          "statsnz.file.1543d0c3f49a900b": 1420,
+          "statsnz.file.1bfc343a9a0f6af5": 4364,
+          "statsnz.file.24758867be824832": 34582,
+          "statsnz.file.2c0d4efcf5f8ad18": 3075,
+          "statsnz.file.6be064e204ce1136": 54509,
+          "statsnz.file.c810397042ece109": 12868,
+          "statsnz.file.fc93b5e26b92080b": 22701
+        }
+      },
+      "reconciliation": [
+        {
+          "what": "dedicated series observations of statsnz.file.008b71864fd7ac8d (2 captures of one file) -> observations",
+          "upstream_rows": 5694,
+          "artifact_rows": 2847,
+          "difference": -2847,
+          "explanation": "2847 stored rows are the other 1 capture(s) of the byte-identical file (same SHA-256, same observation keys); one capture is imported and capture_count records the rest"
+        },
+        {
+          "what": "dedicated series observations of statsnz.file.04ab16f5bf250403 (2 captures of one file) -> observations",
+          "upstream_rows": 195918,
+          "artifact_rows": 97959,
+          "difference": -97959,
+          "explanation": "97959 stored rows are the other 1 capture(s) of the byte-identical file (same SHA-256, same observation keys); one capture is imported and capture_count records the rest"
+        },
+        {
+          "what": "dedicated series observations of statsnz.file.1543d0c3f49a900b (2 captures of one file) -> observations",
+          "upstream_rows": 2840,
+          "artifact_rows": 1420,
+          "difference": -1420,
+          "explanation": "1420 stored rows are the other 1 capture(s) of the byte-identical file (same SHA-256, same observation keys); one capture is imported and capture_count records the rest"
+        },
+        {
+          "what": "dedicated series observations of statsnz.file.1bfc343a9a0f6af5 (2 captures of one file) -> observations",
+          "upstream_rows": 8728,
+          "artifact_rows": 4364,
+          "difference": -4364,
+          "explanation": "4364 stored rows are the other 1 capture(s) of the byte-identical file (same SHA-256, same observation keys); one capture is imported and capture_count records the rest"
+        },
+        {
+          "what": "dedicated series observations of statsnz.file.24758867be824832 (2 captures of one file) -> observations",
+          "upstream_rows": 69164,
+          "artifact_rows": 34582,
+          "difference": -34582,
+          "explanation": "34582 stored rows are the other 1 capture(s) of the byte-identical file (same SHA-256, same observation keys); one capture is imported and capture_count records the rest"
+        },
+        {
+          "what": "dedicated series observations of statsnz.file.2c0d4efcf5f8ad18 (2 captures of one file) -> observations",
+          "upstream_rows": 6150,
+          "artifact_rows": 3075,
+          "difference": -3075,
+          "explanation": "3075 stored rows are the other 1 capture(s) of the byte-identical file (same SHA-256, same observation keys); one capture is imported and capture_count records the rest"
+        },
+        {
+          "what": "dedicated series observations of statsnz.file.6be064e204ce1136 (2 captures of one file) -> observations",
+          "upstream_rows": 109018,
+          "artifact_rows": 54509,
+          "difference": -54509,
+          "explanation": "54509 stored rows are the other 1 capture(s) of the byte-identical file (same SHA-256, same observation keys); one capture is imported and capture_count records the rest"
+        },
+        {
+          "what": "dedicated series observations of statsnz.file.c810397042ece109 (2 captures of one file) -> observations",
+          "upstream_rows": 25736,
+          "artifact_rows": 12868,
+          "difference": -12868,
+          "explanation": "12868 stored rows are the other 1 capture(s) of the byte-identical file (same SHA-256, same observation keys); one capture is imported and capture_count records the rest"
+        },
+        {
+          "what": "dedicated series observations of statsnz.file.fc93b5e26b92080b (2 captures of one file) -> observations",
+          "upstream_rows": 45402,
+          "artifact_rows": 22701,
+          "difference": -22701,
+          "explanation": "22701 stored rows are the other 1 capture(s) of the byte-identical file (same SHA-256, same observation keys); one capture is imported and capture_count records the rest"
+        }
+      ],
+      "findings": [
+        "1420 observations carry a number that the upstream normaliser had recorded as absent: the publisher file uses other column names (SER_REF / TIME_REF / DATA_VAL) and upstream kept those columns verbatim, so the number, period and series reference were read from the publisher's own columns."
+      ],
+      "files": 13
+    }
+  ]
+}

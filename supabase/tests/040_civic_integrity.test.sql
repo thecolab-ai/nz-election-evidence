@@ -117,19 +117,30 @@ select throws_ok($$insert into evidence_private.parliamentary_service_terms (per
   from evidence_private.person_source_identities where source_id = 'pgtap_baseline' limit 1$$, '23514', null, 'a directory sighting cannot set a service start date');
 
 -- unknown is not zero in statistics
+-- The statistics tables accept rows only inside a running, leased run of a statistics source (the table boundary), so
+-- the fixture opens one.
+select evidence_private.sync_registry(jsonb_build_object('sources', jsonb_build_array(
+  jsonb_build_object('source_id', 'pgtap_stat_fixture', 'title', 'Fixture statistics', 'publisher', 'Fixture Publisher',
+    'official_url', 'https://fixture.example/stats', 'adapter_kind', 'export_import', 'adapter_name', 'fixture',
+    'allowed_hosts', jsonb_build_array(), 'view_scope', 'statistics',
+    'snapshot_semantics', 'append_only_feed', 'enabled', false, 'config_hash', 'c1'))));
+select evidence_private.acquire_lease('pgtap_stat_fixture', '55555555-5555-5555-5555-555555555555', 60);
+create temp table stat_run as
+  select (evidence_private.start_run('pgtap_stat_fixture', '55555555-5555-5555-5555-555555555555', 'v1', 'export_import', 'test', 'm-stat') ->> 'run_id')::uuid as id;
+insert into evidence_private.stat_datasets (id, source_id, dataset_key, title, publisher, route)
+values ('dddddddd-0000-0000-0000-000000000001', 'pgtap_stat_fixture', 'fixture_family', 'Fixture', 'Fixture', 'dedicated_series');
 insert into evidence_private.stat_route_reconciliation (observation_family, canonical_route, decision_note, decided_by)
 values ('fixture_family', 'dedicated_series', 'fixture', 'fixture');
-insert into evidence_private.stat_datasets (id, source_id, dataset_key, title, publisher)
-values ('dddddddd-0000-0000-0000-000000000001', 'pgtap_baseline', 'fixture_family', 'Fixture', 'Fixture');
-insert into evidence_private.stat_releases (id, dataset_id, release_key) values ('dddddddd-0000-0000-0000-000000000002', 'dddddddd-0000-0000-0000-000000000001', 'r1');
+insert into evidence_private.stat_releases (id, dataset_id, release_key, import_run_id)
+select 'dddddddd-0000-0000-0000-000000000002', 'dddddddd-0000-0000-0000-000000000001', 'r1', id from stat_run;
 insert into evidence_private.stat_series (id, dataset_id, series_key) values ('dddddddd-0000-0000-0000-000000000003', 'dddddddd-0000-0000-0000-000000000001', 's1');
 select throws_ok($$insert into evidence_private.stat_observations (series_id, release_id, period_label, value, value_status, parse_status, content_hash, canonical_route, import_run_id)
   select 'dddddddd-0000-0000-0000-000000000003', 'dddddddd-0000-0000-0000-000000000002', '2023', 0, 'suppressed', 'parsed',
-         'sha256:' || repeat('a', 64), 'dedicated_series', id from evidence_private.import_runs limit 1$$,
+         'sha256:' || repeat('a', 64), 'dedicated_series', id from stat_run$$,
   '23514', null, 'a suppressed observation cannot carry a number');
 select throws_ok($$insert into evidence_private.stat_observations (series_id, release_id, period_label, value, value_status, parse_status, content_hash, canonical_route, import_run_id)
   select 'dddddddd-0000-0000-0000-000000000003', 'dddddddd-0000-0000-0000-000000000002', '2023', 5, 'reported', 'parsed',
-         'sha256:' || repeat('a', 64), 'operational', id from evidence_private.import_runs limit 1$$,
+         'sha256:' || repeat('a', 64), 'operational', id from stat_run$$,
   'P0001', null, 'an observation family cannot be imported through a second, overlapping route');
 
 select * from finish();

@@ -1,0 +1,128 @@
+{
+  "receipt_note": "Statistics family, 2026-09-20 (UTC). Read-only upstream export or fresh anonymous fetch, loaded into an isolated disposable local database. Nothing hosted was written. Counts, hashes, statuses and publisher URLs only.",
+  "receipts": [
+    {
+      "receipt_version": 1,
+      "source_id": "stats_healthnz_data",
+      "products": [
+        "P11"
+      ],
+      "dry_run": false,
+      "status": "succeeded",
+      "error_class": null,
+      "error_detail": null,
+      "run_id": "f636a7ac-adc2-4a8b-b4b8-a363b93bcfd1",
+      "resumed_from_run_id": null,
+      "loader_version": "1.0.0",
+      "artifact": {
+        "digest": "sha256:3c5f32d306e5429b02cd4352cb4e74d7148fe564f9cfb8a6c8cfc45835bebab6",
+        "producer": {
+          "route": "warehouse_export",
+          "exporter_version": "1.0.0",
+          "recipe_sha256": "ef9251531d54d295b004060b8378f41d510cb6c3c77be1ccf67800f4eef7b3b8"
+        },
+        "collected_from": "2026-09-15T19:03:59.219Z",
+        "collected_to": "2026-09-16T03:36:15.650Z",
+        "files": 2,
+        "counts": {
+          "routes": 1,
+          "datasets": 1,
+          "releases": 1,
+          "series": 44,
+          "geographies": 20,
+          "observations": 44,
+          "catalogue_entries": 49,
+          "observations_by_status": {
+            "reported": 44
+          },
+          "observations_by_dataset": {
+            "healthnz.primary_care.pho_enrolment_availability": 44
+          }
+        }
+      },
+      "source_to_artifact": [
+        {
+          "what": "operational fact records (current version of each record id) -> observations",
+          "upstream_rows": 44,
+          "artifact_rows": 44,
+          "difference": 0,
+          "explanation": "every current fact record became exactly one observation"
+        },
+        {
+          "what": "operational catalogue records (distinct record ids) -> catalogue entries (distinct entry keys)",
+          "upstream_rows": 49,
+          "artifact_rows": 49,
+          "difference": 0,
+          "explanation": "one entry key per upstream record id"
+        },
+        {
+          "what": "operational catalogue stored versions -> catalogue entry versions",
+          "upstream_rows": 49,
+          "artifact_rows": 49,
+          "difference": 0,
+          "explanation": "every stored version differs in allowlisted content"
+        }
+      ],
+      "artifact_to_destination": [
+        {
+          "what": "observations of healthnz.primary_care.pho_enrolment_availability @ file-520cca019dde6d71: artifact -> store",
+          "upstream_rows": 44,
+          "artifact_rows": 44,
+          "difference": 0,
+          "explanation": "every artifact row is stored exactly once"
+        },
+        {
+          "what": "catalogue entry versions: artifact -> store",
+          "upstream_rows": 49,
+          "artifact_rows": 49,
+          "difference": 0,
+          "explanation": "every artifact version is stored exactly once"
+        },
+        {
+          "what": "withheld, confidential, missing or not-applicable rows that carry a number",
+          "upstream_rows": 0,
+          "artifact_rows": 0,
+          "difference": 0,
+          "explanation": "none: a value the publisher did not print is stored as null with its status, never as zero"
+        }
+      ],
+      "totals": {
+        "meta": {
+          "routes": 1,
+          "datasets": 1,
+          "releases": 1,
+          "series_inserted": 44,
+          "geographies_inserted": 20,
+          "catalogue_entries_seen": 49,
+          "catalogue_entries_written": 49
+        },
+        "observations": {
+          "seen": 44,
+          "inserted": 44,
+          "unchanged": 0,
+          "conflicts": 0
+        },
+        "batches": 1
+      },
+      "replay_wrote_nothing": false,
+      "destination": {
+        "series": 44,
+        "datasets": 1,
+        "releases": 1,
+        "geographies": 20,
+        "observations": 44,
+        "content_digest": "e6d5b6bc32f48e0a443d4dd43fd22454",
+        "observations_by_status": {
+          "reported": 44
+        },
+        "observations_by_release": {
+          "healthnz.primary_care.pho_enrolment_availability @ file-520cca019dde6d71": 44
+        },
+        "catalogue_entry_versions": 49,
+        "catalogue_entries_current": 49,
+        "withheld_rows_carrying_a_number": 0
+      },
+      "findings": []
+    }
+  ]
+}

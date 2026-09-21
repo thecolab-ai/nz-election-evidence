@@ -1,0 +1,746 @@
+{
+  "receipt_version": 1,
+  "receipt_note": "Election family, 2026-09-20 (UTC). Upstream store read read-only; destination was a disposable, isolated local database, never a hosted or shared one. Counts, hashes, statuses and check outcomes only: no payloads, no locations.",
+  "step": "same export loaded a second time: stored history is not re-sent, only the final wave of each product runs; no new version, no tombstone",
+  "all_runs_ok": true,
+  "plans": [
+    {
+      "product": "P08",
+      "findings": {
+        "product": "P08",
+        "rows": 18,
+        "records": 18,
+        "waves": 1,
+        "rows_by_kind": {
+          "election_nationwide_party_result": 17,
+          "election_nationwide_total": 1
+        },
+        "rows_with_publisher_date": 0,
+        "manifest_agrees": true
+      },
+      "waves": [
+        {
+          "wave": 1,
+          "rows": 18
+        }
+      ]
+    },
+    {
+      "product": "P09",
+      "findings": {
+        "product": "P09",
+        "rows": 1791,
+        "records": 1791,
+        "waves": 1,
+        "rows_by_kind": {
+          "election_electorate_vote": 1719,
+          "election_electorate_summary": 72
+        },
+        "rows_with_publisher_date": 0,
+        "manifest_agrees": true
+      },
+      "waves": [
+        {
+          "wave": 1,
+          "rows": 1791
+        }
+      ]
+    },
+    {
+      "product": "P13",
+      "findings": {
+        "product": "P13",
+        "rows": 75,
+        "records": 17,
+        "waves": 7,
+        "rows_by_kind": {
+          "party_policy_page": 75
+        },
+        "rows_with_publisher_date": 6,
+        "manifest_agrees": true
+      },
+      "waves": [
+        {
+          "wave": 1,
+          "rows": 17
+        },
+        {
+          "wave": 2,
+          "rows": 17
+        },
+        {
+          "wave": 3,
+          "rows": 17
+        },
+        {
+          "wave": 4,
+          "rows": 3
+        },
+        {
+          "wave": 5,
+          "rows": 3
+        },
+        {
+          "wave": 6,
+          "rows": 1
+        },
+        {
+          "wave": 7,
+          "rows": 17
+        }
+      ]
+    },
+    {
+      "product": "P14",
+      "findings": {
+        "product": "P14",
+        "rows": 30,
+        "records": 12,
+        "waves": 4,
+        "rows_by_kind": {
+          "party_vote_poll": 30
+        },
+        "rows_with_publisher_date": 0,
+        "manifest_agrees": true
+      },
+      "waves": [
+        {
+          "wave": 1,
+          "rows": 12
+        },
+        {
+          "wave": 2,
+          "rows": 3
+        },
+        {
+          "wave": 3,
+          "rows": 3
+        },
+        {
+          "wave": 4,
+          "rows": 12
+        }
+      ]
+    },
+    {
+      "product": "P15",
+      "findings": {
+        "product": "P15",
+        "rows": 492,
+        "records": 492,
+        "waves": 1,
+        "rows_by_kind": {
+          "finance_candidate_return": 492
+        },
+        "rows_with_publisher_date": 0,
+        "manifest_agrees": true
+      },
+      "waves": [
+        {
+          "wave": 1,
+          "rows": 492
+        }
+      ]
+    },
+    {
+      "product": "P16",
+      "findings": {
+        "product": "P16",
+        "rows": 14,
+        "records": 14,
+        "waves": 1,
+        "rows_by_kind": {
+          "finance_party_aggregate": 14
+        },
+        "rows_with_publisher_date": 0,
+        "manifest_agrees": true
+      },
+      "waves": [
+        {
+          "wave": 1,
+          "rows": 14
+        }
+      ]
+    },
+    {
+      "product": "P17",
+      "findings": {
+        "product": "P17",
+        "rows": 23,
+        "records": 17,
+        "waves": 2,
+        "rows_by_kind": {
+          "finance_party_return": 23
+        },
+        "rows_with_publisher_date": 0,
+        "manifest_agrees": true
+      },
+      "waves": [
+        {
+          "wave": 1,
+          "rows": 6
+        },
+        {
+          "wave": 2,
+          "rows": 17
+        }
+      ]
+    },
+    {
+      "product": "C26A",
+      "findings": {
+        "product": "C26A",
+        "rows": 2,
+        "records": 1,
+        "waves": 2,
+        "rows_by_kind": {
+          "election_2026_official_page_status": 2
+        },
+        "rows_with_publisher_date": 0,
+        "manifest_agrees": true
+      },
+      "waves": [
+        {
+          "wave": 1,
+          "rows": 1
+        },
+        {
+          "wave": 2,
+          "rows": 1
+        }
+      ]
+    },
+    {
+      "product": "C26B",
+      "findings": {
+        "product": "C26B",
+        "rows": 3,
+        "records": 3,
+        "waves": 1,
+        "rows_by_kind": {
+          "election_2026_boundary_map_link": 3
+        },
+        "rows_with_publisher_date": 0,
+        "manifest_agrees": true
+      },
+      "waves": [
+        {
+          "wave": 1,
+          "rows": 3
+        }
+      ]
+    }
+  ],
+  "runs": [
+    {
+      "product": "P08",
+      "wave": 1,
+      "waves": 1,
+      "source_id": "election_2023_nationwide_results_export",
+      "mode": "export_import",
+      "dry_run": false,
+      "status": "succeeded",
+      "complete_snapshot": true,
+      "error_class": null,
+      "manifest_hash": "sha256:845cda2c227638eb3b7ed917c892ab4fe45976235d77350b31206eac3aa0d363",
+      "input_digest": {
+        "sha256": "sha256:7145c0349ac98473093fc38546ba0a3bba15312737febccd2c3db6c2cdb118a1",
+        "bytes": 21560,
+        "rows": 18
+      },
+      "run_id": "42d2b8a7-44a5-4345-b4a7-f2af29b0f898",
+      "totals": {
+        "seen": 18,
+        "versions_inserted": 0,
+        "observations_inserted": 18,
+        "unchanged": 18,
+        "rejected": 0
+      },
+      "tombstoned": 0,
+      "pages": 1,
+      "projection": {
+        "shared": {
+          "documents": 0,
+          "mp_directory": 0,
+          "baseline_candidacies": 0
+        },
+        "election_family": {
+          "facts": {
+            "official_page_status": 0,
+            "published_aggregates": 0
+          },
+          "documents": {},
+          "nationwide": 18,
+          "electorates": {
+            "summaries": 0,
+            "party_lines": 0,
+            "candidate_route_checks": 0
+          }
+        }
+      }
+    },
+    {
+      "product": "P09",
+      "wave": 1,
+      "waves": 1,
+      "source_id": "election_2023_electorate_results_export",
+      "mode": "export_import",
+      "dry_run": false,
+      "status": "succeeded",
+      "complete_snapshot": true,
+      "error_class": null,
+      "manifest_hash": "sha256:a60e91b7b65c45708036232778a24b001b8d86b83e71b380dbf32eb506855f57",
+      "input_digest": {
+        "sha256": "sha256:7bbc7c6d14deb0d695fd425d70df86e061b93ee64dde52d78d0e536a3fc29262",
+        "bytes": 2438221,
+        "rows": 1791
+      },
+      "run_id": "75d528d0-14ce-4681-b107-17e4d5a62d67",
+      "totals": {
+        "seen": 1791,
+        "versions_inserted": 0,
+        "observations_inserted": 1791,
+        "unchanged": 1791,
+        "rejected": 0
+      },
+      "tombstoned": 0,
+      "pages": 5,
+      "projection": {
+        "shared": {
+          "documents": 0,
+          "mp_directory": 0,
+          "baseline_candidacies": 0
+        },
+        "election_family": {
+          "facts": {
+            "official_page_status": 0,
+            "published_aggregates": 0
+          },
+          "documents": {},
+          "nationwide": 0,
+          "electorates": {
+            "summaries": 72,
+            "party_lines": 1224,
+            "candidate_route_checks": 495
+          }
+        }
+      }
+    },
+    {
+      "product": "P13",
+      "wave": 1,
+      "waves": 7,
+      "status": "history_already_stored",
+      "rows_skipped": 17
+    },
+    {
+      "product": "P13",
+      "wave": 2,
+      "waves": 7,
+      "status": "history_already_stored",
+      "rows_skipped": 17
+    },
+    {
+      "product": "P13",
+      "wave": 3,
+      "waves": 7,
+      "status": "history_already_stored",
+      "rows_skipped": 17
+    },
+    {
+      "product": "P13",
+      "wave": 4,
+      "waves": 7,
+      "status": "history_already_stored",
+      "rows_skipped": 3
+    },
+    {
+      "product": "P13",
+      "wave": 5,
+      "waves": 7,
+      "status": "history_already_stored",
+      "rows_skipped": 3
+    },
+    {
+      "product": "P13",
+      "wave": 6,
+      "waves": 7,
+      "status": "history_already_stored",
+      "rows_skipped": 1
+    },
+    {
+      "product": "P13",
+      "wave": 7,
+      "waves": 7,
+      "source_id": "party_policy_pages_2026_export",
+      "mode": "export_import",
+      "dry_run": false,
+      "status": "succeeded",
+      "complete_snapshot": true,
+      "error_class": null,
+      "manifest_hash": "sha256:c8916a31f07e112f96481ff79e161a32263e072c59a4db6e027a5a22db9de601",
+      "input_digest": {
+        "sha256": "sha256:d271c1cc7b3cf3179f0507c5b9e5a0f80f3711ed258591a17e1e44c83ebe0dd9",
+        "bytes": 152973,
+        "rows": 17
+      },
+      "run_id": "430f3d22-bddb-420f-b65b-f26e761c6720",
+      "totals": {
+        "seen": 17,
+        "versions_inserted": 0,
+        "observations_inserted": 17,
+        "unchanged": 17,
+        "rejected": 0
+      },
+      "tombstoned": 0,
+      "pages": 1,
+      "projection": {
+        "shared": {
+          "documents": 0,
+          "mp_directory": 0,
+          "baseline_candidacies": 0
+        },
+        "election_family": {
+          "facts": {
+            "official_page_status": 0,
+            "published_aggregates": 0
+          },
+          "documents": {
+            "party_policy_page": 17
+          },
+          "nationwide": 0,
+          "electorates": {
+            "summaries": 0,
+            "party_lines": 0,
+            "candidate_route_checks": 0
+          }
+        }
+      }
+    },
+    {
+      "product": "P14",
+      "wave": 1,
+      "waves": 4,
+      "status": "history_already_stored",
+      "rows_skipped": 12
+    },
+    {
+      "product": "P14",
+      "wave": 2,
+      "waves": 4,
+      "status": "history_already_stored",
+      "rows_skipped": 3
+    },
+    {
+      "product": "P14",
+      "wave": 3,
+      "waves": 4,
+      "status": "history_already_stored",
+      "rows_skipped": 3
+    },
+    {
+      "product": "P14",
+      "wave": 4,
+      "waves": 4,
+      "source_id": "party_vote_polls_2026_export",
+      "mode": "export_import",
+      "dry_run": false,
+      "status": "succeeded",
+      "complete_snapshot": true,
+      "error_class": null,
+      "manifest_hash": "sha256:72314b68297d1ad81e48c30a7b8a693a943feeaf48278e9798d95602552012f1",
+      "input_digest": {
+        "sha256": "sha256:c3e5e384a5418a554c90c15bff1ad94a7c0482f5ffc797f0059d668ecf377746",
+        "bytes": 77522,
+        "rows": 12
+      },
+      "run_id": "d0dd9efe-78a5-45a4-9525-5dbdffe6e684",
+      "totals": {
+        "seen": 12,
+        "versions_inserted": 0,
+        "observations_inserted": 12,
+        "unchanged": 12,
+        "rejected": 0
+      },
+      "tombstoned": 0,
+      "pages": 1,
+      "projection": {
+        "shared": {
+          "documents": 0,
+          "mp_directory": 0,
+          "baseline_candidacies": 0
+        },
+        "election_family": {
+          "facts": {
+            "official_page_status": 0,
+            "published_aggregates": 0
+          },
+          "documents": {
+            "party_vote_poll": 12
+          },
+          "nationwide": 0,
+          "electorates": {
+            "summaries": 0,
+            "party_lines": 0,
+            "candidate_route_checks": 0
+          }
+        }
+      }
+    },
+    {
+      "product": "P15",
+      "wave": 1,
+      "waves": 1,
+      "source_id": "finance_2023_candidate_returns_export",
+      "mode": "export_import",
+      "dry_run": false,
+      "status": "succeeded",
+      "complete_snapshot": true,
+      "error_class": null,
+      "manifest_hash": "sha256:9141cbfbff4ba16ea6f511e9ef618f425ffaa0e849194b9c3c74b17b6d38f14d",
+      "input_digest": {
+        "sha256": "sha256:df75fd4a7fe6cfe5e4a1b1a8e6c9f269f682af6d5a06c0a54b9fc96df48f6636",
+        "bytes": 1536783,
+        "rows": 492
+      },
+      "run_id": "6ffb7308-b788-4044-93c7-d6ec9cadea27",
+      "totals": {
+        "seen": 492,
+        "versions_inserted": 0,
+        "observations_inserted": 492,
+        "unchanged": 492,
+        "rejected": 0
+      },
+      "tombstoned": 0,
+      "pages": 2,
+      "projection": {
+        "shared": {
+          "documents": 0,
+          "mp_directory": 0,
+          "baseline_candidacies": 0
+        },
+        "election_family": {
+          "facts": {
+            "official_page_status": 0,
+            "published_aggregates": 0
+          },
+          "documents": {
+            "finance_candidate_return": 492
+          },
+          "nationwide": 0,
+          "electorates": {
+            "summaries": 0,
+            "party_lines": 0,
+            "candidate_route_checks": 0
+          }
+        }
+      }
+    },
+    {
+      "product": "P16",
+      "wave": 1,
+      "waves": 1,
+      "source_id": "finance_2025_party_aggregates_export",
+      "mode": "export_import",
+      "dry_run": false,
+      "status": "succeeded",
+      "complete_snapshot": true,
+      "error_class": null,
+      "manifest_hash": "sha256:27b96f865e049370a006448c93ba9d3148d2ad5dc29ddc4c5efa717ff60044da",
+      "input_digest": {
+        "sha256": "sha256:50ea71006bd2d3ff21f3875d28a375ccf3f9b7a836d1aa2a934c7b0099783adf",
+        "bytes": 21660,
+        "rows": 14
+      },
+      "run_id": "7a373b22-1943-43f6-b90d-261f6e0bd4e9",
+      "totals": {
+        "seen": 14,
+        "versions_inserted": 0,
+        "observations_inserted": 14,
+        "unchanged": 14,
+        "rejected": 0
+      },
+      "tombstoned": 0,
+      "pages": 1,
+      "projection": {
+        "shared": {
+          "documents": 0,
+          "mp_directory": 0,
+          "baseline_candidacies": 0
+        },
+        "election_family": {
+          "facts": {
+            "official_page_status": 0,
+            "published_aggregates": 28
+          },
+          "documents": {},
+          "nationwide": 0,
+          "electorates": {
+            "summaries": 0,
+            "party_lines": 0,
+            "candidate_route_checks": 0
+          }
+        }
+      }
+    },
+    {
+      "product": "P17",
+      "wave": 1,
+      "waves": 2,
+      "status": "history_already_stored",
+      "rows_skipped": 6
+    },
+    {
+      "product": "P17",
+      "wave": 2,
+      "waves": 2,
+      "source_id": "finance_2025_party_returns_export",
+      "mode": "export_import",
+      "dry_run": false,
+      "status": "succeeded",
+      "complete_snapshot": true,
+      "error_class": null,
+      "manifest_hash": "sha256:b3fb60d8fc6f780530d4639ecf3cec3844f0086a35137afe636f0df58230aa9e",
+      "input_digest": {
+        "sha256": "sha256:df42409b9ea9c0dade79f83419172bb0fe67a7117b300c652b136a3e61656eca",
+        "bytes": 71043,
+        "rows": 17
+      },
+      "run_id": "8ca0bb8b-5c18-4b88-9f40-f0b8cb97bac8",
+      "totals": {
+        "seen": 17,
+        "versions_inserted": 0,
+        "observations_inserted": 17,
+        "unchanged": 17,
+        "rejected": 0
+      },
+      "tombstoned": 0,
+      "pages": 1,
+      "projection": {
+        "shared": {
+          "documents": 0,
+          "mp_directory": 0,
+          "baseline_candidacies": 0
+        },
+        "election_family": {
+          "facts": {
+            "official_page_status": 0,
+            "published_aggregates": 0
+          },
+          "documents": {
+            "finance_party_return": 17
+          },
+          "nationwide": 0,
+          "electorates": {
+            "summaries": 0,
+            "party_lines": 0,
+            "candidate_route_checks": 0
+          }
+        }
+      }
+    },
+    {
+      "product": "C26A",
+      "wave": 1,
+      "waves": 2,
+      "status": "history_already_stored",
+      "rows_skipped": 1
+    },
+    {
+      "product": "C26A",
+      "wave": 2,
+      "waves": 2,
+      "source_id": "election_2026_official_page_status_export",
+      "mode": "export_import",
+      "dry_run": false,
+      "status": "succeeded",
+      "complete_snapshot": true,
+      "error_class": null,
+      "manifest_hash": "sha256:5e706c5cb0aca90ec79820db0e2e23c525d915b3e020188b8cfce1b998856dd3",
+      "input_digest": {
+        "sha256": "sha256:ffab2d165a6f7086b5f8e87956de2ce2d366afe417b9d3cdf78393ba394d44f9",
+        "bytes": 1618,
+        "rows": 1
+      },
+      "run_id": "2f6b303a-369f-41d0-98a0-7852ebfaf9eb",
+      "totals": {
+        "seen": 1,
+        "versions_inserted": 0,
+        "observations_inserted": 1,
+        "unchanged": 1,
+        "rejected": 0
+      },
+      "tombstoned": 0,
+      "pages": 1,
+      "projection": {
+        "shared": {
+          "documents": 0,
+          "mp_directory": 0,
+          "baseline_candidacies": 0
+        },
+        "election_family": {
+          "facts": {
+            "official_page_status": 1,
+            "published_aggregates": 0
+          },
+          "documents": {},
+          "nationwide": 0,
+          "electorates": {
+            "summaries": 0,
+            "party_lines": 0,
+            "candidate_route_checks": 0
+          }
+        }
+      }
+    },
+    {
+      "product": "C26B",
+      "wave": 1,
+      "waves": 1,
+      "source_id": "election_2026_boundary_map_links_export",
+      "mode": "export_import",
+      "dry_run": false,
+      "status": "succeeded",
+      "complete_snapshot": true,
+      "error_class": null,
+      "manifest_hash": "sha256:9616cfb09a23b77a5338a8931b3eea4e27ba47d03f0052bc76088c743bcdea4a",
+      "input_digest": {
+        "sha256": "sha256:1a86dfe29ef0bf7d6713b51a2271493b872fc2081b6c6a66ac305efb680e7093",
+        "bytes": 3145,
+        "rows": 3
+      },
+      "run_id": "728614e3-d353-4cbd-8c1f-77f26d005ee3",
+      "totals": {
+        "seen": 3,
+        "versions_inserted": 0,
+        "observations_inserted": 3,
+        "unchanged": 3,
+        "rejected": 0
+      },
+      "tombstoned": 0,
+      "pages": 1,
+      "projection": {
+        "shared": {
+          "documents": 0,
+          "mp_directory": 0,
+          "baseline_candidacies": 0
+        },
+        "election_family": {
+          "facts": {
+            "official_page_status": 0,
+            "published_aggregates": 0
+          },
+          "documents": {
+            "election_2026_boundary_map_link": 3
+          },
+          "nationwide": 0,
+          "electorates": {
+            "summaries": 0,
+            "party_lines": 0,
+            "candidate_route_checks": 0
+          }
+        }
+      }
+    }
+  ]
+}

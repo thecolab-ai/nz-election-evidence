@@ -1,0 +1,114 @@
+{
+  "receipt_note": "Statistics family, 2026-09-20 (UTC). Read-only upstream export or fresh anonymous fetch, loaded into an isolated disposable local database. Nothing hosted was written. Counts, hashes, statuses and publisher URLs only.",
+  "receipts": [
+    {
+      "receipt_version": 1,
+      "source_id": "stats_nz_census_2018_highlights",
+      "products": [
+        "P19"
+      ],
+      "dry_run": false,
+      "status": "succeeded",
+      "error_class": null,
+      "error_detail": null,
+      "run_id": "a9148fc0-2820-4437-90b1-5490d14ff3a6",
+      "resumed_from_run_id": null,
+      "loader_version": "1.0.0",
+      "artifact": {
+        "digest": "sha256:344cf1ac62e198aec0d36e307f55b85b35cff0dbd786d7034f3963e983bf9e10",
+        "producer": {
+          "route": "warehouse_export",
+          "exporter_version": "1.0.0",
+          "recipe_sha256": "7e2b3ce6260ae3efbacc9f11a33ce1072403d04bfd97d9ddf25ea24bdf83f41f"
+        },
+        "collected_from": "2026-09-12T03:53:40.000Z",
+        "collected_to": "2026-09-12T03:53:40.000Z",
+        "files": 2,
+        "counts": {
+          "routes": 1,
+          "datasets": 1,
+          "releases": 1,
+          "series": 4966,
+          "geographies": 1,
+          "observations": 4966,
+          "catalogue_entries": 0,
+          "observations_by_status": {
+            "reported": 4966
+          },
+          "observations_by_dataset": {
+            "statsnz.census.2018.national_highlights": 4966
+          }
+        }
+      },
+      "source_to_artifact": [
+        {
+          "what": "dedicated census observations of statsnz.census.2018.national_highlights -> observations",
+          "upstream_rows": 4966,
+          "artifact_rows": 4966,
+          "difference": 0,
+          "explanation": "every upstream observation became exactly one observation"
+        },
+        {
+          "what": "overlapping operational route (1754 stored rows, 877 record ids) -> observations",
+          "upstream_rows": 877,
+          "artifact_rows": 0,
+          "difference": -877,
+          "explanation": "not imported: Same publisher file by SHA-256; every operational row is present in the dedicated route with the same member, row, measure and value. Importing both would count the same publisher cells twice."
+        }
+      ],
+      "artifact_to_destination": [
+        {
+          "what": "observations of statsnz.census.2018.national_highlights @ 2018 Census release: artifact -> store",
+          "upstream_rows": 4966,
+          "artifact_rows": 4966,
+          "difference": 0,
+          "explanation": "every artifact row is stored exactly once"
+        },
+        {
+          "what": "withheld, confidential, missing or not-applicable rows that carry a number",
+          "upstream_rows": 0,
+          "artifact_rows": 0,
+          "difference": 0,
+          "explanation": "none: a value the publisher did not print is stored as null with its status, never as zero"
+        }
+      ],
+      "totals": {
+        "meta": {
+          "routes": 1,
+          "datasets": 1,
+          "releases": 1,
+          "series_inserted": 0,
+          "geographies_inserted": 0,
+          "catalogue_entries_seen": 0,
+          "catalogue_entries_written": 0
+        },
+        "observations": {
+          "seen": 4966,
+          "inserted": 0,
+          "unchanged": 4966,
+          "conflicts": 0
+        },
+        "batches": 1
+      },
+      "replay_wrote_nothing": true,
+      "destination": {
+        "series": 4966,
+        "datasets": 1,
+        "releases": 1,
+        "geographies": 1,
+        "observations": 4966,
+        "content_digest": "8d0df17dd91ee98ca16ac51d5a5f64ed",
+        "observations_by_status": {
+          "reported": 4966
+        },
+        "observations_by_release": {
+          "statsnz.census.2018.national_highlights @ 2018 Census release": 4966
+        },
+        "catalogue_entry_versions": 0,
+        "catalogue_entries_current": 0,
+        "withheld_rows_carrying_a_number": 0
+      },
+      "findings": []
+    }
+  ]
+}

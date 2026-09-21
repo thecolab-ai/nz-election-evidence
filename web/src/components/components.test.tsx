@@ -1,9 +1,9 @@
 import { render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 import { renderCell } from '@/routes/datasets'
-import { coverageCounts, RELEASE_COVERAGE } from '@/lib/release-coverage'
+import { coverageCounts, heldFor, NOT_PUBLISHED_FOR_2026, RELEASE_COVERAGE } from '@/lib/release-coverage'
 import { AccountabilityFooter } from './footer'
-import { OwnerOverrideNotice, ownerBasis } from './owner-override-notice'
+import { figureWords, OwnerOverrideNotice, ownerBasis } from './owner-override-notice'
 import { PREVIEW_BANNER, PreviewBanner } from './shell'
 import { EmptyBlock, ErrorBlock } from './states'
 import { SummaryCard } from './summary-card'
@@ -88,7 +88,7 @@ describe('owner override: stated as what it is, never as a review or a publisher
   const gate = (patch: Partial<SurfaceStatusRow>): SurfaceStatusRow => ({
     gate_key: 'r10_public_surface_review', state: 'closed', evidence_reference: null, decided_at: null, public_rows_released: true,
     release_basis: 'owner_override', owner_authorization_id: 'OWNER-AUTH-2026-09-20-01', owner_decided_on: '2026-09-20', owner_expires_on: '2026-11-06',
-    owner_fields_in_force: true, ...patch,
+    owner_fields_in_force: true, owner_figure_scopes: [], ...patch,
   })
   const both = (patch: Partial<SurfaceStatusRow>) => [gate(patch), gate({ ...patch, gate_key: 'r8_accountable_legal_entity' })]
   it('names the decision, its dates, the reviews still outstanding (read from the gates) and the absence of any publisher approval', () => {
@@ -101,6 +101,22 @@ describe('owner override: stated as what it is, never as a review or a publisher
     const hrefs = Array.from(screen.getByTestId('owner-override-notice').querySelectorAll('a')).map((a) => a.getAttribute('href'))
     expect(hrefs).toContain('https://github.com/thecolab-ai/nz-election-evidence/blob/main/governance/owner-authorizations.json')
     expect(hrefs).toContain('https://github.com/thecolab-ai/nz-election-evidence/blob/main/REVIEW-REGISTER.md')
+  })
+  it('names the kinds of figure that rest on the decision, from the database, and never poll figures', () => {
+    render(<OwnerOverrideNotice status={both({ owner_figure_scopes: ['official_finance_figures', 'official_result_figures', 'published_poll_figures', 'statistical_facts'] })} />)
+    const text = screen.getByTestId('owner-override-notice').textContent ?? ''
+    expect(text).toContain('the vote counts, shares, seat numbers and list positions the official election-results publications printed')
+    expect(text).toContain('the donation, expense and loan totals the Electoral Commission prints on its own public index pages')
+    expect(text).toContain('the published figures of official statistics')
+    expect(text).toContain('the party-vote percentages each pollster published, each shown beside whether that pollster disclosed a methodology')
+    expect(text).toContain('Nothing is read from inside a finance return, and no donor is named anywhere')
+    // A scope the database does not report is not claimed, and an unknown kind is not invented.
+    expect(figureWords(['statistical_facts'])).toEqual(['the published figures of official statistics'])
+    expect(figureWords(['something_new', null as unknown as string])).toEqual([])
+    expect(figureWords(null)).toEqual([])
+    const none = render(<OwnerOverrideNotice status={both({})} />).container
+    expect(none.querySelector('[data-testid="owner-notice-figures"]')).toBeNull()
+    expect(none.textContent).toContain('no donor is named anywhere')
   })
   it('says only what the gates say: one review on record leaves only the other named as outstanding', () => {
     render(<OwnerOverrideNotice status={[gate({ state: 'open' }), gate({ gate_key: 'r8_accountable_legal_entity' })]} />)
@@ -131,10 +147,43 @@ describe('owner override: stated as what it is, never as a review or a publisher
   })
 })
 
-describe('release coverage is stated with what is missing', () => {
-  it('counts 3 live adapters, 1 historical export and 20 products not in the store, out of 24', () => {
-    expect(coverageCounts()).toEqual({ total: 24, live: 3, export: 1, none: 20 })
-    expect(RELEASE_COVERAGE.filter((row) => row.route !== 'none').map((row) => row.product_id)).toEqual(['P01', 'P03', 'P04', 'P10'])
-    expect(RELEASE_COVERAGE.find((row) => row.product_id === 'P04')?.note).toContain('963')
+describe('release coverage keeps routes and held data apart', () => {
+  it('every one of the 24 products has a backfill route; a route is never counted as held data', () => {
+    const counts = coverageCounts()
+    expect(counts.total).toBe(24)
+    expect(counts.with_backfill_route).toBe(24)
+    expect(counts.with_refresh_route + counts.without_refresh_route).toBe(24)
+    for (const row of RELEASE_COVERAGE) {
+      // A product without a working refresh route always says why.
+      if (row.refresh !== 'scheduled' && row.refresh !== 'operator_run') expect(row.refresh_gap, row.product_id).toBeTruthy()
+      // Nothing is held until the database says so.
+      expect(heldFor(row, []).held, row.product_id).toBe(false)
+    }
+  })
+  it('held is read from the store: ledger records, or typed observations for a statistics source, never a guess', () => {
+    const p23 = RELEASE_COVERAGE.find((row) => row.product_id === 'P23')!
+    const empty = heldFor(p23, [{ source_id: 'stats_tenancy_rental_bonds', live_records: 0, statistical_observations: null, statistical_catalogue_entries: null, last_success_at: null }])
+    expect(empty).toMatchObject({ held: false, sources_seen: 1, routes: [] })
+    const loaded = heldFor(p23, [{ source_id: 'stats_tenancy_rental_bonds', live_records: 0, statistical_observations: '57888', statistical_catalogue_entries: 4, last_success_at: '2026-09-20T10:00:00Z' }])
+    expect(loaded.held).toBe(true)
+    expect(loaded.routes).toEqual([{ source_id: 'stats_tenancy_rental_bonds', ledger_records: 0, statistical_observations: 57888, catalogue_entries: 4 }])
+    // A source of another product never counts towards this one.
+    expect(heldFor(p23, [{ source_id: 'stats_msd_benefits', live_records: 0, statistical_observations: 903, statistical_catalogue_entries: 26, last_success_at: '2026-09-20T10:00:00Z' }]).held).toBe(false)
+  })
+  it('never adds overlapping routes of one product together: each route keeps its own count', () => {
+    const p24 = RELEASE_COVERAGE.find((row) => row.product_id === 'P24')!
+    const held = heldFor(p24, [
+      { source_id: 'parliament_export_written_questions', live_records: 187956, statistical_observations: null, statistical_catalogue_entries: null, last_success_at: '2026-09-20T10:00:00Z' },
+      { source_id: 'nz_parliament_written_questions_recent', live_records: 2000, statistical_observations: null, statistical_catalogue_entries: null, last_success_at: '2026-09-20T11:00:00Z' },
+    ])
+    expect(held.routes.map((r) => [r.source_id, r.ledger_records])).toEqual([['parliament_export_written_questions', 187956], ['nz_parliament_written_questions_recent', 2000]])
+    expect(JSON.stringify(held)).not.toContain('189956')
+    // A route that ran and holds nothing is not counted as holding anything.
+    const ranEmpty = heldFor(p24, [{ source_id: 'nz_parliament_written_questions_recent', live_records: 0, statistical_observations: null, statistical_catalogue_entries: null, last_success_at: '2026-09-20T11:00:00Z' }])
+    expect(ranEmpty).toMatchObject({ held: false, routes: [] })
+  })
+  it('says plainly what the 2026 election routes do not publish', () => {
+    expect(NOT_PUBLISHED_FOR_2026.some((line) => /nominations/.test(line) && /unknown/.test(line))).toBe(true)
+    expect(NOT_PUBLISHED_FOR_2026.join(' ')).not.toMatch(/\b0 (candidates|nominations|electorates)\b/)
   })
 })
