@@ -37,6 +37,7 @@
     "vite.config.ts",
     "playwright.config.ts",
     "playwright.pages.config.ts",
+    "playwright.journey.config.ts",
     "playwright.shared.ts"
   ]
 }
