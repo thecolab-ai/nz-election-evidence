@@ -33,11 +33,13 @@
   "include": [
     "src",
     "e2e",
+    "e2e-live",
     "scripts",
     "vite.config.ts",
     "playwright.config.ts",
     "playwright.pages.config.ts",
     "playwright.journey.config.ts",
+    "playwright.live.config.ts",
     "playwright.shared.ts"
   ]
 }
