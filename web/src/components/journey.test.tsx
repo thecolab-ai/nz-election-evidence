@@ -181,6 +181,55 @@ describe('four silences, four different sentences', () => {
     expect(text).toContain('unknown, not zero')
   })
 
+  /**
+   * The 2026 card holds two panels — who is standing, and the publisher's own boundary maps — and on a
+   * store holding neither they rendered two identical `none-held` boxes ending in the same sentence.
+   * A reader could not tell which question each answered, and an assertion about the card's OWN answer
+   * resolved to two elements. A nested panel names its silences for itself; the card's answer keeps the
+   * plain names, and the two sentences stay distinct.
+   */
+  it('names a nested panel’s silence for itself, so one card never answers twice under one name', () => {
+    render(
+      <div data-testid="a-card">
+        <AvailabilityBlock availability={{ state: 'none_held' }} loadingLabel="Loading the answer" datasetName="evidence_public.fixture" noneHeld="No fixture row is held for this.">
+          {() => <p />}
+        </AvailabilityBlock>
+        <AvailabilityBlock
+          availability={{ state: 'none_held' }}
+          statePrefix="fixture-maps"
+          loadingLabel="Loading fixture maps"
+          datasetName="evidence_open.fixture_maps"
+          noneHeld="No fixture map has been loaded."
+        >
+          {() => <p />}
+        </AvailabilityBlock>
+      </div>,
+    )
+    expect(screen.getAllByTestId('none-held')).toHaveLength(1)
+    expect(screen.getByTestId('none-held').textContent).toContain('No fixture row is held for this.')
+    // The nested panel still says it, still under its own name, and still ends in the same discipline.
+    const nested = screen.getByTestId('fixture-maps-none-held').textContent ?? ''
+    expect(nested).toContain('No fixture map has been loaded.')
+    expect(nested).toContain('unknown, not zero')
+  })
+
+  it('scopes a nested panel’s other silences too, and leaves the spinner answerable for every panel at once', () => {
+    const nested = (availability: Availability<never>) =>
+      render(
+        <AvailabilityBlock availability={availability} statePrefix="fixture-maps" loadingLabel="Loading fixture maps" datasetName="evidence_open.fixture_maps" noneHeld="none">
+          {() => <p />}
+        </AvailabilityBlock>,
+      )
+    nested({ state: 'not_loaded', error: new DataError('missing (TEST FIXTURE)', 'PGRST205') })
+    expect(screen.getByTestId('fixture-maps-not-loaded')).toBeTruthy()
+    expect(screen.queryByTestId('not-loaded')).toBeNull()
+    nested({ state: 'not_answerable', error: new DataError('cancelled (TEST FIXTURE)', '57014') })
+    expect(screen.getByTestId('fixture-maps-not-answerable')).toBeTruthy()
+    // "No panel is left spinning" must stay answerable in one question, so the spinner is NEVER scoped.
+    nested({ state: 'loading' })
+    expect(screen.getAllByTestId('loading-state').length).toBeGreaterThan(0)
+  })
+
   it('a dataset that is not on this deployment says so, and claims nothing either way', () => {
     renderState({ state: 'not_loaded', error: new DataError('missing (TEST FIXTURE)', 'PGRST205') })
     const text = screen.getByTestId('not-loaded').textContent ?? ''

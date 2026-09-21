@@ -192,11 +192,18 @@ function StandingIn2026Card({ electorate: e, sources }: { electorate: Electorate
   )
 }
 
+/**
+ * The publisher's own map files, nested inside the 2026 card. It answers a DIFFERENT question from the
+ * card it sits in — which maps are held, not who is standing — so its silences are named for itself.
+ * Two unnamed silences in one card read as one answer given twice, and neither a reader nor a test can
+ * tell which question was answered.
+ */
 function BoundaryMapList({ maps }: { maps: ReturnType<typeof useBoundaryMaps> }) {
   const availability = classify(maps)
   return (
     <AvailabilityBlock
       availability={availability}
+      statePrefix="boundary-maps"
       loadingLabel="Loading boundary maps"
       datasetName="evidence_open.boundary_map_links"
       noneHeld="No 2026 boundary map has been loaded."

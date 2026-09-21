@@ -32,9 +32,9 @@ export function EmptyBlock({ message = EMPTY_MESSAGE }: { message?: string }) {
  * the site is broken when the honest answer is that this deployment holds nothing here and claims
  * nothing either way.
  */
-export function NotLoadedBlock({ datasetName }: { datasetName: string }) {
+export function NotLoadedBlock({ datasetName, testId = 'not-loaded' }: { datasetName: string; testId?: string }) {
   return (
-    <div role="status" data-testid="not-loaded" className="flex items-start gap-3 border border-dashed border-caution-foreground/50 bg-caution px-4 py-4 text-sm text-caution-foreground">
+    <div role="status" data-testid={testId} className="flex items-start gap-3 border border-dashed border-caution-foreground/50 bg-caution px-4 py-4 text-sm text-caution-foreground">
       <CircleSlash aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
       <div className="space-y-1">
         <p className="font-medium">This part of the store is not on the deployment you are reading.</p>

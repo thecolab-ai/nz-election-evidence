@@ -95,6 +95,13 @@ export function ProvenanceStrip({ provenance, unknowns }: { provenance: Provenan
  * Renders the one honest state a panel is actually in. Four different silences are four different
  * sentences: a dataset that this deployment does not carry, a query this deployment would not
  * finish, a request that failed, and a store that genuinely holds no row.
+ *
+ * `statePrefix` names the panel when a card holds MORE THAN ONE of these blocks. The 2026 card holds
+ * two — who is standing, and the publisher's own boundary maps — and with both silent they rendered
+ * two identical `none-held` boxes carrying the same closing sentence. A reader could not tell which
+ * question each was answering, and neither could an assertion about the card's own answer. The card's
+ * answer keeps the plain names; a nested panel is named for itself. `loading-state` is deliberately
+ * NOT scoped: "no panel is left spinning" has to be answerable for every panel at once.
  */
 export function AvailabilityBlock<Row>({
   availability,
@@ -102,6 +109,7 @@ export function AvailabilityBlock<Row>({
   noneHeld,
   datasetName,
   onRetry,
+  statePrefix,
   children,
 }: {
   availability: Availability<Row>
@@ -111,13 +119,16 @@ export function AvailabilityBlock<Row>({
   /** The dataset a reader would look for in the catalogue if it is not loaded here. */
   datasetName: string
   onRetry?: () => void
+  /** Set on a panel nested inside a card that has an answer of its own. See the note above. */
+  statePrefix?: string
   children: (rows: Row[]) => ReactNode
 }) {
+  const stateId = (state: string) => (statePrefix ? `${statePrefix}-${state}` : state)
   if (availability.state === 'loading') return <LoadingBlock label={loadingLabel} rows={3} />
   if (availability.state === 'ready') return <>{children(availability.rows)}</>
   if (availability.state === 'none_held') {
     return (
-      <div role="status" data-testid="none-held" className="flex items-start gap-3 border border-dashed border-rule px-4 py-4 text-sm text-muted-foreground">
+      <div role="status" data-testid={stateId('none-held')} className="flex items-start gap-3 border border-dashed border-rule px-4 py-4 text-sm text-muted-foreground">
         <CircleSlash aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
         <div className="space-y-1">
           <p className="text-foreground">{noneHeld}</p>
@@ -126,10 +137,10 @@ export function AvailabilityBlock<Row>({
       </div>
     )
   }
-  if (availability.state === 'not_loaded') return <NotLoadedBlock datasetName={datasetName} />
+  if (availability.state === 'not_loaded') return <NotLoadedBlock datasetName={datasetName} testId={stateId('not-loaded')} />
   if (availability.state === 'not_answerable') {
     return (
-      <div role="status" data-testid="not-answerable" className="flex items-start gap-3 border border-dashed border-caution-foreground/50 bg-caution px-4 py-4 text-sm text-caution-foreground">
+      <div role="status" data-testid={stateId('not-answerable')} className="flex items-start gap-3 border border-dashed border-caution-foreground/50 bg-caution px-4 py-4 text-sm text-caution-foreground">
         <Clock aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
         <div className="space-y-1">
           <p className="font-medium">This deployment could not answer the question in the time it allows.</p>
