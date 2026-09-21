@@ -439,6 +439,117 @@ export type Database = {
           },
         ]
       }
+      donation_disclosures: {
+        Row: {
+          amendment_labelled: boolean | null
+          amounts_basis: string | null
+          candidate_name_as_published: string | null
+          date_disclosure: string | null
+          disclosed_amount_nzd: number | null
+          disclosure_kind: string | null
+          disclosure_part: string | null
+          disclosure_reader_version: string | null
+          donation_dates: string[] | null
+          donor_identity_kind: string | null
+          donor_name_as_published: string | null
+          donor_name_status: string | null
+          electorate_as_published: string | null
+          entry_index: number | null
+          evidence_version_id: string | null
+          id: string | null
+          official_url: string | null
+          overlaps_election_year_notices: boolean | null
+          part_label_as_published: string | null
+          party_identity_id: string | null
+          party_name_as_published: string | null
+          reporting_year: number | null
+          return_kind: string | null
+          return_part_id: string | null
+          source_record_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "donation_disclosures_evidence_version_id_fkey"
+            columns: ["evidence_version_id"]
+            isOneToOne: false
+            referencedRelation: "source_record_versions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "donation_disclosures_party_identity_id_fkey"
+            columns: ["party_identity_id"]
+            isOneToOne: false
+            referencedRelation: "party_source_identities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "donation_disclosures_return_part_id_fkey"
+            columns: ["return_part_id"]
+            isOneToOne: false
+            referencedRelation: "donation_return_parts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "donation_disclosures_source_record_id_fkey"
+            columns: ["source_record_id"]
+            isOneToOne: true
+            referencedRelation: "source_records"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      donation_return_parts: {
+        Row: {
+          amendment_labelled: boolean | null
+          amounts_basis: string | null
+          candidate_name_as_published: string | null
+          catalogue_page_url: string | null
+          disclosed_total_nzd: number | null
+          disclosed_total_status: string | null
+          disclosure_kind: string | null
+          disclosure_part: string | null
+          disclosure_reader_version: string | null
+          document_version_type: string | null
+          donor_identity_kind: string | null
+          electorate_as_published: string | null
+          entries_disclosed: number | null
+          evidence_version_id: string | null
+          id: string | null
+          itemisation_note: string | null
+          itemisation_status: string | null
+          official_url: string | null
+          overlaps_election_year_notices: boolean | null
+          part_label_as_published: string | null
+          party_identity_id: string | null
+          party_name_as_published: string | null
+          reporting_year: number | null
+          return_kind: string | null
+          source_record_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "donation_return_parts_evidence_version_id_fkey"
+            columns: ["evidence_version_id"]
+            isOneToOne: false
+            referencedRelation: "source_record_versions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "donation_return_parts_party_identity_id_fkey"
+            columns: ["party_identity_id"]
+            isOneToOne: false
+            referencedRelation: "party_source_identities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "donation_return_parts_source_record_id_fkey"
+            columns: ["source_record_id"]
+            isOneToOne: true
+            referencedRelation: "source_records"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       election_official_page_status: {
         Row: {
           candidate_details_available: string | null
@@ -2874,6 +2985,34 @@ export type Database = {
             referencedColumns: ["source_id"]
           },
         ]
+      }
+      donation_disclosures: {
+        Row: {
+          amendment_labelled: boolean | null
+          amounts_basis: string | null
+          candidate_name_as_published: string | null
+          date_disclosure: string | null
+          disclosed_amount_nzd: number | null
+          disclosure_kind: string | null
+          disclosure_part: string | null
+          disclosure_reader_version: string | null
+          donation_dates: string[] | null
+          donor_identity_kind: string | null
+          donor_name_as_published: string | null
+          donor_name_status: string | null
+          electorate_as_published: string | null
+          entry_index: number | null
+          official_url: string | null
+          overlaps_election_year_notices: boolean | null
+          part_entries_disclosed: number | null
+          part_itemisation_status: string | null
+          part_label_as_published: string | null
+          part_total_nzd: number | null
+          party_name_as_published: string | null
+          reporting_year: number | null
+          return_kind: string | null
+        }
+        Relationships: []
       }
       elections: {
         Row: {

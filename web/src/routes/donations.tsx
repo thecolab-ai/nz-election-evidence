@@ -66,7 +66,7 @@ export function DonationsPage() {
   const setSearch = useSetSearch()
   const query = useListQuery<DonationDisclosureRow, keyof typeof donationsSpec.filters>({
     // The curated view: the figure and the label that says how complete it is, in one row.
-    view: 'donation_disclosures' as 'documents',
+    view: 'donation_disclosures',
     select: '*',
     spec: donationsSpec,
     search,
