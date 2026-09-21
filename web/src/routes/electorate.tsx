@@ -1,6 +1,7 @@
 import { getRouteApi, Link } from '@tanstack/react-router'
 import { ArrowLeft, Banknote, FileText, Map, Users } from 'lucide-react'
 import { CandidacyStatusBadge, LinkStatusBadge, Pill } from '@/components/badges'
+import { DisclosedAmount, DonorName } from '@/components/donation'
 import { AvailabilityBlock, FactCard } from '@/components/fact-card'
 import { EntityLink } from '@/components/entity-link'
 import { EvidenceVersionLink } from '@/components/evidence-link'
@@ -19,7 +20,8 @@ import {
   REPRESENTATION_MATCH_NOTE,
   type SourceLike,
 } from '@/lib/electorate'
-import { formatCount, formatDate, formatDateTime, formatMoney, formatPlainDate, formatServiceDate, formatVotes, humanise, NOT_SHOWN, RIGHTS_NOTE } from '@/lib/format'
+import { formatCount, formatDate, formatDateTime, formatPlainDate, formatServiceDate, formatVotes, humanise, NOT_SHOWN, RIGHTS_NOTE } from '@/lib/format'
+import { donationRowKey } from '@/lib/donations'
 import type { CandidacyRow, DonationDisclosureRow, ElectorateVersionRow, ServiceTermRow } from '@/lib/types'
 import {
   CANDIDACY_SOURCE_ID,
@@ -548,30 +550,43 @@ function MoneyCard({ electorate: e, sources }: { electorate: ElectorateVersionRo
   )
 }
 
+/**
+ * The line under one entry, built only from what that entry actually carries. A field released as null
+ * is not a return that printed nothing, so its segment is left out rather than rendered over the null:
+ * a null `return_kind` must not read as "Party return", and a null part must not read as "Part : ".
+ * Reachable wherever a deployment releases some fields of a return and not others, which the public
+ * projection supports field by field. The donor and the amount are not here: those cells say in words
+ * that they are held and not released.
+ */
+export function donationMeta(d: DonationDisclosureRow): string[] {
+  const segments: string[] = []
+  const kind = d.return_kind === null || d.return_kind === undefined ? null : d.return_kind === 'candidate_election_return' ? 'Candidate return' : 'Party return'
+  const year = d.reporting_year === null || d.reporting_year === undefined ? null : String(d.reporting_year)
+  const head = kind && year ? `${kind} ${year}` : (kind ?? year)
+  if (head) segments.push(head)
+  const recipient = d.candidate_name_as_published ?? d.party_name_as_published
+  if (recipient) segments.push(recipient)
+  if (d.disclosure_part) segments.push(d.part_label_as_published ? `Part ${d.disclosure_part}: ${d.part_label_as_published}` : `Part ${d.disclosure_part}`)
+  if (d.disclosure_kind) segments.push(humanise(d.disclosure_kind).toLowerCase())
+  if (d.amendment_labelled) segments.push('amended return')
+  if (d.overlaps_election_year_notices) segments.push('overlaps the separately published election-year notices')
+  return segments
+}
+
 function DonationList({ rows }: { rows: readonly DonationDisclosureRow[] }) {
   return (
     <ul className="divide-y divide-border" data-testid="donation-list">
-      {rows.map((d) => (
-        <li key={`${d.official_url}#${d.disclosure_part}-${d.entry_index}`} className="py-2.5" data-testid="donation-row">
+      {rows.map((d, i) => (
+        <li key={donationRowKey(d, i)} className="py-2.5" data-testid="donation-row">
           <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
             <span className="font-medium">
-              {d.donor_name_status === 'published' ? (
-                d.donor_name_as_published
-              ) : d.donor_name_status === 'withheld_by_publisher' ? (
-                <Pill tone="muted">{d.donor_identity_kind === 'anonymous' ? 'Anonymous — no name is disclosed' : 'Protected from disclosure by law'}</Pill>
-              ) : (
-                <Pill tone="caution">Named in the return; the name could not be separated from the other text printed in the same cell</Pill>
-              )}
+              <DonorName row={d} />
             </span>
-            <span className="num">{formatMoney(d.disclosed_amount_nzd, 'reported')}</span>
+            <DisclosedAmount row={d} />
           </div>
           <p className="mt-0.5 text-[13px] text-muted-foreground">
             <Banknote aria-hidden="true" className="mr-1 inline size-3" />
-            {d.return_kind === 'candidate_election_return' ? 'Candidate return' : 'Party return'} {d.reporting_year} ·{' '}
-            {d.candidate_name_as_published ?? d.party_name_as_published ?? 'recipient not printed'} · Part {d.disclosure_part}: {d.part_label_as_published} ·{' '}
-            {humanise(d.disclosure_kind).toLowerCase()}
-            {d.amendment_labelled ? ' · amended return' : ''}
-            {d.overlaps_election_year_notices ? ' · overlaps the separately published election-year notices' : ''} ·{' '}
+            {donationMeta(d).map((segment) => `${segment} · `).join('')}
             <ExternalLink href={d.official_url}>open the return</ExternalLink>
           </p>
         </li>

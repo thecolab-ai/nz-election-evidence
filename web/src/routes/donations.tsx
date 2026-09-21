@@ -1,69 +1,117 @@
 import { createColumnHelper } from '@tanstack/react-table'
-import { getRouteApi } from '@tanstack/react-router'
+import { getRouteApi, Link } from '@tanstack/react-router'
 import { Pill } from '@/components/badges'
 import { DataTable, type CoreFeatures } from '@/components/data-table'
+import { DisclosedAmount, DisclosedDates, DonorName, NOT_RELEASED } from '@/components/donation'
 import { FilterBar, SelectFilter, TextFilter } from '@/components/filters'
 import { ExternalLink, Note, PageHeader } from '@/components/page'
 import { NotLoadedBlock } from '@/components/states'
+import { donationRowKey, donationsRelease, isLinkOnlyDisclosure, returnDocumentLabel } from '@/lib/donations'
 import { isMissingDataset } from '@/lib/electorate'
-import { formatDate, formatMoney, humanise } from '@/lib/format'
+import { humanise } from '@/lib/format'
 import { useListQuery } from '@/lib/queries'
 import { donationsSpec } from '@/lib/specs'
 import type { DonationDisclosureRow } from '@/lib/types'
 import { filterPatch, useSetSearch } from '@/lib/use-set-search'
+import { useState } from 'react'
 
 const route = getRouteApi('/_released/donations')
 const helper = createColumnHelper<CoreFeatures, DonationDisclosureRow>()
 
-/** What the return says about the donor. An identity the law withholds is shown as withheld, never as missing. */
-function Donor({ row }: { row: DonationDisclosureRow }) {
-  if (row.donor_name_status === 'published') return <>{row.donor_name_as_published}</>
-  if (row.donor_name_status === 'withheld_by_publisher') {
-    return <Pill tone="muted">{row.donor_identity_kind === 'anonymous' ? 'Anonymous — no name is disclosed' : 'Protected from disclosure by law'}</Pill>
-  }
-  // `not_separable` covers every reason a name was refused, not the address alone: a cell carrying a
-  // digit or a street word is refused too, so the sentence names the cell rather than one cause of it.
-  return <Pill tone="caution">Named in the return; the name could not be separated from the other text printed in the same cell</Pill>
-}
-
-/** The dates the return itself states. An empty list is never shown as a date. */
-function Dates({ row }: { row: DonationDisclosureRow }) {
-  if (row.donation_dates && row.donation_dates.length > 0) {
-    return <span className="text-xs">{row.donation_dates.map((d) => formatDate(d)).join(', ')}</span>
-  }
-  return <span className="text-xs text-muted-foreground">{row.date_disclosure === 'described_not_dated' ? 'described in words, not as dates' : 'no date printed'}</span>
+/** A content column that came back null on a row the store did list: held here, released elsewhere. */
+function NotReleased() {
+  return <span className="text-xs text-muted-foreground">{NOT_RELEASED}</span>
 }
 
 const columns = helper.columns([
-  helper.accessor('reporting_year', { header: 'Year', cell: ({ getValue }) => <span className="num">{getValue()}</span> }),
-  helper.accessor('donor_name_as_published', { header: 'Donor as disclosed', cell: ({ row }) => <Donor row={row.original} /> }),
-  helper.accessor('disclosed_amount_nzd', { header: 'Amount disclosed', cell: ({ row }) => <span className="num">{formatMoney(row.original.disclosed_amount_nzd, 'reported')}</span> }),
+  helper.accessor('reporting_year', { header: 'Year', cell: ({ getValue }) => (getValue() === null || getValue() === undefined ? <NotReleased /> : <span className="num">{getValue()}</span>) }),
+  helper.accessor('donor_name_as_published', { header: 'Donor as disclosed', cell: ({ row }) => <DonorName row={row.original} /> }),
+  helper.accessor('disclosed_amount_nzd', { header: 'Amount disclosed', cell: ({ row }) => <DisclosedAmount row={row.original} /> }),
   helper.accessor('party_name_as_published', {
     header: 'Received by',
-    cell: ({ row }) => (
-      <>
-        {row.original.candidate_name_as_published ?? row.original.party_name_as_published}
-        {row.original.candidate_name_as_published ? (
-          <span className="block text-xs text-muted-foreground">
-            {row.original.party_name_as_published ?? 'no party stated'} · {row.original.electorate_as_published}
-          </span>
-        ) : null}
-      </>
-    ),
+    cell: ({ row }) => {
+      const recipient = row.original.candidate_name_as_published ?? row.original.party_name_as_published
+      // A row whose fields are not released is not a return that printed no recipient, and must not read as one.
+      if (recipient === null || recipient === undefined) return isLinkOnlyDisclosure(row.original) ? <NotReleased /> : <span className="text-xs text-muted-foreground">recipient not printed</span>
+      return (
+        <>
+          {recipient}
+          {row.original.candidate_name_as_published ? (
+            <span className="block text-xs text-muted-foreground">
+              {row.original.party_name_as_published ?? 'no party stated'} · {row.original.electorate_as_published ?? 'no electorate printed'}
+            </span>
+          ) : null}
+        </>
+      )
+    },
   }),
-  helper.accessor('donation_dates', { header: 'Dates the return states', cell: ({ row }) => <Dates row={row.original} /> }),
+  helper.accessor('donation_dates', { header: 'Dates the return states', cell: ({ row }) => <DisclosedDates row={row.original} /> }),
   helper.accessor('part_label_as_published', {
     header: 'Disclosed under',
-    cell: ({ row }) => (
-      <>
-        Part {row.original.disclosure_part}: {row.original.part_label_as_published}
-        <span className="block text-xs text-muted-foreground">{humanise(row.original.disclosure_kind)}</span>
-      </>
-    ),
+    cell: ({ row }) =>
+      row.original.disclosure_part ? (
+        <>
+          Part {row.original.disclosure_part}: {row.original.part_label_as_published}
+          <span className="block text-xs text-muted-foreground">{humanise(row.original.disclosure_kind)}</span>
+        </>
+      ) : (
+        <NotReleased />
+      ),
   }),
-  helper.accessor('amendment_labelled', { header: 'Document', cell: ({ getValue }) => (getValue() ? <Pill tone="caution">Amended return</Pill> : 'As first filed') }),
+  // A null is not "as first filed": whether the document was amended is itself a field of the return.
+  helper.accessor('amendment_labelled', { header: 'Document', cell: ({ getValue }) => (getValue() === null || getValue() === undefined ? <NotReleased /> : getValue() ? <Pill tone="caution">Amended return</Pill> : 'As first filed') }),
   helper.accessor('official_url', { header: 'Official return', cell: ({ getValue }) => <ExternalLink href={getValue()}>Open at publisher</ExternalLink> }),
 ])
+
+/**
+ * What a deployment shows for entries it has loaded and not released: the publisher's own document,
+ * named, and a column that says in as many words that nothing inside it is published here. Eight
+ * columns of nulls would read as a return that stated nothing; this reads as what it is.
+ */
+export const linkOnlyColumns = helper.columns([
+  helper.accessor('official_url', {
+    header: 'Official return document',
+    cell: ({ getValue }) => <ExternalLink href={getValue()}>{returnDocumentLabel(getValue())}</ExternalLink>,
+  }),
+  helper.display({ id: 'release', header: 'Published on this deployment', cell: () => <EntryLinkOnlyCell /> }),
+])
+
+/** One entry of a return this deployment has read and does not release. It states that, and claims nothing else. */
+export function EntryLinkOnlyCell() {
+  return (
+    <span className="text-xs text-muted-foreground">
+      <Pill tone="muted" testId="entry-link-only">Link only</Pill>{' '}
+      One entry was read from this return. Its donor, amount, recipient and dates are not released here.
+    </span>
+  )
+}
+
+/**
+ * The state a reader meets when every entry ON THIS PAGE came back with its link and nothing else. It
+ * says which is which — read, not released — and refuses the two readings a blank invites: that the
+ * return said nothing, and that nothing was given.
+ *
+ * It is written about the rows in hand, because that is all `donationsRelease` reads. A deployment that
+ * releases the fields of some sources and not others can answer one page entirely from the unreleased
+ * ones, and this note must not turn that page into a statement about the whole store; the rights page
+ * and the sources list are what carry release state source by source.
+ */
+export function DonationsLinkOnlyNote() {
+  return (
+    <Note tone="caution" testId="donations-link-only">
+      <strong className="font-semibold">Read from the Commission’s returns — the entries on this page are not released here.</strong> Every entry
+      listed below came back with one value: the link to the Electoral Commission’s own return document. For these entries the donor, the amount,
+      the recipient, the dates and the part each was disclosed under are not released, so this page lists the documents instead of printing empty
+      cells. Nothing below states who gave what to whom, and a blank is not a zero and not a denial — the figures are printed in the publisher’s
+      document, which every row opens. Other pages of this list, and other sources, may be released differently: why material is published as links
+      only is on the <Link to="/rights" className="doc-link">rights</Link> page, source by source on{' '}
+      <Link to="/sources" className="doc-link">sources</Link>.
+    </Note>
+  )
+}
+
+const EMPTY_WITH_FILTERS =
+  'No row matched these filters. A filter can only match a field that is published, so where a return is released as a link only, filtering by donor, kind, identity or year matches nothing. Clearing the filters shows what this deployment does hold.'
 
 export function DonationsPage() {
   const search = route.useSearch()
@@ -84,6 +132,11 @@ export function DonationsPage() {
     },
   })
   const datasetNotLoaded = query.isError && isMissingDataset(query.error)
+  const hasActiveFilters = !!(search.kind || search.identity || search.year || search.q)
+  // Read off the rows in hand, so what the page then says is said about those rows and nothing wider.
+  const linkOnly = donationsRelease(query.data?.rows) === 'link_only'
+  // A reader who has been shown the filters keeps them, whatever the next page of rows turns out to be.
+  const [filtersRequested, setFiltersRequested] = useState(false)
   return (
     <>
       <PageHeader eyebrow="Civic model · Political finance" title="Donations disclosed in filed returns">
@@ -94,6 +147,7 @@ export function DonationsPage() {
         </p>
       </PageHeader>
       <div className="mb-4 space-y-2">
+        {linkOnly ? <DonationsLinkOnlyNote /> : null}
         <Note tone="caution" testId="donations-incomplete">
           This is not a complete record of donations in New Zealand. An entry appears only where the entries of its part add up exactly to the
           total the Commission’s own form prints for that part; where they do not, the part is published with its printed total and the number of
@@ -115,8 +169,23 @@ export function DonationsPage() {
         <NotLoadedBlock datasetName="evidence_public.donation_disclosures" />
       ) : (
         <>
+      {linkOnly && !hasActiveFilters && !filtersRequested ? (
+        // Offering a donor box on rows that publish no donor would invite a reader to search for a name
+        // and read the empty result as "this person gave nothing". This is read off the rows on this page,
+        // so it is set aside rather than removed: the reader can open the filters and search the rest of
+        // the list, which is the only control they have for reaching rows that ARE released.
+        <div className="mb-4">
+          <Note testId="donations-filters-unavailable">
+            The donor, kind, identity and year filters read fields that none of the entries on this page carry, so a search over this page could
+            only ever return nothing — which would be read as an answer. They are set aside, not withdrawn: other rows of this list may be released.{' '}
+            <button type="button" className="doc-link" data-testid="donations-show-filters" onClick={() => setFiltersRequested(true)}>
+              Show the filters anyway
+            </button>
+          </Note>
+        </div>
+      ) : (
       <FilterBar
-        hasActive={!!(search.kind || search.identity || search.year || search.q)}
+        hasActive={hasActiveFilters}
         onClear={() => setSearch({ kind: undefined, identity: undefined, year: undefined, q: undefined, page: 1 })}
       >
         <TextFilter name="q" label="Donor name" value={search.q} onCommit={(v: string | undefined) => setSearch(filterPatch('q', v), { replace: true })} placeholder="Name as the return discloses it" />
@@ -131,7 +200,17 @@ export function DonationsPage() {
         />
         <SelectFilter name="year" label="Reporting year" value={search.year} onChange={(v) => setSearch(filterPatch('year', v), { replace: true })} options={donationsSpec.filters.year.values.map((v) => ({ value: v, label: v }))} anyLabel="Any year" />
       </FilterBar>
-      <DataTable caption="Donations disclosed in filed returns" columns={columns} query={query} spec={donationsSpec} search={search} onSearchChange={setSearch} getRowId={(row) => `${row.official_url}#${row.disclosure_part}-${row.entry_index}`} />
+      )}
+      <DataTable
+        caption="Donations disclosed in filed returns"
+        columns={linkOnly ? linkOnlyColumns : columns}
+        query={query}
+        spec={donationsSpec}
+        search={search}
+        onSearchChange={setSearch}
+        getRowId={donationRowKey}
+        {...(hasActiveFilters ? { emptyMessage: EMPTY_WITH_FILTERS } : {})}
+      />
         </>
       )}
     </>

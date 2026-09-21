@@ -13,6 +13,40 @@ import type { ReactNode } from 'react'
 const route = getRouteApi('/_released/sources/$sourceId')
 const PANEL_LIMIT = 25
 
+/**
+ * Every column this page renders, named one by one. Deliberately not `*`.
+ *
+ * `evidence_views.sources` computes four of its columns as correlated subqueries over the ledger, and
+ * one of them — `content_versions` — joins source_record_versions back through source_records for the
+ * whole source. Measured against the deployed anonymous endpoint on 2026-09-21, that column alone took
+ * 0.8–1.1 s warm and timed out (57014) cold for the written-questions export, which holds 187,956 of
+ * the store's 203,536 records. It was by far the most expensive thing this page asked for, and this
+ * page was the only reader of it anywhere in the app — asked for only because `*` asks for everything.
+ *
+ * The three counting columns that remain are counts of this ONE source, read once for this one row:
+ * tombstoned_records and catalogue_product_ids both measured under 0.2 s in that same run. live_records
+ * is not claimed to be cheap and no index makes it so: the two indexes leading with source_id
+ * (source_records_kind, and the unique on source_id/external_record_id) narrow it to this source's
+ * rows, but neither carries tombstoned_at, so the live test still costs a visit per row of this source.
+ * What this page relies on is the scope, not an index — one source's count for one page, instead of
+ * every source's count for one list, which is why the list defers the figure here. Naming the columns
+ * also means a column added to the view later cannot quietly make this page slow again.
+ */
+const SOURCE_DETAIL_COLUMNS = [
+  'source_id', 'title', 'publisher', 'official_url', 'adapter_kind', 'adapter_name', 'allowed_hosts',
+  'view_scope', 'snapshot_semantics', 'expected_cadence_seconds', 'enabled', 'blocked_reason',
+  'registry_key', 'rights_id', 'rights_review_status', 'rights_default_release',
+  'public_release_tier', 'public_approved_fields', 'last_attempt_at', 'last_attempt_status',
+  'last_success_at', 'last_change_at', 'latest_source_published_at', 'consecutive_failures',
+  'last_error_class', 'freshness_status', 'live_records', 'tombstoned_records',
+  'catalogue_product_ids', 'owner_authorized_fields', 'statistical_observations',
+  'statistical_observations_without_a_number', 'statistical_series', 'statistical_catalogue_entries',
+  'statistics_counted_at',
+].join(',')
+
+/** The page no longer fetches content_versions, so its row type stops claiming a number it does not have. */
+type SourceDetailRow = Omit<SourceRow, 'content_versions'>
+
 export function Panel<Row>({ query, caption, head, children, limit = PANEL_LIMIT }: { query: UseQueryResult<Row[], DataError>; caption: string; head: string[]; children: (row: Row) => ReactNode; limit?: number }) {
   if (query.isPending) return <LoadingBlock label={`Loading ${caption}`} rows={3} />
   if (query.isError) return <ErrorBlock error={query.error} onRetry={() => void query.refetch()} />
@@ -41,7 +75,7 @@ export const Cell = ({ children, className }: { children: ReactNode; className?:
 
 export function SourceDetailPage() {
   const { sourceId } = route.useParams()
-  const source = useOneQuery<SourceRow>({ view: 'sources', select: '*', column: 'source_id', value: sourceId })
+  const source = useOneQuery<SourceDetailRow>({ view: 'sources', select: SOURCE_DETAIL_COLUMNS, column: 'source_id', value: sourceId })
   const runs = useRowsQuery<ImportRunRow>({ view: 'import_runs', select: '*', key: [sourceId], limit: PANEL_LIMIT, build: (q) => q.eq('source_id', sourceId).order('started_at', { ascending: false }) })
   const fetches = useRowsQuery<FetchLogRow>({ view: 'fetch_log', select: '*', key: [sourceId], limit: PANEL_LIMIT, build: (q) => q.eq('source_id', sourceId).order('retrieved_at', { ascending: false }) })
   const errors = useRowsQuery<IngestErrorRow>({ view: 'ingest_errors', select: '*', key: [sourceId], limit: PANEL_LIMIT, build: (q) => q.eq('source_id', sourceId).order('occurred_at', { ascending: false }) })
@@ -113,7 +147,9 @@ export function SourceDetailPage() {
             { label: 'Last error class', value: s.last_error_class ? <Mono>{s.last_error_class}</Mono> : 'none recorded' },
             { label: 'Live records', value: <Link to="/records" search={{ source: s.source_id }} className="doc-link num">{formatCount(s.live_records)}</Link> },
             { label: 'Tombstoned records', value: <span className="num">{formatCount(s.tombstoned_records)}</span> },
-            { label: 'Content versions', value: <span className="num">{formatCount(s.content_versions)}</span> },
+            // No total is printed here because none is read here: totalling versions across a source costs more
+            // than the rest of this page put together. The per-record counts are the same facts, unaggregated.
+            { label: 'Content versions', value: <Link to="/records" search={{ source: s.source_id }} className="doc-link">counted per record, not totalled here</Link> },
             // A statistics source writes typed observations, not ledger records: its counts are recorded when a load finishes.
             ...(s.statistical_observations === null || s.statistical_observations === undefined ? [] : [
               { label: 'Statistical observations', value: <Link to="/statistics" className="doc-link num" data-testid="source-observations">{formatCount(s.statistical_observations)}</Link> },

@@ -26,8 +26,12 @@ export interface ListSpec<F extends string = string> {
   acceptsSortKey?: (value: string) => boolean
   /** Applied when the URL carries no valid sort. */
   defaultSort: readonly SortRule[]
-  /** Appended to every ordering so server pagination is stable. */
-  tiebreak: string
+  /**
+   * Appended to every ordering so server pagination is stable. A list of columns is tried in order:
+   * a list whose leading tiebreak is a content column needs a fallback that is still there when that
+   * column is not released, or its pages are ordered by nothing at all and can repeat or skip rows.
+   */
+  tiebreak: string | readonly string[]
   filters: Record<F, FilterDef>
 }
 
@@ -107,7 +111,9 @@ export function effectiveSort<F extends string>(spec: ListSpec<F>, search: ListS
     ? [{ column: search.sort, dir: search.dir ?? 'asc' }]
     : spec.defaultSort.map((r) => ({ ...r }))
   // An empty tiebreak means "no stable column is safe to order by" (a generic dataset made only of figures).
-  if (spec.tiebreak !== '' && !rules.some((r) => r.column === spec.tiebreak)) rules.push({ column: spec.tiebreak, dir: 'asc' })
+  for (const column of typeof spec.tiebreak === 'string' ? [spec.tiebreak] : spec.tiebreak) {
+    if (column !== '' && !rules.some((r) => r.column === column)) rules.push({ column, dir: 'asc' })
+  }
   return rules
 }
 

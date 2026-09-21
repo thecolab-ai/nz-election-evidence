@@ -32,7 +32,11 @@ interface DataTableProps<Row extends RowData> {
   spec: { sortable: readonly string[] }
   search: TableSearch
   onSearchChange: (patch: SearchPatch, options?: { replace?: boolean }) => void
-  getRowId: (row: Row) => string
+  /**
+   * Row identity. The index is passed too so a list whose identifying columns are not released on a
+   * deployment can still give every row a key of its own instead of collapsing rows into one.
+   */
+  getRowId: (row: Row, index: number) => string
   emptyMessage?: string
 }
 
@@ -41,7 +45,7 @@ const EMPTY_ROWS: never[] = []
 export function DataTable<Row extends RowData>({ caption, columns, query, spec, search, onSearchChange, getRowId, emptyMessage }: DataTableProps<Row>) {
   const rows = query.data?.rows ?? (EMPTY_ROWS as Row[])
   const total = query.data?.total ?? null
-  const table = useTable({ features: tableCoreFeatures, columns, data: rows, getRowId: (row) => getRowId(row) })
+  const table = useTable({ features: tableCoreFeatures, columns, data: rows, getRowId: (row, index) => getRowId(row, index) })
   const sizeId = useId()
 
   if (query.isPending) return <LoadingBlock label={`Loading ${caption}`} />

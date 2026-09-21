@@ -33,6 +33,17 @@ function shot(page: Page, name: string): Promise<Buffer> {
 }
 
 /**
+ * The first screen, at the viewport, not the whole scroll. A full-page capture of the live electorate
+ * page is about ten phone screens tall, which shows a reviewer everything except the thing a reader
+ * actually meets: what is above the fold, and whether the first action is reachable without scrolling.
+ * These are evidence for a human. Nothing is compared automatically, so a layout change fails nothing.
+ */
+function fold(page: Page, name: string): Promise<Buffer> {
+  const project = test.info().project.name
+  return page.screenshot({ path: join(SCREENS, `live-${project}-${name}-fold.png`), fullPage: false })
+}
+
+/**
  * Watches what the live REST API answers while a page loads. A 404 is not a failure here — the app
  * renders "this deployment does not carry that dataset" for exactly that — but a refusal or a server
  * error is: it would mean anonymous reading of the published site is broken.
@@ -89,6 +100,7 @@ test.describe('the published site', () => {
     await expect(page.getByTestId('home-to-explorer')).toBeVisible()
     await settled(page)
     await shot(page, '01-home')
+    await fold(page, '01-home')
     expect(refusals, 'anonymous reads of the live API').toEqual([])
   })
 
@@ -103,6 +115,7 @@ test.describe('the published site', () => {
     await expect(page.getByRole('heading', { level: 1, name })).toBeVisible()
     await settled(page)
     await shot(page, '03-electorate')
+    await fold(page, '03-electorate')
   })
 
   test('the whole journey works from the keyboard alone', async ({ page }) => {
@@ -218,6 +231,45 @@ test.describe('the published site', () => {
     expect(refusals, 'anonymous reads of the live API').toEqual([])
   })
 
+  test('a source opens its own page, where the record counts are read', async ({ page }) => {
+    const refusals = watchApi(page)
+
+    // Ordered by the source's own id: a first row that is the same on every run, chosen by a key the
+    // server can order on without counting anything. The list is deliberately not sortable by how much
+    // a source holds — that ordering would make the server count every source's records to return one
+    // page — so this test opens a deterministic source, not the largest one, and claims no more.
+    // A deep link is answered by the Pages 404.html fallback, which boots the app. Wait for the route
+    // to have rendered before asking whether anything is still loading, or "nothing is loading" would
+    // be true simply because nothing has started.
+    await page.goto('./sources?sort=source_id&dir=asc')
+    await expect(page.getByRole('heading', { level: 1, name: 'Sources' })).toBeVisible()
+    await settled(page)
+    const firstSource = page.getByTestId('data-row').first()
+    await expect(firstSource, 'the live store answered the sources list').toBeVisible()
+
+    const link = firstSource.getByRole('link').first()
+    await expect(link, 'the row links to the source’s own page').toHaveAttribute('href', /\/sources\/[^/]+$/)
+    await link.click()
+    await expect(page).toHaveURL(/\/sources\/[^/]+$/)
+    await settled(page)
+
+    // It answered with the source itself, not an error block and not a spinner it never left.
+    await expect(page.getByTestId('error-state'), 'the source page is not an error').toHaveCount(0)
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
+
+    // The page states the basis on which any field of this source is shown at all, before any count.
+    await expect(page.getByTestId('source-release-basis')).toBeVisible()
+
+    // Counts are shown as counts; where a total is not read, the page says so instead of printing a
+    // number it does not have. Either way it is words or a figure, never a blank.
+    await expect(page.locator('main')).toContainText('Live records')
+    await expect(page.locator('main')).toContainText('Content versions')
+
+    await shot(page, '09-source-detail')
+    await fold(page, '09-source-detail')
+    expect(refusals, 'anonymous reads of the live API').toEqual([])
+  })
+
   test('donations are shown as they stand, with the absence stated rather than implied', async ({ page }) => {
     await page.goto('./')
     const sections = page.getByRole('navigation', { name: 'Sections' })
@@ -234,6 +286,22 @@ test.describe('the published site', () => {
     const rows = await page.getByTestId('data-row').count()
     if (rows === 0) {
       await expect(page.getByTestId('empty-state').or(page.getByTestId('not-loaded')).first()).toBeVisible()
+    }
+
+    // The live store may hold these returns and release none of their fields. Rows then exist and carry
+    // only the publisher's link, which is a state the reader must be told in words: a table of blanks
+    // would read as returns that stated nothing. Whichever state the deployment is in, it is stated.
+    const linkOnly = page.getByTestId('donations-link-only')
+    if (await linkOnly.count()) {
+      await expect(linkOnly).toBeVisible()
+      await expect(linkOnly).toContainText('not released on this deployment')
+      // Every row still reaches the publisher's own document: link-only is access, not a dead end.
+      const firstRow = page.getByTestId('data-row').first()
+      await expect(firstRow.getByRole('link').first()).toHaveAttribute('href', /^https?:\/\//)
+      await expect(firstRow.getByTestId('entry-link-only')).toBeVisible()
+      // And the filters that read unreleased fields are not offered, so no reader can search a donor
+      // name and read the empty answer as "this person gave nothing".
+      await expect(page.getByTestId('donations-filters-unavailable')).toBeVisible()
     }
     await shot(page, '08-donations')
   })
