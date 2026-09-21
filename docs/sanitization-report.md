@@ -27,7 +27,7 @@ The SVG's generation provenance is not recorded. That gap does not establish whe
 
 The dependency-free validator and test suite check:
 
-- exactly 24 unique public product IDs and a total of 351,710 snapshot records
+- exactly 26 unique public product IDs and a total of 353,336 records
 - evidence-form subtotals equal each product count
 - JSON/CSV catalogue parity
 - exactly 52 unique roadmap lanes

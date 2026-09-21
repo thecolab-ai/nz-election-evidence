@@ -1,4 +1,4 @@
-// Route coverage of the 24 catalogue products, stated per source and checked by tests against the registry and the
+// Route coverage of the 26 catalogue products, stated per source and checked by tests against the registry and the
 // catalogue. Each state is a claim about something that was DONE (or could not be), with where the evidence is.
 // A product is never "covered" by a row that was not loaded, and a blocked route is never an empty result.
 
@@ -43,6 +43,8 @@ export const SOURCE_ROUTES: { [sourceId: string]: SourceRoute } = {
   finance_2023_candidate_returns_export: { kind: "backfill", state: "loaded_and_reconciled", evidence: COMBINED },
   finance_2025_party_aggregates_export: { kind: "backfill", state: "loaded_and_reconciled", evidence: COMBINED },
   finance_2025_party_returns_export: { kind: "backfill", state: "loaded_and_reconciled", evidence: COMBINED },
+  finance_2023_candidate_return_disclosures_export: { kind: "backfill", state: "loaded_and_reconciled", evidence: COMBINED },
+  finance_2025_party_return_disclosures_export: { kind: "backfill", state: "loaded_and_reconciled", evidence: COMBINED },
   election_2026_official_page_status_export: { kind: "backfill", state: "loaded_and_reconciled", evidence: COMBINED },
   election_2026_boundary_map_links_export: { kind: "backfill", state: "loaded_and_reconciled", evidence: COMBINED },
   party_vote_polls_index: { kind: "refresh", state: "working", evidence: "real run stored 50 index rows; an incremental run re-observed 18 (docs/database/receipts/2026-09-20-party_vote_polls_index.*.json)" },
@@ -100,6 +102,8 @@ export const REFRESH_GAPS: { [productId: string]: string } = {
   P15: "The Electoral Commission's index page challenges this host. Backfill only.",
   P16: "The Electoral Commission's page challenges this host. Backfill only.",
   P17: "The Electoral Commission's page challenges this host. Backfill only.",
+  P25: "The Electoral Commission's index page challenges this host, and a return once filed does not change. Backfill only. The donations-over-$20,000 notices published separately during an election year are on a page that is challenged too, and are not collected.",
+  P26: "The Electoral Commission's page challenges this host, and a return once filed does not change; an amended return is published as its own document. Backfill only. The donations-over-$20,000 notices published separately during an election year are on a page that is challenged too, and are not collected.",
   P19: "A closed historical release published as a ZIP archive; the text-only fetch client cannot read it. Nothing to refresh.",
   P21: "Workbooks mapped by hand; the publisher's observation API needs a subscription key and is not used.",
 };

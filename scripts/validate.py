@@ -9,11 +9,11 @@ def fail(msg): errors.append(msg)
 def load(p): return json.loads((ROOT/p).read_text(encoding='utf-8'))
 rows=load('catalogue/sources.json'); roadmap=load('catalogue/roadmap.json'); rights=load('catalogue/rights-register.json')
 required={'product_id','title','publisher','domain','source_url','snapshot_at_utc','record_count','evidence_forms','observed_start_utc','observed_end_utc','coverage_window','release_mode','rights_status','known_limitations'}
-if len(rows)!=24: fail(f'expected 24 source products, got {len(rows)}')
+if len(rows)!=26: fail(f'expected 26 source products, got {len(rows)}')
 ids=[r.get('product_id') for r in rows]
 if len(set(ids))!=len(ids): fail('duplicate product_id')
 if set().union(*(set(r) for r in rows))!=required: fail('catalogue field set differs from schema contract')
-if sum(r['record_count'] for r in rows)!=351710: fail('record total is not 351710')
+if sum(r['record_count'] for r in rows)!=353336: fail('record total is not 353336')
 for r in rows:
  if not re.fullmatch(r'P\d{2}',r['product_id']): fail(f"bad public ID: {r['product_id']}")
  if not r['source_url'].startswith('https://'): fail(f"non-HTTPS source: {r['product_id']}")
@@ -24,7 +24,7 @@ with (ROOT/'catalogue/sources.csv').open(newline='',encoding='utf-8') as f: csvr
 if [(x['product_id'],int(x['record_count'])) for x in csvrows] != [(x['product_id'],x['record_count']) for x in rows]: fail('JSON/CSV catalogue parity failed')
 if len(roadmap)!=52 or len({x['lane_id'] for x in roadmap})!=52: fail('roadmap must contain 52 unique lanes')
 mapped=[p for lane in roadmap for p in lane['held_product_ids']]
-if sorted(mapped)!=sorted(ids): fail('each of 24 products must map to the roadmap exactly once')
+if sorted(mapped)!=sorted(ids): fail('each of 26 products must map to the roadmap exactly once')
 if any(r['review_status']!='pending' or r['default_release']!='link-only' for r in rights): fail('rights register must default to pending/link-only')
 # Scan tracked candidate text, including dotfiles, before git exists.
 blocked=[
@@ -52,4 +52,4 @@ if errors:
  print('VALIDATION FAILED',file=sys.stderr)
  for e in errors: print(f'- {e}',file=sys.stderr)
  raise SystemExit(1)
-print(f'OK: 24 products, {sum(r["record_count"] for r in rows):,} records, 52 roadmap lanes, {len(rights)} rights rows')
+print(f'OK: {len(rows)} products, {sum(r["record_count"] for r in rows):,} records, 52 roadmap lanes, {len(rights)} rights rows')

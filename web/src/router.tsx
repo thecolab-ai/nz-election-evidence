@@ -3,14 +3,17 @@ import { PageHeader } from '@/components/page'
 import { Shell } from '@/components/shell'
 import { basePath } from '@/lib/env'
 import { parseGraphSearch, parseListSearch, type GraphSearch, type ListSearch, type ListSearchInput, type ListSpec } from '@/lib/search'
-import { candidaciesSpec, datasetRowsSpec, datasetsSpec, documentsSpec, financeSpec, operationsRouteSpec, identitiesSpec, parliamentSpec, recordsSpec, rightsSpec, sourcesSpec, statisticsRouteSpec } from '@/lib/specs'
+import { candidaciesSpec, datasetRowsSpec, datasetsSpec, documentsSpec, donationsSpec, financeSpec, operationsRouteSpec, identitiesSpec, parliamentSpec, recordsSpec, rightsSpec, sourcesSpec, statisticsRouteSpec } from '@/lib/specs'
 import { ConfiguredOnly, PublicGate } from '@/routes/access'
 import { DatasetDetailPage, DatasetsPage } from '@/routes/datasets'
 import { DocumentsPage } from '@/routes/documents'
 import { ElectionDetailPage, ElectionsPage } from '@/routes/elections'
+import { ElectoratePage } from '@/routes/electorate'
 import { ElectorateVersionDetailPage, PartyIdentityDetailPage } from '@/routes/entity-detail'
+import { DonationsPage } from '@/routes/donations'
 import { FinancePage } from '@/routes/finance'
 import { GraphPage } from '@/routes/graph'
+import { HomePage } from '@/routes/home'
 import { IdentityDetailPage } from '@/routes/identity-detail'
 import { OperationsPage } from '@/routes/operations'
 import { OverviewPage } from '@/routes/overview'
@@ -34,7 +37,7 @@ function NotFound() {
       <PageHeader eyebrow="Not found" title="There is no page at this address">
         <p>The address may be mistyped, or the page may have moved.</p>
       </PageHeader>
-      <Link to="/" className="doc-link">Go to the overview</Link>
+      <Link to="/" className="doc-link">Find an electorate</Link>
     </>
   )
 }
@@ -49,7 +52,10 @@ const catalogueRoute = createRoute({ getParentRoute: () => rootRoute, id: '_cata
 const datasetsRoute = createRoute({ getParentRoute: () => catalogueRoute, path: '/datasets', validateSearch: listSearch(datasetsSpec), component: DatasetsPage })
 const datasetDetailRoute = createRoute({ getParentRoute: () => catalogueRoute, path: '/datasets/$schema/$name', validateSearch: listSearch(datasetRowsSpec), component: DatasetDetailPage })
 
-const overviewRoute = createRoute({ getParentRoute: inspector, path: '/', component: OverviewPage })
+// The reader's entry point: one electorate at a time. The evidence explorer keeps its own index at /overview.
+const homeRoute = createRoute({ getParentRoute: inspector, path: '/', component: HomePage })
+const electorateRoute = createRoute({ getParentRoute: inspector, path: '/electorate/$slug', component: ElectoratePage })
+const overviewRoute = createRoute({ getParentRoute: inspector, path: '/overview', component: OverviewPage })
 const sourcesRoute = createRoute({ getParentRoute: inspector, path: '/sources', validateSearch: listSearch(sourcesSpec), component: SourcesPage })
 const sourceDetailRoute = createRoute({ getParentRoute: inspector, path: '/sources/$sourceId', component: SourceDetailPage })
 const recordsRoute = createRoute({ getParentRoute: inspector, path: '/records', validateSearch: listSearch(recordsSpec), component: RecordsPage })
@@ -63,6 +69,7 @@ const electionsRoute = createRoute({ getParentRoute: inspector, path: '/election
 const electionDetailRoute = createRoute({ getParentRoute: inspector, path: '/elections/$slug', validateSearch: listSearch(candidaciesSpec), component: ElectionDetailPage })
 const documentsRoute = createRoute({ getParentRoute: inspector, path: '/documents', validateSearch: listSearch(documentsSpec), component: DocumentsPage })
 const financeRoute = createRoute({ getParentRoute: inspector, path: '/finance', validateSearch: listSearch(financeSpec), component: FinancePage })
+const donationsRoute = createRoute({ getParentRoute: inspector, path: '/donations', validateSearch: listSearch(donationsSpec), component: DonationsPage })
 const statisticsRoute = createRoute({ getParentRoute: inspector, path: '/statistics', validateSearch: listSearch(statisticsRouteSpec), component: StatisticsPage })
 const rightsRoute = createRoute({ getParentRoute: inspector, path: '/rights', validateSearch: listSearch(rightsSpec), component: RightsPage })
 const operationsRoute = createRoute({ getParentRoute: inspector, path: '/operations', validateSearch: listSearch(operationsRouteSpec), component: OperationsPage })
@@ -71,6 +78,8 @@ const graphRoute = createRoute({ getParentRoute: inspector, path: '/graph', vali
 const routeTree = rootRoute.addChildren([
   catalogueRoute.addChildren([datasetsRoute, datasetDetailRoute]),
   inspectorRoute.addChildren([
+    homeRoute,
+    electorateRoute,
     overviewRoute,
     sourcesRoute,
     sourceDetailRoute,
@@ -85,6 +94,7 @@ const routeTree = rootRoute.addChildren([
     electionDetailRoute,
     documentsRoute,
     financeRoute,
+    donationsRoute,
     statisticsRoute,
     rightsRoute,
     operationsRoute,

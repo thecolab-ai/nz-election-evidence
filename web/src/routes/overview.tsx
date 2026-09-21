@@ -88,7 +88,7 @@ export function OverviewPage() {
         <p data-testid="rights-note">{RIGHTS_NOTE}</p>
       </PageHeader>
 
-      <Section id="release-coverage" title="What this release holds, and what it does not" description="Counted against the project's public catalogue of 24 products. Most of the catalogue is not in this store yet.">
+      <Section id="release-coverage" title="What this release holds, and what it does not" description="Counted against the project's public catalogue of 26 products. Most of the catalogue is not in this store yet.">
         <ReleaseCoveragePanel />
       </Section>
 

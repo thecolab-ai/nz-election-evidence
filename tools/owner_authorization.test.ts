@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { test } from "node:test";
-import { authorizationProblems, deployAuthorization, FIGURE_REGISTRIES, FINANCE_FIGURE_FIELDS, FORBIDDEN_FIELD, MAX_DAYS_IN_FORCE, POLL_FIGURE_FIELDS, type RegisteredSource, RESULT_FIGURE_FIELDS, scopesInForce, SOURCE_FIELD_EXCEPTIONS, STATISTICAL_FACT_FIELDS, type AuthorizationFile } from "./owner_authorization.ts";
+import { authorizationProblems, deployAuthorization, DONATION_FACT_FIELDS, FIGURE_REGISTRIES, FINANCE_FIGURE_FIELDS, FORBIDDEN_FIELD, MAX_DAYS_IN_FORCE, POLL_FIGURE_FIELDS, type RegisteredSource, RESULT_FIGURE_FIELDS, scopesInForce, SOURCE_FIELD_EXCEPTIONS, STATISTICAL_FACT_FIELDS, type AuthorizationFile } from "./owner_authorization.ts";
 import { gate, gateWithOwnerOverride, registerRows, unparsedRegisterLines } from "./release_gate.ts";
 
 const root = new URL("../", import.meta.url);
@@ -315,11 +315,16 @@ test("the database constraints and this tool agree on every field rule", async (
   assert.ok(stats, "closed list present");
   assert.deepEqual(tokens(stats[1]), [...STATISTICAL_FACT_FIELDS]);
 
-  // The current forbidden-name rule, its closed exception list and the figure lists live in the latest of the
-  // two public-values migrations. Reading the LAST one that defines each constraint is the point: an earlier
-  // migration's copy is history, and this test must follow the definition that is actually in force.
-  const values = await readFile(new URL("supabase/migrations/20260921070100_public_payload_and_poll_figures.sql", root), "utf-8");
-  const forbidden = /owner_field_scope_forbidden\s+check \(scope_kind is distinct from 'source_fields'\s+or field_token in \(([^)]+)\)\s+or field_token !~ '([^']+)'\)/.exec(values);
+  // The current forbidden-name rule, its closed exception list and the figure lists live in the LATEST migration
+  // that defines each of them. Reading the last definition is the point: an earlier migration's copy is history,
+  // and this test must follow the one that is actually in force. The files are read in order and the last match
+  // wins, so adding a migration that redefines a constraint moves this test to it automatically.
+  const values = (await Promise.all([
+    "supabase/migrations/20260921070100_public_payload_and_poll_figures.sql",
+    "supabase/migrations/20260921080100_donation_disclosures.sql",
+  ].map((file) => readFile(new URL(file, root), "utf-8")))).join("\n");
+  const lastMatch = (pattern: RegExp): RegExpMatchArray | null => [...values.matchAll(new RegExp(pattern, pattern.flags + "g"))].at(-1) ?? null;
+  const forbidden = lastMatch(/owner_field_scope_forbidden\s+check \(scope_kind is distinct from 'source_fields'\s+or field_token in \(([^)]+)\)\s+or field_token !~ '([^']+)'\)/);
   assert.ok(forbidden, "the forbidden-name rule still binds every source_fields row");
   assert.deepEqual(tokens(forbidden[1]), [...SOURCE_FIELD_EXCEPTIONS]);
   assert.equal(forbidden[2], FORBIDDEN_FIELD.source);
@@ -328,20 +333,23 @@ test("the database constraints and this tool agree on every field rule", async (
     ["owner_result_figure_tokens", "official_result_figures", RESULT_FIGURE_FIELDS],
     ["owner_finance_figure_tokens", "official_finance_figures", FINANCE_FIGURE_FIELDS],
     ["owner_poll_figure_tokens", "published_poll_figures", POLL_FIGURE_FIELDS],
+    ["owner_donation_fact_tokens", "published_donation_facts", DONATION_FACT_FIELDS],
   ] as const) {
-    const match = new RegExp(`${constraint}\\s+check \\(scope_kind is distinct from '${kind}' or field_token in \\(([^)]+)\\)\\)`).exec(values);
+    const match = lastMatch(new RegExp(`${constraint}\\s+check \\(scope_kind is distinct from '${kind}' or field_token in \\(([^)]+)\\)\\)`));
     assert.ok(match, `${constraint} present`);
     assert.deepEqual(tokens(match[1]), [...expected]);
   }
   // The registry allowlists are literals in two places (the guard and source_release) and here. All three agree.
   for (const [kind, registries] of Object.entries(FIGURE_REGISTRIES)) {
-    const inView = new RegExp(`f\\.scope_kind <> '${kind}' or s\\.registry_key (?:= '([^']+)'|in \\(([^)]+)\\))`).exec(values);
+    const inView = lastMatch(new RegExp(`f\\.scope_kind <> '${kind}' or s\\.registry_key (?:= '([^']+)'|in \\(([^)]+)\\))`));
     assert.ok(inView, `${kind} re-checked where the tier is read`);
     assert.deepEqual(tokens(inView[1] ?? inView[2] ?? ""), [...registries]);
   }
   assert.match(values, /v_registry_key is distinct from 'election_2023_results'/);
   assert.match(values, /not in \('candidate_finance_returns', 'party_finance_returns'\)/);
   assert.match(values, /new\.scope_kind = 'published_poll_figures' and v_registry_key is distinct from 'party_vote_polls'/);
+  // A donation fact is for the two return-DISCLOSURE products; the document indexes they were read from are not on the list.
+  assert.match(values, /not in \('candidate_return_disclosures', 'party_return_disclosures'\)/);
   // The label that says whether a methodology was disclosed is link metadata, so it can never be blank beside a
   // poll figure, and the figure itself is published only through the view that carries the label in the row.
   assert.match(values, /'methodology_status',/);

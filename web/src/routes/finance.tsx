@@ -1,5 +1,5 @@
 import { createColumnHelper } from '@tanstack/react-table'
-import { getRouteApi } from '@tanstack/react-router'
+import { getRouteApi, Link } from '@tanstack/react-router'
 import { Pill } from '@/components/badges'
 import { DataTable, type CoreFeatures } from '@/components/data-table'
 import { FilterBar, SelectFilter } from '@/components/filters'
@@ -42,7 +42,7 @@ export function FinancePage() {
       <PageHeader eyebrow={`Civic model · ${SCOPE_LABELS.finance_2025}`} title="Finance returns">
         <p>References to finance returns in the {SCOPE_LABELS.finance_2025.toLowerCase()} scope. This is a separate scope from the 2026 election and the 2023 baseline, and is never combined with them.</p>
       </PageHeader>
-      <div className="mb-4"><Note tone="caution" testId="no-donor-data">No donor data is held. This project stores a reference to each return and the total as filed, never the names, addresses or amounts of individual donors.</Note></div>
+      <div className="mb-4"><Note tone="caution" testId="no-donor-data">This page is the INDEX of filed returns: one row per return document, with the total as filed. What each return discloses inside it — including donors the return names — is a separate page, <Link to="/donations" className="underline">Donations</Link>. No street address is held on either.</Note></div>
       <FilterBar hasActive={!!(search.type || search.filing)} onClear={() => setSearch({ type: undefined, filing: undefined, page: 1 })}>
         <SelectFilter name="type" label="Return type" value={search.type} onChange={(v) => setSearch(filterPatch('type', v), { replace: true })} options={financeSpec.filters.type.values.map((v) => ({ value: v, label: humanise(v) }))} anyLabel="Any type" />
         <SelectFilter name="filing" label="Filing status" value={search.filing} onChange={(v) => setSearch(filterPatch('filing', v), { replace: true })} options={financeSpec.filters.filing.values.map((v) => ({ value: v, label: humanise(v) }))} anyLabel="Any status" />

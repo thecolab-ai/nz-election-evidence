@@ -1,0 +1,492 @@
+{
+  "receipt_version": 1,
+  "kind": "election_family_export_with_return_disclosures",
+  "generated_for": "P25 (2023 candidate return disclosures) and P26 (2025 party annual return disclosures), cut on 2026-09-21 from the same election-family export recipe as P08-P17.",
+  "what_this_is": "Counts, hashes and named checks of an export written OUTSIDE this repository. No row content, no donor, no location on any disk.",
+  "files": {
+    "P08": {
+      "file": "P08.jsonl",
+      "sha256": "sha256:ff23c5d34f59b40c1a7fbaadef49c250e243401e817663fb224e355667c7f398",
+      "bytes": 21560,
+      "rows": 18
+    },
+    "P09": {
+      "file": "P09.jsonl",
+      "sha256": "sha256:d6019eb56f4178f106ed5343c277657cbde200df09aa234914bb060028ff0b3d",
+      "bytes": 2438221,
+      "rows": 1791
+    },
+    "P13": {
+      "file": "P13.jsonl",
+      "sha256": "sha256:1dd89863b1b789c0dedbaadd533ea11513dcf79c0c92c38db931acbbba0a3f0b",
+      "bytes": 155165,
+      "rows": 76
+    },
+    "P14": {
+      "file": "P14.jsonl",
+      "sha256": "sha256:cf8ceeab7c429e7a9c26546b5175dc9cf0c9df5184c6b05be2b3b8cdd4a4467c",
+      "bytes": 77522,
+      "rows": 30
+    },
+    "P15": {
+      "file": "P15.jsonl",
+      "sha256": "sha256:e65bf3088d51a7efba09d1f3586a225c2bb6f4a0f9a8ab01aa64d765cf762734",
+      "bytes": 1536783,
+      "rows": 492
+    },
+    "P16": {
+      "file": "P16.jsonl",
+      "sha256": "sha256:48b0ff941fa495ef46e5cb754149cd49b30fca5831d6e8a4097b64a0502295e9",
+      "bytes": 21660,
+      "rows": 14
+    },
+    "P17": {
+      "file": "P17.jsonl",
+      "sha256": "sha256:40905746969aeefa2c22b9c88c9d5fa7f0fe6060f8a3a5aca3f5fef8d7a3d9db",
+      "bytes": 71043,
+      "rows": 23
+    },
+    "P25": {
+      "file": "P25.jsonl",
+      "sha256": "sha256:0937c821a00ede6fbf9ae863785af0d8bec59ad62684e234365548c27835b792",
+      "bytes": 2799920,
+      "rows": 1340
+    },
+    "P26": {
+      "file": "P26.jsonl",
+      "sha256": "sha256:5c8588b8a3fa632a1926669add92bab252188e7181640284fb524d9f6268c4af",
+      "bytes": 577313,
+      "rows": 286
+    },
+    "C26A": {
+      "file": "C26A.jsonl",
+      "sha256": "sha256:6e505871f3516204924bfe329af4bed0e4fcbbbde8b0eb02552e1a3142adbe0b",
+      "bytes": 1618,
+      "rows": 2
+    },
+    "C26B": {
+      "file": "C26B.jsonl",
+      "sha256": "sha256:7645d31bc90a38baa602151c6ba1a9b1a534a672eacec889f33eaebe85a254a5",
+      "bytes": 3145,
+      "rows": 3
+    }
+  },
+  "reconciliation": [
+    {
+      "product_id": "P08",
+      "upstream_source_id": "nz_electoral_commission_2023_overall_results",
+      "upstream_rows_read": 18,
+      "upstream_exact_duplicates_ignored": 0,
+      "upstream_distinct_records": 18,
+      "upstream_distinct_versions": 18,
+      "export_rows": 18,
+      "export_distinct_records": 18,
+      "versions_folded_as_identical_after_allowlist": 0,
+      "rows_by_kind": {
+        "election_nationwide_party_result": 17,
+        "election_nationwide_total": 1
+      },
+      "collected_at_min": "2026-09-19T09:22:27.000Z",
+      "collected_at_max": "2026-09-19T09:22:27.000Z",
+      "rows_with_publisher_date": 0,
+      "checks": [
+        {
+          "name": "every_upstream_record_exported",
+          "ok": true,
+          "detail": "18 of 18 upstream records"
+        },
+        {
+          "name": "every_upstream_version_accounted_for",
+          "ok": true,
+          "detail": "18 exported + 0 folded = 18 upstream versions"
+        },
+        {
+          "name": "party_rows_sum_to_published_total",
+          "ok": true,
+          "detail": "2851211 summed; 2851211 published"
+        },
+        {
+          "name": "party_rows_without_a_vote_count",
+          "ok": true,
+          "detail": "0 rows"
+        }
+      ]
+    },
+    {
+      "product_id": "P09",
+      "upstream_source_id": "nz_electoral_commission_2023_electorate_results",
+      "upstream_rows_read": 1791,
+      "upstream_exact_duplicates_ignored": 0,
+      "upstream_distinct_records": 1791,
+      "upstream_distinct_versions": 1791,
+      "export_rows": 1791,
+      "export_distinct_records": 1791,
+      "versions_folded_as_identical_after_allowlist": 0,
+      "rows_by_kind": {
+        "election_electorate_vote": 1719,
+        "election_electorate_summary": 72
+      },
+      "collected_at_min": "2026-09-19T09:44:19.000Z",
+      "collected_at_max": "2026-09-19T09:46:49.000Z",
+      "rows_with_publisher_date": 0,
+      "checks": [
+        {
+          "name": "every_upstream_record_exported",
+          "ok": true,
+          "detail": "1791 of 1791 upstream records"
+        },
+        {
+          "name": "every_upstream_version_accounted_for",
+          "ok": true,
+          "detail": "1791 exported + 0 folded = 1791 upstream versions"
+        },
+        {
+          "name": "seventy_two_electorate_pages",
+          "ok": true,
+          "detail": "72 summaries"
+        },
+        {
+          "name": "line_items_plus_informals_equal_each_published_total",
+          "ok": true,
+          "detail": "0 electorates disagree"
+        },
+        {
+          "name": "vote_rows_without_a_count",
+          "ok": true,
+          "detail": "0 rows"
+        }
+      ]
+    },
+    {
+      "product_id": "P13",
+      "upstream_source_id": "nz_registered_party_policy_pages_2026",
+      "upstream_rows_read": 76,
+      "upstream_exact_duplicates_ignored": 0,
+      "upstream_distinct_records": 17,
+      "upstream_distinct_versions": 76,
+      "export_rows": 76,
+      "export_distinct_records": 17,
+      "versions_folded_as_identical_after_allowlist": 0,
+      "rows_by_kind": {
+        "party_policy_page": 76
+      },
+      "collected_at_min": "2026-09-19T01:51:21.275Z",
+      "collected_at_max": "2026-09-21T01:36:17.731Z",
+      "rows_with_publisher_date": 6,
+      "checks": [
+        {
+          "name": "every_upstream_record_exported",
+          "ok": true,
+          "detail": "17 of 17 upstream records"
+        },
+        {
+          "name": "every_upstream_version_accounted_for",
+          "ok": true,
+          "detail": "76 exported + 0 folded = 76 upstream versions"
+        }
+      ]
+    },
+    {
+      "product_id": "P14",
+      "upstream_source_id": "nz_party_vote_polls_90d_20260919",
+      "upstream_rows_read": 30,
+      "upstream_exact_duplicates_ignored": 0,
+      "upstream_distinct_records": 12,
+      "upstream_distinct_versions": 30,
+      "export_rows": 30,
+      "export_distinct_records": 12,
+      "versions_folded_as_identical_after_allowlist": 0,
+      "rows_by_kind": {
+        "party_vote_poll": 30
+      },
+      "collected_at_min": "2026-09-19T01:52:05.169Z",
+      "collected_at_max": "2026-09-19T18:38:55.645Z",
+      "rows_with_publisher_date": 0,
+      "checks": [
+        {
+          "name": "every_upstream_record_exported",
+          "ok": true,
+          "detail": "12 of 12 upstream records"
+        },
+        {
+          "name": "every_upstream_version_accounted_for",
+          "ok": true,
+          "detail": "30 exported + 0 folded = 30 upstream versions"
+        },
+        {
+          "name": "methodology_status_split",
+          "ok": true,
+          "detail": "9 verified, 3 unresolved"
+        },
+        {
+          "name": "blank_cells_kept_as_not_reported",
+          "ok": true,
+          "detail": "44 blank cells, 100 reported"
+        }
+      ]
+    },
+    {
+      "product_id": "P15",
+      "upstream_source_id": "political_finance_2023_candidate_returns",
+      "upstream_rows_read": 492,
+      "upstream_exact_duplicates_ignored": 0,
+      "upstream_distinct_records": 492,
+      "upstream_distinct_versions": 492,
+      "export_rows": 492,
+      "export_distinct_records": 492,
+      "versions_folded_as_identical_after_allowlist": 0,
+      "rows_by_kind": {
+        "finance_candidate_return": 492
+      },
+      "collected_at_min": "2026-09-19T17:51:54.739Z",
+      "collected_at_max": "2026-09-19T18:11:42.663Z",
+      "rows_with_publisher_date": 0,
+      "checks": [
+        {
+          "name": "every_upstream_record_exported",
+          "ok": true,
+          "detail": "492 of 492 upstream records"
+        },
+        {
+          "name": "every_upstream_version_accounted_for",
+          "ok": true,
+          "detail": "492 exported + 0 folded = 492 upstream versions"
+        },
+        {
+          "name": "image_only_split",
+          "ok": true,
+          "detail": "268 with a text layer, 224 image-only"
+        },
+        {
+          "name": "published_amounts",
+          "ok": true,
+          "detail": "expenses: 344 reported, 148 nil, 0 not reported; donations: 188 reported, 304 nil, 0 not reported; loans: 1 reported, 485 nil, 6 not reported"
+        }
+      ]
+    },
+    {
+      "product_id": "P16",
+      "upstream_source_id": "political_finance_2025_aggregates",
+      "upstream_rows_read": 14,
+      "upstream_exact_duplicates_ignored": 0,
+      "upstream_distinct_records": 14,
+      "upstream_distinct_versions": 14,
+      "export_rows": 14,
+      "export_distinct_records": 14,
+      "versions_folded_as_identical_after_allowlist": 0,
+      "rows_by_kind": {
+        "finance_party_aggregate": 14
+      },
+      "collected_at_min": "2026-09-19T16:28:18.983Z",
+      "collected_at_max": "2026-09-19T16:28:18.983Z",
+      "rows_with_publisher_date": 0,
+      "checks": [
+        {
+          "name": "every_upstream_record_exported",
+          "ok": true,
+          "detail": "14 of 14 upstream records"
+        },
+        {
+          "name": "every_upstream_version_accounted_for",
+          "ok": true,
+          "detail": "14 exported + 0 folded = 14 upstream versions"
+        }
+      ]
+    },
+    {
+      "product_id": "P17",
+      "upstream_source_id": "political_finance_2025_returns",
+      "upstream_rows_read": 23,
+      "upstream_exact_duplicates_ignored": 0,
+      "upstream_distinct_records": 17,
+      "upstream_distinct_versions": 23,
+      "export_rows": 23,
+      "export_distinct_records": 17,
+      "versions_folded_as_identical_after_allowlist": 0,
+      "rows_by_kind": {
+        "finance_party_return": 23
+      },
+      "collected_at_min": "2026-09-19T16:58:58.118Z",
+      "collected_at_max": "2026-09-19T17:15:27.000Z",
+      "rows_with_publisher_date": 0,
+      "checks": [
+        {
+          "name": "every_upstream_record_exported",
+          "ok": true,
+          "detail": "17 of 17 upstream records"
+        },
+        {
+          "name": "every_upstream_version_accounted_for",
+          "ok": true,
+          "detail": "23 exported + 0 folded = 23 upstream versions"
+        }
+      ]
+    },
+    {
+      "product_id": "P25",
+      "upstream_source_id": "political_finance_2023_candidate_returns",
+      "upstream_rows_read": 492,
+      "upstream_exact_duplicates_ignored": -848,
+      "upstream_distinct_records": 1340,
+      "upstream_distinct_versions": 1340,
+      "export_rows": 1340,
+      "export_distinct_records": 1340,
+      "versions_folded_as_identical_after_allowlist": 0,
+      "rows_by_kind": {
+        "donation_return_part": 1277,
+        "donation_disclosure_entry": 63
+      },
+      "collected_at_min": "2026-09-19T17:51:54.739Z",
+      "collected_at_max": "2026-09-19T18:11:42.577Z",
+      "rows_with_publisher_date": 0,
+      "checks": [
+        {
+          "name": "every_upstream_record_exported",
+          "ok": true,
+          "detail": "1340 of 1340 upstream records"
+        },
+        {
+          "name": "every_upstream_version_accounted_for",
+          "ok": true,
+          "detail": "1340 exported + 0 folded = 1340 upstream versions"
+        },
+        {
+          "name": "every_upstream_version_of_every_return_was_read",
+          "ok": true,
+          "detail": "492 of 492 upstream versions read, covering 492 distinct return documents"
+        },
+        {
+          "name": "coverage_of_the_return_corpus",
+          "ok": true,
+          "detail": "documents_offered 492; documents_read 171; documents_without_a_recognised_form 315; documents_without_a_part_summary 6; part_disclosures 1277; parts_reconciled 30; itemised_entries 63; donors_named 63; donors_not_separable 0; donors_withheld_by_publisher 0. A document that is not the Commission's form, and a part whose entries do not sum to the form's own total, are counted here and produce no donor row."
+        }
+      ]
+    },
+    {
+      "product_id": "P26",
+      "upstream_source_id": "political_finance_2025_returns",
+      "upstream_rows_read": 23,
+      "upstream_exact_duplicates_ignored": -263,
+      "upstream_distinct_records": 286,
+      "upstream_distinct_versions": 286,
+      "export_rows": 286,
+      "export_distinct_records": 286,
+      "versions_folded_as_identical_after_allowlist": 0,
+      "rows_by_kind": {
+        "donation_return_part": 58,
+        "donation_disclosure_entry": 228
+      },
+      "collected_at_min": "2026-09-19T16:58:58.118Z",
+      "collected_at_max": "2026-09-19T17:15:27.000Z",
+      "rows_with_publisher_date": 0,
+      "checks": [
+        {
+          "name": "every_upstream_record_exported",
+          "ok": true,
+          "detail": "286 of 286 upstream records"
+        },
+        {
+          "name": "every_upstream_version_accounted_for",
+          "ok": true,
+          "detail": "286 exported + 0 folded = 286 upstream versions"
+        },
+        {
+          "name": "every_upstream_version_of_every_return_was_read",
+          "ok": true,
+          "detail": "23 of 23 upstream versions read, covering 17 distinct return documents"
+        },
+        {
+          "name": "coverage_of_the_return_corpus",
+          "ok": true,
+          "detail": "documents_offered 23; documents_read 10; documents_without_a_recognised_form 9; documents_without_a_part_summary 4; part_disclosures 58; parts_reconciled 3; itemised_entries 228; donors_named 224; donors_not_separable 4; donors_withheld_by_publisher 0. A document that is not the Commission's form, and a part whose entries do not sum to the form's own total, are counted here and produce no donor row."
+        }
+      ]
+    },
+    {
+      "product_id": "C26A",
+      "upstream_source_id": "candidate_elections_snapshot",
+      "upstream_rows_read": 4,
+      "upstream_exact_duplicates_ignored": 2,
+      "upstream_distinct_records": 1,
+      "upstream_distinct_versions": 2,
+      "export_rows": 2,
+      "export_distinct_records": 1,
+      "versions_folded_as_identical_after_allowlist": 0,
+      "rows_by_kind": {
+        "election_2026_official_page_status": 2
+      },
+      "collected_at_min": "2026-09-12T03:49:41.235Z",
+      "collected_at_max": "2026-09-12T04:21:04.475Z",
+      "rows_with_publisher_date": 0,
+      "checks": [
+        {
+          "name": "every_upstream_record_exported",
+          "ok": true,
+          "detail": "1 of 1 upstream records"
+        },
+        {
+          "name": "rows_for_other_elections_left_to_their_own_product",
+          "ok": true,
+          "detail": "2 rows for 2023 not exported here"
+        }
+      ]
+    },
+    {
+      "product_id": "C26B",
+      "upstream_source_id": "candidate_boundaries_snapshot",
+      "upstream_rows_read": 6,
+      "upstream_exact_duplicates_ignored": 0,
+      "upstream_distinct_records": 3,
+      "upstream_distinct_versions": 6,
+      "export_rows": 3,
+      "export_distinct_records": 3,
+      "versions_folded_as_identical_after_allowlist": 3,
+      "rows_by_kind": {
+        "election_2026_boundary_map_link": 3
+      },
+      "collected_at_min": "2026-09-12T03:49:41.235Z",
+      "collected_at_max": "2026-09-12T03:49:41.235Z",
+      "rows_with_publisher_date": 0,
+      "checks": [
+        {
+          "name": "every_upstream_record_exported",
+          "ok": true,
+          "detail": "3 of 3 upstream records"
+        },
+        {
+          "name": "every_upstream_version_accounted_for",
+          "ok": true,
+          "detail": "3 exported + 3 folded = 6 upstream versions"
+        }
+      ]
+    }
+  ],
+  "cross_product": [
+    {
+      "name": "p09_party_votes_equal_p08_nationwide_total",
+      "ok": true,
+      "detail": "2851211 across electorates; 2851211 nationwide. One fact seen by two routes: reconciled, never added."
+    },
+    {
+      "name": "p09_candidate_lines_join_p04_by_identifier",
+      "ok": true,
+      "detail": "495 joined of 495 candidate lines and 495 baseline electorate candidacies; unmatched 0, ambiguous 0, votes disagree 0. Candidate votes are one fact held by two products: reconciled, never added."
+    },
+    {
+      "name": "p16_linked_returns_equal_p17_document_index",
+      "ok": true,
+      "detail": "17 linked from the aggregate table; 17 in the document index"
+    },
+    {
+      "name": "p25_part_totals_agree_with_the_published_index_totals",
+      "ok": true,
+      "detail": "153 of 153 returns whose parts are all present match the Commission's own published total exactly; 0 disagree; 18 returns publish only some of their parts and are not compared. One fact published twice: reconciled, never added."
+    },
+    {
+      "name": "p26_part_totals_agree_with_the_published_index_totals",
+      "ok": true,
+      "detail": "3 of 3 returns whose parts are all present match the Commission's own published total exactly; 0 disagree; 7 returns publish only some of their parts and are not compared. One fact published twice: reconciled, never added."
+    }
+  ],
+  "all_checks_ok": true
+}

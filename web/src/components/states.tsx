@@ -1,4 +1,4 @@
-import { CircleAlert, Inbox, RotateCw } from 'lucide-react'
+import { CircleAlert, CircleSlash, Inbox, RotateCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 
@@ -20,6 +20,29 @@ export function EmptyBlock({ message = EMPTY_MESSAGE }: { message?: string }) {
     <div role="status" aria-live="polite" data-testid="empty-state" className="flex items-start gap-3 border border-dashed border-rule bg-paper px-4 py-5 text-sm text-muted-foreground">
       <Inbox aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
       <p>{message}</p>
+    </div>
+  )
+}
+
+/**
+ * The dataset a panel reads is not on the deployment being read.
+ *
+ * This is NOT an error and must never be shown as one: a store that has not had a product imported
+ * yet answers "the relation does not exist", and a red alert printing a PostgREST code tells a reader
+ * the site is broken when the honest answer is that this deployment holds nothing here and claims
+ * nothing either way.
+ */
+export function NotLoadedBlock({ datasetName, testId = 'not-loaded' }: { datasetName: string; testId?: string }) {
+  return (
+    <div role="status" data-testid={testId} className="flex items-start gap-3 border border-dashed border-caution-foreground/50 bg-caution px-4 py-4 text-sm text-caution-foreground">
+      <CircleSlash aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
+      <div className="space-y-1">
+        <p className="font-medium">This part of the store is not on the deployment you are reading.</p>
+        <p>
+          The <code className="font-mono text-[12.5px]">{datasetName}</code> dataset answered that it does not exist here, so there is nothing to show
+          and it makes no claim either way. It may exist on another deployment, or not be loaded yet.
+        </p>
+      </div>
     </div>
   )
 }

@@ -283,6 +283,33 @@ export interface DocumentRow {
   parliament_number: number | null
 }
 
+/** One row of evidence_public.donation_disclosures: a disclosed donation with everything needed to read it. */
+export interface DonationDisclosureRow {
+  official_url: string
+  return_kind: string
+  reporting_year: number
+  party_name_as_published: string | null
+  candidate_name_as_published: string | null
+  electorate_as_published: string | null
+  amendment_labelled: boolean
+  disclosure_part: string
+  part_label_as_published: string
+  disclosure_kind: string
+  entry_index: number
+  donor_name_as_published: string | null
+  donor_name_status: string
+  donor_identity_kind: string
+  disclosed_amount_nzd: Numeric
+  donation_dates: string[] | null
+  date_disclosure: string
+  overlaps_election_year_notices: boolean
+  part_total_nzd: Numeric | null
+  part_entries_disclosed: number | null
+  part_itemisation_status: string | null
+  amounts_basis: string | null
+  disclosure_reader_version: string | null
+}
+
 export interface FinanceReturnRow {
   id: string
   document_id: string

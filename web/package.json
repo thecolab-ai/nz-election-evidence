@@ -16,6 +16,7 @@
     "preview:pages": "node scripts/pages-preview.ts",
     "e2e": "playwright test --config playwright.config.ts",
     "e2e:pages": "playwright test --config playwright.pages.config.ts",
+    "e2e:journey": "playwright test --config playwright.journey.config.ts",
     "types:generate": "node scripts/db-types.ts write",
     "types:check": "node scripts/db-types.ts check",
     "check:bundle": "node scripts/check-bundle.ts",

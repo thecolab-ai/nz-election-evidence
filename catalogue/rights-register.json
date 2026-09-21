@@ -20,7 +20,8 @@
     "publisher": "Electoral Commission",
     "source_url": "https://elections.nz/democracy-in-nz/candidates/candidate-expenses-and-donations/",
     "product_ids": [
-      "P15"
+      "P15",
+      "P25"
     ],
     "review_status": "pending",
     "default_release": "link-only",
@@ -51,7 +52,8 @@
     "source_url": "https://elections.nz/democracy-in-nz/political-parties-in-new-zealand/party-donations-and-loans-by-year/",
     "product_ids": [
       "P16",
-      "P17"
+      "P17",
+      "P26"
     ],
     "review_status": "pending",
     "default_release": "link-only",

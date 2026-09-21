@@ -18,7 +18,7 @@ Automation limit: a previously green CI status is **not a durable election-day m
 
 ## What is here
 
-- **24 dated source-product records**, mapped once each, totalling **351,710 distinct records in the 19 September 2026 snapshot**.
+- **26 dated source-product records**, mapped once each, totalling **353,336 distinct records** (351,710 in the 19 September 2026 snapshot, plus the 1,626 disclosures read from inside the filed Electoral Commission returns on 21 September 2026).
 - A separate **52-lane research roadmap**. It is a plan, **not a claim that 52 datasets are complete**.
 - Publisher links, observed timestamps, evidence types, counts, limitations and rights-review state.
 - A self-contained [interactive evidence atlas](atlas/index.html).
@@ -78,7 +78,7 @@ Read [methodology](docs/methodology.md), the [data dictionary](docs/data-diction
 
 ## Repository map
 
-- `catalogue/sources.{json,csv}` — the 24-product dated catalogue
+- `catalogue/sources.{json,csv}` — the 26-product dated catalogue
 - `catalogue/roadmap.{json,csv}` — the separate 52-lane research roadmap
 - `catalogue/rights-register.{json,csv}` — per-publisher review queue
 - `catalogue/schema.json` — machine-readable catalogue contract

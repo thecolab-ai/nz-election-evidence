@@ -1,0 +1,1174 @@
+{
+  "receipt_version": 1,
+  "kind": "donation_disclosures_load_proof",
+  "tested_source": {
+    "commit": "326776dc7b5b1e93c8b1315cc9d4331160030fb3",
+    "dirty": false
+  },
+  "stack": "an isolated, disposable local stack of its own (project id and ports used by nothing else); the hosted database was not contacted and no other stack was reset",
+  "what_was_run": [
+    "supabase start from a clean clone of the tested commit: every migration applied in order, 20260921080100_donation_disclosures.sql among them",
+    "supabase test db: 20 pgTAP files, 674 assertions",
+    "node src/cli.ts registry-sync, then the owner authorization mirror (5 decisions recorded)",
+    "node src/cli.ts import election   (the eleven election units, P25 and P26 among them)",
+    "node src/cli.ts import election   again, as a replay: every record already at its latest version",
+    "node src/cli.ts reconcile election",
+    "the Donations page rendered in a real browser against the loaded store"
+  ],
+  "pgtap": {
+    "files": 20,
+    "assertions": 674,
+    "result": "pass",
+    "new_file": "supabase/tests/127_donation_disclosures.test.sql (31 assertions)"
+  },
+  "what_a_reader_receives": {
+    "measured_as": "anon, on the loaded store",
+    "donation_disclosures_rows": 291,
+    "with_a_donor_name": 287,
+    "without_the_official_link_to_the_return": 0,
+    "without_the_part_itemisation_status": 0,
+    "donation_return_parts_rows": 1335,
+    "public_text_values_checked_for_an_address": 2039,
+    "holding_a_digit": 0,
+    "holding_a_street_word": 0,
+    "page_rendered_in_a_browser": {
+      "rows_on_page_one": 25,
+      "console_errors": 0,
+      "notices_shown": 3
+    }
+  },
+  "import": [
+    {
+      "unit": "C26A",
+      "source_ids": [
+        "election_2026_official_page_status_export"
+      ],
+      "status": "succeeded",
+      "error_code": null,
+      "input": {
+        "rows": 2,
+        "records": 1,
+        "versions": 2,
+        "by_population": {
+          "ledger_records": 1
+        }
+      },
+      "written": {
+        "ledger_records": {
+          "seen": 2,
+          "inserted": 2,
+          "unchanged": 0,
+          "rejected": 0,
+          "conflicts": 0,
+          "tombstoned": 0
+        }
+      },
+      "destination": {
+        "election_official_page_status": 1
+      },
+      "checks_passed": 9,
+      "checks_failed": [],
+      "source_revision": {
+        "commit": "326776dc7b5b1e93c8b1315cc9d4331160030fb3",
+        "dirty": false
+      }
+    },
+    {
+      "unit": "C26B",
+      "source_ids": [
+        "election_2026_boundary_map_links_export"
+      ],
+      "status": "succeeded",
+      "error_code": null,
+      "input": {
+        "rows": 3,
+        "records": 3,
+        "versions": 3,
+        "by_population": {
+          "ledger_records": 3
+        }
+      },
+      "written": {
+        "ledger_records": {
+          "seen": 3,
+          "inserted": 3,
+          "unchanged": 0,
+          "rejected": 0,
+          "conflicts": 0,
+          "tombstoned": 0
+        }
+      },
+      "destination": {
+        "documents": 3,
+        "boundary_map_links": 3
+      },
+      "checks_passed": 9,
+      "checks_failed": [],
+      "source_revision": {
+        "commit": "326776dc7b5b1e93c8b1315cc9d4331160030fb3",
+        "dirty": false
+      }
+    },
+    {
+      "unit": "P08",
+      "source_ids": [
+        "election_2023_nationwide_results_export"
+      ],
+      "status": "succeeded",
+      "error_code": null,
+      "input": {
+        "rows": 18,
+        "records": 18,
+        "versions": 18,
+        "by_population": {
+          "ledger_records": 18
+        }
+      },
+      "written": {
+        "ledger_records": {
+          "seen": 18,
+          "inserted": 18,
+          "unchanged": 0,
+          "rejected": 0,
+          "conflicts": 0,
+          "tombstoned": 0
+        }
+      },
+      "destination": {
+        "result_sets": 1,
+        "election_party_totals": 17,
+        "election_result_totals": 1,
+        "party_source_identities": 17
+      },
+      "checks_passed": 12,
+      "checks_failed": [],
+      "source_revision": {
+        "commit": "326776dc7b5b1e93c8b1315cc9d4331160030fb3",
+        "dirty": false
+      }
+    },
+    {
+      "unit": "P09",
+      "source_ids": [
+        "election_2023_electorate_results_export"
+      ],
+      "status": "succeeded",
+      "error_code": null,
+      "input": {
+        "rows": 1791,
+        "records": 1791,
+        "versions": 1791,
+        "by_population": {
+          "ledger_records": 1791
+        }
+      },
+      "written": {
+        "ledger_records": {
+          "seen": 1791,
+          "inserted": 1791,
+          "unchanged": 0,
+          "rejected": 0,
+          "conflicts": 0,
+          "tombstoned": 0
+        }
+      },
+      "destination": {
+        "result_sets": 1,
+        "party_results": 1224,
+        "electorate_versions": 72,
+        "result_route_checks": 496,
+        "party_source_identities": 17,
+        "electorate_result_summaries": 72,
+        "electorate_version_attestations": 1791
+      },
+      "checks_passed": 13,
+      "checks_failed": [],
+      "source_revision": {
+        "commit": "326776dc7b5b1e93c8b1315cc9d4331160030fb3",
+        "dirty": false
+      }
+    },
+    {
+      "unit": "P13",
+      "source_ids": [
+        "party_policy_pages_2026_export"
+      ],
+      "status": "succeeded",
+      "error_code": null,
+      "input": {
+        "rows": 75,
+        "records": 17,
+        "versions": 75,
+        "by_population": {
+          "ledger_records": 17
+        }
+      },
+      "written": {
+        "ledger_records": {
+          "seen": 75,
+          "inserted": 75,
+          "unchanged": 0,
+          "rejected": 0,
+          "conflicts": 0,
+          "tombstoned": 0
+        }
+      },
+      "destination": {
+        "documents": 17,
+        "policy_sources": 17,
+        "party_source_identities": 17
+      },
+      "checks_passed": 11,
+      "checks_failed": [],
+      "source_revision": {
+        "commit": "326776dc7b5b1e93c8b1315cc9d4331160030fb3",
+        "dirty": false
+      }
+    },
+    {
+      "unit": "P14",
+      "source_ids": [
+        "party_vote_polls_2026_export"
+      ],
+      "status": "succeeded",
+      "error_code": null,
+      "input": {
+        "rows": 30,
+        "records": 12,
+        "versions": 30,
+        "by_population": {
+          "ledger_records": 12
+        }
+      },
+      "written": {
+        "ledger_records": {
+          "seen": 30,
+          "inserted": 30,
+          "unchanged": 0,
+          "rejected": 0,
+          "conflicts": 0,
+          "tombstoned": 0
+        }
+      },
+      "destination": {
+        "polls": 12,
+        "documents": 12,
+        "poll_results": 144
+      },
+      "checks_passed": 14,
+      "checks_failed": [],
+      "source_revision": {
+        "commit": "326776dc7b5b1e93c8b1315cc9d4331160030fb3",
+        "dirty": false
+      }
+    },
+    {
+      "unit": "P15",
+      "source_ids": [
+        "finance_2023_candidate_returns_export"
+      ],
+      "status": "succeeded",
+      "error_code": null,
+      "input": {
+        "rows": 492,
+        "records": 492,
+        "versions": 492,
+        "by_population": {
+          "ledger_records": 492
+        }
+      },
+      "written": {
+        "ledger_records": {
+          "seen": 492,
+          "inserted": 492,
+          "unchanged": 0,
+          "rejected": 0,
+          "conflicts": 0,
+          "tombstoned": 0
+        }
+      },
+      "destination": {
+        "documents": 492,
+        "party_source_identities": 31,
+        "finance_return_references": 492,
+        "finance_published_aggregates": 1476
+      },
+      "checks_passed": 15,
+      "checks_failed": [],
+      "source_revision": {
+        "commit": "326776dc7b5b1e93c8b1315cc9d4331160030fb3",
+        "dirty": false
+      }
+    },
+    {
+      "unit": "P16",
+      "source_ids": [
+        "finance_2025_party_aggregates_export"
+      ],
+      "status": "succeeded",
+      "error_code": null,
+      "input": {
+        "rows": 14,
+        "records": 14,
+        "versions": 14,
+        "by_population": {
+          "ledger_records": 14
+        }
+      },
+      "written": {
+        "ledger_records": {
+          "seen": 14,
+          "inserted": 14,
+          "unchanged": 0,
+          "rejected": 0,
+          "conflicts": 0,
+          "tombstoned": 0
+        }
+      },
+      "destination": {
+        "party_source_identities": 14,
+        "finance_published_aggregates": 28
+      },
+      "checks_passed": 12,
+      "checks_failed": [],
+      "source_revision": {
+        "commit": "326776dc7b5b1e93c8b1315cc9d4331160030fb3",
+        "dirty": false
+      }
+    },
+    {
+      "unit": "P17",
+      "source_ids": [
+        "finance_2025_party_returns_export"
+      ],
+      "status": "succeeded",
+      "error_code": null,
+      "input": {
+        "rows": 23,
+        "records": 17,
+        "versions": 23,
+        "by_population": {
+          "ledger_records": 17
+        }
+      },
+      "written": {
+        "ledger_records": {
+          "seen": 23,
+          "inserted": 23,
+          "unchanged": 0,
+          "rejected": 0,
+          "conflicts": 0,
+          "tombstoned": 0
+        }
+      },
+      "destination": {
+        "documents": 17,
+        "party_source_identities": 14,
+        "finance_return_references": 17
+      },
+      "checks_passed": 10,
+      "checks_failed": [],
+      "source_revision": {
+        "commit": "326776dc7b5b1e93c8b1315cc9d4331160030fb3",
+        "dirty": false
+      }
+    },
+    {
+      "unit": "P25",
+      "source_ids": [
+        "finance_2023_candidate_return_disclosures_export"
+      ],
+      "status": "succeeded",
+      "error_code": null,
+      "input": {
+        "rows": 1340,
+        "records": 1340,
+        "versions": 1340,
+        "by_population": {
+          "ledger_records": 1340
+        }
+      },
+      "written": {
+        "ledger_records": {
+          "seen": 1340,
+          "inserted": 1340,
+          "unchanged": 0,
+          "rejected": 0,
+          "conflicts": 0,
+          "tombstoned": 0
+        }
+      },
+      "destination": {
+        "donation_disclosures": 63,
+        "donation_return_parts": 1277,
+        "party_source_identities": 16
+      },
+      "checks_passed": 7,
+      "checks_failed": [],
+      "source_revision": {
+        "commit": "326776dc7b5b1e93c8b1315cc9d4331160030fb3",
+        "dirty": false
+      }
+    },
+    {
+      "unit": "P26",
+      "source_ids": [
+        "finance_2025_party_return_disclosures_export"
+      ],
+      "status": "succeeded",
+      "error_code": null,
+      "input": {
+        "rows": 286,
+        "records": 286,
+        "versions": 286,
+        "by_population": {
+          "ledger_records": 286
+        }
+      },
+      "written": {
+        "ledger_records": {
+          "seen": 286,
+          "inserted": 286,
+          "unchanged": 0,
+          "rejected": 0,
+          "conflicts": 0,
+          "tombstoned": 0
+        }
+      },
+      "destination": {
+        "donation_disclosures": 228,
+        "donation_return_parts": 58,
+        "party_source_identities": 9
+      },
+      "checks_passed": 7,
+      "checks_failed": [],
+      "source_revision": {
+        "commit": "326776dc7b5b1e93c8b1315cc9d4331160030fb3",
+        "dirty": false
+      }
+    }
+  ],
+  "replay": [
+    {
+      "unit": "C26A",
+      "source_ids": [
+        "election_2026_official_page_status_export"
+      ],
+      "status": "succeeded",
+      "error_code": null,
+      "input": {
+        "rows": 2,
+        "records": 1,
+        "versions": 2,
+        "by_population": {
+          "ledger_records": 1
+        }
+      },
+      "written": {
+        "ledger_records": {
+          "seen": 1,
+          "inserted": 0,
+          "unchanged": 1,
+          "rejected": 0,
+          "conflicts": 0,
+          "tombstoned": 0
+        }
+      },
+      "destination": {
+        "election_official_page_status": 1
+      },
+      "checks_passed": 9,
+      "checks_failed": [],
+      "source_revision": {
+        "commit": "326776dc7b5b1e93c8b1315cc9d4331160030fb3",
+        "dirty": false
+      }
+    },
+    {
+      "unit": "C26B",
+      "source_ids": [
+        "election_2026_boundary_map_links_export"
+      ],
+      "status": "succeeded",
+      "error_code": null,
+      "input": {
+        "rows": 3,
+        "records": 3,
+        "versions": 3,
+        "by_population": {
+          "ledger_records": 3
+        }
+      },
+      "written": {
+        "ledger_records": {
+          "seen": 3,
+          "inserted": 0,
+          "unchanged": 3,
+          "rejected": 0,
+          "conflicts": 0,
+          "tombstoned": 0
+        }
+      },
+      "destination": {
+        "documents": 3,
+        "boundary_map_links": 3
+      },
+      "checks_passed": 9,
+      "checks_failed": [],
+      "source_revision": {
+        "commit": "326776dc7b5b1e93c8b1315cc9d4331160030fb3",
+        "dirty": false
+      }
+    },
+    {
+      "unit": "P08",
+      "source_ids": [
+        "election_2023_nationwide_results_export"
+      ],
+      "status": "succeeded",
+      "error_code": null,
+      "input": {
+        "rows": 18,
+        "records": 18,
+        "versions": 18,
+        "by_population": {
+          "ledger_records": 18
+        }
+      },
+      "written": {
+        "ledger_records": {
+          "seen": 18,
+          "inserted": 0,
+          "unchanged": 18,
+          "rejected": 0,
+          "conflicts": 0,
+          "tombstoned": 0
+        }
+      },
+      "destination": {
+        "result_sets": 1,
+        "election_party_totals": 17,
+        "election_result_totals": 1,
+        "party_source_identities": 17
+      },
+      "checks_passed": 12,
+      "checks_failed": [],
+      "source_revision": {
+        "commit": "326776dc7b5b1e93c8b1315cc9d4331160030fb3",
+        "dirty": false
+      }
+    },
+    {
+      "unit": "P09",
+      "source_ids": [
+        "election_2023_electorate_results_export"
+      ],
+      "status": "succeeded",
+      "error_code": null,
+      "input": {
+        "rows": 1791,
+        "records": 1791,
+        "versions": 1791,
+        "by_population": {
+          "ledger_records": 1791
+        }
+      },
+      "written": {
+        "ledger_records": {
+          "seen": 1791,
+          "inserted": 0,
+          "unchanged": 1791,
+          "rejected": 0,
+          "conflicts": 0,
+          "tombstoned": 0
+        }
+      },
+      "destination": {
+        "result_sets": 1,
+        "party_results": 1224,
+        "electorate_versions": 72,
+        "result_route_checks": 496,
+        "party_source_identities": 17,
+        "electorate_result_summaries": 72,
+        "electorate_version_attestations": 1791
+      },
+      "checks_passed": 13,
+      "checks_failed": [],
+      "source_revision": {
+        "commit": "326776dc7b5b1e93c8b1315cc9d4331160030fb3",
+        "dirty": false
+      }
+    },
+    {
+      "unit": "P13",
+      "source_ids": [
+        "party_policy_pages_2026_export"
+      ],
+      "status": "succeeded",
+      "error_code": null,
+      "input": {
+        "rows": 75,
+        "records": 17,
+        "versions": 75,
+        "by_population": {
+          "ledger_records": 17
+        }
+      },
+      "written": {
+        "ledger_records": {
+          "seen": 17,
+          "inserted": 0,
+          "unchanged": 17,
+          "rejected": 0,
+          "conflicts": 0,
+          "tombstoned": 0
+        }
+      },
+      "destination": {
+        "documents": 17,
+        "policy_sources": 17,
+        "party_source_identities": 17
+      },
+      "checks_passed": 11,
+      "checks_failed": [],
+      "source_revision": {
+        "commit": "326776dc7b5b1e93c8b1315cc9d4331160030fb3",
+        "dirty": false
+      }
+    },
+    {
+      "unit": "P14",
+      "source_ids": [
+        "party_vote_polls_2026_export"
+      ],
+      "status": "succeeded",
+      "error_code": null,
+      "input": {
+        "rows": 30,
+        "records": 12,
+        "versions": 30,
+        "by_population": {
+          "ledger_records": 12
+        }
+      },
+      "written": {
+        "ledger_records": {
+          "seen": 12,
+          "inserted": 0,
+          "unchanged": 12,
+          "rejected": 0,
+          "conflicts": 0,
+          "tombstoned": 0
+        }
+      },
+      "destination": {
+        "polls": 12,
+        "documents": 12,
+        "poll_results": 144
+      },
+      "checks_passed": 14,
+      "checks_failed": [],
+      "source_revision": {
+        "commit": "326776dc7b5b1e93c8b1315cc9d4331160030fb3",
+        "dirty": false
+      }
+    },
+    {
+      "unit": "P15",
+      "source_ids": [
+        "finance_2023_candidate_returns_export"
+      ],
+      "status": "succeeded",
+      "error_code": null,
+      "input": {
+        "rows": 492,
+        "records": 492,
+        "versions": 492,
+        "by_population": {
+          "ledger_records": 492
+        }
+      },
+      "written": {
+        "ledger_records": {
+          "seen": 492,
+          "inserted": 0,
+          "unchanged": 492,
+          "rejected": 0,
+          "conflicts": 0,
+          "tombstoned": 0
+        }
+      },
+      "destination": {
+        "documents": 492,
+        "party_source_identities": 31,
+        "finance_return_references": 492,
+        "finance_published_aggregates": 1476
+      },
+      "checks_passed": 15,
+      "checks_failed": [],
+      "source_revision": {
+        "commit": "326776dc7b5b1e93c8b1315cc9d4331160030fb3",
+        "dirty": false
+      }
+    },
+    {
+      "unit": "P16",
+      "source_ids": [
+        "finance_2025_party_aggregates_export"
+      ],
+      "status": "succeeded",
+      "error_code": null,
+      "input": {
+        "rows": 14,
+        "records": 14,
+        "versions": 14,
+        "by_population": {
+          "ledger_records": 14
+        }
+      },
+      "written": {
+        "ledger_records": {
+          "seen": 14,
+          "inserted": 0,
+          "unchanged": 14,
+          "rejected": 0,
+          "conflicts": 0,
+          "tombstoned": 0
+        }
+      },
+      "destination": {
+        "party_source_identities": 14,
+        "finance_published_aggregates": 28
+      },
+      "checks_passed": 12,
+      "checks_failed": [],
+      "source_revision": {
+        "commit": "326776dc7b5b1e93c8b1315cc9d4331160030fb3",
+        "dirty": false
+      }
+    },
+    {
+      "unit": "P17",
+      "source_ids": [
+        "finance_2025_party_returns_export"
+      ],
+      "status": "succeeded",
+      "error_code": null,
+      "input": {
+        "rows": 23,
+        "records": 17,
+        "versions": 23,
+        "by_population": {
+          "ledger_records": 17
+        }
+      },
+      "written": {
+        "ledger_records": {
+          "seen": 17,
+          "inserted": 0,
+          "unchanged": 17,
+          "rejected": 0,
+          "conflicts": 0,
+          "tombstoned": 0
+        }
+      },
+      "destination": {
+        "documents": 17,
+        "party_source_identities": 14,
+        "finance_return_references": 17
+      },
+      "checks_passed": 10,
+      "checks_failed": [],
+      "source_revision": {
+        "commit": "326776dc7b5b1e93c8b1315cc9d4331160030fb3",
+        "dirty": false
+      }
+    },
+    {
+      "unit": "P25",
+      "source_ids": [
+        "finance_2023_candidate_return_disclosures_export"
+      ],
+      "status": "succeeded",
+      "error_code": null,
+      "input": {
+        "rows": 1340,
+        "records": 1340,
+        "versions": 1340,
+        "by_population": {
+          "ledger_records": 1340
+        }
+      },
+      "written": {
+        "ledger_records": {
+          "seen": 1340,
+          "inserted": 0,
+          "unchanged": 1340,
+          "rejected": 0,
+          "conflicts": 0,
+          "tombstoned": 0
+        }
+      },
+      "destination": {
+        "donation_disclosures": 63,
+        "donation_return_parts": 1277,
+        "party_source_identities": 16
+      },
+      "checks_passed": 7,
+      "checks_failed": [],
+      "source_revision": {
+        "commit": "326776dc7b5b1e93c8b1315cc9d4331160030fb3",
+        "dirty": false
+      }
+    },
+    {
+      "unit": "P26",
+      "source_ids": [
+        "finance_2025_party_return_disclosures_export"
+      ],
+      "status": "succeeded",
+      "error_code": null,
+      "input": {
+        "rows": 286,
+        "records": 286,
+        "versions": 286,
+        "by_population": {
+          "ledger_records": 286
+        }
+      },
+      "written": {
+        "ledger_records": {
+          "seen": 286,
+          "inserted": 0,
+          "unchanged": 286,
+          "rejected": 0,
+          "conflicts": 0,
+          "tombstoned": 0
+        }
+      },
+      "destination": {
+        "donation_disclosures": 228,
+        "donation_return_parts": 58,
+        "party_source_identities": 9
+      },
+      "checks_passed": 7,
+      "checks_failed": [],
+      "source_revision": {
+        "commit": "326776dc7b5b1e93c8b1315cc9d4331160030fb3",
+        "dirty": false
+      }
+    }
+  ],
+  "reconcile": [
+    {
+      "unit": "C26A",
+      "source_ids": [
+        "election_2026_official_page_status_export"
+      ],
+      "status": "reconciled",
+      "error_code": null,
+      "input": {
+        "rows": 2,
+        "records": 1,
+        "versions": 2,
+        "by_population": {
+          "ledger_records": 1
+        }
+      },
+      "written": {},
+      "destination": {
+        "election_official_page_status": 1
+      },
+      "checks_passed": 9,
+      "checks_failed": [],
+      "source_revision": {
+        "commit": "326776dc7b5b1e93c8b1315cc9d4331160030fb3",
+        "dirty": false
+      }
+    },
+    {
+      "unit": "C26B",
+      "source_ids": [
+        "election_2026_boundary_map_links_export"
+      ],
+      "status": "reconciled",
+      "error_code": null,
+      "input": {
+        "rows": 3,
+        "records": 3,
+        "versions": 3,
+        "by_population": {
+          "ledger_records": 3
+        }
+      },
+      "written": {},
+      "destination": {
+        "documents": 3,
+        "boundary_map_links": 3
+      },
+      "checks_passed": 9,
+      "checks_failed": [],
+      "source_revision": {
+        "commit": "326776dc7b5b1e93c8b1315cc9d4331160030fb3",
+        "dirty": false
+      }
+    },
+    {
+      "unit": "P08",
+      "source_ids": [
+        "election_2023_nationwide_results_export"
+      ],
+      "status": "reconciled",
+      "error_code": null,
+      "input": {
+        "rows": 18,
+        "records": 18,
+        "versions": 18,
+        "by_population": {
+          "ledger_records": 18
+        }
+      },
+      "written": {},
+      "destination": {
+        "result_sets": 1,
+        "election_party_totals": 17,
+        "election_result_totals": 1,
+        "party_source_identities": 17
+      },
+      "checks_passed": 12,
+      "checks_failed": [],
+      "source_revision": {
+        "commit": "326776dc7b5b1e93c8b1315cc9d4331160030fb3",
+        "dirty": false
+      }
+    },
+    {
+      "unit": "P09",
+      "source_ids": [
+        "election_2023_electorate_results_export"
+      ],
+      "status": "reconciled",
+      "error_code": null,
+      "input": {
+        "rows": 1791,
+        "records": 1791,
+        "versions": 1791,
+        "by_population": {
+          "ledger_records": 1791
+        }
+      },
+      "written": {},
+      "destination": {
+        "result_sets": 1,
+        "party_results": 1224,
+        "electorate_versions": 72,
+        "result_route_checks": 496,
+        "party_source_identities": 17,
+        "electorate_result_summaries": 72,
+        "electorate_version_attestations": 1791
+      },
+      "checks_passed": 13,
+      "checks_failed": [],
+      "source_revision": {
+        "commit": "326776dc7b5b1e93c8b1315cc9d4331160030fb3",
+        "dirty": false
+      }
+    },
+    {
+      "unit": "P13",
+      "source_ids": [
+        "party_policy_pages_2026_export"
+      ],
+      "status": "reconciled",
+      "error_code": null,
+      "input": {
+        "rows": 75,
+        "records": 17,
+        "versions": 75,
+        "by_population": {
+          "ledger_records": 17
+        }
+      },
+      "written": {},
+      "destination": {
+        "documents": 17,
+        "policy_sources": 17,
+        "party_source_identities": 17
+      },
+      "checks_passed": 11,
+      "checks_failed": [],
+      "source_revision": {
+        "commit": "326776dc7b5b1e93c8b1315cc9d4331160030fb3",
+        "dirty": false
+      }
+    },
+    {
+      "unit": "P14",
+      "source_ids": [
+        "party_vote_polls_2026_export"
+      ],
+      "status": "reconciled",
+      "error_code": null,
+      "input": {
+        "rows": 30,
+        "records": 12,
+        "versions": 30,
+        "by_population": {
+          "ledger_records": 12
+        }
+      },
+      "written": {},
+      "destination": {
+        "polls": 12,
+        "documents": 12,
+        "poll_results": 144
+      },
+      "checks_passed": 14,
+      "checks_failed": [],
+      "source_revision": {
+        "commit": "326776dc7b5b1e93c8b1315cc9d4331160030fb3",
+        "dirty": false
+      }
+    },
+    {
+      "unit": "P15",
+      "source_ids": [
+        "finance_2023_candidate_returns_export"
+      ],
+      "status": "reconciled",
+      "error_code": null,
+      "input": {
+        "rows": 492,
+        "records": 492,
+        "versions": 492,
+        "by_population": {
+          "ledger_records": 492
+        }
+      },
+      "written": {},
+      "destination": {
+        "documents": 492,
+        "party_source_identities": 31,
+        "finance_return_references": 492,
+        "finance_published_aggregates": 1476
+      },
+      "checks_passed": 15,
+      "checks_failed": [],
+      "source_revision": {
+        "commit": "326776dc7b5b1e93c8b1315cc9d4331160030fb3",
+        "dirty": false
+      }
+    },
+    {
+      "unit": "P16",
+      "source_ids": [
+        "finance_2025_party_aggregates_export"
+      ],
+      "status": "reconciled",
+      "error_code": null,
+      "input": {
+        "rows": 14,
+        "records": 14,
+        "versions": 14,
+        "by_population": {
+          "ledger_records": 14
+        }
+      },
+      "written": {},
+      "destination": {
+        "party_source_identities": 14,
+        "finance_published_aggregates": 28
+      },
+      "checks_passed": 12,
+      "checks_failed": [],
+      "source_revision": {
+        "commit": "326776dc7b5b1e93c8b1315cc9d4331160030fb3",
+        "dirty": false
+      }
+    },
+    {
+      "unit": "P17",
+      "source_ids": [
+        "finance_2025_party_returns_export"
+      ],
+      "status": "reconciled",
+      "error_code": null,
+      "input": {
+        "rows": 23,
+        "records": 17,
+        "versions": 23,
+        "by_population": {
+          "ledger_records": 17
+        }
+      },
+      "written": {},
+      "destination": {
+        "documents": 17,
+        "party_source_identities": 14,
+        "finance_return_references": 17
+      },
+      "checks_passed": 10,
+      "checks_failed": [],
+      "source_revision": {
+        "commit": "326776dc7b5b1e93c8b1315cc9d4331160030fb3",
+        "dirty": false
+      }
+    },
+    {
+      "unit": "P25",
+      "source_ids": [
+        "finance_2023_candidate_return_disclosures_export"
+      ],
+      "status": "reconciled",
+      "error_code": null,
+      "input": {
+        "rows": 1340,
+        "records": 1340,
+        "versions": 1340,
+        "by_population": {
+          "ledger_records": 1340
+        }
+      },
+      "written": {},
+      "destination": {
+        "donation_disclosures": 63,
+        "donation_return_parts": 1277,
+        "party_source_identities": 16
+      },
+      "checks_passed": 7,
+      "checks_failed": [],
+      "source_revision": {
+        "commit": "326776dc7b5b1e93c8b1315cc9d4331160030fb3",
+        "dirty": false
+      }
+    },
+    {
+      "unit": "P26",
+      "source_ids": [
+        "finance_2025_party_return_disclosures_export"
+      ],
+      "status": "reconciled",
+      "error_code": null,
+      "input": {
+        "rows": 286,
+        "records": 286,
+        "versions": 286,
+        "by_population": {
+          "ledger_records": 286
+        }
+      },
+      "written": {},
+      "destination": {
+        "donation_disclosures": 228,
+        "donation_return_parts": 58,
+        "party_source_identities": 9
+      },
+      "checks_passed": 7,
+      "checks_failed": [],
+      "source_revision": {
+        "commit": "326776dc7b5b1e93c8b1315cc9d4331160030fb3",
+        "dirty": false
+      }
+    }
+  ]
+}

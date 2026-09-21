@@ -2,7 +2,7 @@
 
 ## Two different inventories
 
-The **24 products** are held metadata from a dated snapshot and sum to 351,710 distinct records. Each `Pxx` appears once in the 52-lane mapping. The **52 lanes** are a research roadmap. A lane may be partial, discovery-only, blocked or not yet available. `52` is not a completeness score.
+The **26 products** are held metadata from a dated snapshot and sum to 353,336 distinct records. Each `Pxx` appears once in the 52-lane mapping. The **52 lanes** are a research roadmap. A lane may be partial, discovery-only, blocked or not yet available. `52` is not a completeness score.
 
 ## Material caveats
 

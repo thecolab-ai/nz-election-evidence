@@ -83,14 +83,28 @@ export const FINANCE_FIGURE_FIELDS = [
 export const POLL_FIGURE_FIELDS = ["value_pct", "value_status", "sample_size", "disclosure_sample_size", "results"] as const;
 
 /**
+ * The donation facts a filed return DISCLOSES: the name the return gives for a donor, what that name's status is,
+ * which of the law's identity categories the entry falls under, the amount of the entry, and the total the form
+ * prints for the part it sits in. A closed list, for a source registered as one of the two return-DISCLOSURE
+ * products only - never for the document indexes those disclosures were read from. Nothing on it can hold a
+ * location, a contact, a signature or a document: there is no address column in the store to name.
+ * Kept equal to owner_donation_fact_tokens (tested).
+ */
+export const DONATION_FACT_FIELDS = [
+  "donor_name_as_published", "donor_name_status", "donor_identity_kind",
+  "disclosed_amount_nzd", "disclosed_total_nzd", "disclosed_total_status", "part_total_nzd", "amounts_basis",
+] as const;
+
+/**
  * The registry products whose sources may carry a figure scope at all. Kept equal to the literal lists in
  * the migration (owner_scope_guard and evidence_private.source_release), which are checked both when a decision
  * is recorded and every time a release tier is read. Widening this is a migration, never a file edit.
  */
-export const FIGURE_REGISTRIES: Record<"official_result_figures" | "official_finance_figures" | "published_poll_figures", readonly string[]> = {
+export const FIGURE_REGISTRIES: Record<"official_result_figures" | "official_finance_figures" | "published_poll_figures" | "published_donation_facts", readonly string[]> = {
   official_result_figures: ["election_2023_results"],
   official_finance_figures: ["candidate_finance_returns", "party_finance_returns"],
   published_poll_figures: ["party_vote_polls"],
+  published_donation_facts: ["candidate_return_disclosures", "party_return_disclosures"],
 };
 
 /** Field scopes, by kind: the closed list of tokens each may name. `source_fields` is the pattern rule instead. */
@@ -99,6 +113,7 @@ export const FIGURE_SCOPE_FIELDS: Record<string, readonly string[]> = {
   official_result_figures: RESULT_FIGURE_FIELDS,
   official_finance_figures: FINANCE_FIGURE_FIELDS,
   published_poll_figures: POLL_FIGURE_FIELDS,
+  published_donation_facts: DONATION_FACT_FIELDS,
 };
 
 const FIGURE_SCOPE_LABEL: Record<string, string> = {
@@ -106,13 +121,14 @@ const FIGURE_SCOPE_LABEL: Record<string, string> = {
   official_result_figures: "an official result figure",
   official_finance_figures: "an official finance figure",
   published_poll_figures: "a published poll figure",
+  published_donation_facts: "a donation fact a filed return discloses",
 };
 
 /** What the validator needs to know about a registered source to check a field decision against it. */
 export interface RegisteredSource { source_id: string; rights_id?: string; view_scope: string; registry_key?: string }
 
 /** Every scope kind that names fields of one source. */
-export const FIELD_SCOPES = ["source_fields", "statistical_facts", "official_result_figures", "official_finance_figures", "published_poll_figures"] as const;
+export const FIELD_SCOPES = ["source_fields", "statistical_facts", "official_result_figures", "official_finance_figures", "published_poll_figures", "published_donation_facts"] as const;
 type FieldScopeKind = (typeof FIELD_SCOPES)[number];
 const isFieldScope = (value: unknown): value is FieldScopeKind => (FIELD_SCOPES as readonly string[]).includes(String(value));
 
