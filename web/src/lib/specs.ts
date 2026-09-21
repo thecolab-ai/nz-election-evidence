@@ -112,7 +112,10 @@ export const donationsSpec = {
     { column: 'reporting_year', dir: 'desc' },
     { column: 'disclosed_amount_nzd', dir: 'desc' },
   ],
-  tiebreak: 'entry_index',
+  // `entry_index` is a content column: on a deployment that releases these returns as links only it is
+  // null in every row, and an ordering made only of nulls is no ordering — the same page could come
+  // back twice and another never. The link is published whatever the release state, so it orders last.
+  tiebreak: ['entry_index', 'official_url'],
   filters: {
     kind: { kind: 'enum', values: ['donation', 'loan', 'expense'] },
     identity: { kind: 'enum', values: ['named', 'anonymous', 'protected_from_disclosure', 'overseas', 'not_itemised'] },

@@ -1,6 +1,7 @@
 import { getRouteApi, Link } from '@tanstack/react-router'
 import { ArrowLeft, Banknote, FileText, Map, Users } from 'lucide-react'
 import { CandidacyStatusBadge, LinkStatusBadge, Pill } from '@/components/badges'
+import { DisclosedAmount, DonorName } from '@/components/donation'
 import { AvailabilityBlock, FactCard } from '@/components/fact-card'
 import { EntityLink } from '@/components/entity-link'
 import { EvidenceVersionLink } from '@/components/evidence-link'
@@ -19,7 +20,8 @@ import {
   REPRESENTATION_MATCH_NOTE,
   type SourceLike,
 } from '@/lib/electorate'
-import { formatCount, formatDate, formatDateTime, formatMoney, formatPlainDate, formatServiceDate, formatVotes, humanise, NOT_SHOWN, RIGHTS_NOTE } from '@/lib/format'
+import { formatCount, formatDate, formatDateTime, formatPlainDate, formatServiceDate, formatVotes, humanise, NOT_SHOWN, RIGHTS_NOTE } from '@/lib/format'
+import { donationRowKey } from '@/lib/donations'
 import type { CandidacyRow, DonationDisclosureRow, ElectorateVersionRow, ServiceTermRow } from '@/lib/types'
 import {
   CANDIDACY_SOURCE_ID,
@@ -551,19 +553,13 @@ function MoneyCard({ electorate: e, sources }: { electorate: ElectorateVersionRo
 function DonationList({ rows }: { rows: readonly DonationDisclosureRow[] }) {
   return (
     <ul className="divide-y divide-border" data-testid="donation-list">
-      {rows.map((d) => (
-        <li key={`${d.official_url}#${d.disclosure_part}-${d.entry_index}`} className="py-2.5" data-testid="donation-row">
+      {rows.map((d, i) => (
+        <li key={donationRowKey(d, i)} className="py-2.5" data-testid="donation-row">
           <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
             <span className="font-medium">
-              {d.donor_name_status === 'published' ? (
-                d.donor_name_as_published
-              ) : d.donor_name_status === 'withheld_by_publisher' ? (
-                <Pill tone="muted">{d.donor_identity_kind === 'anonymous' ? 'Anonymous — no name is disclosed' : 'Protected from disclosure by law'}</Pill>
-              ) : (
-                <Pill tone="caution">Named in the return; the name could not be separated from the other text printed in the same cell</Pill>
-              )}
+              <DonorName row={d} />
             </span>
-            <span className="num">{formatMoney(d.disclosed_amount_nzd, 'reported')}</span>
+            <DisclosedAmount row={d} />
           </div>
           <p className="mt-0.5 text-[13px] text-muted-foreground">
             <Banknote aria-hidden="true" className="mr-1 inline size-3" />

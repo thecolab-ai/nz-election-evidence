@@ -286,6 +286,22 @@ test.describe('the published site', () => {
     if (rows === 0) {
       await expect(page.getByTestId('empty-state').or(page.getByTestId('not-loaded')).first()).toBeVisible()
     }
+
+    // The live store may hold these returns and release none of their fields. Rows then exist and carry
+    // only the publisher's link, which is a state the reader must be told in words: a table of blanks
+    // would read as returns that stated nothing. Whichever state the deployment is in, it is stated.
+    const linkOnly = page.getByTestId('donations-link-only')
+    if (await linkOnly.count()) {
+      await expect(linkOnly).toBeVisible()
+      await expect(linkOnly).toContainText('not released on this deployment')
+      // Every row still reaches the publisher's own document: link-only is access, not a dead end.
+      const firstRow = page.getByTestId('data-row').first()
+      await expect(firstRow.getByRole('link').first()).toHaveAttribute('href', /^https?:\/\//)
+      await expect(firstRow.getByTestId('entry-link-only')).toBeVisible()
+      // And the filters that read unreleased fields are not offered, so no reader can search a donor
+      // name and read the empty answer as "this person gave nothing".
+      await expect(page.getByTestId('donations-filters-unavailable')).toBeVisible()
+    }
     await shot(page, '08-donations')
   })
 
