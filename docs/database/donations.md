@@ -1,7 +1,10 @@
 # Donations disclosed inside filed Electoral Commission returns (P25, P26)
 
-Branch `feat/official-donation-records`, commit `326776d`. Local only: nothing pushed, nothing deployed, and the
-hosted database was not contacted. Everything below was run on an isolated, disposable stack of its own.
+Branch `feat/official-donation-records`, commit `326776d`; proven in a combined load at `8a94a1f` on
+`feat/election-overnight-donation-proof` (§8.1). Local only: nothing pushed, nothing deployed, and the hosted
+database was not contacted. Everything below was run on an isolated, disposable stack of its own. **Loaded is not
+published:** all 22 rights rows are still `pending` / `link-only`, and an anonymous reader of the loaded store
+receives **0 donation rows** — measured, not assumed.
 
 Until this change the store held **no donation at all**. It held the Commission's *index* of filed returns (P15,
 P17) and the totals the Commission prints on its own pages (P16, and the index-page totals of P15). Migration
@@ -265,13 +268,24 @@ Both were only visible by loading the page against a store that actually held th
 
 ## 8. Known, and not papered over
 
-1. **The combined reconciliation manifest is stale, and was already stale before this branch.**
-   `docs/database/receipts/unified/reconciliation-manifest.json` names tested commit `1e1184c`; migrations
-   `20260921060100` and `20260921070100` landed after it on the parent branch. `loaders_contract.test.ts` refuses a
-   manifest older than the source and therefore fails — at `8d33ea6`, before any change here, and still. This branch
-   does not re-pin it: that would be asserting a proof that was not run. The two new routes are consequently
-   `built_not_proven`, which is what the coverage file says. A combined load across all four families would clear
-   both; that is the coordinator's run.
+1. ~~**The combined reconciliation manifest is stale**~~ — **closed on 2026-09-21 by the combined load at `8a94a1f`.**
+   `docs/database/receipts/unified/reconciliation-manifest.json` now names tested commit `8a94a1f` and covers **33
+   units: all imported and `succeeded`, all 33 replayed with zero inserts anywhere, and 41 of 41 reconciliations
+   `reconciled` over 316 checks with none failed.** P25 loaded 1,340 records into 1,277 parts and 63 entries; P26
+   loaded 286 into 58 parts and 228 entries; each reconciled on all 17 of its checks, including the cross-document
+   duplicate count (0) and money compared in whole cents on both sides. The two routes therefore read
+   `loaded_and_reconciled`, **granted by that manifest and withdrawn with it** — no state was written by hand.
+   The load was run once, in one family order; **order independence was not re-run and stays unproven at this
+   commit** (see `unified-loaders.md` §5).
+
+   What had actually gone wrong on the first attempt is worth recording, because it was environment, never data:
+   only a product's `.jsonl` honours `EVIDENCE_EXPORT_ELECTION_<P>`; the export **manifest** is always resolved
+   through `EVIDENCE_EXPORT_ELECTION_DIR`. That pointed at the `2026-09-20` export, which describes nine products,
+   so P25 and P26 were refused `input_pin_mismatch` — a fail-closed refusal working exactly as designed. The
+   artifacts matched their pins throughout. The fix was to assemble one directory holding exactly the eleven pinned
+   files, each manifest entry copied verbatim from the export that produced that same file, and nothing re-exported
+   or re-pinned. Pointing the run at the whole `2026-09-21` export instead would have been the wrong fix: that
+   export re-cut P13 at 76 rows against a pin of 75, so it would have traded two refusals for a third.
 2. **P13's pin no longer matches the upstream store.** A fresh export cuts 76 rows where the pin says 75: the party
    policy monitor re-observed a page after the pin was taken. The pin is left alone and the load above used the
    pinned 2026-09-20 P13 file. This is upstream drift, not a defect of this branch, and re-pinning it is a decision

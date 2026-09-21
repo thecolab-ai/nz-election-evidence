@@ -4,24 +4,24 @@
   "what_this_is": "Source-to-destination reconciliation of every import unit, from a combined load of the real private artifacts into an isolated, disposable local database built from the full migration union. Counts, digests and statuses only. Not a hosted load: nothing here was written to a hosted project.",
   "rights_note": "Loading changes nothing about rights: every rights row is pending and link-only. A loaded row is not a published row.",
   "tested_source": {
-    "commit": "8d33ea60999259cf8d02d6a5180680248c07ea85",
+    "commit": "8a94a1f74f16b64e727df57bb0c9bc4a97365b73",
     "every_receipt_from_a_clean_checkout_of_it": true,
     "note": "The receipts pin the commit of the checkout that produced them. This manifest is evidence about that commit only; a later commit that changes source code is not covered by it."
   },
   "totals": {
-    "units": 31,
-    "units_succeeded": 31,
+    "units": 33,
+    "units_succeeded": 33,
     "units_not_succeeded": [],
     "populations_note": "Counters are per population (ledger records, statistical observations, catalogue entry versions). They are never added across populations.",
     "input_by_population": {
-      "ledger_records": 203311,
+      "ledger_records": 204937,
       "stat_observations": 1273423,
       "stat_catalogue_entries": 983
     },
     "first_pass": {
       "ledger_records": {
-        "seen": 203423,
-        "inserted": 203423,
+        "seen": 205049,
+        "inserted": 205049,
         "unchanged": 0,
         "rejected": 0,
         "conflicts": 0,
@@ -45,12 +45,12 @@
       }
     },
     "replay": {
-      "units": 31,
+      "units": 33,
       "units_that_inserted_anything": [],
       "ledger_records": {
-        "seen": 203340,
+        "seen": 204966,
         "inserted": 0,
-        "unchanged": 203340,
+        "unchanged": 204966,
         "rejected": 0,
         "conflicts": 0,
         "tombstoned": 0
@@ -77,9 +77,9 @@
       "violations": []
     },
     "reconcile": {
-      "units": 39,
-      "reconciled": 39,
-      "checks": 282,
+      "units": 41,
+      "reconciled": 41,
+      "checks": 316,
       "checks_failed": 0
     },
     "resumed_after_a_hard_stop": []
@@ -122,8 +122,8 @@
       "content_digest": "1eff892af05ef1674de66f0aae7d8df3"
     },
     "catalogue_product_map": {
-      "rows": 45,
-      "content_digest": "da9eda7c3a56d42de9d1e7faa2ba1975"
+      "rows": 47,
+      "content_digest": "f277102c6993d96726059dc5a13d5435"
     },
     "committee_business_items": {
       "rows": 123,
@@ -144,6 +144,14 @@
     "documents": {
       "rows": 198275,
       "content_digest": "d58d9398107e8ecc8e79ec50d8b7f50d"
+    },
+    "donation_disclosures": {
+      "rows": 291,
+      "content_digest": "a823dc9a0940d4cb4d489f68e23cb9c2"
+    },
+    "donation_return_parts": {
+      "rows": 1335,
+      "content_digest": "b5b96de62b25b3dcdcdd9bde331044a0"
     },
     "election_official_page_status": {
       "rows": 1,
@@ -214,8 +222,8 @@
       "content_digest": "e9765531ac8af34166d1775ca2688a75"
     },
     "party_source_identities": {
-      "rows": 133,
-      "content_digest": "ace5658d0132088b56d28a8ea24a9299"
+      "rows": 158,
+      "content_digest": "17ffe249967c64aa0ec32fe2f32b4193"
     },
     "person_source_identities": {
       "rows": 1114,
@@ -234,12 +242,12 @@
       "content_digest": "3e479c1d0ed29b4485ae1ee3e86da22c"
     },
     "public_columns": {
-      "rows": 1143,
-      "content_digest": "d1fcde33c63976998cfabcaa450c9193"
+      "rows": 1216,
+      "content_digest": "e4a7bc9b60069b01851040da7d71e561"
     },
     "public_lineage": {
-      "rows": 120,
-      "content_digest": "e16d7c929ac44e34ae7c0f61131fba5a"
+      "rows": 123,
+      "content_digest": "f12f95c6b2ae14726b78cedcb15984ac"
     },
     "public_row_rules": {
       "rows": 4,
@@ -254,8 +262,8 @@
       "content_digest": "83818d4db58c5ba38654cda04d5f0673"
     },
     "registry_products": {
-      "rows": 16,
-      "content_digest": "4576d0bfa14f0b0f95c195fc73fcc78c"
+      "rows": 18,
+      "content_digest": "55b52f503253e91c239a4713650dc181"
     },
     "release_attributions": {
       "rows": 530,
@@ -282,24 +290,24 @@
       "content_digest": "0ea19eabbf128e9bcd96cede2e725bcc"
     },
     "run_projectors": {
-      "rows": 2,
-      "content_digest": "7f8ba6c5d1b2d5110e5299123a53857f"
+      "rows": 3,
+      "content_digest": "c4ba8ecbe008fb9022249943c975d695"
     },
     "source_record_versions": {
-      "rows": 203423,
-      "content_digest": "9e49e58c4e9c3d84ed54afa992b79208"
+      "rows": 205049,
+      "content_digest": "1c523ef334d73f92421e767311a3ddd6"
     },
     "source_records": {
-      "rows": 203311,
-      "content_digest": "f545c9b13b20bc70992eab86ae2975de"
+      "rows": 204937,
+      "content_digest": "cf6bd00c5df8dc6fa28c09d9e56bbe32"
     },
     "source_rights": {
       "rows": 22,
-      "content_digest": "0c4a1e57e1198275ec7566c54be0562d"
+      "content_digest": "bba2c5308c1c89f3b95fa1a07bddb3ae"
     },
     "sources": {
-      "rows": 49,
-      "content_digest": "7b5dc8ee50befbec51147d6bb7148b48"
+      "rows": 51,
+      "content_digest": "d0ad92f7e29a7c6f1e9b52e21e5f7ff1"
     },
     "stat_catalogue_entries": {
       "rows": 983,
@@ -1664,6 +1672,342 @@
           "documents": 17,
           "party_source_identities": 14,
           "finance_return_references": 17
+        }
+      }
+    },
+    {
+      "family": "election",
+      "unit": "P25",
+      "writer": "ledger_records_with_projection",
+      "source_ids": [
+        "finance_2023_candidate_return_disclosures_export"
+      ],
+      "product_ids": [
+        "P25"
+      ],
+      "input": {
+        "rows": 1340,
+        "records": 1340,
+        "versions": 1340,
+        "by_population": {
+          "ledger_records": 1340
+        },
+        "digest": "sha256:0937c821a00ede6fbf9ae863785af0d8bec59ad62684e234365548c27835b792",
+        "bytes": 2799920,
+        "collected_from": "2026-09-19T17:51:54.739Z",
+        "collected_to": "2026-09-19T18:11:42.577Z"
+      },
+      "import": {
+        "status": "succeeded",
+        "error_code": null,
+        "attempts": 1,
+        "runs": 1,
+        "resumed_runs": 0,
+        "written": {
+          "ledger_records": {
+            "seen": 1340,
+            "inserted": 1340,
+            "unchanged": 0,
+            "rejected": 0,
+            "conflicts": 0,
+            "tombstoned": 0
+          }
+        },
+        "checks_passed": 17,
+        "checks_failed": []
+      },
+      "replay": {
+        "status": "succeeded",
+        "written": {
+          "ledger_records": {
+            "seen": 1340,
+            "inserted": 0,
+            "unchanged": 1340,
+            "rejected": 0,
+            "conflicts": 0,
+            "tombstoned": 0
+          }
+        },
+        "checks_failed": []
+      },
+      "reconcile": {
+        "status": "reconciled",
+        "checks": [
+          {
+            "name": "source_records",
+            "expected": 1340,
+            "actual": 1340,
+            "ok": true
+          },
+          {
+            "name": "record_versions",
+            "expected": 1340,
+            "actual": 1340,
+            "ok": true
+          },
+          {
+            "name": "tombstoned_records",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "rejected_records",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "donation_return_parts",
+            "expected": 1277,
+            "actual": 1277,
+            "ok": true
+          },
+          {
+            "name": "donation_return_parts_reconciled",
+            "expected": 30,
+            "actual": 30,
+            "ok": true
+          },
+          {
+            "name": "donation_return_parts_with_a_printed_total",
+            "expected": 1277,
+            "actual": 1277,
+            "ok": true
+          },
+          {
+            "name": "donation_return_parts_total_cents",
+            "expected": 177036623,
+            "actual": 177036623,
+            "ok": true
+          },
+          {
+            "name": "donation_disclosures",
+            "expected": 63,
+            "actual": 63,
+            "ok": true
+          },
+          {
+            "name": "donation_disclosures_named",
+            "expected": 63,
+            "actual": 63,
+            "ok": true
+          },
+          {
+            "name": "donation_disclosures_withheld_by_publisher",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "donation_disclosures_not_separable",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "donation_disclosures_amount_cents",
+            "expected": 71825036,
+            "actual": 71825036,
+            "ok": true
+          },
+          {
+            "name": "donation_disclosures_duplicated_entries",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "records_not_at_their_latest_version",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "typed tables the tally could not read",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "count invariants: per population, inserted + unchanged + rejected + conflicts = seen",
+            "expected": "hold",
+            "actual": "hold",
+            "ok": true
+          }
+        ],
+        "typed_destination_rows": {
+          "donation_disclosures": 63,
+          "donation_return_parts": 1277,
+          "party_source_identities": 16
+        }
+      }
+    },
+    {
+      "family": "election",
+      "unit": "P26",
+      "writer": "ledger_records_with_projection",
+      "source_ids": [
+        "finance_2025_party_return_disclosures_export"
+      ],
+      "product_ids": [
+        "P26"
+      ],
+      "input": {
+        "rows": 286,
+        "records": 286,
+        "versions": 286,
+        "by_population": {
+          "ledger_records": 286
+        },
+        "digest": "sha256:5c8588b8a3fa632a1926669add92bab252188e7181640284fb524d9f6268c4af",
+        "bytes": 577313,
+        "collected_from": "2026-09-19T16:58:58.118Z",
+        "collected_to": "2026-09-19T17:15:27.000Z"
+      },
+      "import": {
+        "status": "succeeded",
+        "error_code": null,
+        "attempts": 1,
+        "runs": 1,
+        "resumed_runs": 0,
+        "written": {
+          "ledger_records": {
+            "seen": 286,
+            "inserted": 286,
+            "unchanged": 0,
+            "rejected": 0,
+            "conflicts": 0,
+            "tombstoned": 0
+          }
+        },
+        "checks_passed": 17,
+        "checks_failed": []
+      },
+      "replay": {
+        "status": "succeeded",
+        "written": {
+          "ledger_records": {
+            "seen": 286,
+            "inserted": 0,
+            "unchanged": 286,
+            "rejected": 0,
+            "conflicts": 0,
+            "tombstoned": 0
+          }
+        },
+        "checks_failed": []
+      },
+      "reconcile": {
+        "status": "reconciled",
+        "checks": [
+          {
+            "name": "source_records",
+            "expected": 286,
+            "actual": 286,
+            "ok": true
+          },
+          {
+            "name": "record_versions",
+            "expected": 286,
+            "actual": 286,
+            "ok": true
+          },
+          {
+            "name": "tombstoned_records",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "rejected_records",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "donation_return_parts",
+            "expected": 58,
+            "actual": 58,
+            "ok": true
+          },
+          {
+            "name": "donation_return_parts_reconciled",
+            "expected": 3,
+            "actual": 3,
+            "ok": true
+          },
+          {
+            "name": "donation_return_parts_with_a_printed_total",
+            "expected": 58,
+            "actual": 58,
+            "ok": true
+          },
+          {
+            "name": "donation_return_parts_total_cents",
+            "expected": 706939319,
+            "actual": 706939319,
+            "ok": true
+          },
+          {
+            "name": "donation_disclosures",
+            "expected": 228,
+            "actual": 228,
+            "ok": true
+          },
+          {
+            "name": "donation_disclosures_named",
+            "expected": 224,
+            "actual": 224,
+            "ok": true
+          },
+          {
+            "name": "donation_disclosures_withheld_by_publisher",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "donation_disclosures_not_separable",
+            "expected": 4,
+            "actual": 4,
+            "ok": true
+          },
+          {
+            "name": "donation_disclosures_amount_cents",
+            "expected": 509329498,
+            "actual": 509329498,
+            "ok": true
+          },
+          {
+            "name": "donation_disclosures_duplicated_entries",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "records_not_at_their_latest_version",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "typed tables the tally could not read",
+            "expected": 0,
+            "actual": 0,
+            "ok": true
+          },
+          {
+            "name": "count invariants: per population, inserted + unchanged + rejected + conflicts = seen",
+            "expected": "hold",
+            "actual": "hold",
+            "ok": true
+          }
+        ],
+        "typed_destination_rows": {
+          "donation_disclosures": 228,
+          "donation_return_parts": 58,
+          "party_source_identities": 9
         }
       }
     },

@@ -1,6 +1,6 @@
 # Unified data loaders: one contract for all 24 catalogue products
 
-> **Status: integrated, and verified on an isolated disposable local database at commit `1e1184c`** (section 5: two full loads in opposite family order, a killed and resumed load, and a row-by-row content comparison in which **all 85 tables are identical**). **Not hosted, not published, not reviewed, not security signed off.** Nothing here was pushed, merged, deployed or written to a hosted project, and no schedule is active. Every rights row is still **pending / link-only**, every `REVIEW-REGISTER.md` row is still **PENDING**, and the release gates are closed: a loaded row is not a published row. The figures are counts of what was read and stored on 20-21 September 2026 (UTC); they make no claim that a publisher's output is covered completely.
+> **Status: integrated, and verified on an isolated disposable local database — in two stages, which are not the same claim.** At commit `1e1184c` (section 5): two full loads in opposite family order over the 31 units of the time, a killed and resumed load, and a row-by-row content comparison in which **all 85 tables are identical**. At commit `8a94a1f` (the committed manifest): one combined **single-order** load of **33 units**, all imported, replayed with zero inserts and reconciled — **order independence was not re-run and is unproven at this commit**, and the two donation products did not exist for the earlier comparison. **Not hosted, not published, not reviewed, not security signed off.** Nothing here was pushed, merged, deployed or written to a hosted project, and no schedule is active. Every rights row is still **pending / link-only**, every `REVIEW-REGISTER.md` row is still **PENDING**, and the release gates are closed: a loaded row is not a published row. The figures are counts of what was read and stored on 20-21 September 2026 (UTC); they make no claim that a publisher's output is covered completely.
 
 The three import families were built on separate branches (election `b8fc629`, parliament `69de0d2`, statistics `b91595a`). This branch integrates them: one migration union, one registry, one CLI contract, shared orchestration, and the explorer wiring. The families' own documents stay the reference for their mappings: [election](../../ingest/src/families/election/README.md), [parliament](../../ingest/src/families/parliament/INTEGRATION.md), [statistics](statistics-import.md). Their "coordinator steps" are done here.
 
@@ -233,18 +233,31 @@ table and bypasses row-level security; the worker login cannot produce evidence 
 
 **Result: all 85 tables are identical — same row counts and same content — and no unit reconciles differently.**
 
-> **Where this evidence now lives.** The committed manifest was rebuilt against commit `8d33ea6` (the head of the
-> public-values work) because `loaders_contract.test.ts` refuses to carry a load proof across a source change: the
-> two publication migrations added after `1e1184c` invalidated the older manifest's grant. That rebuild is a
-> **single-order** load — 31 units imported, replayed with zero inserts anywhere, and 39 of 39 reconciliations
-> `reconciled` over 282 checks — so `order_independence` in the manifest is now `null`. The two-order comparison in
-> this section is unchanged evidence about `1e1184c`, and it still describes this code: `git diff 1e1184c 8d33ea6 --
-> ingest/src supabase/functions ingest/package.json ingest/package-lock.json` is **empty**, so not one byte of a
-> loader, an adapter, an Edge Function or a pinned dependency differs between the commit that was compared in two
-> orders and the commit the manifest now names. Only the anonymous projection changed. Re-running both orders
-> against `8d33ea6` would restate the same result; it has not been done, and nothing here claims it has.
+> **Where this evidence now lives, and what it no longer covers.** The committed manifest was rebuilt again, against
+> commit `8a94a1f`, because `loaders_contract.test.ts` refuses to carry a load proof across a source change. That
+> rebuild is a **single-order** load — **33 units imported, all `succeeded`; 33 replayed with zero inserts anywhere;
+> 41 of 41 reconciliations `reconciled` over 316 checks, none failed** — so `order_independence` in the manifest is
+> `null`.
+>
+> **Order independence is no longer proven for the code this manifest names, and this section must not be read as if
+> it were.** The earlier justification said the two-order comparison still described the code because
+> `git diff 1e1184c 8d33ea6` over the loader paths was empty. That is no longer true: `git diff 1e1184c 8a94a1f --
+> ingest/src supabase/functions ingest/package.json ingest/package-lock.json` touches **10 files** (the CLI, six
+> election-family files including the two new donation readers, `coverage.ts` and the merged registry), and three
+> migrations landed as well. The two donation products **P25** and **P26** did not exist when the two orders were
+> compared, so nothing in the table below says anything about them.
+>
+> What the 2026-09-21 run did and did not do: the corrected combined load was run **once**, in the CLI's own family
+> order, on this lane's disposable stack. The second load in the opposite order **was not run** — it was started and
+> abandoned twice, and re-running two full loads was judged not worth the wall clock against the morning deadline.
+> `manifest_build.ts --compare` is the command that would fill `order_independence`, and it was deliberately not
+> given a second receipt set rather than given a stale one. **Order independence at `8a94a1f`: unproven.** The table
+> below is unchanged evidence about `1e1184c` and is kept for what it found; it is not evidence about this commit.
 
-| What was compared | Result |
+The comparison below was made at `1e1184c`, across the 31 units that existed then. It is **not** evidence about
+`8a94a1f` or about the two donation products.
+
+| What was compared (at `1e1184c`, 31 units) | Result |
 |---|---|
 | Data tables, row counts | 85 of 85 equal |
 | Data tables, content digests | **85 of 85 equal** (`identical: true`) |
