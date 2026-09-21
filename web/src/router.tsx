@@ -8,10 +8,12 @@ import { ConfiguredOnly, PublicGate } from '@/routes/access'
 import { DatasetDetailPage, DatasetsPage } from '@/routes/datasets'
 import { DocumentsPage } from '@/routes/documents'
 import { ElectionDetailPage, ElectionsPage } from '@/routes/elections'
+import { ElectoratePage } from '@/routes/electorate'
 import { ElectorateVersionDetailPage, PartyIdentityDetailPage } from '@/routes/entity-detail'
 import { DonationsPage } from '@/routes/donations'
 import { FinancePage } from '@/routes/finance'
 import { GraphPage } from '@/routes/graph'
+import { HomePage } from '@/routes/home'
 import { IdentityDetailPage } from '@/routes/identity-detail'
 import { OperationsPage } from '@/routes/operations'
 import { OverviewPage } from '@/routes/overview'
@@ -35,7 +37,7 @@ function NotFound() {
       <PageHeader eyebrow="Not found" title="There is no page at this address">
         <p>The address may be mistyped, or the page may have moved.</p>
       </PageHeader>
-      <Link to="/" className="doc-link">Go to the overview</Link>
+      <Link to="/" className="doc-link">Find an electorate</Link>
     </>
   )
 }
@@ -50,7 +52,10 @@ const catalogueRoute = createRoute({ getParentRoute: () => rootRoute, id: '_cata
 const datasetsRoute = createRoute({ getParentRoute: () => catalogueRoute, path: '/datasets', validateSearch: listSearch(datasetsSpec), component: DatasetsPage })
 const datasetDetailRoute = createRoute({ getParentRoute: () => catalogueRoute, path: '/datasets/$schema/$name', validateSearch: listSearch(datasetRowsSpec), component: DatasetDetailPage })
 
-const overviewRoute = createRoute({ getParentRoute: inspector, path: '/', component: OverviewPage })
+// The reader's entry point: one electorate at a time. The evidence explorer keeps its own index at /overview.
+const homeRoute = createRoute({ getParentRoute: inspector, path: '/', component: HomePage })
+const electorateRoute = createRoute({ getParentRoute: inspector, path: '/electorate/$slug', component: ElectoratePage })
+const overviewRoute = createRoute({ getParentRoute: inspector, path: '/overview', component: OverviewPage })
 const sourcesRoute = createRoute({ getParentRoute: inspector, path: '/sources', validateSearch: listSearch(sourcesSpec), component: SourcesPage })
 const sourceDetailRoute = createRoute({ getParentRoute: inspector, path: '/sources/$sourceId', component: SourceDetailPage })
 const recordsRoute = createRoute({ getParentRoute: inspector, path: '/records', validateSearch: listSearch(recordsSpec), component: RecordsPage })
@@ -73,6 +78,8 @@ const graphRoute = createRoute({ getParentRoute: inspector, path: '/graph', vali
 const routeTree = rootRoute.addChildren([
   catalogueRoute.addChildren([datasetsRoute, datasetDetailRoute]),
   inspectorRoute.addChildren([
+    homeRoute,
+    electorateRoute,
     overviewRoute,
     sourcesRoute,
     sourceDetailRoute,

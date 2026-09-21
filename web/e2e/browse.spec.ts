@@ -13,7 +13,7 @@ async function tableSummary(page: Page): Promise<string> {
 // Every test here runs as an anonymous visitor: there is no sign-in anywhere in the application.
 test.describe('anonymous browsing', () => {
   test('overview keeps the three election scopes apart and states the rights position', async ({ page }) => {
-    await page.goto('/')
+    await page.goto('/overview')
     for (const [scope, label] of [
       ['primary_2026', '2026 election (primary view)'],
       ['baseline_2023', '2023 baseline'],

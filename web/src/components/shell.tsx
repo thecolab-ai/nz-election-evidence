@@ -9,9 +9,13 @@ export const PREVIEW_BANNER = 'Public read-only evidence register. Records are l
 
 const NAV_GROUPS = [
   {
+    label: 'Start here',
+    items: [{ to: '/', label: 'Find an electorate', exact: true }],
+  },
+  {
     label: 'Evidence',
     items: [
-      { to: '/', label: 'Overview', exact: true },
+      { to: '/overview', label: 'Overview' },
       { to: '/sources', label: 'Sources' },
       { to: '/records', label: 'Records' },
       { to: '/documents', label: 'Documents' },

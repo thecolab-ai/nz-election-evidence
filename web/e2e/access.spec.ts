@@ -306,7 +306,7 @@ test.describe('owner override: a separate, stated decision, never a review and n
       await page.goto('/sources/fixture_pending_rights')
       await expect(page.getByTestId('owner-fields-note')).toContainText('not on the publisher’s approval')
       await expect(page.getByTestId('owner-fields-note')).toContainText('name_display')
-      await page.goto('/')
+      await page.goto('/overview')
       // Routes exist for all 26 catalogue products; what is HELD is read from the store. The fixture stack holds none of them.
       await expect(page.getByTestId('coverage-missing-note')).toContainText('of the 26 catalogue products')
       const heldProducts = await page.locator('[data-testid^="coverage-P"][data-held="yes"]').count()
