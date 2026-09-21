@@ -11,6 +11,7 @@ import {
   isMissingDataset,
   matchElectorates,
   moveActiveIndex,
+  NO_2026_NOMINATION_NOTE,
   NO_ADDRESS_NOTE,
   NOT_A_CANDIDATE_NOTE,
   PARTY_NOT_CANDIDATE_RECEIPT_NOTE,
@@ -271,6 +272,23 @@ describe('the sentences this product must not get wrong', () => {
 
   it('states that no address or location is asked for, stored or sent', () => {
     expect(NO_ADDRESS_NOTE).toContain('never asks for, stores or sends an address or a location')
+  })
+
+  /**
+   * One sentence for one gap, on the homepage card and the electorate card alike. The browser journey
+   * asserts the first clause verbatim; the rest is what stops the sentence being narrowed back down to
+   * a half-truth — a nomination and an announcement are different things, and the gap belongs to the
+   * whole store rather than to this electorate.
+   */
+  it('says the same thing about 2026 wherever it is printed, and says all of it', () => {
+    // The clause the browser journey holds this product to.
+    expect(NO_2026_NOMINATION_NOTE).toContain('no official nomination for 2026 has been loaded')
+    // An official nomination and a party's own announcement are not the same thing; neither is held.
+    expect(NO_2026_NOMINATION_NOTE).toContain('no party announcement either')
+    // The gap is the store's, so no reader may infer that some other electorate has a list.
+    expect(NO_2026_NOMINATION_NOTE).toContain('for any electorate')
+    // It is a clause, so both cards can lead into it; it must not arrive with its own sentence case.
+    expect(NO_2026_NOMINATION_NOTE).not.toMatch(/^[A-Z]|\.$/)
   })
 
   it('carries none of the wording the red-line scanner refuses', () => {

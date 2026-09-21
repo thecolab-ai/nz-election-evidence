@@ -172,6 +172,21 @@ export function classifyNamed<Row>(name: string | null | undefined, query: Query
 export const REPRESENTATION_MATCH_NOTE =
   'Shown because Parliament’s own record writes this electorate’s name. That is a correspondence between two pieces of text, not a reviewed link: the member records loaded here carry no link to the boundary version above, and the same name can belong to different boundaries in different years.'
 
+/**
+ * What this store does not hold about who is standing in 2026, in ONE place.
+ *
+ * The homepage card and the electorate page's 2026 card were each given their own wording for the same
+ * fact, and they drifted: one said an official nomination had not been loaded, the other said a
+ * nomination or announcement had not been loaded for any electorate. Both were true, neither said all
+ * of it, and a reader moving between the two pages was told two different things about one gap. It is
+ * one sentence now, so it cannot drift again, and it carries every part that matters: OFFICIAL
+ * nomination and party ANNOUNCEMENT are different things and neither is held, and the gap is the whole
+ * store's, not this electorate's — so nothing here invites a reader to infer that some other
+ * electorate has a candidate list when it does not.
+ */
+export const NO_2026_NOMINATION_NOTE =
+  'no official nomination for 2026 has been loaded into this store, and no party announcement either, for any electorate'
+
 export const NOT_A_CANDIDATE_NOTE =
   'A sitting member is not a candidate. Nothing on this page says that any member listed here is standing, or is not standing, in 2026.'
 

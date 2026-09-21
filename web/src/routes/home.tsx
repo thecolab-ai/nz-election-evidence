@@ -7,6 +7,7 @@ import { EmptyBlock, ErrorBlock, LoadingBlock } from '@/components/states'
 import {
   BOUNDARY_NOT_COMPARABLE_NOTE,
   classify,
+  NO_2026_NOMINATION_NOTE,
   NO_ADDRESS_NOTE,
   NOT_A_CANDIDATE_NOTE,
   provenanceForSource,
@@ -172,7 +173,7 @@ function UpcomingElectionCard({ election, sources }: { election: ElectionRow; so
       lede={<p>{NOT_A_CANDIDATE_NOTE}</p>}
       provenance={provenanceForSource(sources, OFFICIAL_PAGE_SOURCE_ID, 'Electoral Commission')}
       unknowns={[
-        'Who will stand: no official nomination for 2026 has been loaded into this store.',
+        `Who will stand: ${NO_2026_NOMINATION_NOTE}.`,
         'The 2026 boundaries: the Commission’s final maps are linked, but no 2026 electorate has been loaded, so no page can say which area a 2026 electorate covers.',
         election.election_date_basis ? `The election date here rests on: ${election.election_date_basis}` : 'How the election date was established is not recorded.',
       ]}

@@ -11,6 +11,7 @@ import {
   BOUNDARY_NOT_COMPARABLE_NOTE,
   classify,
   classifyNamed,
+  NO_2026_NOMINATION_NOTE,
   NOT_A_CANDIDATE_NOTE,
   PARTY_NOT_CANDIDATE_RECEIPT_NOTE,
   provenanceForSource,
@@ -166,7 +167,7 @@ function StandingIn2026Card({ electorate: e, sources }: { electorate: Electorate
       tone="caution"
       provenance={provenanceSpanning(sources, [OFFICIAL_PAGE_SOURCE_ID, ...candidacySources.ids], 'Electoral Commission')}
       unknowns={[
-        'Everyone standing: no 2026 nomination or announcement has been loaded for any electorate.',
+        `Everyone standing: ${NO_2026_NOMINATION_NOTE}.`,
         'Which 2026 electorate covers this area: the 2026 boundaries are a different edition and no 2026 electorate has been loaded here, so this page cannot carry a name across.',
         'Whether the sitting member is standing again: this store holds nothing that says either way.',
         ...(spansSources
