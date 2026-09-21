@@ -4,7 +4,7 @@
   "what_this_is": "Source-to-destination reconciliation of every import unit, from a combined load of the real private artifacts into an isolated, disposable local database built from the full migration union. Counts, digests and statuses only. Not a hosted load: nothing here was written to a hosted project.",
   "rights_note": "Loading changes nothing about rights: every rights row is pending and link-only. A loaded row is not a published row.",
   "tested_source": {
-    "commit": "1e1184c001e275c999061d51401ded0e469f7eaa",
+    "commit": "8d33ea60999259cf8d02d6a5180680248c07ea85",
     "every_receipt_from_a_clean_checkout_of_it": true,
     "note": "The receipts pin the commit of the checkout that produced them. This manifest is evidence about that commit only; a later commit that changes source code is not covered by it."
   },
@@ -20,9 +20,9 @@
     },
     "first_pass": {
       "ledger_records": {
-        "seen": 182223,
-        "inserted": 182023,
-        "unchanged": 200,
+        "seen": 203423,
+        "inserted": 203423,
+        "unchanged": 0,
         "rejected": 0,
         "conflicts": 0,
         "tombstoned": 0
@@ -82,9 +82,7 @@
       "checks": 282,
       "checks_failed": 0
     },
-    "resumed_after_a_hard_stop": [
-      "parliament/parliament_export_written_questions"
-    ]
+    "resumed_after_a_hard_stop": []
   },
   "data_tables": {
     "bill_publication_sets": {
@@ -236,20 +234,20 @@
       "content_digest": "3e479c1d0ed29b4485ae1ee3e86da22c"
     },
     "public_columns": {
-      "rows": 1133,
-      "content_digest": "4608ae0274493f2882a0024c6e18458a"
+      "rows": 1143,
+      "content_digest": "d1fcde33c63976998cfabcaa450c9193"
     },
     "public_lineage": {
-      "rows": 119,
-      "content_digest": "d0d57228c84e93af8d9de14679562cd3"
+      "rows": 120,
+      "content_digest": "e16d7c929ac44e34ae7c0f61131fba5a"
     },
     "public_row_rules": {
       "rows": 4,
       "content_digest": "88536e84c5ad62cf252cfabfe81207e3"
     },
     "public_withheld": {
-      "rows": 57,
-      "content_digest": "d49a2bb8492feaf4a78bd0d8417b36c6"
+      "rows": 59,
+      "content_digest": "4fdee0ae55386c90c58e58cfa89100f2"
     },
     "record_route_keys": {
       "rows": 197734,
@@ -336,273 +334,7 @@
       "content_digest": "e0c17e10f0ccfcf23e5f63a2f969dd9f"
     }
   },
-  "order_independence": {
-    "compared": "the same artifacts loaded into a second fresh database in the opposite family order",
-    "how": "per data table: the row count, and a digest of every row's content after the stated normalisation (content_digest.ts). Equal digests mean equal content, not only equal counts.",
-    "content_was_compared": true,
-    "both_digests_complete": true,
-    "normalisation": {
-      "method": "row digests refined in rounds: each round replaces every reference with the digest the referred row had in the round before, so cycles converge and no surrogate id is ever compared",
-      "rounds_used": 2,
-      "refinement_complete": true,
-      "refinement_note": "complete means the last round told no more rows apart than the one before, so no further round could change what is compared",
-      "surrogate_keys": "left out",
-      "references": "replaced by the content of the row referred to; a declared foreign key names its table, an undeclared uuid column is resolved only by verifying that every one of its values is an id of that table",
-      "references_discovered_by_measurement": [
-        "source_records.current_version_id -> source_record_versions"
-      ],
-      "uuid_columns_left_unresolved": [],
-      "database_clock_columns": "left out (a default of now()): they record when a load ran, not what was loaded",
-      "run_ledger": "references to run-ledger tables are left out, and those tables are counted but never compared",
-      "everything_else": "every other column of every row is inside the digest (its JSON text), so equal digests mean equal content"
-    },
-    "units_compared": 39,
-    "units_with_a_different_reconciliation": [],
-    "data_tables_compared": 85,
-    "data_tables_with_rows": 62,
-    "data_tables_with_a_different_row_count": [],
-    "data_tables_with_different_content": [],
-    "columns_not_compared": {
-      "app_memberships": {
-        "id": "surrogate key (a random uuid or a sequence)",
-        "user_id": "every value is null: it refers to nothing",
-        "granted_at": "filled by the database clock at write time"
-      },
-      "bill_publication_sets": {
-        "id": "surrogate key (a random uuid or a sequence)"
-      },
-      "bill_publications": {
-        "id": "surrogate key (a random uuid or a sequence)"
-      },
-      "bills": {
-        "document_id": "surrogate key (a random uuid or a sequence)"
-      },
-      "boundary_editions": {
-        "id": "surrogate key (a random uuid or a sequence)"
-      },
-      "boundary_map_links": {
-        "document_id": "surrogate key (a random uuid or a sequence)"
-      },
-      "candidacies": {
-        "id": "surrogate key (a random uuid or a sequence)"
-      },
-      "candidacy_status_events": {
-        "id": "surrogate key (a random uuid or a sequence)",
-        "recorded_at": "filled by the database clock at write time"
-      },
-      "committee_business_items": {
-        "document_id": "surrogate key (a random uuid or a sequence)"
-      },
-      "committee_report_files": {
-        "id": "surrogate key (a random uuid or a sequence)"
-      },
-      "committee_reports": {
-        "document_id": "surrogate key (a random uuid or a sequence)"
-      },
-      "contests": {
-        "id": "surrogate key (a random uuid or a sequence)"
-      },
-      "corrections": {
-        "id": "surrogate key (a random uuid or a sequence)",
-        "subject_id": "every value is null: it refers to nothing",
-        "recorded_at": "filled by the database clock at write time"
-      },
-      "documents": {
-        "id": "surrogate key (a random uuid or a sequence)"
-      },
-      "election_official_page_status": {
-        "id": "surrogate key (a random uuid or a sequence)"
-      },
-      "election_result_totals": {
-        "result_set_id": "surrogate key (a random uuid or a sequence)"
-      },
-      "elections": {
-        "id": "surrogate key (a random uuid or a sequence)"
-      },
-      "electorate_versions": {
-        "id": "surrogate key (a random uuid or a sequence)"
-      },
-      "electorates": {
-        "id": "surrogate key (a random uuid or a sequence)"
-      },
-      "finance_published_aggregates": {
-        "id": "surrogate key (a random uuid or a sequence)"
-      },
-      "finance_return_references": {
-        "id": "surrogate key (a random uuid or a sequence)"
-      },
-      "geography_versions": {
-        "id": "surrogate key (a random uuid or a sequence)"
-      },
-      "identity_decisions": {
-        "id": "surrogate key (a random uuid or a sequence)",
-        "evidence": "carries the surrogate id of a row of person_source_identities inside its value",
-        "decided_at": "filled by the database clock at write time"
-      },
-      "model_runs": {
-        "id": "surrogate key (a random uuid or a sequence)"
-      },
-      "owner_authorizations": {
-        "recorded_at": "filled by the database clock at write time"
-      },
-      "parliamentary_service_terms": {
-        "id": "surrogate key (a random uuid or a sequence)"
-      },
-      "parties": {
-        "id": "surrogate key (a random uuid or a sequence)",
-        "created_at": "filled by the database clock at write time"
-      },
-      "party_affiliations": {
-        "id": "surrogate key (a random uuid or a sequence)"
-      },
-      "party_aliases": {
-        "id": "surrogate key (a random uuid or a sequence)"
-      },
-      "party_lists": {
-        "id": "surrogate key (a random uuid or a sequence)"
-      },
-      "party_registrations": {
-        "id": "surrogate key (a random uuid or a sequence)"
-      },
-      "party_source_identities": {
-        "id": "surrogate key (a random uuid or a sequence)",
-        "created_at": "filled by the database clock at write time"
-      },
-      "people": {
-        "id": "surrogate key (a random uuid or a sequence)",
-        "created_at": "filled by the database clock at write time"
-      },
-      "person_source_identities": {
-        "id": "surrogate key (a random uuid or a sequence)",
-        "created_at": "filled by the database clock at write time"
-      },
-      "policy_sources": {
-        "document_id": "surrogate key (a random uuid or a sequence)"
-      },
-      "polls": {
-        "document_id": "surrogate key (a random uuid or a sequence)"
-      },
-      "publisher_terms_reviews": {
-        "id": "surrogate key (a random uuid or a sequence)",
-        "terms_check_id": "names a row of the run ledger (publisher_access_checks); how many runs there were depends on how the load was driven",
-        "robots_check_id": "names a row of the run ledger (publisher_access_checks); how many runs there were depends on how the load was driven",
-        "reviewed_at": "filled by the database clock at write time"
-      },
-      "record_route_keys": {
-        "record_id": "surrogate key (a random uuid or a sequence)"
-      },
-      "release_attributions": {
-        "id": "surrogate key (a random uuid or a sequence)"
-      },
-      "release_batches": {
-        "id": "surrogate key (a random uuid or a sequence)",
-        "created_at": "filled by the database clock at write time"
-      },
-      "releases": {
-        "document_id": "surrogate key (a random uuid or a sequence)"
-      },
-      "result_route_checks": {
-        "id": "surrogate key (a random uuid or a sequence)"
-      },
-      "result_sets": {
-        "id": "surrogate key (a random uuid or a sequence)"
-      },
-      "review_decisions": {
-        "id": "surrogate key (a random uuid or a sequence)",
-        "subject_id": "every value is null: it refers to nothing",
-        "decided_at": "filled by the database clock at write time"
-      },
-      "rights_decisions": {
-        "id": "surrogate key (a random uuid or a sequence)",
-        "decided_at": "filled by the database clock at write time"
-      },
-      "role_terms": {
-        "id": "surrogate key (a random uuid or a sequence)"
-      },
-      "run_projectors": {
-        "registered_at": "filled by the database clock at write time"
-      },
-      "schema_agreement_validations": {
-        "id": "surrogate key (a random uuid or a sequence)",
-        "validated_at": "filled by the database clock at write time"
-      },
-      "source_record_versions": {
-        "id": "surrogate key (a random uuid or a sequence)",
-        "loaded_at": "filled by the database clock at write time",
-        "import_run_id": "names a row of the run ledger (import_runs); how many runs there were depends on how the load was driven"
-      },
-      "source_records": {
-        "id": "surrogate key (a random uuid or a sequence)"
-      },
-      "source_rights": {
-        "synced_at": "filled by the database clock at write time"
-      },
-      "sources": {
-        "synced_at": "filled by the database clock at write time"
-      },
-      "staged_unmatched_results": {
-        "id": "surrogate key (a random uuid or a sequence)",
-        "staged_at": "filled by the database clock at write time"
-      },
-      "stat_catalogue_entries": {
-        "id": "surrogate key (a random uuid or a sequence)",
-        "import_run_id": "names a row of the run ledger (import_runs); how many runs there were depends on how the load was driven"
-      },
-      "stat_datasets": {
-        "id": "surrogate key (a random uuid or a sequence)"
-      },
-      "stat_observations": {
-        "id": "surrogate key (a random uuid or a sequence)",
-        "import_run_id": "names a row of the run ledger (import_runs); how many runs there were depends on how the load was driven"
-      },
-      "stat_releases": {
-        "id": "surrogate key (a random uuid or a sequence)",
-        "import_run_id": "names a row of the run ledger (import_runs); how many runs there were depends on how the load was driven"
-      },
-      "stat_route_reconciliation": {
-        "decided_at": "filled by the database clock at write time"
-      },
-      "stat_series": {
-        "id": "surrogate key (a random uuid or a sequence)"
-      },
-      "stat_source_summary": {
-        "import_run_id": "names a row of the run ledger (import_runs); how many runs there were depends on how the load was driven",
-        "counted_at": "filled by the database clock at write time"
-      },
-      "summary_versions": {
-        "id": "surrogate key (a random uuid or a sequence)",
-        "created_at": "filled by the database clock at write time"
-      },
-      "version_bill_links": {
-        "id": "surrogate key (a random uuid or a sequence)"
-      },
-      "version_electorate_links": {
-        "id": "surrogate key (a random uuid or a sequence)"
-      },
-      "version_party_links": {
-        "id": "surrogate key (a random uuid or a sequence)"
-      },
-      "version_person_links": {
-        "id": "surrogate key (a random uuid or a sequence)"
-      },
-      "written_questions": {
-        "document_id": "surrogate key (a random uuid or a sequence)"
-      }
-    },
-    "run_ledger_tables_not_compared": [
-      "fetch_log",
-      "import_runs",
-      "ingest_errors",
-      "publisher_access_checks",
-      "record_lifecycle_events",
-      "run_checkpoints",
-      "schedule_dispatch_log",
-      "source_freshness",
-      "source_leases",
-      "source_observations"
-    ],
-    "identical": true
-  },
+  "order_independence": null,
   "units": [
     {
       "family": "core",
@@ -3103,12 +2835,12 @@
         "error_code": null,
         "attempts": 1,
         "runs": 1,
-        "resumed_runs": 1,
+        "resumed_runs": 0,
         "written": {
           "ledger_records": {
-            "seen": 166756,
-            "inserted": 166556,
-            "unchanged": 200,
+            "seen": 187956,
+            "inserted": 187956,
+            "unchanged": 0,
             "rejected": 0,
             "conflicts": 0,
             "tombstoned": 0

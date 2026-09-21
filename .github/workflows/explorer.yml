@@ -46,7 +46,10 @@ jobs:
     defaults: { run: { working-directory: ingest } }
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with: { persist-credentials: false }
+        # Full history: the coverage test asks git whether any loader, migration or function file has changed
+        # since the commit the committed reconciliation manifest tested. On a shallow checkout that diff errors
+        # and the test skips itself, so a stale load proof would pass here unnoticed. It only reads.
+        with: { fetch-depth: 0, persist-credentials: false }
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with: { node-version: "24", cache: npm, cache-dependency-path: ingest/package-lock.json }
       - run: npm ci --no-audit --no-fund

@@ -233,6 +233,17 @@ table and bypasses row-level security; the worker login cannot produce evidence 
 
 **Result: all 85 tables are identical — same row counts and same content — and no unit reconciles differently.**
 
+> **Where this evidence now lives.** The committed manifest was rebuilt against commit `8d33ea6` (the head of the
+> public-values work) because `loaders_contract.test.ts` refuses to carry a load proof across a source change: the
+> two publication migrations added after `1e1184c` invalidated the older manifest's grant. That rebuild is a
+> **single-order** load — 31 units imported, replayed with zero inserts anywhere, and 39 of 39 reconciliations
+> `reconciled` over 282 checks — so `order_independence` in the manifest is now `null`. The two-order comparison in
+> this section is unchanged evidence about `1e1184c`, and it still describes this code: `git diff 1e1184c 8d33ea6 --
+> ingest/src supabase/functions ingest/package.json ingest/package-lock.json` is **empty**, so not one byte of a
+> loader, an adapter, an Edge Function or a pinned dependency differs between the commit that was compared in two
+> orders and the commit the manifest now names. Only the anonymous projection changed. Re-running both orders
+> against `8d33ea6` would restate the same result; it has not been done, and nothing here claims it has.
+
 | What was compared | Result |
 |---|---|
 | Data tables, row counts | 85 of 85 equal |
