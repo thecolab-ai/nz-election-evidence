@@ -231,22 +231,23 @@ test.describe('the published site', () => {
     expect(refusals, 'anonymous reads of the live API').toEqual([])
   })
 
-  test('a source opens its own page, including the source this store holds most of', async ({ page }) => {
+  test('a source opens its own page, where the record counts are read', async ({ page }) => {
     const refusals = watchApi(page)
 
-    // Sorted by what the store holds, heaviest first, so this opens the most expensive source page
-    // the deployment can serve. Which source that is, is read off the live list at run time and never
-    // named here: the point is that the biggest one answers, whichever one it turns out to be.
+    // Ordered by the source's own id: a first row that is the same on every run, chosen by a key the
+    // server can order on without counting anything. The list is deliberately not sortable by how much
+    // a source holds — that ordering would make the server count every source's records to return one
+    // page — so this test opens a deterministic source, not the largest one, and claims no more.
     // A deep link is answered by the Pages 404.html fallback, which boots the app. Wait for the route
     // to have rendered before asking whether anything is still loading, or "nothing is loading" would
     // be true simply because nothing has started.
-    await page.goto('./sources?sort=live_records&dir=desc')
+    await page.goto('./sources?sort=source_id&dir=asc')
     await expect(page.getByRole('heading', { level: 1, name: 'Sources' })).toBeVisible()
     await settled(page)
-    const heaviest = page.getByTestId('data-row').first()
-    await expect(heaviest, 'the live store answered the sources list').toBeVisible()
+    const firstSource = page.getByTestId('data-row').first()
+    await expect(firstSource, 'the live store answered the sources list').toBeVisible()
 
-    const link = heaviest.getByRole('link').first()
+    const link = firstSource.getByRole('link').first()
     await expect(link, 'the row links to the source’s own page').toHaveAttribute('href', /\/sources\/[^/]+$/)
     await link.click()
     await expect(page).toHaveURL(/\/sources\/[^/]+$/)

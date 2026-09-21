@@ -12,7 +12,7 @@ import type { SourceRow } from '@/lib/types'
 import { filterPatch, useSetSearch } from '@/lib/use-set-search'
 
 const route = getRouteApi('/_released/sources')
-const helper = createColumnHelper<CoreFeatures, SourceRow>()
+const helper = createColumnHelper<CoreFeatures, SourcesListRow>()
 
 const columns = helper.columns([
   helper.accessor('title', {
@@ -31,7 +31,7 @@ const columns = helper.columns([
   helper.accessor('freshness_status', { header: 'Freshness', cell: ({ getValue }) => <FreshnessBadge status={getValue()} /> }),
   helper.accessor('last_success_at', { header: 'Last retrieved', cell: ({ getValue }) => formatDateTime(getValue(), 'never retrieved') }),
   helper.accessor('latest_source_published_at', { header: 'Latest publisher date', cell: ({ getValue }) => formatDateTime(getValue(), NOT_STATED) }),
-  helper.display({ id: 'live_records', header: 'Held in this store', cell: ({ row }) => <HeldCell source={row.original} /> }),
+  helper.display({ id: 'held_in_this_store', header: 'Held in this store', cell: ({ row }) => <HeldCell source={row.original} /> }),
   helper.accessor('rights_review_status', { header: 'Rights', cell: ({ row }) => <><RightsBadge status={row.original.rights_review_status} /><span className="mt-1 block text-xs text-muted-foreground" data-testid="release-tier">{RELEASE_TIER_LABELS[row.original.public_release_tier] ?? row.original.public_release_tier}</span>{(row.original.owner_authorized_fields ?? []).length > 0 ? <span className="block text-xs text-muted-foreground" data-testid="owner-fields-count">{row.original.owner_authorized_fields.length} fields shown on the owner’s decision, not on a publisher approval</span> : null}</> }),
   helper.accessor('enabled', { header: 'Enabled', cell: ({ getValue }) => (getValue() ? <Pill>Enabled</Pill> : <Pill tone="muted">Not enabled</Pill>) }),
 ])
@@ -74,12 +74,22 @@ export const RELEASE_TIER_LABELS: Record<string, string> = {
 // Every column this page renders, and no other. `live_records` is deliberately absent: it is a correlated
 // count over the record table for each row, and one list of it costs more than everything else here put
 // together. It is read on a source's own page, for that one source.
-export const SOURCES_SELECT = 'source_id,title,publisher,view_scope,freshness_status,last_success_at,latest_source_published_at,statistical_observations,statistical_observations_without_a_number,statistical_catalogue_entries,rights_review_status,public_release_tier,owner_authorized_fields,enabled'
+export const SOURCES_COLUMNS = [
+  'source_id', 'title', 'publisher', 'view_scope', 'freshness_status', 'last_success_at',
+  'latest_source_published_at', 'statistical_observations', 'statistical_observations_without_a_number',
+  'statistical_catalogue_entries', 'rights_review_status', 'public_release_tier', 'owner_authorized_fields',
+  'enabled',
+] as const satisfies readonly (keyof SourceRow)[]
+
+export const SOURCES_SELECT = SOURCES_COLUMNS.join(',')
+
+/** Exactly what the response carries. A column this list does not fetch is not a field its rows may claim. */
+export type SourcesListRow = Pick<SourceRow, (typeof SOURCES_COLUMNS)[number]>
 
 export function SourcesPage() {
   const search = route.useSearch()
   const setSearch = useSetSearch()
-  const query = useListQuery<SourceRow, keyof typeof sourcesSpec.filters>({
+  const query = useListQuery<SourcesListRow, keyof typeof sourcesSpec.filters>({
     view: 'sources',
     select: SOURCES_SELECT,
     spec: sourcesSpec,

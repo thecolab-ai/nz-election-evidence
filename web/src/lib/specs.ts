@@ -6,8 +6,15 @@ import type { ListSpec } from './search'
 
 export const RECORD_KINDS_HINT = ['mp_directory_entry', 'bill', 'release', 'baseline_2023_candidacy'] as const
 
+/**
+ * `live_records` is deliberately not sortable. Ordering this list by it makes the server run the
+ * correlated record count once for every source before it can return one page — the read this list
+ * stopped asking for — and no cell here prints that number, so the ordering would have no visible
+ * basis either. A source's own page reads the count, for that one source. Every key below is a column
+ * `SOURCES_SELECT` actually fetches, which `sources.test.tsx` checks.
+ */
 export const sourcesSpec = {
-  sortable: ['source_id', 'title', 'publisher', 'view_scope', 'freshness_status', 'last_success_at', 'latest_source_published_at', 'live_records', 'enabled', 'rights_review_status'],
+  sortable: ['source_id', 'title', 'publisher', 'view_scope', 'freshness_status', 'last_success_at', 'latest_source_published_at', 'enabled', 'rights_review_status'],
   defaultSort: [{ column: 'source_id', dir: 'asc' }],
   tiebreak: 'source_id',
   filters: {

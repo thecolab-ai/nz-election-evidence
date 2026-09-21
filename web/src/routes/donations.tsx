@@ -13,6 +13,7 @@ import { useListQuery } from '@/lib/queries'
 import { donationsSpec } from '@/lib/specs'
 import type { DonationDisclosureRow } from '@/lib/types'
 import { filterPatch, useSetSearch } from '@/lib/use-set-search'
+import { useState } from 'react'
 
 const route = getRouteApi('/_released/donations')
 const helper = createColumnHelper<CoreFeatures, DonationDisclosureRow>()
@@ -86,19 +87,25 @@ export function EntryLinkOnlyCell() {
 }
 
 /**
- * The state a reader meets when this deployment has loaded these returns and releases none of their
- * fields. It says which is which — read, not released — and refuses the two readings a blank invites:
- * that the return said nothing, and that nothing was given.
+ * The state a reader meets when every entry ON THIS PAGE came back with its link and nothing else. It
+ * says which is which — read, not released — and refuses the two readings a blank invites: that the
+ * return said nothing, and that nothing was given.
+ *
+ * It is written about the rows in hand, because that is all `donationsRelease` reads. A deployment that
+ * releases the fields of some sources and not others can answer one page entirely from the unreleased
+ * ones, and this note must not turn that page into a statement about the whole store; the rights page
+ * and the sources list are what carry release state source by source.
  */
 export function DonationsLinkOnlyNote() {
   return (
     <Note tone="caution" testId="donations-link-only">
-      <strong className="font-semibold">Loaded here, published by the Commission — not released on this deployment.</strong> Every entry listed
-      below came back with one value: the link to the Electoral Commission’s own return document. The donor, the amount, the recipient, the dates
-      and the part each entry was disclosed under are not released here, so this page lists the documents instead of printing empty cells. Nothing
-      below states who gave what to whom, and a blank is not a zero and not a denial — the figures are printed in the publisher’s document, which
-      every row opens. Why material is published as links only is on the <Link to="/rights" className="doc-link">rights</Link> page, source by
-      source on <Link to="/sources" className="doc-link">sources</Link>.
+      <strong className="font-semibold">Read from the Commission’s returns — the entries on this page are not released here.</strong> Every entry
+      listed below came back with one value: the link to the Electoral Commission’s own return document. For these entries the donor, the amount,
+      the recipient, the dates and the part each was disclosed under are not released, so this page lists the documents instead of printing empty
+      cells. Nothing below states who gave what to whom, and a blank is not a zero and not a denial — the figures are printed in the publisher’s
+      document, which every row opens. Other pages of this list, and other sources, may be released differently: why material is published as links
+      only is on the <Link to="/rights" className="doc-link">rights</Link> page, source by source on{' '}
+      <Link to="/sources" className="doc-link">sources</Link>.
     </Note>
   )
 }
@@ -128,6 +135,8 @@ export function DonationsPage() {
   const hasActiveFilters = !!(search.kind || search.identity || search.year || search.q)
   // Read off the rows in hand, so what the page then says is said about those rows and nothing wider.
   const linkOnly = donationsRelease(query.data?.rows) === 'link_only'
+  // A reader who has been shown the filters keeps them, whatever the next page of rows turns out to be.
+  const [filtersRequested, setFiltersRequested] = useState(false)
   return (
     <>
       <PageHeader eyebrow="Civic model · Political finance" title="Donations disclosed in filed returns">
@@ -160,13 +169,18 @@ export function DonationsPage() {
         <NotLoadedBlock datasetName="evidence_public.donation_disclosures" />
       ) : (
         <>
-      {linkOnly && !hasActiveFilters ? (
+      {linkOnly && !hasActiveFilters && !filtersRequested ? (
         // Offering a donor box on rows that publish no donor would invite a reader to search for a name
-        // and read the empty result as "this person gave nothing".
+        // and read the empty result as "this person gave nothing". This is read off the rows on this page,
+        // so it is set aside rather than removed: the reader can open the filters and search the rest of
+        // the list, which is the only control they have for reaching rows that ARE released.
         <div className="mb-4">
           <Note testId="donations-filters-unavailable">
-            The donor, kind, identity and year filters read fields that are not released here, so they are not offered on this deployment: a search
-            that can only ever return nothing would be read as an answer.
+            The donor, kind, identity and year filters read fields that none of the entries on this page carry, so a search over this page could
+            only ever return nothing — which would be read as an answer. They are set aside, not withdrawn: other rows of this list may be released.{' '}
+            <button type="button" className="doc-link" data-testid="donations-show-filters" onClick={() => setFiltersRequested(true)}>
+              Show the filters anyway
+            </button>
           </Note>
         </div>
       ) : (

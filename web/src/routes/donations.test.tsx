@@ -7,6 +7,7 @@ import { effectiveSort } from '@/lib/search'
 import { donationsSpec } from '@/lib/specs'
 import type { DonationDisclosureRow } from '@/lib/types'
 import { DonationsLinkOnlyNote, EntryLinkOnlyCell, linkOnlyColumns } from './donations'
+import { donationMeta } from './electorate'
 
 // Invented values labelled as fixtures; none of this is evidence. The link is a fixture URL.
 const LINK = 'https://example.invalid/returns/fixture-party-return-2023.pdf'
@@ -150,7 +151,11 @@ describe('the links-only state of the donations page', () => {
     renderInRouter(<DonationsLinkOnlyNote />)
     const note = await screen.findByTestId('donations-link-only')
     const text = note.textContent ?? ''
-    expect(text).toContain('not released on this deployment')
+    // Said of the rows this page is holding, which is all the page can read. A deployment-wide claim
+    // would be made from one page of rows on a store that may release other sources differently.
+    expect(text).toContain('the entries on this page are not released here')
+    expect(text).toMatch(/Other pages of this list, and other sources, may be released differently/)
+    expect(text).not.toMatch(/not released on this deployment|no donation fields are released anywhere/i)
     expect(text).toContain('a blank is not a zero')
     expect(text).toContain('Nothing below states who gave what to whom')
     // It must not read as an absence of donations, nor as a claim that any name or amount is published here.
@@ -170,5 +175,33 @@ describe('the links-only state of the donations page', () => {
     const headers = linkOnlyColumns.map((column) => String((column as { header?: unknown }).header ?? ''))
     expect(headers).toEqual(['Official return document', 'Published on this deployment'])
     for (const header of headers) expect(header).not.toMatch(/donor|amount|received by/i)
+  })
+})
+
+describe('the line under one entry on the electorate money card', () => {
+  it('prints every reading the return states, in the order a reader meets them', () => {
+    expect(donationMeta({ ...releasedRow(), amendment_labelled: true, overlaps_election_year_notices: true })).toEqual([
+      'Party return 2023',
+      'Fixture Party (TEST FIXTURE)',
+      'Part 3: Donations (TEST FIXTURE)',
+      'donation',
+      'amended return',
+      'overlaps the separately published election-year notices',
+    ])
+  })
+
+  it('leaves out a field this deployment did not release, rather than printing a reading over the null', () => {
+    // Reachable under a partial field release: some columns of the return published, others null.
+    const partial = { ...releasedRow(), return_kind: null, disclosure_part: null, part_label_as_published: null } as unknown as DonationDisclosureRow
+    const segments = donationMeta(partial)
+    // The year is stated, so it is shown; the kind of return is not, so no kind is asserted for it.
+    expect(segments).toContain('2023')
+    expect(segments.join(' · ')).not.toMatch(/Party return|Candidate return|Part\s*:/)
+    // Nothing renders as an empty fragment where a value is missing.
+    for (const segment of segments) expect(segment.trim()).not.toBe('')
+  })
+
+  it('a row carrying nothing but its link states nothing at all on this line', () => {
+    expect(donationMeta(linkOnlyRow())).toEqual([])
   })
 })

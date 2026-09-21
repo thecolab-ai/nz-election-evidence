@@ -23,10 +23,14 @@ const PANEL_LIMIT = 25
  * the store's 203,536 records. It was by far the most expensive thing this page asked for, and this
  * page was the only reader of it anywhere in the app — asked for only because `*` asks for everything.
  *
- * The columns that remain are cheap: live_records is answered from an index (migration
- * 20260921090100_source_records_live_index), and tombstoned_records and catalogue_product_ids both
- * measured under 0.2 s. Naming them also means a column added to the view later cannot quietly make
- * this page slow again.
+ * The three counting columns that remain are counts of this ONE source, read once for this one row:
+ * tombstoned_records and catalogue_product_ids both measured under 0.2 s in that same run. live_records
+ * is not claimed to be cheap and no index makes it so: the two indexes leading with source_id
+ * (source_records_kind, and the unique on source_id/external_record_id) narrow it to this source's
+ * rows, but neither carries tombstoned_at, so the live test still costs a visit per row of this source.
+ * What this page relies on is the scope, not an index — one source's count for one page, instead of
+ * every source's count for one list, which is why the list defers the figure here. Naming the columns
+ * also means a column added to the view later cannot quietly make this page slow again.
  */
 const SOURCE_DETAIL_COLUMNS = [
   'source_id', 'title', 'publisher', 'official_url', 'adapter_kind', 'adapter_name', 'allowed_hosts',

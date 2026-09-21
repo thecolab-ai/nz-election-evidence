@@ -1,6 +1,8 @@
 import { render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
-import { HeldCell, RECORDS_COUNTED_ON_THE_SOURCE_PAGE, SOURCES_SELECT } from './sources'
+import { effectiveSort, parseListSearch } from '@/lib/search'
+import { sourcesSpec } from '@/lib/specs'
+import { HeldCell, RECORDS_COUNTED_ON_THE_SOURCE_PAGE, SOURCES_COLUMNS, SOURCES_SELECT } from './sources'
 
 // Invented values labelled as fixtures; none of this is evidence.
 
@@ -25,5 +27,30 @@ describe('the sources list does not pay for a count it does not print', () => {
   it('still prints a record count where one is given, so the cell keeps its contract for any caller that reads one', () => {
     render(<HeldCell source={{ live_records: 187956, statistical_observations: null, statistical_observations_without_a_number: null, statistical_catalogue_entries: null }} />)
     expect(screen.getByTestId('held-records').textContent).toBe('187,956 records')
+  })
+})
+
+describe('no URL can put the count back into the list', () => {
+  it('a hand-typed ?sort=live_records is dropped, and the ordering sent to the server is the default', () => {
+    const search = parseListSearch(sourcesSpec, { sort: 'live_records', dir: 'desc' })
+    // Not carried in the validated search at all, so no header renders as sorted by it either.
+    expect(search.sort).toBeUndefined()
+    expect(search.dir).toBeUndefined()
+    expect(sourcesSpec.sortable).not.toContain('live_records')
+    const columns = effectiveSort(sourcesSpec, search).map((rule) => rule.column)
+    expect(columns).not.toContain('live_records')
+    expect(columns).toEqual(['source_id'])
+  })
+
+  it('a sort key the URL does carry is still honoured, so the list did not lose sorting', () => {
+    const search = parseListSearch(sourcesSpec, { sort: 'publisher', dir: 'desc' })
+    expect(effectiveSort(sourcesSpec, search)).toEqual([
+      { column: 'publisher', dir: 'desc' },
+      { column: 'source_id', dir: 'asc' },
+    ])
+  })
+
+  it('every sortable column is one this list actually fetches, so an ordering is never over an unshown number', () => {
+    for (const column of sourcesSpec.sortable) expect(SOURCES_COLUMNS).toContain(column)
   })
 })
