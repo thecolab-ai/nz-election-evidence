@@ -33,6 +33,17 @@ function shot(page: Page, name: string): Promise<Buffer> {
 }
 
 /**
+ * The first screen, at the viewport, not the whole scroll. A full-page capture of the live electorate
+ * page is about ten phone screens tall, which shows a reviewer everything except the thing a reader
+ * actually meets: what is above the fold, and whether the first action is reachable without scrolling.
+ * These are evidence for a human. Nothing is compared automatically, so a layout change fails nothing.
+ */
+function fold(page: Page, name: string): Promise<Buffer> {
+  const project = test.info().project.name
+  return page.screenshot({ path: join(SCREENS, `live-${project}-${name}-fold.png`), fullPage: false })
+}
+
+/**
  * Watches what the live REST API answers while a page loads. A 404 is not a failure here — the app
  * renders "this deployment does not carry that dataset" for exactly that — but a refusal or a server
  * error is: it would mean anonymous reading of the published site is broken.
@@ -89,6 +100,7 @@ test.describe('the published site', () => {
     await expect(page.getByTestId('home-to-explorer')).toBeVisible()
     await settled(page)
     await shot(page, '01-home')
+    await fold(page, '01-home')
     expect(refusals, 'anonymous reads of the live API').toEqual([])
   })
 
@@ -103,6 +115,7 @@ test.describe('the published site', () => {
     await expect(page.getByRole('heading', { level: 1, name })).toBeVisible()
     await settled(page)
     await shot(page, '03-electorate')
+    await fold(page, '03-electorate')
   })
 
   test('the whole journey works from the keyboard alone', async ({ page }) => {
@@ -215,6 +228,44 @@ test.describe('the published site', () => {
     await settled(page)
     await expect(page.getByTestId('data-row').first(), 'the live store answered the sources list').toBeVisible()
     await shot(page, '07-sources')
+    expect(refusals, 'anonymous reads of the live API').toEqual([])
+  })
+
+  test('a source opens its own page, including the source this store holds most of', async ({ page }) => {
+    const refusals = watchApi(page)
+
+    // Sorted by what the store holds, heaviest first, so this opens the most expensive source page
+    // the deployment can serve. Which source that is, is read off the live list at run time and never
+    // named here: the point is that the biggest one answers, whichever one it turns out to be.
+    // A deep link is answered by the Pages 404.html fallback, which boots the app. Wait for the route
+    // to have rendered before asking whether anything is still loading, or "nothing is loading" would
+    // be true simply because nothing has started.
+    await page.goto('./sources?sort=live_records&dir=desc')
+    await expect(page.getByRole('heading', { level: 1, name: 'Sources' })).toBeVisible()
+    await settled(page)
+    const heaviest = page.getByTestId('data-row').first()
+    await expect(heaviest, 'the live store answered the sources list').toBeVisible()
+
+    const link = heaviest.getByRole('link').first()
+    await expect(link, 'the row links to the source’s own page').toHaveAttribute('href', /\/sources\/[^/]+$/)
+    await link.click()
+    await expect(page).toHaveURL(/\/sources\/[^/]+$/)
+    await settled(page)
+
+    // It answered with the source itself, not an error block and not a spinner it never left.
+    await expect(page.getByTestId('error-state'), 'the source page is not an error').toHaveCount(0)
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
+
+    // The page states the basis on which any field of this source is shown at all, before any count.
+    await expect(page.getByTestId('source-release-basis')).toBeVisible()
+
+    // Counts are shown as counts; where a total is not read, the page says so instead of printing a
+    // number it does not have. Either way it is words or a figure, never a blank.
+    await expect(page.locator('main')).toContainText('Live records')
+    await expect(page.locator('main')).toContainText('Content versions')
+
+    await shot(page, '09-source-detail')
+    await fold(page, '09-source-detail')
     expect(refusals, 'anonymous reads of the live API').toEqual([])
   })
 
